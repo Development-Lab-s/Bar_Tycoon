@@ -1,3 +1,4 @@
+using System.Collections;
 using LitMotion;
 using LitMotion.Extensions;
 using TMPro;
@@ -13,24 +14,28 @@ public class Title : MonoBehaviour
     public Image background;
     public Image cover;
     
-    private float[] durations = {
+    private float[] durations = { // 타이틀 로고 각 텍스트 애니메이션 속도
         0.1f, 0.1f, 0.1f, 0.1f,
         0.5f,
         0.1f, 0.1f, 0.1f,
         0.2f
     };
     
-    private float[] sizeMultipliers = {
+    private float[] sizeMultipliers = { // 타이틀 로고 각 텍스트 애니메이션 역동적인 정도
         0.8f, 0.8f, 0.8f, 0.8f,
         0.4f,
         0.8f, 0.8f, 0.8f,
         0.6f
     };
 
+    private Color32 CoverColor = new Color32(255, 230, 210, 255);
+    private Color32 invisibleCoverColor = new Color32(255, 230, 210, 0);
+    
     private string text;
-    private bool isOnTitle = true;
+    private bool isAniming = true;
+    private bool isCovering = false;
     private bool isBlink = true;
-    private bool isAnimable = true;
+    private bool isTitle = true;
     
     private void OnEnable()
     {
@@ -48,7 +53,13 @@ public class Title : MonoBehaviour
             titleElements[i].color = new Color(1, 1, 1, 0);
         text = touchAnywhere.text;
         touchAnywhere.text = string.Empty;
-        
+        StartCoroutine(GameStartEffect());
+    }
+
+    private IEnumerator GameStartEffect()
+    {
+        EndCover();
+        yield return new WaitForSeconds(1f);
         TitleAppearAnim();
     }
 
@@ -58,50 +69,50 @@ public class Title : MonoBehaviour
         {
             var touch = Touch.activeTouches[0];
 
-            if (touch.phase == UnityEngine.InputSystem.TouchPhase.Began)
+            if (touch.phase == UnityEngine.InputSystem.TouchPhase.Began && !isAniming && isTitle)
             {
                 StartCover();
+                isTitle = false;
             }
         }
     }
 
-    async void StartCover()
+    async void StartCover() // 타이틀 화면 전환 시 화면 덮어주는 커버 알파갚 1
     {
-        if (!isAnimable || !isOnTitle) return;
-        isAnimable = false;
-        
-        var coverTween = LMotion.Create(new Color(1, 0.8941177f, 0.7686275f, 0), Color.bisque, 0.4f)
+        if (isCovering) return;
+        isCovering = true;
+        cover.gameObject.SetActive(true);
+        var coverTween = LMotion.Create(invisibleCoverColor, CoverColor, 0.8f)
             .WithEase(Ease.OutQuad)
             .BindToColor(cover)
             .ToAwaitable();
         await System.Threading.Tasks.Task.Delay(1000);
-        background.color = new Color(0.5f, 0.5f, 0.5f, 0);
+            
         background.gameObject.SetActive(false);
-        for(int i = 0; i < titleElements.Length; i++)
-            titleElements[i].gameObject.SetActive(false);
+        
+        titleElements[0].transform.parent.gameObject.SetActive(false);
+
+        isBlink = false;
         touchAnywhere.gameObject.SetActive(false);
+        
         EndCover();
     }
 
-    async void EndCover()
+    async void EndCover() // 타이틀 화면 전환 시 화면 덮어주는 커버 알파갚 0
     {
-        var coverTween = LMotion.Create(Color.bisque, new Color(1, 0.8941177f, 0.7686275f, 0), 0.7f)
+        var coverTween = LMotion.Create(CoverColor, invisibleCoverColor, 0.7f)
             .WithEase(Ease.InQuad)
             .BindToColor(cover)
             .ToAwaitable();
         
         await coverTween;
-        cover.gameObject.SetActive(false);
         
-        isAnimable = true;
-        isOnTitle = false;
+        cover.gameObject.SetActive(false);
+        isCovering = false;
     }
     
-    async void TitleAppearAnim()
+    async void TitleAppearAnim() // 로고 텍스트 애니메이션
     {
-        if (!isAnimable) return;
-        isAnimable = false;
-        
         for (int i = 0; i < titleElements.Length; i++)
         {
             var element = titleElements[i];
@@ -126,7 +137,7 @@ public class Title : MonoBehaviour
         TypeWriter();
     }
 
-    async void TypeWriter()
+    async void TypeWriter() // 계속하려면 화면을 클릭하세요 UI 타이핑 이펙트
     {
         touchAnywhere.text = string.Empty;
         for (int i = 0; i < text.Length; i++)
@@ -134,12 +145,12 @@ public class Title : MonoBehaviour
             touchAnywhere.text += text[i];
             await System.Threading.Tasks.Task.Delay(20);
         }
-        StartBlink();
         
-        isAnimable = true;
+        StartBlink();
+        isAniming = false;
     }
 
-    async void StartBlink()
+    async void StartBlink() // 계속하려면 화면을 클릭하세요 UI 깜빡임
     {
         while (isBlink)
         {
@@ -154,7 +165,7 @@ public class Title : MonoBehaviour
         }
     }
 
-    void SetAlpha(float a)
+    void SetAlpha(float a) // 계속하려면 화면을 클릭하세요 UI 깜빡임 알파갚 변환
     {
         var c = touchAnywhere.color;
         c.a = a;
