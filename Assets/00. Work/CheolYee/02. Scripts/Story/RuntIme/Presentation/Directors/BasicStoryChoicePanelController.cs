@@ -14,7 +14,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
     {
         [Header("UI")]
         [SerializeField] private GameObject panelRoot;
-        [SerializeField] private TMP_Text promptText;
         [SerializeField] private Transform optionRoot;
         [SerializeField] private Button optionButtonPrefab;
 
@@ -101,12 +100,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             if (panelRoot != null)
                 panelRoot.SetActive(true);
 
-            if (promptText != null)
-                promptText.text = module.Prompt ?? string.Empty;
-
-            for (int i = 0; i < module.Options.Count; i++)
+            foreach (var option in module.Options)
             {
-                StoryChoiceModuleSO.ChoiceOption option = module.Options[i];
                 Button button = Instantiate(optionButtonPrefab, optionRoot);
                 button.interactable = false;
 
@@ -115,7 +110,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                     label.text = option.text;
 
                 button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => SelectOption(module, option));
+                var option1 = option;
+                button.onClick.AddListener(() => SelectOption(module, option1));
 
                 _spawnedButtons.Add(button);
             }
@@ -156,19 +152,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
         private void SetButtonsInteractable(bool value)
         {
-            for (int i = 0; i < _spawnedButtons.Count; i++)
+            foreach (var button in _spawnedButtons)
             {
-                if (_spawnedButtons[i] != null)
-                    _spawnedButtons[i].interactable = value;
+                if (button != null)
+                    button.interactable = value;
             }
         }
 
         private void ClearButtons()
         {
-            for (int i = 0; i < _spawnedButtons.Count; i++)
+            foreach (var button in _spawnedButtons)
             {
-                if (_spawnedButtons[i] != null)
-                    Destroy(_spawnedButtons[i].gameObject);
+                if (button != null)
+                    Destroy(button.gameObject);
             }
 
             _spawnedButtons.Clear();
