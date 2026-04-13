@@ -110,6 +110,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         /// false인 경우 수동 진행 모드로 설정됩니다.
         public void SetAutoMode(bool autoEnabled)
         {
+            Debug.Log($"{autoEnabled} : 자동 모드");
             Session.AdvanceMode = autoEnabled
                 ? StoryAdvanceMode.Auto
                 : StoryAdvanceMode.Manual;

@@ -20,7 +20,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         public string CurrentLineId { get; private set; }
 
         // 스토리 진행 방식을 나타내는 열거형입니다.
-        // 수동 진행, 자동 진행, 빠르게 진행 등의 다양한 방식이 있을 수 있습니다.
         public StoryAdvanceMode AdvanceMode { get; set; } = StoryAdvanceMode.Manual;
         // UI 표시 여부를 나타내는 불리언입니다. true인 경우 스토리 UI가 숨겨지고, false인 경우 표시됩니다.
         public bool IsUiHidden { get; set; }
