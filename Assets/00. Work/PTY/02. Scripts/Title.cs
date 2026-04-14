@@ -9,10 +9,11 @@ using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 public class Title : MonoBehaviour
 {
-    public Image[] titleElements;
-    public TextMeshProUGUI touchAnywhere;
-    public Image background;
-    public Image cover;
+    [SerializeField] private Image[] titleElements;
+    [SerializeField] private TextMeshProUGUI touchAnywhere;
+    [SerializeField] private Image background;
+    [SerializeField] private Image cover;
+    [SerializeField] private GameObject mainUI;
     
     private float[] durations = { // 타이틀 로고 각 텍스트 애니메이션 속도
         0.1f, 0.1f, 0.1f, 0.1f,
@@ -53,6 +54,7 @@ public class Title : MonoBehaviour
             titleElements[i].color = new Color(1, 1, 1, 0);
         text = touchAnywhere.text;
         touchAnywhere.text = string.Empty;
+        mainUI.SetActive(false);
         StartCoroutine(GameStartEffect());
     }
 
@@ -89,7 +91,7 @@ public class Title : MonoBehaviour
         await System.Threading.Tasks.Task.Delay(1000);
             
         background.gameObject.SetActive(false);
-        
+        mainUI.SetActive(true);
         titleElements[0].transform.parent.gameObject.SetActive(false);
 
         isBlink = false;
