@@ -20,9 +20,7 @@ namespace _00._Work.Lusaload._02._Scripts
         private float _pointerDownTime;
         private bool _routeToScroll;
         private bool _draggingItem;
-
-
-
+        
         private void Awake()
         {
             _rectTransform = GetComponent<RectTransform>();
@@ -38,6 +36,15 @@ namespace _00._Work.Lusaload._02._Scripts
         public void OnPointerDown(PointerEventData eventData)
         {
             _pointerDownTime = Time.unscaledTime;
+        }
+        
+        public void ReturnToOriginalParent()
+        {
+            if (_originalParent == null)
+                return;
+
+            transform.SetParent(_originalParent, false);
+            transform.SetSiblingIndex(_originalIndex);
         }
 
         public void OnBeginDrag(PointerEventData eventData)

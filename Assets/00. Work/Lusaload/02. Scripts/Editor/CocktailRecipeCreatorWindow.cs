@@ -102,8 +102,8 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
         private void DrawTitle()
         {
-            string title = _editingRecipe == null ? "칵테일 레시피 생성" : "칵테일 레시피 수정";
-            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+            string label = _editingRecipe == null ? "칵테일 레시피 생성" : "칵테일 레시피 수정";
+            EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
 
             EditorGUILayout.HelpBox(
                 "AlcoholListSO의 술 목록을 선택하여 CocktailRecipeSO를 생성하거나 수정합니다.",
