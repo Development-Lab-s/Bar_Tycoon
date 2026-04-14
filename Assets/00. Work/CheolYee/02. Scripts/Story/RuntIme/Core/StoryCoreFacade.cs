@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Skip;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Contracts;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
@@ -34,14 +35,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         // 스토리 로그 컨트롤러를 제공하는 컴포넌트입니다. 이 필드는 MonoBehaviour로 선언되어 있지만,
         // 실제로는 IStoryLogController 인터페이스를 구현하는 컴포넌트를 참조해야 합니다.
         [SerializeField] private MonoBehaviour logControllerSource;
+        // 스토리 스킵 요약 패널 컨트롤러입니다.
+        [SerializeField] private StorySkipSummaryPanelController skipSummaryPanel;
+
 
         private IStorySaveService _saveService;
         private IStoryLogController _logController;
         private CancellationTokenSource _playCts;
 
         public bool IsOpen { get; private set; }
+        public bool IsLogOpen { get; private set; }
         public bool IsRunning { get; private set; }
         public StorySession Session { get; private set; } = new StorySession();
+        public bool IsSkipPopupOpen { get; private set; }
 
         private void Awake()
         {
@@ -49,12 +55,87 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             _logController = logControllerSource as IStoryLogController;
 
             Debug.Assert(runner != null, "StoryRunner reference is missing.");
+            SubscribeAll();
         }
 
         private void OnDestroy()
         {
             CancelPlayLoop();
+            UnsubscribeAll();
         }
+
+        #region Event Handlers
+
+        private void SubscribeAll()
+        {
+            if (skipSummaryPanel != null)
+            {
+                skipSummaryPanel.CloseRequested += HandleSkipSummaryCloseRequested;
+                skipSummaryPanel.ConfirmSkipRequested += HandleSkipSummaryConfirmRequested;
+            }
+        }
+
+        private void UnsubscribeAll()
+        {
+            if (skipSummaryPanel != null)
+            {
+                skipSummaryPanel.CloseRequested -= HandleSkipSummaryCloseRequested;
+                skipSummaryPanel.ConfirmSkipRequested -= HandleSkipSummaryConfirmRequested;
+            }
+        }
+        
+        private void HandleSkipSummaryCloseRequested()
+        {
+            CloseSkipSummary();
+        }
+
+        private void HandleSkipSummaryConfirmRequested()
+        {
+            ConfirmSkipSummary();
+        }
+
+        #endregion
+        
+        #region Skip Summary
+        
+        /// 스토리 스킵 요약 패널을 열기 위한 메서드입니다.
+        /// 현재 스토리가 재생 중이고, 세션에 유효한 에피소드가 있으며, 스킵 요약 패널이 할당되어 있는 경우에만 패널을 엽니다.
+        /// 이미 스킵 요약 패널이 열려 있는 경우에는 중복으로 열리지 않도록 합니다.
+        public void OpenSkipSummary()
+        {
+            if (!IsOpen || !IsRunning || Session?.Episode == null || skipSummaryPanel == null)
+                return;
+
+            if (IsSkipPopupOpen)
+                return;
+
+            IsSkipPopupOpen = true;
+            skipSummaryPanel.Open(Session.Episode);
+        }
+
+        public void CloseSkipSummary()
+        {
+            if (!IsSkipPopupOpen || skipSummaryPanel == null)
+                return;
+
+            IsSkipPopupOpen = false;
+            skipSummaryPanel.CloseImmediate();
+        }
+
+        public void ConfirmSkipSummary()
+        {
+            if (!IsSkipPopupOpen)
+                return;
+
+            IsSkipPopupOpen = false;
+
+            if (skipSummaryPanel != null)
+                skipSummaryPanel.CloseImmediate();
+
+            RequestSkip();
+        }
+        
+        #endregion
 
         /// StoryRunner의 RunAsync 메서드를 호출하여 스토리를 재생하는 메서드입니다.
         /// 스토리 재생이 완료되면 StoryPlayResult를 반환합니다.
@@ -114,6 +195,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             Session.AdvanceMode = autoEnabled
                 ? StoryAdvanceMode.Auto
                 : StoryAdvanceMode.Manual;
+            
+            if (!enabled || runner == null || !runner.IsRunning)
+                return;
+            
+            if (runner.IsWaitingForAdvance)
+            {
+                runner.RequestAdvance();
+            }
         }
 
         /// 스토리 UI의 표시 여부를 토글하는 메서드입니다.
@@ -121,21 +210,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         public void ToggleUiVisible()
         {
             Session.IsUiHidden = !Session.IsUiHidden;
-
-            // TODO:
-            // 실제 UI 패널 애니메이션은 StoryHideUIController에서 처리
         }
 
         /// 스토리 로그 창을 열거나 닫는 메서드입니다.
         /// 로그 컨트롤러가 존재하는 경우에만 해당 기능이 활성화됩니다.
         public void OpenLog()
         {
+            IsLogOpen = true;
             _logController?.Open();
         }
         
         /// 스토리 로그 창을 닫는 메서드입니다.
         public void CloseLog()
         {
+            IsLogOpen = false;
             _logController?.Close();
         }
         

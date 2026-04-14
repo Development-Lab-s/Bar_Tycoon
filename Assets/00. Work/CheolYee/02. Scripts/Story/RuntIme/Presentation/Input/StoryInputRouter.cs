@@ -40,6 +40,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Input
         {
             if (facade == null || !facade.IsOpen)
                 return;
+            
+            if (facade.IsSkipPopupOpen)
+                return;
+            
+            if (facade.IsLogOpen)
+                return;
 
             if (facade.Session is { IsUiHidden: true })
             {
@@ -54,10 +60,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Input
             }
 
             if (_choicePanel is { IsChoiceOpen: true })
-            {
-                // 선택지가 떠 있으면 빈 곳 탭으로 진행하지 않음
                 return;
-            }
 
             if (_textDirector is { IsTyping: true })
             {
@@ -70,7 +73,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Input
 
         public void OnToggleAuto(bool toggleEnabled)
         {
-            if (facade == null)
+            if (facade == null || facade.IsSkipPopupOpen)
                 return;
 
             facade.SetAutoMode(toggleEnabled);
@@ -86,7 +89,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Input
 
         public void OnOpenLog()
         {
-            if (facade == null || !facade.IsOpen)
+            if (facade == null || !facade.IsOpen || facade.IsSkipPopupOpen)
                 return;
 
             facade.OpenLog();
@@ -105,7 +108,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Input
             if (facade == null || !facade.IsRunning)
                 return;
 
-            facade.RequestSkip();
+            facade.OpenSkipSummary();
         }
 
         public void OnClosePressed()
