@@ -23,7 +23,7 @@ namespace _00._Work.Lusaload._02._Scripts
 
         private void CreateButton()
         {
-            foreach (BaseAlcoholDataSO alcoholData in alcoholListSO.alcoholDataList)
+            foreach (BaseAlcoholDataSO alcoholData in alcoholListSO.alcoholList)
             {
                 if(alcoholData == null) continue;
 

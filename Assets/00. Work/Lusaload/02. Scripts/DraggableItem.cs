@@ -1,108 +1,100 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace _00._Work.Lusaload._02._Scripts
 {
-    public class DraggableItem : MonoBehaviour,  IPointerDownHandler, IPointerUpHandler,
+    public class DraggableItem : MonoBehaviour,  IPointerDownHandler,
         IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         [SerializeField] private float longPressTime = 0.2f;
 
-        private ScrollRect parentScrollRect;
-        private Canvas rootCanvas;
-        private CanvasGroup canvasGroup;
-        private RectTransform rectTransform;
+        private ScrollRect _parentScrollRect;
+        private Canvas _rootCanvas;
+        private CanvasGroup _canvasGroup;
+        private RectTransform _rectTransform;
 
-        private Transform originalParent;
-        private int originalIndex;
+        private Transform _originalParent;
+        private int _originalIndex;
 
-        private float pointerDownTime;
-        private bool pointerHeld;
-        private bool routeToScroll;
-        private bool draggingItem;
+        private float _pointerDownTime;
+        private bool _routeToScroll;
+        private bool _draggingItem;
 
 
 
         private void Awake()
         {
-            rectTransform = GetComponent<RectTransform>();
-            canvasGroup = GetComponent<CanvasGroup>();
+            _rectTransform = GetComponent<RectTransform>();
+            _canvasGroup = GetComponent<CanvasGroup>();
 
-            if (canvasGroup == null)
-                canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            if (_canvasGroup == null)
+                _canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
-            parentScrollRect = GetComponentInParent<ScrollRect>();
-            rootCanvas = GetComponentInParent<Canvas>();
+            _parentScrollRect = GetComponentInParent<ScrollRect>();
+            _rootCanvas = GetComponentInParent<Canvas>();
         }
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            pointerHeld = true;
-            pointerDownTime = Time.unscaledTime;
-        }
-
-        public void OnPointerUp(PointerEventData eventData)
-        {
-            pointerHeld = false;
+            _pointerDownTime = Time.unscaledTime;
         }
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            float heldTime = Time.unscaledTime - pointerDownTime;
+            float heldTime = Time.unscaledTime - _pointerDownTime;
 
             // 짧게 드래그하면 스크롤로 넘김
             if (heldTime < longPressTime)
             {
-                routeToScroll = true;
-                parentScrollRect?.OnBeginDrag(eventData);
+                _routeToScroll = true;
+                _parentScrollRect?.OnBeginDrag(eventData);
                 return;
             }
 
             // 길게 누른 뒤 드래그하면 아이템 이동 시작
-            draggingItem = true;
-            originalParent = transform.parent;
-            originalIndex = transform.GetSiblingIndex();
+            _draggingItem = true;
+            _originalParent = transform.parent;
+            _originalIndex = transform.GetSiblingIndex();
 
-            transform.SetParent(rootCanvas.transform, true);
-            canvasGroup.blocksRaycasts = false;
+            transform.SetParent(_rootCanvas.transform, true);
+            _canvasGroup.blocksRaycasts = false;
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (routeToScroll)
+            if (_routeToScroll)
             {
-                parentScrollRect?.OnDrag(eventData);
+                _parentScrollRect?.OnDrag(eventData);
                 return;
             }
 
-            if (!draggingItem)
+            if (!_draggingItem)
                 return;
 
-            rectTransform.position = eventData.position;
+            _rectTransform.position = eventData.position;
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            if (routeToScroll)
+            if (_routeToScroll)
             {
-                parentScrollRect?.OnEndDrag(eventData);
-                routeToScroll = false;
+                _parentScrollRect?.OnEndDrag(eventData);
+                _routeToScroll = false;
                 return;
             }
 
-            if (!draggingItem)
+            if (!_draggingItem)
                 return;
 
-            draggingItem = false;
-            canvasGroup.blocksRaycasts = true;
+            _draggingItem = false;
+            _canvasGroup.blocksRaycasts = true;
 
             // 드롭 실패 시 원래 자리로 복귀
-            if (transform.parent == rootCanvas.transform)
+            if (transform.parent == _rootCanvas.transform)
             {
-                transform.SetParent(originalParent, false);
-                transform.SetSiblingIndex(originalIndex);
+                transform.SetParent(_originalParent, false);
+                transform.SetSiblingIndex(_originalIndex);
             }
         }
     }

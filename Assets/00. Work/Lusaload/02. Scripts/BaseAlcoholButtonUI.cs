@@ -1,5 +1,4 @@
-﻿using System;
-using _00._Work.Lusaload._02._Scripts.SO;
+﻿using _00._Work.Lusaload._02._Scripts.SO;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
