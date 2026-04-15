@@ -119,7 +119,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                 return;
 
             IsSkipPopupOpen = false;
-            skipSummaryPanel.CloseImmediate();
+            skipSummaryPanel.CloseAnimated();
         }
 
         public void ConfirmSkipSummary()

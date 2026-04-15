@@ -39,12 +39,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.ViewModels
             bool isNarration = entry.entryType == StoryLogEntryType.Narration;
             bool hasSpeaker = entry.speaker != null;
 
+            // ── 선택지 뱃지 ────────────────────
             if (choiceBadgeRoot != null)
                 choiceBadgeRoot.SetActive(isChoice);
 
             if (choiceBadgeText != null)
                 choiceBadgeText.text = choiceLabel;
 
+            // ── 아이콘 ─────────────────────────
             if (iconRoot != null)
                 iconRoot.SetActive(hasSpeaker && !isChoice && !isNarration);
 
@@ -62,24 +64,30 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.ViewModels
                 }
             }
 
+            // ── 이름 영역 ─────────────────────
             if (nameRoot != null)
-                nameRoot.SetActive(!isChoice);
+                nameRoot.SetActive(true);
 
             if (nameText != null)
             {
                 if (isChoice)
                 {
-                    nameText.text = string.Empty;
-                }
-                else if (isNarration)
-                {
-                    nameText.text = narrationLabel;
+                    nameText.gameObject.SetActive(false);
                 }
                 else
                 {
-                    nameText.text = string.IsNullOrWhiteSpace(entry.displayName)
-                        ? (hasSpeaker ? entry.speaker.DisplayName : string.Empty)
-                        : entry.displayName;
+                    nameText.gameObject.SetActive(true);
+
+                    if (isNarration)
+                    {
+                        nameText.text = narrationLabel;
+                    }
+                    else
+                    {
+                        nameText.text = string.IsNullOrWhiteSpace(entry.displayName)
+                            ? (hasSpeaker ? entry.speaker.DisplayName : string.Empty)
+                            : entry.displayName;
+                    }
                 }
             }
         }

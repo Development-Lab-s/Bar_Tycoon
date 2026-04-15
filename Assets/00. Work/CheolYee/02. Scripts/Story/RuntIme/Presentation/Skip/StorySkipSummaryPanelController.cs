@@ -1,6 +1,6 @@
 using System;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
-using Alchemy.Inspector;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Motion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +12,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Skip
         [Header("Root")]
         [SerializeField] private GameObject overlayRoot;
         [SerializeField] private CanvasGroup overlayCanvasGroup;
+
+        [Header("Motion (Optional)")]
+        [SerializeField] private UIMotionPlayer motionPlayer;
 
         [Header("Texts")]
         [SerializeField] private TMP_Text titleText;
@@ -31,7 +34,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Skip
 
         public event Action CloseRequested;
         public event Action ConfirmSkipRequested;
-        
+
         private void Awake()
         {
             if (closeButton != null)
@@ -61,11 +64,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Skip
             if (overlayRoot != null)
                 overlayRoot.SetActive(true);
 
-            if (overlayCanvasGroup != null)
+            if (motionPlayer != null)
             {
-                overlayCanvasGroup.alpha = 1f;
-                overlayCanvasGroup.interactable = true;
-                overlayCanvasGroup.blocksRaycasts = true;
+                SetCanvasGroupInteractable(false);
+                motionPlayer.Play("Show",
+                    onComplete: () => SetCanvasGroupInteractable(true));
+            }
+            else
+            {
+                if (overlayCanvasGroup != null)
+                {
+                    overlayCanvasGroup.alpha = 1f;
+                    overlayCanvasGroup.interactable = true;
+                    overlayCanvasGroup.blocksRaycasts = true;
+                }
             }
         }
 
@@ -74,6 +86,33 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Skip
             IsOpen = false;
             ApplyClosedStateImmediate();
         }
+
+        /// <summary>
+        /// 모션과 함께 닫습니다. 모션 완료 후 비활성화됩니다.
+        /// motionPlayer가 없으면 즉시 닫힙니다.
+        /// </summary>
+        public void CloseAnimated()
+        {
+            if (!IsOpen)
+                return;
+
+            if (motionPlayer != null)
+            {
+                SetCanvasGroupInteractable(false);
+                motionPlayer.Play("Hide",
+                    onFinish: () =>
+                    {
+                        IsOpen = false;
+                        ApplyClosedStateImmediate();
+                    });
+            }
+            else
+            {
+                CloseImmediate();
+            }
+        }
+
+        // ── Binding / State ───────────────────────────
 
         private void BindEpisode(StoryEpisodeSO episode)
         {
@@ -99,16 +138,25 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Skip
 
         private void ApplyClosedStateImmediate()
         {
-            if (overlayCanvasGroup != null)
-            {
+            if (motionPlayer != null)
+                motionPlayer.ApplyState("Hide");
+            else if (overlayCanvasGroup != null)
                 overlayCanvasGroup.alpha = 0f;
-                overlayCanvasGroup.interactable = false;
-                overlayCanvasGroup.blocksRaycasts = false;
-            }
+
+            SetCanvasGroupInteractable(false);
 
             if (overlayRoot != null)
                 overlayRoot.SetActive(false);
         }
+
+        private void SetCanvasGroupInteractable(bool interactable)
+        {
+            if (overlayCanvasGroup == null) return;
+            overlayCanvasGroup.interactable = interactable;
+            overlayCanvasGroup.blocksRaycasts = interactable;
+        }
+
+        // ── Button handlers ───────────────────────────
 
         private void HandleClosePressed()
         {
