@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Skip;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Visibility;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Contracts;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
@@ -37,6 +38,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         [SerializeField] private MonoBehaviour logControllerSource;
         // 스토리 스킵 요약 패널 컨트롤러입니다.
         [SerializeField] private StorySkipSummaryPanelController skipSummaryPanel;
+        // TopBar / DialogueArea / ChoiceArea 시각적 숨김 제어 컨트롤러입니다.
+        [SerializeField] private StoryUiVisibilityController uiVisibilityController;
 
 
         private IStorySaveService _saveService;
@@ -207,9 +210,18 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
         /// 스토리 UI의 표시 여부를 토글하는 메서드입니다.
         /// 현재 UI가 숨겨져 있는지 여부에 따라 UI를 표시하거나 숨깁니다.
+        /// 실제 모션은 StoryUiVisibilityController에 위임합니다.
         public void ToggleUiVisible()
         {
             Session.IsUiHidden = !Session.IsUiHidden;
+
+            if (uiVisibilityController == null)
+                return;
+
+            if (Session.IsUiHidden)
+                uiVisibilityController.Hide();
+            else
+                uiVisibilityController.Show();
         }
 
         /// 스토리 로그 창을 열거나 닫는 메서드입니다.

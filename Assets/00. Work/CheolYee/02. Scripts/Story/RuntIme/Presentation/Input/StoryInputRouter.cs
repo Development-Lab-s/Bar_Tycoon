@@ -84,6 +84,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Input
             if (facade == null || !facade.IsOpen)
                 return;
 
+            // 모달이 열려 있으면 숨기기 요청 무시
+            if (facade.IsSkipPopupOpen || facade.IsLogOpen)
+                return;
+
+            // 선택지가 열려 있으면 숨기기 요청 무시
+            if (_choicePanel is { IsChoiceOpen: true })
+                return;
+
             facade.ToggleUiVisible();
         }
 

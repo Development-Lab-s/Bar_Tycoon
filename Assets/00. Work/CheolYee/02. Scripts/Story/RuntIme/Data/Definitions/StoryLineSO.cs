@@ -56,6 +56,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         //자동 진행에 영향을 미치는지 여부 등의 공통 속성을 가집니다.
         [SerializeField] private List<StoryModuleSO> modules = new();
 
+        // 에디터 전용 — 런타임에서 사용하지 않음
+        [HideInInspector]
+        [SerializeField] private Vector2 editorNodePosition = new(-1f, -1f);
+        [HideInInspector]
+        [SerializeField] private Vector2 editorNodeSize = new(-1f, -1f);
+
         public string LineId => lineId;
         public CharacterDefinitionSO Speaker => speaker;
         public string NameOverride => nameOverride;
@@ -68,6 +74,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         public bool UseAutoAdvanceOverride => useAutoAdvanceOverride;
         public float AutoAdvanceDelay => autoAdvanceDelay;
         public IReadOnlyList<StoryModuleSO> Modules => modules;
+
+        // 에디터 전용 프로퍼티
+        public Vector2 EditorNodePosition    => editorNodePosition;
+        public bool    HasEditorNodePosition => editorNodePosition.x >= 0f;
+        public Vector2 EditorNodeSize        => editorNodeSize;
+        public bool    HasEditorNodeSize     => editorNodeSize.x >= 0f;
 
         //이 대사의 화자 이름을 결정하는 메서드입니다. nameOverride가 설정되어 있으면 그것을 반환하고,
         //그렇지 않으면 speaker의 DisplayName을 반환합니다. speaker가 null인 경우에는 빈 문자열을 반환합니다.

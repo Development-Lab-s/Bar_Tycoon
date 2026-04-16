@@ -880,6 +880,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1383751379691559511}
   - component: {fileID: 4616951487210980108}
+  - component: {fileID: 1100000000000002005}
+  - component: {fileID: 1100000000000002006}
   m_Layer: 0
   m_Name: ChoiceArea
   m_TagString: Untagged
@@ -923,6 +925,65 @@ MonoBehaviour:
   optionRoot: {fileID: 1569733721922050068}
   optionButtonPrefab: {fileID: 2084920117410167910, guid: cb7b306b46d2cf2479cff0d0bceaa4a6, type: 3}
   revealDuration: 0.2
+--- !u!225 &1100000000000002005
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1177238208437429641}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &1100000000000002006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1177238208437429641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a093fe924ba1459c99d7cc373bc72c96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Motion.UIMotionPlayer
+  canvasGroup: {fileID: 1100000000000002005}
+  motionTarget: {fileID: 1383751379691559511}
+  sequences:
+  - label: Hide
+    keyframes:
+    - time: 0
+      alpha: 1
+      scale: 1
+      positionX: 0
+      positionY: 0
+      rotation: 0
+      ease: 0
+    - time: 0.2
+      alpha: 0
+      scale: 1
+      positionX: 0
+      positionY: -200
+      rotation: 0
+      ease: 8
+  - label: Show
+    keyframes:
+    - time: 0
+      alpha: 0
+      scale: 1
+      positionX: 0
+      positionY: -200
+      rotation: 0
+      ease: 0
+    - time: 0.2
+      alpha: 1
+      scale: 1
+      positionX: 0
+      positionY: 0
+      rotation: 0
+      ease: 8
 --- !u!1 &1198440847258131232
 GameObject:
   m_ObjectHideFlags: 0
@@ -936,6 +997,7 @@ GameObject:
   - component: {fileID: 7771075218007664946}
   - component: {fileID: 8499143183203277039}
   - component: {fileID: 8272797593844727622}
+  - component: {fileID: 1100000000000002007}
   m_Layer: 0
   m_Name: StoryCore
   m_TagString: Untagged
@@ -978,6 +1040,7 @@ MonoBehaviour:
   saveServiceSource: {fileID: 0}
   logControllerSource: {fileID: 1837574846800730199}
   skipSummaryPanel: {fileID: 7451497733691111962}
+  uiVisibilityController: {fileID: 1100000000000002007}
 --- !u!114 &7771075218007664946
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1027,6 +1090,24 @@ MonoBehaviour:
   facade: {fileID: 4541276489143467196}
   textDirectorSource: {fileID: 6615992989402148555}
   choicePanelSource: {fileID: 4616951487210980108}
+--- !u!114 &1100000000000002007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1198440847258131232}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b28c686b0c9644f4296a1d8c0b66ba18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Visibility.StoryUiVisibilityController
+  topBarMotion: {fileID: 1100000000000002002}
+  topBarCanvasGroup: {fileID: 1100000000000002001}
+  dialogueAreaMotion: {fileID: 1100000000000002004}
+  dialogueAreaCanvasGroup: {fileID: 1100000000000002003}
+  choiceAreaMotion: {fileID: 1100000000000002006}
+  choiceAreaCanvasGroup: {fileID: 1100000000000002005}
 --- !u!1 &1213983964601940166
 GameObject:
   m_ObjectHideFlags: 0
@@ -3025,6 +3106,8 @@ GameObject:
   m_Component:
   - component: {fileID: 7010447654294354251}
   - component: {fileID: 6615992989402148555}
+  - component: {fileID: 1100000000000002003}
+  - component: {fileID: 1100000000000002004}
   m_Layer: 0
   m_Name: DialogueArea
   m_TagString: Untagged
@@ -3073,6 +3156,65 @@ MonoBehaviour:
   commaDelay: 0.2
   lineBreakDelay: 0.5
   spaceDelay: 0.05
+--- !u!225 &1100000000000002003
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4136729265643069404}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &1100000000000002004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4136729265643069404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a093fe924ba1459c99d7cc373bc72c96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Motion.UIMotionPlayer
+  canvasGroup: {fileID: 1100000000000002003}
+  motionTarget: {fileID: 7010447654294354251}
+  sequences:
+  - label: Hide
+    keyframes:
+    - time: 0
+      alpha: 1
+      scale: 1
+      positionX: 0
+      positionY: 0
+      rotation: 0
+      ease: 0
+    - time: 0.2
+      alpha: 0
+      scale: 1
+      positionX: 0
+      positionY: -200
+      rotation: 0
+      ease: 8
+  - label: Show
+    keyframes:
+    - time: 0
+      alpha: 0
+      scale: 1
+      positionX: 0
+      positionY: -200
+      rotation: 0
+      ease: 0
+    - time: 0.2
+      alpha: 1
+      scale: 1
+      positionX: 0
+      positionY: 0
+      rotation: 0
+      ease: 8
 --- !u!1 &4250157479448324064
 GameObject:
   m_ObjectHideFlags: 0
@@ -3792,6 +3934,8 @@ GameObject:
   - component: {fileID: 4544365073832395640}
   - component: {fileID: 1771121002792592141}
   - component: {fileID: 7595327706245716935}
+  - component: {fileID: 1100000000000002001}
+  - component: {fileID: 1100000000000002002}
   m_Layer: 0
   m_Name: TopBar
   m_TagString: Untagged
@@ -3862,6 +4006,65 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
   m_HorizontalFit: 2
   m_VerticalFit: 2
+--- !u!225 &1100000000000002001
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5728541889874923429}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &1100000000000002002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5728541889874923429}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a093fe924ba1459c99d7cc373bc72c96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Motion.UIMotionPlayer
+  canvasGroup: {fileID: 1100000000000002001}
+  motionTarget: {fileID: 4544365073832395640}
+  sequences:
+  - label: Hide
+    keyframes:
+    - time: 0
+      alpha: 1
+      scale: 1
+      positionX: 0
+      positionY: 0
+      rotation: 0
+      ease: 0
+    - time: 0.2
+      alpha: 0
+      scale: 1
+      positionX: 0
+      positionY: 80
+      rotation: 0
+      ease: 8
+  - label: Show
+    keyframes:
+    - time: 0
+      alpha: 0
+      scale: 1
+      positionX: 0
+      positionY: 80
+      rotation: 0
+      ease: 0
+    - time: 0.2
+      alpha: 1
+      scale: 1
+      positionX: 0
+      positionY: 0
+      rotation: 0
+      ease: 8
 --- !u!1 &6005175368091065942
 GameObject:
   m_ObjectHideFlags: 0
@@ -4913,6 +5116,8 @@ GameObject:
   - component: {fileID: 7449711207545569038}
   - component: {fileID: 7126648582586747870}
   - component: {fileID: 8649725355641333951}
+  - component: {fileID: 1100000000000000001}
+  - component: {fileID: 1100000000000000002}
   m_Layer: 0
   m_Name: ViewPort
   m_TagString: Untagged
@@ -4974,6 +5179,44 @@ MonoBehaviour:
   m_FlexibleWidth: 1
   m_FlexibleHeight: 1
   m_LayoutPriority: 1
+--- !u!222 &1100000000000000001
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7995775132393626209}
+  m_CullTransparentMesh: 1
+--- !u!114 &1100000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7995775132393626209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &8077457010358816850
 GameObject:
   m_ObjectHideFlags: 0
