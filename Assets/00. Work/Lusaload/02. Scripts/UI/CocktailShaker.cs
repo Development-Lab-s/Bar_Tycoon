@@ -1,15 +1,34 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using _00._Work.Lusaload._02._Scripts.SO;
+using LitMotion;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace _00._Work.Lusaload._02._Scripts.UI
 {
     public class CocktailShaker : MonoBehaviour, IDropHandler
     {
         [SerializeField] private CocktailRecipeSO cocktailRecipe;
-        private List<BaseAlcoholDataSO> _currentAlcoholList;
+        [SerializeField] private RectTransform panelRectTransform;
+        [SerializeField] private Button shakeButton;
+        [SerializeField] private float panelDropDuration = 0.5f;
+        [SerializeField] private float shakeDuration = 1.5f;
         
+        private readonly List<BaseAlcoholDataSO> _currentAlcoholList = new();
+        private bool _isShaking;
+
+        private void Start()
+        {
+            if (shakeButton != null)
+            {
+                shakeButton.onClick.AddListener(OnShakeButtonClicked);
+                shakeButton.gameObject.SetActive(false);
+            }
+        }
+
         public void OnDrop(PointerEventData eventData)
         {
             if (eventData.pointerDrag == null) return;
@@ -56,7 +75,7 @@ namespace _00._Work.Lusaload._02._Scripts.UI
             // 셰이커 안에 레시피 내, 모든 술이 들어 있는지 확인
             if (IsRecipeCompleted())
             {
-                Debug.Log($"{cocktailRecipe.cocktailName}이 완성 되었습니다!");
+                CompleteCocktailMake();
             }
         }
 
@@ -79,6 +98,54 @@ namespace _00._Work.Lusaload._02._Scripts.UI
             }
 
             return true;
+        }
+        
+        private void CompleteCocktailMake()
+        {
+            if (panelRectTransform == null || shakeButton == null)
+                return;
+ 
+            shakeButton.gameObject.SetActive(true);
+ 
+            Vector3 startPosition = panelRectTransform.anchoredPosition;
+            Vector3 endPosition = startPosition + Vector3.down * 500;
+ 
+            LMotion.Create(startPosition, endPosition, panelDropDuration)
+                .WithEase(Ease.OutCubic)
+                .Bind(position => panelRectTransform.anchoredPosition = position);
+        }
+        
+        private void OnShakeButtonClicked()
+        {
+            if (_isShaking)
+                return;
+ 
+            PlayShakeAnimation();
+        }
+
+        private void PlayShakeAnimation()
+        {
+            _isShaking = true;
+            StartCoroutine(ShakeCoroutine());
+        }
+        
+        private IEnumerator ShakeCoroutine()
+        {
+            float elapsedTime = 0f;
+            var startPosition = transform.localPosition;
+    
+            while (elapsedTime < shakeDuration)
+            {
+                elapsedTime += Time.deltaTime;
+
+                float shakeAmount = Mathf.PerlinNoise(elapsedTime * 10f, 0f) * 100f - 10f;
+                transform.localPosition = startPosition + Vector3.up * shakeAmount;
+        
+                yield return null;
+            }
+    
+            transform.localPosition = startPosition;
+            _isShaking = false;
         }
     }
 }
