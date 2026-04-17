@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -111,6 +112,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             // 다음 라인 섹션 (드롭다운 헬퍼)
             AddSectionLabel("다음 라인");
             BuildNextLineSection();
+
+            // 모듈 섹션
+            AddSectionLabel("모듈");
+            BuildModuleSection();
 
             _content.Bind(_so);
         }
@@ -278,6 +283,186 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
 
             return (labels, ids, selected);
+        }
+
+        // ── 모듈 섹션 (IMGUIContainer) ─────────────────
+
+        private void BuildModuleSection()
+        {
+            var container = new IMGUIContainer(DrawModuleSectionIMGUI);
+            container.style.marginTop    = 2;
+            container.style.marginBottom = 4;
+            _content.Add(container);
+        }
+
+        private void DrawModuleSectionIMGUI()
+        {
+            if (_line == null || _so == null) return;
+            _so.Update();
+
+            DrawSoModulesIMGUI();
+            DrawInlineModulesIMGUI();
+
+            EditorGUILayout.Space(4);
+            if (GUILayout.Button("+ 모듈 추가", GUILayout.Height(22)))
+                ShowModuleTypeMenu();
+
+            _so.ApplyModifiedProperties();
+        }
+
+        private void DrawSoModulesIMGUI()
+        {
+            var prop = _so.FindProperty("modules");
+            if (prop == null || prop.arraySize == 0) return;
+
+            EditorGUILayout.LabelField("SO 모듈 (Legacy)", EditorStyles.centeredGreyMiniLabel);
+
+            for (int i = 0; i < prop.arraySize; i++)
+            {
+                var elem  = prop.GetArrayElementAtIndex(i);
+                var asset = elem.objectReferenceValue as StoryModuleSO;
+
+                if (asset == null)
+                {
+                    EditorGUILayout.HelpBox($"#{i}: null SO 참조", MessageType.Warning);
+                    continue;
+                }
+
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+                // 헤더
+                EditorGUILayout.BeginHorizontal();
+                elem.isExpanded = EditorGUILayout.Foldout(
+                    elem.isExpanded,
+                    $"[SO] {asset.DisplayName}  ({asset.Timing})",
+                    true);
+                if (GUILayout.Button("선택", GUILayout.Width(38), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
+                {
+                    Selection.activeObject = asset;
+                    EditorGUIUtility.PingObject(asset);
+                }
+                EditorGUILayout.EndHorizontal();
+
+                // 인라인 필드 편집
+                if (elem.isExpanded)
+                {
+                    EditorGUI.indentLevel++;
+                    var nested = new SerializedObject(asset);
+                    nested.Update();
+                    var iter  = nested.GetIterator();
+                    bool enter = true;
+                    while (iter.NextVisible(enter))
+                    {
+                        enter = false;
+                        if (iter.name == "m_Script") continue;
+                        EditorGUILayout.PropertyField(iter, true);
+                    }
+                    nested.ApplyModifiedProperties();
+                    EditorGUI.indentLevel--;
+                }
+
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.Space(1);
+            }
+
+            EditorGUILayout.Space(4);
+        }
+
+        private void DrawInlineModulesIMGUI()
+        {
+            var prop = _so.FindProperty("inlineModules");
+            if (prop == null || prop.arraySize == 0) return;
+
+            EditorGUILayout.LabelField("인라인 모듈", EditorStyles.centeredGreyMiniLabel);
+
+            int toDelete = -1;
+
+            for (int i = 0; i < prop.arraySize; i++)
+            {
+                var elem = prop.GetArrayElementAtIndex(i);
+                var data = elem.managedReferenceValue as StoryInlineModuleData;
+                string label = data?.DisplayName ?? $"Unknown #{i}";
+
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+                // 헤더 행
+                EditorGUILayout.BeginHorizontal();
+                elem.isExpanded = EditorGUILayout.Foldout(elem.isExpanded, label, true);
+
+                var prevBg = GUI.backgroundColor;
+                GUI.backgroundColor = new Color(1f, 0.45f, 0.45f);
+                if (GUILayout.Button("✕", GUILayout.Width(22), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
+                    toDelete = i;
+                GUI.backgroundColor = prevBg;
+
+                EditorGUILayout.EndHorizontal();
+
+                // 필드 (열린 상태)
+                if (elem.isExpanded)
+                {
+                    EditorGUI.indentLevel++;
+                    var child = elem.Copy();
+                    var end   = elem.GetEndProperty();
+                    bool first = true;
+                    while (child.NextVisible(first))
+                    {
+                        first = false;
+                        if (SerializedProperty.EqualContents(child, end)) break;
+                        EditorGUILayout.PropertyField(child, true);
+                    }
+                    EditorGUI.indentLevel--;
+                }
+
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.Space(1);
+            }
+
+            // 이터레이션 후 삭제 처리
+            if (toDelete >= 0)
+            {
+                Undo.RecordObject(_line, "Remove Inline Module");
+                prop.DeleteArrayElementAtIndex(toDelete);
+                _so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(_line);
+            }
+        }
+
+        private void ShowModuleTypeMenu()
+        {
+            var menu  = new GenericMenu();
+            var types = TypeCache.GetTypesDerivedFrom<StoryInlineModuleData>();
+
+            foreach (var type in types)
+            {
+                if (type.IsAbstract) continue;
+
+                var temp = Activator.CreateInstance(type) as StoryInlineModuleData;
+                string displayName  = temp?.DisplayName ?? type.Name;
+                var    capturedType = type;
+
+                menu.AddItem(new GUIContent(displayName), false, () => AddInlineModule(capturedType));
+            }
+
+            if (menu.GetItemCount() == 0)
+                menu.AddDisabledItem(new GUIContent("등록된 인라인 모듈 없음"));
+
+            menu.ShowAsContext();
+        }
+
+        private void AddInlineModule(Type type)
+        {
+            if (_line == null || _so == null) return;
+
+            Undo.RecordObject(_line, $"Add Inline Module: {type.Name}");
+            _so.Update();
+
+            var prop = _so.FindProperty("inlineModules");
+            prop.arraySize++;
+            var newElem = prop.GetArrayElementAtIndex(prop.arraySize - 1);
+            newElem.managedReferenceValue = Activator.CreateInstance(type);
+
+            _so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(_line);
         }
 
         // ── 공통 헬퍼 ─────────────────────────────────

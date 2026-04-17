@@ -9,28 +9,46 @@ using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
 {
-    public sealed class WaitModuleExecutor : MonoBehaviour, IStoryModuleExecutor
+    public sealed class WaitModuleExecutor : MonoBehaviour, IStoryModuleExecutor, IStoryInlineModuleExecutor
     {
-        public bool CanExecute(StoryModuleSO module)
-        {
-            return module is StoryWaitModuleSO;
-        }
+        // --- SO 모듈 처리 ---
+
+        public bool CanExecute(StoryModuleSO module) => module is StoryWaitModuleSO;
 
         public async UniTask ExecuteAsync(StoryModuleSO module, StorySession session, CancellationToken ct)
         {
             if (module is not StoryWaitModuleSO waitModule)
                 return;
 
-            float duration = Mathf.Max(0f, waitModule.Duration);
-            if (duration <= 0f)
+            await WaitAsync(waitModule.Duration, waitModule.UseUnscaledTime, ct);
+        }
+
+        // --- 인라인 모듈 처리 ---
+
+        public bool CanExecute(StoryInlineModuleData module) => module is WaitInlineModuleData;
+
+        public async UniTask ExecuteAsync(StoryInlineModuleData module, StorySession session, CancellationToken ct)
+        {
+            if (module is not WaitInlineModuleData waitModule)
                 return;
 
-            DelayType delayType = waitModule.UseUnscaledTime
+            await WaitAsync(waitModule.Duration, waitModule.UseUnscaledTime, ct);
+        }
+
+        // --- 공통 로직 ---
+
+        private static async UniTask WaitAsync(float duration, bool useUnscaledTime, CancellationToken ct)
+        {
+            float d = Mathf.Max(0f, duration);
+            if (d <= 0f)
+                return;
+
+            DelayType delayType = useUnscaledTime
                 ? DelayType.UnscaledDeltaTime
                 : DelayType.DeltaTime;
 
             await UniTask.Delay(
-                TimeSpan.FromSeconds(duration),
+                TimeSpan.FromSeconds(d),
                 delayType,
                 PlayerLoopTiming.Update,
                 ct);

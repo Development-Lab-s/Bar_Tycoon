@@ -16,18 +16,30 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         }
 
         // ── 상태 ────────────────────────────────────
-        private StoryEpisodeSO _episode;
-        private StoryLineSO    _selectedLine;
-        private string         _saveFolder = "";
+        // [SerializeField]: domain reload / Play mode 진입 후에도 값 유지
+        [SerializeField] private StoryEpisodeSO _episode;
+        [SerializeField] private float          _inspectorWidth = 300f;
+
+        private StoryLineSO _selectedLine;
+        private string      _saveFolder = "";
 
         // ── UI 참조 ─────────────────────────────────
         private StoryGraphCanvasView     _canvas;
         private StoryGraphInspectorPanel _inspectorPanel;
+        private ObjectField              _episodeField;   // 복원 시 SetValueWithoutNotify 용
         private Label                    _statusLineId;
         private Label                    _statusNextId;
         private Label                    _statusWarning;
         private Button                   _clearNextBtn;
-        private Label                    _folderDisplay;   // 상단바 폴더 표시
+        private Label                    _folderDisplay;
+
+        // ── Splitter 드래그 상태 ─────────────────────
+        private bool  _splitterDragging;
+        private float _splitterStartX;
+        private float _splitterStartWidth;
+
+        private const float InspectorMinWidth = 220f;
+        private const float InspectorMaxWidth = 700f;
 
         // ── 생명주기 ─────────────────────────────────
 
@@ -39,12 +51,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedoPerformed;
-            // 뷰 상태 저장
             var key = EpisodePrefsKey;
             if (key != null) _canvas?.SaveViewState(key);
         }
 
-        /// <summary>에피소드 GUID 기반 EditorPrefs 키. 에피소드 없으면 null.</summary>
         private string EpisodePrefsKey => _episode != null
             ? "StoryGraph_" + AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(_episode))
             : null;
@@ -77,26 +87,99 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _canvas.NodeDisconnected += OnNodeDisconnected;
             center.Add(_canvas);
 
+            center.Add(BuildSplitter());
+
             _inspectorPanel = new StoryGraphInspectorPanel();
+            _inspectorPanel.style.width = _inspectorWidth;
             _inspectorPanel.LineChanged += OnInspectorLineChanged;
             center.Add(_inspectorPanel);
 
             root.Add(center);
             root.Add(BuildStatusBar());
 
+            // domain reload / Play mode 진입 후 episode 복원
+            if (_episode != null)
+                RestoreEpisodeToUI();
         }
 
-        // ── 키보드 + Zoom (IMGUI 방식 – UIToolkit보다 신뢰성 높음) ──
+        // ── Episode 복원 ─────────────────────────────
+
+        /// <summary>
+        /// CreateGUI 후 직렬화된 _episode를 ObjectField와 캔버스에 반영한다.
+        /// </summary>
+        private void RestoreEpisodeToUI()
+        {
+            if (_episode == null || _episodeField == null) return;
+
+            _episodeField.SetValueWithoutNotify(_episode);
+            _selectedLine = null;
+            _inspectorPanel?.SetLine(null, _episode);
+            LoadFolderFromEpisode();
+            RebuildCanvas();
+            RefreshStatusBar();
+
+            var key = EpisodePrefsKey;
+            if (key != null) _canvas?.LoadViewState(key);
+        }
+
+        // ── Splitter ─────────────────────────────────
+
+        private VisualElement BuildSplitter()
+        {
+            var s = new VisualElement();
+            s.style.width           = 5;
+            s.style.flexShrink      = 0;
+            s.style.alignSelf       = Align.Stretch;
+            s.style.backgroundColor = new StyleColor(new Color(0.12f, 0.12f, 0.12f));
+            s.style.cursor          = new StyleCursor(StyleKeyword.Auto);
+
+            s.RegisterCallback<MouseEnterEvent>(_ =>
+                s.style.backgroundColor = new StyleColor(new Color(0.25f, 0.45f, 0.75f)));
+            s.RegisterCallback<MouseLeaveEvent>(_ =>
+                s.style.backgroundColor = new StyleColor(new Color(0.12f, 0.12f, 0.12f)));
+
+            s.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                if (evt.button != 0) return;
+                _splitterDragging   = true;
+                _splitterStartX     = evt.position.x;
+                _splitterStartWidth = _inspectorWidth;
+                s.CapturePointer(evt.pointerId);
+                evt.StopPropagation();
+            });
+
+            s.RegisterCallback<PointerMoveEvent>(evt =>
+            {
+                if (!_splitterDragging) return;
+                // 왼쪽으로 드래그 → inspector 넓어짐
+                float delta    = _splitterStartX - evt.position.x;
+                float newWidth = Mathf.Clamp(_splitterStartWidth + delta,
+                    InspectorMinWidth, InspectorMaxWidth);
+                _inspectorWidth             = newWidth;
+                _inspectorPanel.style.width = newWidth;
+                evt.StopPropagation();
+            });
+
+            s.RegisterCallback<PointerUpEvent>(evt =>
+            {
+                if (!_splitterDragging) return;
+                _splitterDragging = false;
+                s.ReleasePointer(evt.pointerId);
+                evt.StopPropagation();
+            });
+
+            return s;
+        }
+
+        // ── 키보드 ──────────────────────────────────
 
         private void OnGUI()
         {
             var e = Event.current;
-
             if (e.type != EventType.KeyDown) return;
             if (e.keyCode != KeyCode.Delete && e.keyCode != KeyCode.Backspace) return;
             if (StoryGraphInspectorPanel.IsFocusedOnTextField(rootVisualElement)) return;
 
-            // 1. edge 선택 → 연결 해제
             var edgeSrc = _canvas?.SelectedEdgeSrc;
             if (edgeSrc != null)
             {
@@ -110,7 +193,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
             }
 
-            // 2. node 선택 → nextLineId 해제
             OnDeleteConnectionClicked();
             e.Use();
         }
@@ -141,30 +223,28 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             bar.style.borderBottomWidth = 1;
             bar.style.borderBottomColor = new StyleColor(new Color(0.1f, 0.1f, 0.1f));
 
-            var epField = new ObjectField("Episode") { objectType = typeof(StoryEpisodeSO) };
-            epField.style.flexGrow    = 1;
-            epField.style.marginRight = 10;
-            epField.RegisterValueChangedCallback(evt =>
+            _episodeField = new ObjectField("Episode") { objectType = typeof(StoryEpisodeSO) };
+            _episodeField.style.flexGrow    = 1;
+            _episodeField.style.marginRight = 10;
+            _episodeField.RegisterValueChangedCallback(evt =>
             {
-                // 기존 에피소드 뷰 저장
                 var oldKey = EpisodePrefsKey;
                 if (oldKey != null) _canvas?.SaveViewState(oldKey);
 
                 _episode      = evt.newValue as StoryEpisodeSO;
                 _selectedLine = null;
-                _inspectorPanel.SetLine(null, _episode);
+                _inspectorPanel?.SetLine(null, _episode);
                 LoadFolderFromEpisode();
                 RebuildCanvas();
                 RefreshStatusBar();
 
-                // 새 에피소드 뷰 로드
                 var newKey = EpisodePrefsKey;
                 if (newKey != null) _canvas?.LoadViewState(newKey);
             });
-            bar.Add(epField);
+            bar.Add(_episodeField);
 
             var folderLabel = new Label("저장 폴더:");
-            folderLabel.style.fontSize   = 10;
+            folderLabel.style.fontSize    = 10;
             folderLabel.style.marginRight = 4;
             bar.Add(folderLabel);
 
@@ -198,8 +278,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             if (_episode == null)
             {
-                _saveFolder          = "";
-                _folderDisplay.text  = "(에피소드 폴더)";
+                _saveFolder            = "";
+                _folderDisplay.text    = "(에피소드 폴더)";
                 _folderDisplay.tooltip = "";
                 return;
             }
@@ -213,8 +293,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
             else
             {
-                _saveFolder          = "";
-                _folderDisplay.text  = "(에피소드 폴더)";
+                _saveFolder            = "";
+                _folderDisplay.text    = "(에피소드 폴더)";
                 _folderDisplay.tooltip = "";
             }
         }
@@ -227,11 +307,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (folder.StartsWith(Application.dataPath))
                 folder = "Assets" + folder[Application.dataPath.Length..];
 
-            _saveFolder              = folder;
-            _folderDisplay.text      = folder;
-            _folderDisplay.tooltip   = folder;
+            _saveFolder            = folder;
+            _folderDisplay.text    = folder;
+            _folderDisplay.tooltip = folder;
 
-            // 에피소드에 저장 (Unity 재시작 후에도 유지)
             if (_episode != null)
                 StoryEditorUtility.SetEditorLineSaveFolder(_episode, folder);
         }
@@ -252,7 +331,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             RefreshStatusBar();
         }
 
-        // ── 연결 확정 핸들러 ─────────────────────────
+        // ── 연결 핸들러 ──────────────────────────────
 
         private void OnConnectionMade(StoryGraphNodeView src, StoryGraphNodeView dst)
         {
@@ -285,7 +364,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             RefreshStatusBar();
         }
 
-        // ── + Line 액션 ──────────────────────────────
+        // ── + Line ───────────────────────────────────
 
         private void OnAddLineClicked()
         {
@@ -326,7 +405,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _statusLineId.style.unityFontStyleAndWeight = FontStyle.Bold;
 
             _statusNextId = new Label("");
-            _statusNextId.style.fontSize   = 11;
+            _statusNextId.style.fontSize    = 11;
             _statusNextId.style.marginRight = 14;
             _statusNextId.style.color       = new StyleColor(new Color(0.65f, 0.65f, 0.65f));
 
@@ -336,8 +415,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _statusWarning.style.color    = new StyleColor(new Color(1f, 0.6f, 0.2f));
 
             var hintLbl = new Label("[Del] 연결 해제  [Edge 클릭+Del]");
-            hintLbl.style.fontSize   = 10;
-            hintLbl.style.color      = new StyleColor(new Color(0.45f, 0.45f, 0.45f));
+            hintLbl.style.fontSize    = 10;
+            hintLbl.style.color       = new StyleColor(new Color(0.45f, 0.45f, 0.45f));
             hintLbl.style.marginRight = 10;
 
             _clearNextBtn = new Button(OnClearNextClicked) { text = "Next 지우기" };
@@ -389,8 +468,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             _statusWarning.text = warnings.Count > 0 ? "⚠ " + string.Join(" / ", warnings) : "";
         }
-
-        // ── 상태 바 버튼 핸들러 ──────────────────────
 
         private void OnClearNextClicked()
         {
