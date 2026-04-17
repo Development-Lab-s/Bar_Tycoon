@@ -12,14 +12,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         public const float DefaultH      = 120f;
         public const float MinW          = 220f;
         public const float MinH          = 100f;
-        private const float PortRadius   = 7f;
+        private const float PortRadius   = 10f;   // 더 크게 해서 클릭/드래그 쉽게
         private const float PortDiameter = PortRadius * 2f;
         private const float GripSize     = 14f;
+        private const float IconSize     = 20f;
 
         // ── 공개 이벤트 ──────────────────────────────
         public event Action<StoryGraphNodeView>          Clicked;
         public event Action<StoryGraphNodeView>          DoubleClicked;
-        public event Action<StoryGraphNodeView>          OutputPortClicked;
+        /// <summary>출력 포트 PointerDown → 드래그 연결 시작 (click-to-connect도 이 이벤트 사용)</summary>
+        public event Action<StoryGraphNodeView>          OutputPortDragStart;
         /// <summary>드래그 이동 종료 → (node, finalPos)</summary>
         public event Action<StoryGraphNodeView, Vector2> Dragged;
         /// <summary>리사이즈 종료 → (node, finalSize)</summary>
@@ -36,6 +38,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         // ── 시각 요소 참조 ───────────────────────────
         private readonly Label         _idLabel;
+        private readonly Label         _speakerLabel;
+        private readonly Label         _dialogueLabel;
+        private readonly VisualElement _iconElement;
         private readonly VisualElement _inputPort;
         private readonly VisualElement _outputPort;
         private readonly VisualElement _resizeHandle;
@@ -43,6 +48,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         // ── 현재 크기 ────────────────────────────────
         private float _w;
         private float _h;
+
+        // ── 줌 스케일 (캔버스에서 주입) ─────────────
+        /// <summary>canvas zoom 배율. 드래그·리사이즈 delta 보정에 사용.</summary>
+        public float ZoomScale { get; set; } = 1f;
 
         // ── 드래그(이동) 상태 ────────────────────────
         private bool    _dragging;
@@ -69,20 +78,38 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             style.backgroundColor = new StyleColor(new Color(0.22f, 0.22f, 0.22f));
             ApplyBorder(new Color(0.35f, 0.35f, 0.35f), 1f);
 
-            // ── Header ────────────────────────────────
+            // ── Header (Row: icon + lineId) ───────────
             var header = new VisualElement();
             header.style.backgroundColor      = new StyleColor(new Color(0.14f, 0.27f, 0.44f));
-            header.style.paddingLeft          = 8;
+            header.style.paddingLeft          = 6;
+            header.style.paddingRight         = 6;
             header.style.paddingTop           = 4;
             header.style.paddingBottom        = 4;
             header.style.borderTopLeftRadius  = 3;
             header.style.borderTopRightRadius = 3;
             header.style.flexShrink           = 0;
+            header.style.flexDirection        = FlexDirection.Row;
+            header.style.alignItems           = Align.Center;
 
+            // speaker 아이콘 (좌측)
+            _iconElement = new VisualElement();
+            _iconElement.style.width           = IconSize;
+            _iconElement.style.height          = IconSize;
+            _iconElement.style.flexShrink      = 0;
+            _iconElement.style.marginRight     = 5;
+            _iconElement.style.backgroundColor = new StyleColor(new Color(0.3f, 0.3f, 0.3f, 0.5f));
+            _iconElement.style.borderTopLeftRadius    = _iconElement.style.borderTopRightRadius    =
+            _iconElement.style.borderBottomLeftRadius = _iconElement.style.borderBottomRightRadius = 3;
+            _iconElement.style.backgroundSize  = new StyleBackgroundSize(
+                new BackgroundSize(BackgroundSizeType.Cover));
+            header.Add(_iconElement);
+
+            // lineId 레이블 (우측)
             _idLabel = new Label(IdText(line));
             _idLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
             _idLabel.style.fontSize = 11;
             _idLabel.style.overflow = Overflow.Hidden;
+            _idLabel.style.flexGrow = 1;
             header.Add(_idLabel);
             Add(header);
 
@@ -94,16 +121,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             body.style.flexGrow     = 1;
             body.style.overflow     = Overflow.Hidden;
 
-            var spkLbl = new Label(line?.Speaker != null ? line.Speaker.DisplayName : "나레이션");
-            spkLbl.style.fontSize = 10;
-            spkLbl.style.color    = new StyleColor(new Color(0.65f, 0.65f, 0.65f));
-            body.Add(spkLbl);
+            _speakerLabel = new Label(SpeakerText(line));
+            _speakerLabel.style.fontSize = 10;
+            _speakerLabel.style.color    = new StyleColor(new Color(0.65f, 0.65f, 0.65f));
+            body.Add(_speakerLabel);
 
-            var txLbl = new Label(Trunc(line?.DialogueText, 34));
-            txLbl.style.fontSize    = 10;
-            txLbl.style.overflow    = Overflow.Hidden;
-            txLbl.style.whiteSpace  = WhiteSpace.Normal;
-            body.Add(txLbl);
+            _dialogueLabel = new Label(Trunc(line?.DialogueText, 60));
+            _dialogueLabel.style.fontSize    = 10;
+            _dialogueLabel.style.overflow    = Overflow.Hidden;
+            _dialogueLabel.style.whiteSpace  = WhiteSpace.Normal;
+            body.Add(_dialogueLabel);
             Add(body);
 
             // ── Ports ─────────────────────────────────
@@ -111,10 +138,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Add(_inputPort);
 
             _outputPort = MakePort(new Color(0.3f, 0.75f, 0.3f));
-            _outputPort.tooltip = "클릭 → 연결 시작  /  우클릭 → Disconnect";
-            _outputPort.RegisterCallback<ClickEvent>(e =>
+            _outputPort.tooltip = "드래그 또는 클릭 → 연결  /  우클릭 → Disconnect";
+            // PointerDown에서 즉시 연결 시작 (드래그 + click-to-connect 모두 지원)
+            _outputPort.RegisterCallback<PointerDownEvent>(e =>
             {
-                OutputPortClicked?.Invoke(this);
+                if (e.button != 0) return;
+                OutputPortDragStart?.Invoke(this);
                 e.StopPropagation();
             });
             _outputPort.AddManipulator(new ContextualMenuManipulator(evt =>
@@ -150,6 +179,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _resizeHandle.RegisterCallback<PointerCancelEvent>(_ => _resizing = false);
 
             SetSize(w, h);
+            RefreshIcon();   // 초기 아이콘 적용
         }
 
         // ── 공개 API ─────────────────────────────────
@@ -162,11 +192,34 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 ? new Color(0.2f, 1f, 0.3f)
                 : new Color(0.3f, 0.75f, 0.3f));
 
-        public void Refresh() => _idLabel.text = IdText(Line);
+        /// <summary>Line 데이터가 변경된 후 노드 표시를 갱신한다.</summary>
+        public void Refresh()
+        {
+            _idLabel.text       = IdText(Line);
+            _speakerLabel.text  = SpeakerText(Line);
+            _dialogueLabel.text = Trunc(Line?.DialogueText, 60);
+            RefreshIcon();
+        }
 
         // ── 포트 좌표 (캔버스 로컬) ─────────────────
         public Vector2 OutPos => new Vector2(layout.xMax, layout.y + layout.height * 0.5f);
         public Vector2 InPos  => new Vector2(layout.xMin, layout.y + layout.height * 0.5f);
+
+        // ── 아이콘 갱신 ─────────────────────────────
+
+        private void RefreshIcon()
+        {
+            var sprite = Line?.Speaker?.LogIcon;
+            if (sprite != null)
+            {
+                _iconElement.style.backgroundImage = new StyleBackground(sprite);
+            }
+            else
+            {
+                // 아이콘 없음: 배경 이미지만 지우고 placeholder 색상 유지
+                _iconElement.style.backgroundImage = StyleKeyword.None;
+            }
+        }
 
         // ── SetSize ──────────────────────────────────
 
@@ -223,11 +276,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void OnPointerMove(PointerMoveEvent e)
         {
             if (!_dragging) return;
-            Vector2 delta = (Vector2)e.position - _dragStartScreen;
-            if (delta.magnitude < DragThreshold) return;
+            Vector2 screenDelta = (Vector2)e.position - _dragStartScreen;
+            if (screenDelta.magnitude < DragThreshold) return;
             _dragMoved = true;
-            style.left = Mathf.Max(0f, _nodeStartPos.x + delta.x);
-            style.top  = Mathf.Max(0f, _nodeStartPos.y + delta.y);
+            Vector2 cd = screenDelta / ZoomScale;   // canvas-pixel delta
+            style.left = Mathf.Max(0f, _nodeStartPos.x + cd.x);
+            style.top  = Mathf.Max(0f, _nodeStartPos.y + cd.y);
             e.StopPropagation();
         }
 
@@ -239,10 +293,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             this.ReleasePointer(e.pointerId);
             if (moved)
             {
-                Vector2 delta = (Vector2)e.position - _dragStartScreen;
+                Vector2 cd = ((Vector2)e.position - _dragStartScreen) / ZoomScale;
                 Dragged?.Invoke(this, new Vector2(
-                    Mathf.Max(0f, _nodeStartPos.x + delta.x),
-                    Mathf.Max(0f, _nodeStartPos.y + delta.y)));
+                    Mathf.Max(0f, _nodeStartPos.x + cd.x),
+                    Mathf.Max(0f, _nodeStartPos.y + cd.y)));
             }
         }
 
@@ -262,8 +316,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void OnResizePointerMove(PointerMoveEvent e)
         {
             if (!_resizing) return;
-            Vector2 delta = (Vector2)e.position - _resizeStartScreen;
-            SetSize(_sizeAtResizeStart.x + delta.x, _sizeAtResizeStart.y + delta.y);
+            Vector2 cd = ((Vector2)e.position - _resizeStartScreen) / ZoomScale;
+            SetSize(_sizeAtResizeStart.x + cd.x, _sizeAtResizeStart.y + cd.y);
             e.StopPropagation();
         }
 
@@ -317,7 +371,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return p;
         }
 
-        private static string IdText(StoryLineSO l)   => string.IsNullOrWhiteSpace(l?.LineId) ? "⚠ ID 없음" : l.LineId;
-        private static string Trunc(string s, int max) { if (string.IsNullOrEmpty(s)) return ""; s = s.Replace('\n',' '); return s.Length <= max ? s : s[..max]+"…"; }
+        private static string IdText(StoryLineSO l)      => string.IsNullOrWhiteSpace(l?.LineId) ? "⚠ ID 없음" : l.LineId;
+        private static string SpeakerText(StoryLineSO l) => l?.Speaker != null ? l.Speaker.DisplayName : "나레이션";
+        private static string Trunc(string s, int max)
+        {
+            if (string.IsNullOrEmpty(s)) return "";
+            s = s.Replace('\n', ' ');
+            return s.Length <= max ? s : s[..max] + "…";
+        }
     }
 }

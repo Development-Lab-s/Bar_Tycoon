@@ -46,45 +46,63 @@
 - Execution: `IStoryModuleExecutor`, `StoryExecutorRegistry`
 - Presentation: `StoryInputRouter`, `BasicStoryTextDirector`, `BasicStoryChoicePanelController`, `BasicStoryCharacterStageDirector`, `BasicStoryLogController`, `StorySkipSummaryPanelController`, `UIMotionPlayer`
 
-## Current Progress
-완료/거의 완료:
+## Completed Features
+
+### 런타임
 - 대사 출력, 이름 표시, 타이프라이터
 - 탭 즉시 전체 출력 / 다음 진행
 - 선택지 표시 / 선택 / 분기
-- `Wait`, `CharacterClear`
+- `Wait`, `CharacterClear` 모듈 실행기
 - speaker 프리팹 자동 생성
 - speaker 포커스 / 나머지 dim
-- 기본 로그 적재
+- 기본 로그 적재 (`BasicStoryLogController`)
 - 로그 패널 기본 열기/닫기
-- 자동 진행 토글 보강
-- 터치 블로커 / 레이캐스트 정리
-- 스킵 UX 방향 확정
-  - `SkipButton -> SkipSummaryPanel -> 닫기 / 스킵하기`
-- 공용 LitMotion UI 모션 레이어 이미 있음
+- 자동 진행 토글
+- 터치 블로커 / 레이캐스트 정리 (`StoryInputRouter`)
+- `UIMotionPlayer` — 키프레임 기반 LitMotion UI 모션 레이어
+- `StorySkipSummaryPanelController` — 스킵 요약 패널 (Open/Close/Animated)
+- `StoryUiVisibilityController` — UI 숨기기/복귀 기반 구현
+- 이벤트 채널 SO (`StoryCommandChannel`, `StorySignalChannel`)
+- `IStorySaveService` 인터페이스 정의 (저장 레이어 계약)
+
+### 에디터 도구
+- `StoryLineSOEditor` — lineId 자동 생성(에피소드 순서 기반), suffix, Undo, 중복/자기참조 경고, nextLineId 드롭다운
+- `StoryLineIdHelperGUI` — Line ID Helper 공용 IMGUI 유틸 (StoryLineSOEditor, StoryGraphInspectorPanel 공유)
+- `StoryGraphEditorWindow` — 그래프 기반 에디터 (`Tools/Story/Story Graph Editor`)
+  - Episode 선택 → Line 노드 시각화 (nextLineId 기반 베지어 연결선)
+  - 미들 마우스 드래그 pan (자연스러운 방향)
+  - Ctrl + 마우스 휠 스크롤 줌 (마우스 커서 기준, exponential smoothing 부드러운 줌)
+  - 줌 범위: 0.4x ~ 2.0x, per-episode 뷰 상태 저장/복원 (EditorPrefs)
+  - Line 생성 / 삭제 / 저장 폴더 커스터마이징
+  - 노드 드래그 이동 / 리사이즈 (줌 보정 적용)
+  - 포트 드래그로 연결, 엣지 클릭 선택, Delete 키로 연결 해제
+  - 하단 상태 바: lineId, nextLineId, 경고(미등록 ID, 자기참조)
+  - `StoryGraphInspectorPanel` — 우측 인스펙터: Line 필드 직접 편집, Line ID Helper 내장
 
 ## Current Priorities
-1. 스킵 UX 마감
-   - `SkipSummaryPanel` 최종 동작
-   - 입력 차단
-   - 스킵 정책 정리
-2. 로그 UX 마감
-   - 모달 입력 차단
-   - 자동 스크롤
-   - 선택지 로그 스타일
-3. UI 숨기기
-   - `TopBar / Dialogue / Choice / Log` 숨김 및 복귀 규칙
+1. **로그 UX 마감**
+   - 모달 입력 차단 확인
+   - 자동 스크롤 (새 항목 추가 시 ScrollRect 하단 이동)
+   - 선택지 로그 스타일 (ChoiceCommitted 타입 별도 렌더링)
+2. **UI 숨기기 마감**
+   - `TopBar / Dialogue / Choice / Log` 숨김 및 복귀 규칙 최종 정리
+   - `StoryUiVisibilityController` 연결 완성
+3. **`StoryEpisodeSOEditor` 구현**
+   - 빈 lineId 일괄 생성
+   - 참조 무결성 검사 (끊긴 nextLineId 목록)
 
 ## Next
-- `TextSpeedModule`
-- `TextShakeModule`
-- `TextEmphasisModule`
-- `CharacterMoveModule`
-- `CharacterExpressionModule`
-- `Background / SFX / BGM`
-- 저장 / 이어보기
-- UI Toolkit 커스텀 에디터
+- `StoryEpisodeSOEditor` — 다음 에디터 작업
+- `TextSpeedModule` — 텍스트 속도 제어
+- `TextShakeModule` — 텍스트 흔들림 연출
+- `TextEmphasisModule` — 강조 연출
+- `CharacterMoveModule` — 캐릭터 이동
+- `CharacterExpressionModule` — 표정 전환
+- `Background / SFX / BGM` 모듈
+- 저장 / 이어보기 (`IStorySaveService` 구현체)
+- `StoryGraphEditorWindow` 모듈 인라인 편집 보강 (sub-asset 자동 생성)
 
-## Story Editor Tool (진행 중)
+## Story Editor Tool
 
 ### 목표
 Episode 선택 → Line 생성 → 시각적 연결 → 모듈 추가/수정을 하나의 EditorWindow에서 처리
@@ -102,18 +120,13 @@ Episode 선택 → Line 생성 → 시각적 연결 → 모듈 추가/수정을 
 
 ### 단계별 계획
 1. **StoryLineSOEditor 개선** ← 완료
-   - `lineId` 자동 생성 (에피소드 순서 기반 `line_001`)
-   - suffix 지원, Undo, 중복/자기참조 경고
-   - `nextLineId` 드롭다운 선택
-2. **StoryEpisodeSOEditor** ← 다음
+2. **StoryGraphEditorWindow** ← 완료
+3. **StoryEpisodeSOEditor** ← 다음
    - 빈 lineId 일괄 생성
    - 참조 무결성 검사 (끊긴 nextLineId 목록)
-3. **Story EditorWindow (UI Toolkit)**
-   - Episode 선택 패널
-   - Line 목록 + 생성/삭제
-   - Line 간 연결 시각화 (nextLineId 기반)
+4. **모듈 인라인 편집 보강**
    - 모듈 추가 버튼 → sub-asset으로 자동 생성
-   - 모듈 필드 인라인 편집
+   - 모듈 필드 인라인 편집 (StoryGraphEditorWindow 확장)
 
 ### 에디터 파일 위치
 `Assets/00. Work/CheolYee/02. Scripts/Story/RuntIme/Data/Definitions/Editor/`
@@ -176,6 +189,13 @@ private void Awake()
 - `Logs`, `ChoiceResults`, `ActiveActors` 모두 Session에서 관리
 - 세션 상태를 직접 읽지 말고 Facade가 제공하는 프로퍼티를 통해 접근
 
+### StoryGraphCanvasView 좌표계 메모
+- `_panOffset`, `_zoomScale` → `_canvas.transform.position/scale`로 적용
+- 노드 드래그 delta는 반드시 `/ ZoomScale` 보정
+- WheelEvent 좌표: `e.localPosition` 사용 (버블 중 `currentTarget` 기준으로 자동 갱신)
+- 스무스 zoom: `schedule.Execute().Every(16)` + exponential smoothing (`1 - exp(-15 * dt)`)
+- 앵커 고정 공식: `panOffset = anchorLocal - anchorCanvas * zoomScale`
+
 ## Event Bus
 `EventChannelSO`
 - `AddListener<T>()`
@@ -203,7 +223,7 @@ private void Awake()
 
 ## Avoid
 - 전면 재설계
-- “처음부터 다시”
+- "처음부터 다시"
 - 과도한 동시 수정
 - 현재 단계 무시한 완성형 제안
 - 내부 진행을 전부 이벤트 채널화

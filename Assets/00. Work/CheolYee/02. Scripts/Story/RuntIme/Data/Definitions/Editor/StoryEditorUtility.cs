@@ -88,20 +88,36 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         // ── 에디터 노드 위치/크기 저장 ───────────────
 
-        public static void SetEditorNodePosition(StoryLineSO line, Vector2 pos)
+        /// <param name="recordUndo">true: Undo.RecordObject 사용 (ApplyModifiedPropertiesWithoutUndo). false: ApplyModifiedProperties.</param>
+        public static void SetEditorNodePosition(StoryLineSO line, Vector2 pos, bool recordUndo = false)
         {
+            if (recordUndo) Undo.RecordObject(line, "Move Node");
             var so = new SerializedObject(line);
             so.FindProperty("editorNodePosition").vector2Value = pos;
-            so.ApplyModifiedProperties();
+            if (recordUndo) so.ApplyModifiedPropertiesWithoutUndo();
+            else            so.ApplyModifiedProperties();
             EditorUtility.SetDirty(line);
         }
 
-        public static void SetEditorNodeSize(StoryLineSO line, Vector2 size)
+        /// <param name="recordUndo">true: Undo.RecordObject 사용 (ApplyModifiedPropertiesWithoutUndo). false: ApplyModifiedProperties.</param>
+        public static void SetEditorNodeSize(StoryLineSO line, Vector2 size, bool recordUndo = false)
         {
+            if (recordUndo) Undo.RecordObject(line, "Resize Node");
             var so = new SerializedObject(line);
             so.FindProperty("editorNodeSize").vector2Value = size;
-            so.ApplyModifiedProperties();
+            if (recordUndo) so.ApplyModifiedPropertiesWithoutUndo();
+            else            so.ApplyModifiedProperties();
             EditorUtility.SetDirty(line);
+        }
+
+        // ── 에피소드 에디터 저장 폴더 ─────────────────
+
+        public static void SetEditorLineSaveFolder(StoryEpisodeSO episode, string folder)
+        {
+            var so = new SerializedObject(episode);
+            so.FindProperty("editorLineSaveFolder").stringValue = folder ?? "";
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(episode);
         }
 
         // ── 모듈 관리 ─────────────────────────────────

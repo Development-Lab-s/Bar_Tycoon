@@ -9,9 +9,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
     {
         private StoryEpisodeSO _episode;
 
-        private bool _idFoldout   = true;
         private bool _nextFoldout = true;
-        private string _idSuffix  = "";
+
+        // Line ID Helper 상태 (StoryLineIdHelperGUI 공용 유틸로 위임)
+        private readonly StoryLineIdHelperGUI.State _idState = new();
 
         // ── 진입점 ──────────────────────────────────
 
@@ -19,173 +20,23 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             DrawDefaultInspector();
 
-            var line    = (StoryLineSO)target;
-            _episode    = FindEpisode(line);
+            var line = (StoryLineSO)target;
+            _episode = FindEpisode(line);
+
+            serializedObject.Update();
 
             EditorGUILayout.Space(8);
-            DrawLineIdHelper(line);
+            // ── Line ID Helper (공용 유틸 호출) ──────
+            StoryLineIdHelperGUI.Draw(line, _episode, serializedObject, _idState);
 
             EditorGUILayout.Space(4);
             DrawNextLineHelper(line);
+
+            serializedObject.ApplyModifiedProperties();
         }
 
         // ══════════════════════════════════════════
-        // Section 1 — Line ID Helper
-        // ══════════════════════════════════════════
-
-        private void DrawLineIdHelper(StoryLineSO line)
-        {
-            _idFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(_idFoldout, "── Line ID Helper ──");
-            if (!_idFoldout) { EditorGUILayout.EndFoldoutHeaderGroup(); return; }
-
-            var idProp = serializedObject.FindProperty("lineId");
-
-            // ── 상태 경고 ──────────────────────────
-            DrawLineIdWarnings(line);
-
-            EditorGUILayout.Space(2);
-
-            // ── 소속 에피소드 (읽기 전용 표시) ───────
-            if (_episode != null)
-            {
-                int myIdx = FindIndexInEpisode(line, _episode);
-                string episodeInfo = myIdx >= 0
-                    ? $"{_episode.name}  (순서 #{myIdx + 1})"
-                    : _episode.name;
-
-                using (new EditorGUI.DisabledScope(true))
-                    EditorGUILayout.ObjectField("소속 에피소드", _episode, typeof(StoryEpisodeSO), false);
-
-                EditorGUILayout.LabelField("에피소드 내 순서", myIdx >= 0 ? $"#{myIdx + 1}" : "미포함", EditorStyles.miniLabel);
-            }
-            else
-            {
-                EditorGUILayout.HelpBox("소속 에피소드를 찾을 수 없습니다. 에피소드 Lines 목록에 추가하면 번호 기반 생성이 가능합니다.", MessageType.None);
-            }
-
-            EditorGUILayout.Space(4);
-
-            // ── Suffix 입력 ────────────────────────
-            _idSuffix = EditorGUILayout.TextField("Suffix (선택)", _idSuffix);
-            EditorGUILayout.LabelField("", $"예: {PreviewGeneratedId(line)}",  EditorStyles.miniLabel);
-
-            EditorGUILayout.Space(2);
-
-            // ── 버튼 행 ────────────────────────────
-            EditorGUILayout.BeginHorizontal();
-
-            bool idIsEmpty = string.IsNullOrWhiteSpace(idProp.stringValue);
-
-            // 생성 버튼: lineId가 비어 있을 때만 활성
-            using (new EditorGUI.DisabledScope(!idIsEmpty && false)) // always enabled, color로 구분
-            {
-                string genLabel = idIsEmpty ? "ID 생성" : "ID 재생성";
-                Color prevColor = GUI.backgroundColor;
-                GUI.backgroundColor = idIsEmpty ? new Color(0.5f, 0.9f, 0.5f) : new Color(1f, 0.75f, 0.4f);
-
-                if (GUILayout.Button(genLabel))
-                    TryGenerateLineId(line, idProp, forceOverwrite: !idIsEmpty);
-
-                GUI.backgroundColor = prevColor;
-            }
-
-            // 복사 버튼
-            using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(idProp.stringValue)))
-            {
-                if (GUILayout.Button("ID 복사", GUILayout.Width(70)))
-                    GUIUtility.systemCopyBuffer = idProp.stringValue;
-            }
-
-            EditorGUILayout.EndHorizontal();
-
-            // lineId가 이미 있을 때 재생성 경고
-            if (!idIsEmpty)
-            {
-                EditorGUILayout.HelpBox(
-                    $"현재 lineId \"{idProp.stringValue}\" 를 참조하는 다른 라인이 있을 수 있습니다.\n재생성하면 해당 참조가 끊어집니다.",
-                    MessageType.Warning);
-            }
-
-            EditorGUILayout.EndFoldoutHeaderGroup();
-        }
-
-        private void TryGenerateLineId(StoryLineSO line, SerializedProperty idProp, bool forceOverwrite)
-        {
-            string generated = GenerateLineId(line);
-            if (string.IsNullOrEmpty(generated))
-            {
-                EditorUtility.DisplayDialog("ID 생성 실패", "소속 에피소드를 찾을 수 없어 번호를 결정할 수 없습니다.\n에피소드 Lines 목록에 이 라인을 추가하세요.", "확인");
-                return;
-            }
-
-            if (!forceOverwrite || EditorUtility.DisplayDialog(
-                    "ID 재생성 확인",
-                    $"현재 ID \"{idProp.stringValue}\" 를 \"{generated}\" 로 변경합니다.\n기존 ID를 참조하는 nextLineId 들은 수동으로 수정해야 합니다.\n계속하시겠습니까?",
-                    "변경", "취소"))
-            {
-                serializedObject.Update();
-                Undo.RecordObject(target, "Generate lineId");
-                idProp.stringValue = generated;
-                serializedObject.ApplyModifiedProperties();
-                EditorUtility.SetDirty(target);
-            }
-        }
-
-        private string GenerateLineId(StoryLineSO line)
-        {
-            if (_episode == null) return null;
-
-            int idx = FindIndexInEpisode(line, _episode);
-            if (idx < 0) return null;
-
-            int number = idx + 1;
-            string baseId = $"line_{number:D3}";
-            string suffix = _idSuffix?.Trim();
-
-            return string.IsNullOrEmpty(suffix) ? baseId : $"{baseId}_{suffix}";
-        }
-
-        private string PreviewGeneratedId(StoryLineSO line)
-        {
-            if (_episode == null) return "에피소드 필요";
-            int idx = FindIndexInEpisode(line, _episode);
-            if (idx < 0) return "에피소드 Lines에 추가 필요";
-
-            int number = idx + 1;
-            string baseId = $"line_{number:D3}";
-            string suffix = _idSuffix?.Trim();
-            return string.IsNullOrEmpty(suffix) ? baseId : $"{baseId}_{suffix}";
-        }
-
-        private void DrawLineIdWarnings(StoryLineSO line)
-        {
-            var idProp = serializedObject.FindProperty("lineId");
-
-            // lineId 비어 있음
-            if (string.IsNullOrWhiteSpace(idProp.stringValue))
-            {
-                EditorGUILayout.HelpBox("lineId가 비어 있습니다. 아래 버튼으로 생성하세요.", MessageType.Warning);
-                return;
-            }
-
-            // lineId 중복
-            if (_episode != null)
-            {
-                int dup = 0;
-                for (int i = 0; i < _episode.Lines.Count; i++)
-                    if (_episode.Lines[i] != null && _episode.Lines[i].LineId == line.LineId)
-                        dup++;
-                if (dup > 1)
-                    EditorGUILayout.HelpBox($"lineId \"{line.LineId}\" 가 에피소드에 {dup}개 존재합니다 (중복).", MessageType.Error);
-            }
-
-            // 자기 자신 참조
-            if (!string.IsNullOrWhiteSpace(line.NextLineId) && line.NextLineId == line.LineId)
-                EditorGUILayout.HelpBox("nextLineId가 자기 자신을 가리킵니다 (무한 루프).", MessageType.Error);
-        }
-
-        // ══════════════════════════════════════════
-        // Section 2 — Next Line Helper (기존)
+        // Section 2 — Next Line Helper
         // ══════════════════════════════════════════
 
         private void DrawNextLineHelper(StoryLineSO line)
@@ -211,7 +62,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             var nextIdProp    = serializedObject.FindProperty("nextLineId");
             string currentNextId = nextIdProp.stringValue;
 
-            // 드롭다운 항목 구성 (자기 자신 제외)
             var labels = new List<string> { "— 없음 (종료) —" };
             var ids    = new List<string> { "" };
             int selectedIdx = 0;
@@ -243,10 +93,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 serializedObject.ApplyModifiedProperties();
             }
 
-            // 버튼 행
             EditorGUILayout.BeginHorizontal();
 
-            int myIdx = FindIndexInEpisode(line, episode);
+            int myIdx = StoryLineIdHelperGUI.IndexInEpisode(line, episode);
             if (myIdx >= 0)
             {
                 StoryLineSO nextInList = null;
@@ -323,13 +172,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     if (ep.Lines[i] == line) return ep;
             }
             return null;
-        }
-
-        private static int FindIndexInEpisode(StoryLineSO line, StoryEpisodeSO episode)
-        {
-            for (int i = 0; i < episode.Lines.Count; i++)
-                if (episode.Lines[i] == line) return i;
-            return -1;
         }
 
         private static string Truncate(string s, int max)

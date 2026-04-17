@@ -34,11 +34,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         //각 대사는 스토리 진행 중 플레이어에게 표시되는 하나의 대사 한 줄을 나타냅니다.
         [SerializeField] private List<StoryLineSO> lines = new();
 
+        // 에디터 전용 — 런타임 미사용
+        [HideInInspector]
+        [SerializeField] private string editorLineSaveFolder = "";
+
         public string EpisodeId => episodeId;
         public string Title => title;
         public string SkipSummary => skipSummary;
         public string EntryLineId => entryLineId;
         public IReadOnlyList<StoryLineSO> Lines => lines;
+        public string EditorLineSaveFolder => editorLineSaveFolder;
 
         //스토리 에피소드 내에서 특정 대사 ID에 해당하는 대사를 찾아 반환하는 메서드입니다.
         public bool TryGetLine(string lineId, out StoryLineSO line)
