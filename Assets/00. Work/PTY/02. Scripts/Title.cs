@@ -22,21 +22,21 @@ public class Title : MonoBehaviour
         0.2f
     };
     
-    private float[] sizeMultipliers = { // 타이틀 로고 각 텍스트 애니메이션 역동적인 정도
+    private float[] _sizeMultipliers = { // 타이틀 로고 각 텍스트 애니메이션 역동적인 정도
         0.8f, 0.8f, 0.8f, 0.8f,
         0.4f,
         0.8f, 0.8f, 0.8f,
         0.6f
     };
 
-    private Color32 CoverColor = new Color32(255, 230, 210, 255);
-    private Color32 invisibleCoverColor = new Color32(255, 230, 210, 0);
+    private Color32 _coverColor = new Color32(255, 230, 210, 255);
+    private Color32 _invisibleCoverColor = new Color32(255, 230, 210, 0);
     
-    private string text;
-    private bool isAniming = true;
-    private bool isCovering = false;
-    private bool isBlink = true;
-    private bool isTitle = true;
+    private string _text;
+    private bool _isAniming = true;
+    private bool _isCovering = false;
+    private bool _isBlink = true;
+    private bool _isTitle = true;
     
     private void OnEnable()
     {
@@ -52,7 +52,7 @@ public class Title : MonoBehaviour
     {
         for(int i = 0; i < titleElements.Length; i++)
             titleElements[i].color = new Color(1, 1, 1, 0);
-        text = touchAnywhere.text;
+        _text = touchAnywhere.text;
         touchAnywhere.text = string.Empty;
         mainUI.SetActive(false);
         StartCoroutine(GameStartEffect());
@@ -71,20 +71,20 @@ public class Title : MonoBehaviour
         {
             var touch = Touch.activeTouches[0];
 
-            if (touch.phase == UnityEngine.InputSystem.TouchPhase.Began && !isAniming && isTitle)
+            if (touch.phase == UnityEngine.InputSystem.TouchPhase.Began && !_isAniming && _isTitle)
             {
                 StartCover();
-                isTitle = false;
+                _isTitle = false;
             }
         }
     }
 
     async void StartCover() // 타이틀 화면 전환 시 화면 덮어주는 커버 알파갚 1
     {
-        if (isCovering) return;
-        isCovering = true;
+        if (_isCovering) return;
+        _isCovering = true;
         cover.gameObject.SetActive(true);
-        var coverTween = LMotion.Create(invisibleCoverColor, CoverColor, 0.8f)
+        var coverTween = LMotion.Create(_invisibleCoverColor, _coverColor, 0.8f)
             .WithEase(Ease.OutQuad)
             .BindToColor(cover)
             .ToAwaitable();
@@ -94,7 +94,7 @@ public class Title : MonoBehaviour
         mainUI.SetActive(true);
         titleElements[0].transform.parent.gameObject.SetActive(false);
 
-        isBlink = false;
+        _isBlink = false;
         touchAnywhere.gameObject.SetActive(false);
         
         EndCover();
@@ -102,7 +102,7 @@ public class Title : MonoBehaviour
 
     async void EndCover() // 타이틀 화면 전환 시 화면 덮어주는 커버 알파갚 0
     {
-        var coverTween = LMotion.Create(CoverColor, invisibleCoverColor, 0.7f)
+        var coverTween = LMotion.Create(_coverColor, _invisibleCoverColor, 0.7f)
             .WithEase(Ease.InQuad)
             .BindToColor(cover)
             .ToAwaitable();
@@ -110,7 +110,7 @@ public class Title : MonoBehaviour
         await coverTween;
         
         cover.gameObject.SetActive(false);
-        isCovering = false;
+        _isCovering = false;
     }
     
     async void TitleAppearAnim() // 로고 텍스트 애니메이션
@@ -119,7 +119,7 @@ public class Title : MonoBehaviour
         {
             var element = titleElements[i];
             float duration = durations[i];
-            float sizeMultiplier = sizeMultipliers[i];
+            float sizeMultiplier = _sizeMultipliers[i];
 
             var colorTween = LMotion.Create(new Color(1, 1, 1, 0), Color.white, duration)
                 .WithEase(Ease.OutQuad)
@@ -142,19 +142,19 @@ public class Title : MonoBehaviour
     async void TypeWriter() // 계속하려면 화면을 클릭하세요 UI 타이핑 이펙트
     {
         touchAnywhere.text = string.Empty;
-        for (int i = 0; i < text.Length; i++)
+        for (int i = 0; i < _text.Length; i++)
         {
-            touchAnywhere.text += text[i];
+            touchAnywhere.text += _text[i];
             await System.Threading.Tasks.Task.Delay(20);
         }
         
         StartBlink();
-        isAniming = false;
+        _isAniming = false;
     }
 
     async void StartBlink() // 계속하려면 화면을 클릭하세요 UI 깜빡임
     {
-        while (isBlink)
+        while (_isBlink)
         {
             await LMotion.Create(1f, 0, 0.8f)
                 .WithEase(Ease.InOutQuad)

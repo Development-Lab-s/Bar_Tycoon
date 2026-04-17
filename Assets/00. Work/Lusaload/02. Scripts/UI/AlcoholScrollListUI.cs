@@ -1,8 +1,7 @@
-﻿using System;
-using _00._Work.Lusaload._02._Scripts.SO;
+﻿using _00._Work.Lusaload._02._Scripts.SO;
 using UnityEngine;
 
-namespace _00._Work.Lusaload._02._Scripts
+namespace _00._Work.Lusaload._02._Scripts.UI
 {
     public class AlcoholScrollListUI : MonoBehaviour
     {
@@ -23,7 +22,7 @@ namespace _00._Work.Lusaload._02._Scripts
 
         private void CreateButton()
         {
-            foreach (BaseAlcoholDataSO alcoholData in alcoholListSO.alcoholDataList)
+            foreach (BaseAlcoholDataSO alcoholData in alcoholListSO.alcoholList)
             {
                 if(alcoholData == null) continue;
 
