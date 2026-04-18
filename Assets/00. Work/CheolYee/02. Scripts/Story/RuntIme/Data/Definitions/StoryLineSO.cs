@@ -53,10 +53,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         [SerializeField] private float autoAdvanceDelay = 1.0f;
 
         [Header("Modules")]
-        //이 대사에 연결된 모듈들의 리스트입니다. 각 모듈은 대사 진행 타이밍, 차단성 여부, 건너뛸 수 있는지 여부,
-        //자동 진행에 영향을 미치는지 여부 등의 공통 속성을 가집니다.
+        // 레거시 SO 모듈 — 에디터에서 숨김. 마이그레이션 도구로만 접근.
+        [HideInInspector]
         [SerializeField] private List<StoryModuleSO> modules = new();
-        // SO 자산 없이 직접 직렬화되는 인라인 모듈 리스트입니다.
+        // authoring 기준: SO 자산 없이 직접 직렬화되는 인라인 모듈 리스트입니다.
         [SerializeReference] private List<StoryInlineModuleData> inlineModules = new();
 
         // 에디터 전용 — 런타임에서 사용하지 않음

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Contracts;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using Cysharp.Threading.Tasks;
@@ -14,8 +13,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
     {
         [Header("UI")]
         [SerializeField] private GameObject panelRoot;
-        [SerializeField] private Transform optionRoot;
-        [SerializeField] private Button optionButtonPrefab;
+        [SerializeField] private Transform  optionRoot;
+        [SerializeField] private Button     optionButtonPrefab;
 
         [Header("Reveal")]
         [SerializeField] private float revealDuration = 0.20f;
@@ -25,10 +24,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
         private bool _completeRevealRequested;
         private bool _resultResolved;
 
-        public bool IsRevealing { get; private set; }
+        public bool IsRevealing  { get; private set; }
         public bool IsChoiceOpen { get; private set; }
 
-        public async UniTask<StoryChoiceResult> ShowChoicesAsync(StoryChoiceModuleSO module, CancellationToken ct)
+        // ── 공개 API ────────────────────────────────────────────────────────
+        public async UniTask<StoryChoiceResult> ShowChoicesAsync(IStoryChoiceLikeModule module, CancellationToken ct)
         {
             if (module == null || module.Options == null || module.Options.Count == 0)
             {
@@ -38,7 +38,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
             Build(module);
 
-            IsRevealing = true;
+            IsRevealing  = true;
             IsChoiceOpen = false;
             _completeRevealRequested = false;
 
@@ -46,40 +46,37 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             {
                 await WaitRevealAsync(ct);
 
-                IsRevealing = false;
+                IsRevealing  = false;
                 IsChoiceOpen = true;
                 SetButtonsInteractable(true);
 
-                _selectionTcs = new UniTaskCompletionSource<StoryChoiceResult>();
+                _selectionTcs  = new UniTaskCompletionSource<StoryChoiceResult>();
                 _resultResolved = false;
 
                 using (ct.Register(() => _selectionTcs.TrySetCanceled()))
                 {
-                    StoryChoiceResult result = await _selectionTcs.Task;
-                    return result;
+                    return await _selectionTcs.Task;
                 }
             }
             finally
             {
-                IsRevealing = false;
+                IsRevealing  = false;
                 IsChoiceOpen = false;
             }
         }
 
         public void CompleteReveal()
         {
-            if (!IsRevealing)
-                return;
-
+            if (!IsRevealing) return;
             _completeRevealRequested = true;
         }
 
         public void CloseImmediate()
         {
-            IsRevealing = false;
+            IsRevealing  = false;
             IsChoiceOpen = false;
             _completeRevealRequested = false;
-            _resultResolved = false;
+            _resultResolved          = false;
 
             if (_selectionTcs != null)
             {
@@ -93,34 +90,54 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                 panelRoot.SetActive(false);
         }
 
-        private void Build(StoryChoiceModuleSO module)
+        // ── 내부 구현 ────────────────────────────────────────────────────────
+        private void Build(IStoryChoiceLikeModule module)
         {
             ClearButtons();
 
             if (panelRoot != null)
                 panelRoot.SetActive(true);
 
-            foreach (var option in module.Options)
+            foreach (IStoryChoiceOption option in module.Options)
             {
                 Button button = Instantiate(optionButtonPrefab, optionRoot);
                 button.interactable = false;
 
                 TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
                 if (label != null)
-                    label.text = option.text;
+                    label.text = option.Text;
 
                 button.onClick.RemoveAllListeners();
-                var option1 = option;
-                button.onClick.AddListener(() => SelectOption(module, option1));
+                IStoryChoiceOption captured = option;
+                button.onClick.AddListener(() => SelectOption(module, captured));
 
                 _spawnedButtons.Add(button);
             }
         }
 
+        private void SelectOption(IStoryChoiceLikeModule module, IStoryChoiceOption option)
+        {
+            if (!IsChoiceOpen || _resultResolved || _selectionTcs == null)
+                return;
+
+            _resultResolved = true;
+
+            string nextLineId = !string.IsNullOrWhiteSpace(option.ReactionStartLineId)
+                ? option.ReactionStartLineId
+                : option.ConvergeLineId;
+
+            _selectionTcs.TrySetResult(new StoryChoiceResult(
+                module.ChoiceId,
+                option.OptionId,
+                option.Text,
+                nextLineId));
+
+            CloseImmediate();
+        }
+
         private async UniTask WaitRevealAsync(CancellationToken ct)
         {
-            if (revealDuration <= 0f)
-                return;
+            if (revealDuration <= 0f) return;
 
             float elapsed = 0f;
             while (!_completeRevealRequested && elapsed < revealDuration)
@@ -130,29 +147,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             }
         }
 
-        private void SelectOption(StoryChoiceModuleSO module, StoryChoiceModuleSO.ChoiceOption option)
-        {
-            if (!IsChoiceOpen || _resultResolved || _selectionTcs == null)
-                return;
-
-            _resultResolved = true;
-
-            string nextLineId = !string.IsNullOrWhiteSpace(option.reactionStartLineId)
-                ? option.reactionStartLineId
-                : option.convergeLineId;
-
-            _selectionTcs.TrySetResult(new StoryChoiceResult(
-                module.ChoiceId,
-                option.optionId,
-                option.text,
-                nextLineId));
-
-            CloseImmediate();
-        }
-
         private void SetButtonsInteractable(bool value)
         {
-            foreach (var button in _spawnedButtons)
+            foreach (Button button in _spawnedButtons)
             {
                 if (button != null)
                     button.interactable = value;
@@ -161,12 +158,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
         private void ClearButtons()
         {
-            foreach (var button in _spawnedButtons)
+            foreach (Button button in _spawnedButtons)
             {
                 if (button != null)
                     Destroy(button.gameObject);
             }
-
             _spawnedButtons.Clear();
         }
     }

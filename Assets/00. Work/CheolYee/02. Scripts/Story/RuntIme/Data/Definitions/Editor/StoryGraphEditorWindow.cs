@@ -193,6 +193,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
             }
 
+            if (_canvas?.HasSelectedConnectableEdge == true)
+            {
+                _canvas.DisconnectSelectedConnectableEdge();
+                _canvas.RefreshAll();
+                e.Use();
+                return;
+            }
+
             OnDeleteConnectionClicked();
             e.Use();
         }

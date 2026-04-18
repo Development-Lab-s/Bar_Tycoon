@@ -28,10 +28,36 @@ MonoBehaviour:
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
   modules:
-  - {fileID: 11400000, guid: cd5da885033c452478e53c15491ba09d, type: 2}
+  - {fileID: 2469952851010455854}
   inlineModules: []
   editorNodePosition: {x: 770.8762, y: 131.53458}
-  editorNodeSize: {x: 229.33179, y: 114.74259}
+  editorNodeSize: {x: 300.3068, y: 129.63858}
   references:
     version: 2
     RefIds: []
+--- !u!114 &2469952851010455854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c69b4f4ff6d48049c5fd130953b6d9c, type: 3}
+  m_Name: '[Migrated] Choice #0'
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryChoiceModuleSO
+  timing: 0
+  isBlocking: 0
+  canSkip: 1
+  affectsAutoAdvance: 0
+  choiceId: choice_intro
+  options:
+  - optionId: opt_a
+    text: "\uC870\uC6A9\uD788 \uC549\uC544\uC11C \uC774\uC57C\uAE30\uB97C \uB4E3\uB294\uB2E4"
+    reactionStartLineId: line_004_a
+    convergeLineId: line_005_end
+  - optionId: opt_b
+    text: "\uAC00\uACC4\uB97C \uB2E4\uC2DC \uC0B4\uB824\uBCF4\uC790\uACE0 \uB9D0\uD55C\uB2E4"
+    reactionStartLineId: line_004_b
+    convergeLineId: line_005_end

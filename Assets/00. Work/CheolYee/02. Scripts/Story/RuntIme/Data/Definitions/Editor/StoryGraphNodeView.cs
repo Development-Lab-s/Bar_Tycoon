@@ -184,6 +184,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         // ── 공개 API ─────────────────────────────────
 
+        /// <summary>카드 영역(header+body)의 현재 높이. 모듈 스택 top 계산에 사용.</summary>
+        public float CardHeight => _h;
+
         public void SetSelected(bool on) =>
             ApplyBorder(on ? new Color(0.9f, 0.7f, 0.2f) : new Color(0.35f, 0.35f, 0.35f), on ? 2f : 1f);
 
