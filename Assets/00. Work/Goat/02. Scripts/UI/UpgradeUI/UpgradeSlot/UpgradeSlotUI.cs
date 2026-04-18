@@ -13,7 +13,8 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
         [SerializeField] private TextMeshProUGUI costText;
         [SerializeField] private Button upgradeButton;
         
-        public event Action OnClickUpgrade;
+        private UpgradeData _data;
+        public event Action<UpgradeData> OnClickUpgrade;
 
         private void Awake()
         {
@@ -27,32 +28,22 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
 
         private void HandleClickUpgrade()
         {
-            OnClickUpgrade?.Invoke();
+            if (_data == null)
+            {
+                Debug.Log("no data");
+                return;
+            }
+                
+            OnClickUpgrade?.Invoke(_data);
         }
-
-        #region SetUI
         
-        public void SetView(string title, string description, string cost)
+        public void SetView(UpgradeData data, string cost)
         {
-            titleText.text = title;
-            descriptionText.text = description;
+            _data = data;
+            UpgradeDataSO dataSo = _data.upgradeDataSo;
+            titleText.text = dataSo.Title;
+            descriptionText.text = dataSo.Description;
             costText.text = cost;
         }
-        
-        public void SetTitle()
-        {
-            titleText.text = titleText.text;
-        }
-
-        public void SetDescription()
-        {
-            descriptionText.text = descriptionText.text;
-        }
-
-        public void SetCost()
-        {
-            costText.text = costText.text;
-        }
-        #endregion
     }
 }
