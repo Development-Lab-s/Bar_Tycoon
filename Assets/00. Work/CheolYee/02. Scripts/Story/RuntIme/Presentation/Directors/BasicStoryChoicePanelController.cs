@@ -122,9 +122,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
             _resultResolved = true;
 
-            string nextLineId = !string.IsNullOrWhiteSpace(option.ReactionStartLineId)
-                ? option.ReactionStartLineId
-                : option.ConvergeLineId;
+            string nextLineId = option.ReactionStartLineId;
 
             _selectionTcs.TrySetResult(new StoryChoiceResult(
                 module.ChoiceId,

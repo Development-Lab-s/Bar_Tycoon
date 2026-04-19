@@ -16,13 +16,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
             public string optionId;
             [TextArea] public string text;
             public string reactionStartLineId;
-            public string convergeLineId;
 
             // IStoryChoiceOption — 명시적 구현으로 기존 필드명 유지
             string IStoryChoiceOption.OptionId            => optionId;
             string IStoryChoiceOption.Text                => text;
             string IStoryChoiceOption.ReactionStartLineId => reactionStartLineId;
-            string IStoryChoiceOption.ConvergeLineId      => convergeLineId;
         }
 
         [SerializeField] private string choiceId;

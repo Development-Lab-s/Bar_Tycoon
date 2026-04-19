@@ -31,8 +31,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
     /// </summary>
     public static class StoryValidationTool
     {
-        private const string SearchRoot  = "Assets/00. Work/CheolYee";
-        private const string MigratedTag = "[Migrated]";
+        private const string SearchRoot = "Assets/00. Work/CheolYee";
 
         [MenuItem("Tools/Story/Validate Story Assets")]
         public static void ValidateAll()
@@ -176,27 +175,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     ValidateChoiceOptions(cl, epLineIds, ctx, "SO", report);
             }
 
-            // Inline modules
-            if (line.InlineModules != null && line.InlineModules.Count > 0)
-            {
-                report.Add(Severity.Info, ctx,
-                    $"미변환 인라인 모듈 {line.InlineModules.Count}개 (Tools/Story/Migrate 실행 권장)");
-
-                for (int i = 0; i < line.InlineModules.Count; i++)
-                {
-                    var m = line.InlineModules[i];
-                    if (m == null)
-                    {
-                        report.Add(Severity.Warn, ctx, $"inlineModules[{i}] = null");
-                        continue;
-                    }
-                    if (m is IStoryChoiceLikeModule cl)
-                        ValidateChoiceOptions(cl, epLineIds, ctx, "inline", report);
-                }
-            }
-
             CheckOrphanedSubAssets(line, ctx, report);
-            CheckDoubleExecutionRisk(line, ctx, report);
         }
 
         // ── Choice option 참조 검사 ────────────────────
@@ -253,27 +232,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
         }
 
-        // ── 이중 실행 위험 검사 ────────────────────────
-
-        private static void CheckDoubleExecutionRisk(
-            StoryLineSO      line,
-            string           ctx,
-            ValidationReport report)
-        {
-            if (line.Modules.Count == 0
-                || line.InlineModules == null
-                || line.InlineModules.Count == 0)
-                return;
-
-            bool hasMigratedSO = false;
-            foreach (var m in line.Modules)
-                if (m != null && m.name.StartsWith(MigratedTag)) { hasMigratedSO = true; break; }
-
-            if (hasMigratedSO)
-                report.Add(Severity.Warn, ctx,
-                    "[Migrated] SO와 inlineModules 가 공존 — 이중 실행 위험. " +
-                    "마이그레이션을 재실행하거나 Phase 5를 진행하세요.");
-        }
 
         // ── ValidationReport ──────────────────────────
 

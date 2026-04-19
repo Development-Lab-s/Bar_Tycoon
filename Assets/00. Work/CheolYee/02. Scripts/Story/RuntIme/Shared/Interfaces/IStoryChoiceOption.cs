@@ -9,6 +9,5 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces
         string OptionId            { get; }
         string Text                { get; }
         string ReactionStartLineId { get; }
-        string ConvergeLineId      { get; }
     }
 }

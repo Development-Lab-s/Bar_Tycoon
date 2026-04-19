@@ -1,25 +1,20 @@
 using System;
 using System.Collections.Generic;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Attributes;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using PopupWindow = UnityEditor.PopupWindow;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 {
     /// <summary>
     /// 캔버스에서 line node 카드 바로 아래에 배치되는 모듈 스택 뷰.
     ///
-    /// - 인라인 모듈: IMGUI로 generic PropertyField 편집 (타입 분기 없음)
-    /// - Connectable 포트: IStoryGraphConnectableModule capability 를 가진 모든 모듈
-    ///   (SO modules + inline modules 모두 처리) 의 포트를 포트 스트립에 통합 노출
-    ///
-    /// Canvas 에서는 ConnectablePortDragStart 이벤트와
-    /// GetConnectablePortCanvasPos / GetConnectablePortConnection / ApplyConnection / ApplyDisconnect
-    /// 를 통해 연결선을 관리합니다.
+    /// - SO 모듈: IMGUI로 SerializedObject 기반 편집 (타입 분기 없음)
+    /// - Connectable 포트: IStoryGraphConnectableModule capability 를 가진 SO 모듈의
+    ///   포트를 포트 스트립에 통합 노출
+    /// - Add Module: StoryModuleSO sub-asset 생성 → modules 리스트 추가까지 원스텝
     /// </summary>
     public sealed class StoryNodeModuleStackView : VisualElement
     {
@@ -38,14 +33,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private bool _pendingRefresh;
 
         // ── 포트 슬롯 ─────────────────────────────────
-        // 각 슬롯은 자신의 읽기/쓰기/연결해제를 캡처된 SerializedObject 경로로 처리한다.
         private sealed class PortSlot
         {
-            public VisualElement  Element;
-            public string         Label;
-            public Func<string>   GetConnection;   // 현재 targetLineId 읽기
-            public Action<string> SetConnection;   // SerializedObject 통해 씀 (Undo 포함)
-            public Action         Disconnect;      // SerializedObject 통해 비움 (Undo 포함)
+            public VisualElement  element;
+            public string         label;
+            public Func<string>   getConnection;
+            public Action<string> setConnection;
+            public Action         disconnect;
         }
 
         private readonly List<PortSlot> _portSlots = new();
@@ -77,7 +71,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         public StoryLineSO Line => _line;
 
-        /// <summary>현재 노출된 connectable 포트 총 수 (SO + inline 합산).</summary>
+        /// <summary>현재 노출된 connectable 포트 총 수.</summary>
         public int ConnectablePortCount => _portSlots.Count;
 
         public void Refresh()
@@ -91,7 +85,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         public Vector2 GetConnectablePortCanvasPos(int slotIdx, VisualElement canvas)
         {
             if ((uint)slotIdx >= (uint)_portSlots.Count) return Vector2.zero;
-            var port   = _portSlots[slotIdx].Element;
+            var port   = _portSlots[slotIdx].element;
             var center = port.contentRect.center;
             if (float.IsNaN(center.x) || float.IsNaN(center.y)) return Vector2.zero;
             return canvas.WorldToLocal(port.LocalToWorld(center));
@@ -101,14 +95,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         public string GetConnectablePortConnection(int slotIdx)
         {
             if ((uint)slotIdx >= (uint)_portSlots.Count) return null;
-            return _portSlots[slotIdx].GetConnection?.Invoke();
+            return _portSlots[slotIdx].getConnection?.Invoke();
         }
 
         /// <summary>슬롯에 연결을 적용한다 (SerializedObject 통해 Undo 지원).</summary>
         public void ApplyConnection(int slotIdx, string targetLineId)
         {
             if ((uint)slotIdx >= (uint)_portSlots.Count) return;
-            _portSlots[slotIdx].SetConnection?.Invoke(targetLineId);
+            _portSlots[slotIdx].setConnection?.Invoke(targetLineId);
             Refresh();
             Changed?.Invoke();
         }
@@ -117,7 +111,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         public void ApplyDisconnect(int slotIdx)
         {
             if ((uint)slotIdx >= (uint)_portSlots.Count) return;
-            _portSlots[slotIdx].Disconnect?.Invoke();
+            _portSlots[slotIdx].disconnect?.Invoke();
             Refresh();
             Changed?.Invoke();
         }
@@ -129,7 +123,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Clear();
             _portSlots.Clear();
 
-            // ① 인라인 모듈 편집 IMGUI
+            // ① SO 모듈 편집 IMGUI
             var modulesImgui = new IMGUIContainer(DrawModulesIMGUI);
             modulesImgui.style.paddingLeft   = 4;
             modulesImgui.style.paddingRight  = 4;
@@ -137,7 +131,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             modulesImgui.style.paddingBottom = 2;
             Add(modulesImgui);
 
-            // ② Connectable 포트 스트립 (SO + inline 모두 처리)
+            // ② Connectable 포트 스트립 (SO modules)
             BuildConnectablePortStrip();
 
             // ③ + Module 버튼 IMGUI
@@ -149,15 +143,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Add(addImgui);
         }
 
-        // ── IMGUI — 인라인 모듈 블록 (generic PropertyField) ───────────────
+        // ── IMGUI — SO 모듈 블록 ────────────────────────────────────────────
 
         private void DrawModulesIMGUI()
         {
             if (_line == null || _so == null) return;
             _so.Update();
 
-            var inlineProp = _so.FindProperty("inlineModules");
-            if (inlineProp == null || inlineProp.arraySize == 0)
+            var modulesProp = _so.FindProperty("modules");
+            if (modulesProp == null || modulesProp.arraySize == 0)
             {
                 _so.ApplyModifiedProperties();
                 return;
@@ -165,20 +159,21 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             int toDelete = -1;
 
-            for (int i = 0; i < inlineProp.arraySize; i++)
+            for (int i = 0; i < modulesProp.arraySize; i++)
             {
-                var    elem  = inlineProp.GetArrayElementAtIndex(i);
-                var    data  = elem.managedReferenceValue as StoryInlineModuleData;
-                string label = data?.DisplayName ?? $"?#{i}";
+                var elemProp = modulesProp.GetArrayElementAtIndex(i);
+                var module   = elemProp.objectReferenceValue as StoryModuleSO;
+                if (module == null) continue;
+
+                string label = module.DisplayName;
 
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 EditorGUILayout.BeginHorizontal();
 
-                if (!_expandedState.ContainsKey(i)) _expandedState[i] = false;
+                _expandedState.TryAdd(i, false);
 
-                // 강조색은 attribute 기반 (타입 분기 없음)
                 var prevContent = GUI.contentColor;
-                GUI.contentColor = StoryModuleMetadataAttribute.GetColor(data?.GetType());
+                GUI.contentColor = StoryModuleMetadataAttribute.GetColor(module.GetType());
                 _expandedState[i] = EditorGUILayout.Foldout(_expandedState[i], label, true);
                 GUI.contentColor  = prevContent;
 
@@ -193,17 +188,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
                 if (_expandedState[i])
                 {
-                    // generic PropertyField 렌더: 타입별 분기 없음
                     EditorGUI.indentLevel++;
-                    var child = elem.Copy();
-                    var end   = elem.GetEndProperty();
-                    bool first = true;
-                    while (child.NextVisible(first))
+                    var moduleSO = new SerializedObject(module);
+                    moduleSO.Update();
+                    var iter = moduleSO.GetIterator();
+                    bool enterChildren = true;
+                    while (iter.NextVisible(enterChildren))
                     {
-                        first = false;
-                        if (SerializedProperty.EqualContents(child, end)) break;
-                        EditorGUILayout.PropertyField(child, true);
+                        enterChildren = false;
+                        if (iter.name == "m_Script") continue;
+                        EditorGUILayout.PropertyField(iter, true);
                     }
+                    if (moduleSO.ApplyModifiedProperties())
+                        EditorUtility.SetDirty(module);
                     EditorGUI.indentLevel--;
                 }
 
@@ -216,15 +213,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (toDelete >= 0)
             {
-                Undo.RecordObject(_line, "Remove Inline Module");
                 _so.Update();
-                var prop = _so.FindProperty("inlineModules");
-                if (toDelete < prop.arraySize)
-                {
-                    prop.DeleteArrayElementAtIndex(toDelete);
-                    _so.ApplyModifiedProperties();
-                    EditorUtility.SetDirty(_line);
-                }
+                var prop      = _so.FindProperty("modules");
+                var objToRemove = prop.GetArrayElementAtIndex(toDelete).objectReferenceValue;
+
+                // ObjectReference 배열: null 처리 후 삭제
+                prop.GetArrayElementAtIndex(toDelete).objectReferenceValue = null;
+                prop.DeleteArrayElementAtIndex(toDelete);
+                _so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(_line);
+
+                if (objToRemove != null)
+                    Undo.DestroyObjectImmediate(objToRemove);
+
+                AssetDatabase.SaveAssets();
                 _expandedState.Clear();
                 Refresh();
                 Changed?.Invoke();
@@ -245,30 +247,40 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (addClicked)
             {
+                // 버튼 우하단 기준 screen 좌표로 Picker 창 열기
                 var screenPt = GUIUtility.GUIToScreenPoint(
-                    new Vector2(_addBtnRect.x, _addBtnRect.yMax));
-                PopupWindow.Show(
-                    new Rect(screenPt, new Vector2(_addBtnRect.width, 0)),
-                    new StoryModuleSearchPopup(AddModuleToLine));
+                    new Vector2(_addBtnRect.xMax, _addBtnRect.yMax));
+                StoryModulePickerWindow.Show(AddModuleToLine, screenPt);
             }
         }
 
-        // ── 모듈 추가 ─────────────────────────────────
+        // ── 모듈 추가 — sub-asset 생성 ────────────────
 
         private void AddModuleToLine(Type type)
         {
             if (_line == null) return;
 
-            Undo.RecordObject(_line, $"Add Inline Module: {type.Name}");
+            string assetPath = AssetDatabase.GetAssetPath(_line);
+            if (string.IsNullOrEmpty(assetPath)) return;
+
+            var module = ScriptableObject.CreateInstance(type) as StoryModuleSO;
+            if (module == null) return;
+
+            var attr = StoryModuleMetadataAttribute.Get(type);
+            module.name = attr?.DisplayName ?? type.Name;
+
+            AssetDatabase.AddObjectToAsset(module, _line);
+            Undo.RegisterCreatedObjectUndo(module, $"Add Module: {module.name}");
+
             _so = new SerializedObject(_line);
             _so.Update();
-
-            var prop = _so.FindProperty("inlineModules");
+            Undo.RecordObject(_line, $"Add Module: {module.name}");
+            var prop = _so.FindProperty("modules");
             prop.arraySize++;
-            prop.GetArrayElementAtIndex(prop.arraySize - 1).managedReferenceValue =
-                Activator.CreateInstance(type);
-
+            prop.GetArrayElementAtIndex(prop.arraySize - 1).objectReferenceValue = module;
             _so.ApplyModifiedProperties();
+
+            AssetDatabase.SaveAssets();
             EditorUtility.SetDirty(_line);
 
             _expandedState[prop.arraySize - 1] = true;
@@ -276,15 +288,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Changed?.Invoke();
         }
 
-        // ── Connectable 포트 스트립 ────────────────────
+        // ── Connectable 포트 스트립 (SO modules only) ──
 
         private void BuildConnectablePortStrip()
         {
             if (_line == null) return;
 
-            // SO modules + inline modules 에서 IStoryGraphConnectableModule 수집
             bool anyConnectable = false;
-
             foreach (var soModule in _line.Modules)
             {
                 if (soModule is IStoryGraphConnectableModule)
@@ -293,37 +303,33 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     break;
                 }
             }
-
-            if (!anyConnectable)
-            {
-                foreach (var inlineMod in _line.InlineModules)
-                {
-                    if (inlineMod is IStoryGraphConnectableModule)
-                    {
-                        anyConnectable = true;
-                        break;
-                    }
-                }
-            }
-
             if (!anyConnectable) return;
 
-            var strip = new VisualElement();
-            strip.style.borderTopWidth  = 1;
-            strip.style.borderTopColor  = new StyleColor(new Color(1f, 0.78f, 0.3f, 0.35f));
-            strip.style.paddingTop      = 3;
-            strip.style.paddingBottom   = 3;
-            strip.style.backgroundColor = new StyleColor(new Color(0.17f, 0.17f, 0.19f));
+            var strip = new VisualElement
+            {
+                style =
+                {
+                    borderTopWidth = 1,
+                    borderTopColor = new StyleColor(new Color(1f, 0.78f, 0.3f, 0.35f)),
+                    paddingTop = 3,
+                    paddingBottom = 3,
+                    backgroundColor = new StyleColor(new Color(0.17f, 0.17f, 0.19f))
+                }
+            };
 
             int totalPorts = CountTotalConnectablePorts();
-            var headerLbl = new Label($"▸ Connectable Ports  ({totalPorts} ports)");
-            headerLbl.style.fontSize      = 9;
-            headerLbl.style.paddingLeft   = 6;
-            headerLbl.style.paddingBottom = 1;
-            headerLbl.style.color         = new StyleColor(new Color(1f, 0.78f, 0.3f, 0.75f));
+            var headerLbl = new Label($"▸ Connectable Ports  ({totalPorts} ports)")
+            {
+                style =
+                {
+                    fontSize = 9,
+                    paddingLeft = 6,
+                    paddingBottom = 1,
+                    color = new StyleColor(new Color(1f, 0.78f, 0.3f, 0.75f))
+                }
+            };
             strip.Add(headerLbl);
 
-            // SO modules
             foreach (var soModule in _line.Modules)
             {
                 if (soModule is not IStoryGraphConnectableModule connectable) continue;
@@ -336,9 +342,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
                     var slot = new PortSlot
                     {
-                        Label         = portLabel,
-                        GetConnection = () => (capturedSO as IStoryGraphConnectableModule)?.GetPortConnection(capturedPort),
-                        SetConnection = targetLineId =>
+                        label         = portLabel,
+                        getConnection = () => (capturedSO as IStoryGraphConnectableModule)?.GetPortConnection(capturedPort),
+                        setConnection = targetLineId =>
                         {
                             var so = new SerializedObject(capturedSO);
                             so.Update();
@@ -350,7 +356,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                             so.ApplyModifiedProperties();
                             EditorUtility.SetDirty(capturedSO);
                         },
-                        Disconnect = () =>
+                        disconnect = () =>
                         {
                             var so = new SerializedObject(capturedSO);
                             so.Update();
@@ -365,60 +371,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     };
 
                     int slotIdx = _portSlots.Count;
-                    slot.Element = BuildPortRow(strip, slot, slotIdx);
-                    _portSlots.Add(slot);
-                }
-            }
-
-            // Inline modules
-            for (int m = 0; m < _line.InlineModules.Count; m++)
-            {
-                if (_line.InlineModules[m] is not IStoryGraphConnectableModule connectable) continue;
-                var ports = connectable.GetPorts();
-                for (int p = 0; p < ports.Count; p++)
-                {
-                    int capturedM    = m;
-                    int capturedPort = p;
-                    string portLabel = ports[p].Label;
-
-                    var slot = new PortSlot
-                    {
-                        Label         = portLabel,
-                        GetConnection = () =>
-                        {
-                            if ((uint)capturedM >= (uint)_line.InlineModules.Count) return null;
-                            return (_line.InlineModules[capturedM] as IStoryGraphConnectableModule)?.GetPortConnection(capturedPort);
-                        },
-                        SetConnection = targetLineId =>
-                        {
-                            var so = new SerializedObject(_line);
-                            so.Update();
-                            Undo.RecordObject(_line, "Connect Module Port");
-                            var inlineProp = so.FindProperty("inlineModules");
-                            var optsProp   = inlineProp.GetArrayElementAtIndex(capturedM).FindPropertyRelative("options");
-                            if (optsProp != null && capturedPort < optsProp.arraySize)
-                                optsProp.GetArrayElementAtIndex(capturedPort)
-                                        .FindPropertyRelative("reactionStartLineId").stringValue = targetLineId;
-                            so.ApplyModifiedProperties();
-                            EditorUtility.SetDirty(_line);
-                        },
-                        Disconnect = () =>
-                        {
-                            var so = new SerializedObject(_line);
-                            so.Update();
-                            Undo.RecordObject(_line, "Disconnect Module Port");
-                            var inlineProp = so.FindProperty("inlineModules");
-                            var optsProp   = inlineProp.GetArrayElementAtIndex(capturedM).FindPropertyRelative("options");
-                            if (optsProp != null && capturedPort < optsProp.arraySize)
-                                optsProp.GetArrayElementAtIndex(capturedPort)
-                                        .FindPropertyRelative("reactionStartLineId").stringValue = "";
-                            so.ApplyModifiedProperties();
-                            EditorUtility.SetDirty(_line);
-                        },
-                    };
-
-                    int slotIdx = _portSlots.Count;
-                    slot.Element = BuildPortRow(strip, slot, slotIdx);
+                    slot.element = BuildPortRow(strip, slot, slotIdx);
                     _portSlots.Add(slot);
                 }
             }
@@ -426,41 +379,61 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Add(strip);
         }
 
-        private VisualElement BuildPortRow(VisualElement parent, PortSlot slot, int slotIdx)
+        private VisualElement BuildPortRow(VisualElement portParent, PortSlot slot, int slotIdx)
         {
-            string connection = slot.GetConnection?.Invoke();
+            string connection = slot.getConnection?.Invoke();
             bool   connected  = !string.IsNullOrWhiteSpace(connection);
 
-            var row = new VisualElement();
-            row.style.flexDirection = FlexDirection.Row;
-            row.style.alignItems    = Align.Center;
-            row.style.height        = 22;
-            row.style.paddingLeft   = 6;
-            row.style.paddingRight  = 6;
+            var row = new VisualElement
+            {
+                style =
+                {
+                    flexDirection = FlexDirection.Row,
+                    alignItems = Align.Center,
+                    height = 22,
+                    paddingLeft = 6,
+                    paddingRight = 6
+                }
+            };
 
-            string labelText = string.IsNullOrWhiteSpace(slot.Label)
-                ? $"Port {slotIdx}" : Trunc(slot.Label, 22);
-            var lbl = new Label(labelText);
-            lbl.style.flexGrow = 1;
-            lbl.style.fontSize = 10;
-            lbl.style.overflow = Overflow.Hidden;
-            lbl.style.color    = new StyleColor(connected
-                ? new Color(0.45f, 0.95f, 0.5f)
-                : new Color(0.72f, 0.72f, 0.72f));
+            string labelText = string.IsNullOrWhiteSpace(slot.label)
+                ? $"Port {slotIdx}" : Trunc(slot.label, 22);
+            var lbl = new Label(labelText)
+            {
+                style =
+                {
+                    flexGrow = 1,
+                    fontSize = 10,
+                    overflow = Overflow.Hidden,
+                    color = new StyleColor(connected
+                        ? new Color(0.45f, 0.95f, 0.5f)
+                        : new Color(0.72f, 0.72f, 0.72f))
+                }
+            };
             row.Add(lbl);
 
             if (connected)
             {
-                var idLbl = new Label($"→ {Trunc(connection, 14)}");
-                idLbl.style.fontSize    = 9;
-                idLbl.style.color       = new StyleColor(new Color(0.45f, 0.9f, 0.5f, 0.75f));
-                idLbl.style.marginRight = 4;
+                var idLbl = new Label($"→ {Trunc(connection, 14)}")
+                {
+                    style =
+                    {
+                        fontSize = 9,
+                        color = new StyleColor(new Color(0.45f, 0.9f, 0.5f, 0.75f)),
+                        marginRight = 4
+                    }
+                };
                 row.Add(idLbl);
             }
 
-            var port = new VisualElement();
-            port.style.width  = PortR * 2;
-            port.style.height = PortR * 2;
+            var port = new VisualElement
+            {
+                style =
+                {
+                    width = PortR * 2,
+                    height = PortR * 2
+                }
+            };
             port.style.borderTopLeftRadius    = port.style.borderTopRightRadius    =
             port.style.borderBottomLeftRadius = port.style.borderBottomRightRadius = PortR;
             port.style.backgroundColor = new StyleColor(connected
@@ -480,14 +453,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             });
             port.AddManipulator(new ContextualMenuManipulator(evt =>
             {
-                bool has = !string.IsNullOrWhiteSpace(_portSlots[capturedSlot].GetConnection?.Invoke());
+                bool has = !string.IsNullOrWhiteSpace(_portSlots[capturedSlot].getConnection?.Invoke());
                 evt.menu.AppendAction("Disconnect",
                     _ => ApplyDisconnect(capturedSlot),
                     has ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
             }));
 
             row.Add(port);
-            parent.Add(row);
+            portParent.Add(row);
             return port;
         }
 
@@ -510,11 +483,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private int CountTotalConnectablePorts()
         {
+            if (_line is null) return 0;
             int count = 0;
-            if (_line == null) return 0;
             foreach (var m in _line.Modules)
-                if (m is IStoryGraphConnectableModule c) count += c.GetPorts().Count;
-            foreach (var m in _line.InlineModules)
                 if (m is IStoryGraphConnectableModule c) count += c.GetPorts().Count;
             return count;
         }

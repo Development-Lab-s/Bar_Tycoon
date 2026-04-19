@@ -9,10 +9,8 @@ using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
 {
-    public sealed class WaitModuleExecutor : MonoBehaviour, IStoryModuleExecutor, IStoryInlineModuleExecutor
+    public sealed class WaitModuleExecutor : MonoBehaviour, IStoryModuleExecutor
     {
-        // --- SO 모듈 처리 ---
-
         public bool CanExecute(StoryModuleSO module) => module is StoryWaitModuleSO;
 
         public async UniTask ExecuteAsync(StoryModuleSO module, StorySession session, CancellationToken ct)
@@ -22,20 +20,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
 
             await WaitAsync(waitModule.Duration, waitModule.UseUnscaledTime, ct);
         }
-
-        // --- 인라인 모듈 처리 ---
-
-        public bool CanExecute(StoryInlineModuleData module) => module is WaitInlineModuleData;
-
-        public async UniTask ExecuteAsync(StoryInlineModuleData module, StorySession session, CancellationToken ct)
-        {
-            if (module is not WaitInlineModuleData waitModule)
-                return;
-
-            await WaitAsync(waitModule.Duration, waitModule.UseUnscaledTime, ct);
-        }
-
-        // --- 공통 로직 ---
 
         private static async UniTask WaitAsync(float duration, bool useUnscaledTime, CancellationToken ct)
         {

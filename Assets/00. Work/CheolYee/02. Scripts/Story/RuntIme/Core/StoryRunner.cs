@@ -1,6 +1,5 @@
 using System.Threading;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.RuntimeModules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Contracts;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
@@ -197,22 +196,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
         // ── 내부 헬퍼 ────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// SO modules → Inline modules 순서로 IStoryChoiceLikeModule capability 를 확인합니다.
-        /// inlineModules 는 Phase 5 제거 전까지 유지됩니다.
-        /// </summary>
         private bool TryGetChoiceLikeModule(StoryLineSO line, out IStoryChoiceLikeModule choiceModule)
         {
             foreach (StoryModuleSO module in line.Modules)
-            {
-                if (module is IStoryChoiceLikeModule choice)
-                {
-                    choiceModule = choice;
-                    return true;
-                }
-            }
-
-            foreach (StoryInlineModuleData module in line.InlineModules)
             {
                 if (module is IStoryChoiceLikeModule choice)
                 {

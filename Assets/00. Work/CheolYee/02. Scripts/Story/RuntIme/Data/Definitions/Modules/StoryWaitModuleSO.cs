@@ -4,7 +4,7 @@ using UnityEngine;
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
 {
     [StoryModuleMetadata("Wait", category: "Timing", accentColorHex: "#5B9BD5", sortPriority: 10)]
-    [CreateAssetMenu(fileName = "WaitModule", menuName = "Story/Modules/Wait")]
+    //[CreateAssetMenu(fileName = "WaitModule", menuName = "Story/Modules/Wait")]
     public sealed class StoryWaitModuleSO : StoryModuleSO
     {
         [Header("Wait")]

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using UnityEngine;
 
@@ -53,11 +52,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         [SerializeField] private float autoAdvanceDelay = 1.0f;
 
         [Header("Modules")]
-        // 레거시 SO 모듈 — 에디터에서 숨김. 마이그레이션 도구로만 접근.
         [HideInInspector]
         [SerializeField] private List<StoryModuleSO> modules = new();
-        // authoring 기준: SO 자산 없이 직접 직렬화되는 인라인 모듈 리스트입니다.
-        [SerializeReference] private List<StoryInlineModuleData> inlineModules = new();
 
         // 에디터 전용 — 런타임에서 사용하지 않음
         [HideInInspector]
@@ -77,7 +73,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         public bool UseAutoAdvanceOverride => useAutoAdvanceOverride;
         public float AutoAdvanceDelay => autoAdvanceDelay;
         public IReadOnlyList<StoryModuleSO> Modules => modules;
-        public IReadOnlyList<StoryInlineModuleData> InlineModules => inlineModules;
 
         // 에디터 전용 프로퍼티
         public Vector2 EditorNodePosition    => editorNodePosition;

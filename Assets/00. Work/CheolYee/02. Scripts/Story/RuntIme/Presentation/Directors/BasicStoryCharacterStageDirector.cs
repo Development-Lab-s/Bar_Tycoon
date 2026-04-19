@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Threading;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using Cysharp.Threading.Tasks;
@@ -7,7 +9,7 @@ using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 {
-    public sealed class BasicStoryCharacterStageDirector : MonoBehaviour, ICharacterStageDirector
+    public sealed class BasicStoryCharacterStageDirector : MonoBehaviour, ICharacterStageDirector, IStoryStageDirector
     {
         [Header("Roots")]
         [SerializeField] private Transform actorRoot;
@@ -91,6 +93,69 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
             _actors.Clear();
         }
+
+        // ── IStoryStageDirector ───────────────────────────────────────────────
+
+        public UniTask ApplyStageStateAsync(IReadOnlyList<StoryActorStateData> targetActors, CancellationToken ct)
+        {
+            // 타겟 세트 구성
+            var targetMap = new Dictionary<string, StoryActorStateData>();
+            foreach (var data in targetActors)
+            {
+                if (data?.actor == null) continue;
+                string id = data.actor.CharacterId;
+                if (!string.IsNullOrWhiteSpace(id))
+                    targetMap[id] = data;
+            }
+
+            // 타겟에 없는 액터 퇴장
+            var toExit = new List<string>();
+            foreach (var id in _actors.Keys)
+                if (!targetMap.ContainsKey(id)) toExit.Add(id);
+            foreach (var id in toExit)
+            {
+                if (_actors.TryGetValue(id, out var e) && e.Instance != null)
+                    Destroy(e.Instance);
+                _actors.Remove(id);
+            }
+
+            // 타겟 액터 등장 / 이동 / 포커스 적용
+            Transform parent = actorRoot != null ? actorRoot : transform;
+            foreach (var kvp in targetMap)
+            {
+                var data = kvp.Value;
+                var charId = kvp.Key;
+
+                if (!_actors.ContainsKey(charId))
+                {
+                    // 신규 등장
+                    var prefab = data.actor.DefaultActorPrefab;
+                    if (prefab == null) continue;
+                    var instance = Instantiate(prefab, parent);
+                    var entry = new ActorEntry(instance, data.actor);
+                    _actors[charId] = entry;
+                }
+
+                var actorEntry = _actors[charId];
+                if (actorEntry.Instance != null)
+                {
+                    actorEntry.Instance.transform.position = NormPosToWorld(data.normalizedPosition);
+                    actorEntry.Instance.SetActive(data.visible);
+                    actorEntry.ApplyTint(data.focused ? focusColor : dimColor);
+                }
+            }
+
+            return UniTask.CompletedTask;
+        }
+
+        private Vector3 NormPosToWorld(Vector2 normPos)
+        {
+            Vector3 left  = leftAnchor  != null ? leftAnchor.position  : new Vector3(-3f, 0f, 0f);
+            Vector3 right = rightAnchor != null ? rightAnchor.position : new Vector3( 3f, 0f, 0f);
+            return Vector3.Lerp(left, right, normPos.x);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
 
         private Transform GetAnchor(StageAnchorType anchorType)
         {
