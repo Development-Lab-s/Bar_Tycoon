@@ -3,11 +3,10 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _00._Work.Lusaload._02._Scripts.UI
+namespace _00._Work.Lusaload._02._Scripts.UI.AlcoholList
 {
     public class BaseAlcoholButtonUI : MonoBehaviour
     {
-        [SerializeField] private Button button;
         [SerializeField] private TextMeshProUGUI nameText;
         [SerializeField] private Image alcoholImage;
 
@@ -15,7 +14,6 @@ namespace _00._Work.Lusaload._02._Scripts.UI
 
         public void Reset()
         {
-            button = GetComponent<Button>();
             nameText = GetComponentInChildren<TextMeshProUGUI>();
         }
 
@@ -24,14 +22,6 @@ namespace _00._Work.Lusaload._02._Scripts.UI
             Data = dataSO;
 
             nameText.text = Data.alcoholName;
-            
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(OnClickButton);
-        }
-
-        private void OnClickButton()
-        {
-            Debug.Log($"선택한 술 : {Data.alcoholName}");
         }
     }
 }

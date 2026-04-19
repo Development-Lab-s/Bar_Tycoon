@@ -7,7 +7,7 @@ namespace _00._Work.Lusaload._02._Scripts.SO
     public class CocktailRecipeSO : ScriptableObject
     {
         public string cocktailName; // 칵테일 이름
-        public Sprite cocktailIcon;
+        public Sprite cocktailIcon; // 칵테일 아이콘
         public List<BaseAlcoholDataSO> cocktailRecipeList;
     }
 }
