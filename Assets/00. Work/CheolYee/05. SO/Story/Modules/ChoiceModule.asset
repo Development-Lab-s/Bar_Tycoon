@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c69b4f4ff6d48049c5fd130953b6d9c, type: 3}
+  m_Name: ChoiceModule
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryChoiceModuleSO
+  timing: 0
+  isBlocking: 0
+  canSkip: 1
+  affectsAutoAdvance: 0
+  choiceId: choice_intro
+  prompt: 
+  options:
+  - optionId: opt_a
+    text: "\uC870\uC6A9\uD788 \uC549\uC544\uC11C \uC774\uC57C\uAE30\uB97C \uB4E3\uB294\uB2E4"
+    reactionStartLineId: line_004_a
+    convergeLineId: line_005_end
+  - optionId: opt_b
+    text: "\uAC00\uACC4\uB97C \uB2E4\uC2DC \uC0B4\uB824\uBCF4\uC790\uACE0 \uB9D0\uD55C\uB2E4"
+    reactionStartLineId: line_004_b
+    convergeLineId: line_005_end
