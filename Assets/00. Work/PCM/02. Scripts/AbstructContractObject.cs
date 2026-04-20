@@ -8,15 +8,11 @@ namespace _00._Work.PCM._02._Scripts
 {
     public abstract class AbstructContractObject : MonoBehaviour, IContractObject
     {
-        public Action OnClickEvent;
-        public virtual void OnEnable()
-        {
-            OnClickEvent += EventRegister;  
-        }
+        public UnityEvent OnClickEvent;
+
         public virtual void ExcuteClick()
         {
             OnClickEvent?.Invoke();
         }
-        public abstract void EventRegister();
     }
 }
