@@ -6,10 +6,6 @@ using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
 {
-    public enum ButtonType
-    {
-        Serving = 0, Counter, Bartender
-    }
     public class ButtonCanvas : MonoBehaviour
     {
         public event Action<ButtonType> OnClickButton;
@@ -32,13 +28,6 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
             {
                 button.OnClickBtn -= HandleButtonClick;
             }
-        }
-
-        public List<UpgradeData> GetButtonInformations(ButtonType btnType)
-        {
-            if (!_buttonInformations.TryGetValue(btnType, out ButtonInformation buttonInformation)) return null;
-            
-            return buttonInformation.UpgradeGroups;
         }
 
         private void HandleButtonClick(ButtonType buttonType)

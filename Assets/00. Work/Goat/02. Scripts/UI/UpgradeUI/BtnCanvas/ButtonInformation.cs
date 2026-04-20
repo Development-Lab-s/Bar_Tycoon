@@ -11,14 +11,21 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
         [field: SerializeField] public ButtonType ButtonType { get; private set; }
         [SerializeField] private Button button;
         
-        [Header("Upgrade Data")]
-        [field: SerializeField] public List<UpgradeData> UpgradeGroups { get; private set; }
-        
         public event Action<ButtonType> OnClickBtn;
         
-        private void Awake()
+        private void OnEnable()
         {
-            button.onClick.AddListener(() => OnClickBtn?.Invoke(ButtonType));
+            button.onClick.AddListener(HandleClickBtn);
+        }
+
+        private void OnDisable()
+        {
+            button.onClick.RemoveListener(HandleClickBtn);
+        }
+
+        private void HandleClickBtn()
+        {
+            OnClickBtn?.Invoke(ButtonType);
         }
     }
 }
