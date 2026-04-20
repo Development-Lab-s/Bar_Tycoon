@@ -42,9 +42,21 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
             if (_stageDirector == null)
             {
                 // fallback: 의도 로깅
+                if (layout.HasBackground)
+                {
+                    var background = layout.Background;
+                    Debug.Log($"[StageLayout] background={background.ResolvedBackgroundKey} " +
+                              $"visible={background.visible} opacity={background.EffectiveOpacity}");
+                }
+
                 foreach (var actor in layout.Actors)
-                    Debug.Log($"[StageLayout] {actor.actor?.DisplayName ?? "?"} " +
+                {
+                    if (actor == null)
+                        continue;
+
+                    Debug.Log($"[StageLayout] {actor.actor?.DisplayName ?? actor.ResolvedActorKey} " +
                               $"pos={actor.normalizedPosition}  visible={actor.visible}  focused={actor.focused}");
+                }
                 return UniTask.CompletedTask;
             }
 

@@ -1,47 +1,138 @@
 using System;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
 {
     /// <summary>
-    /// 한 라인 시점에서 특정 캐릭터의 스테이지 상태 스냅샷.
-    /// StoryStageLayoutModuleSO 의 actors 리스트 원소로 직렬화된다.
-    /// 에디터 프리뷰에서 드래그로 조정하고 저장하면 런타임에도 그대로 반영된다.
+    /// Absolute actor state at a story line. StoryStageLayoutModuleSO owns these
+    /// values as sub-asset-authored source data through StoryLineSO.modules.
     /// </summary>
     [Serializable]
     public sealed class StoryActorStateData
     {
-        [Tooltip("배치할 캐릭터")]
-        public _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.CharacterDefinitionSO actor;
+        [Tooltip("Character definition used for preview visuals and runtime prefab lookup.")]
+        public CharacterDefinitionSO actor;
 
-        [Tooltip("스테이지 내 정규화 위치. X:0=왼쪽 1=오른쪽 / Y:0=아래(지면) 1=위")]
+        [Tooltip("Stable actor key. Falls back to CharacterDefinitionSO.CharacterId when empty.")]
+        public string actorKey = "";
+
+        [Tooltip("Unique stage actor instance key. Multiple entries may reference the same CharacterDefinitionSO.")]
+        public string actorInstanceKey = "";
+
+        [Tooltip("Normalized stage position. X: 0=left, 1=right / Y: 0=bottom, 1=top.")]
         public Vector2 normalizedPosition = new Vector2(0.5f, 0f);
 
-        [Tooltip("X 스케일 (음수 = 좌우 반전). 크기 보정에도 사용.")]
+        [Tooltip("Per-line scale multiplier. Default character scale is applied before this value.")]
+        public Vector2 scale = Vector2.one;
+
+        [Tooltip("Legacy horizontal scale/flip multiplier. Kept for existing preview authoring data.")]
         public float scaleX = 1f;
 
-        [Tooltip("이 라인에서 캐릭터가 보이는지 여부")]
+        [Tooltip("Whether this actor is visible at this line state.")]
         public bool visible = true;
 
-        [Tooltip("포커스 상태. false = 비포커스(어두운) 연출")]
+        [Tooltip("Whether this actor is focused. Unfocused actors can be dimmed by preview/runtime.")]
         public bool focused = true;
 
-        [Tooltip("스테이지 정렬 우선순위 (높을수록 앞에 그려짐)")]
+        [Tooltip("Stage sorting priority. Larger values are rendered in front.")]
         public int sortOrder = 0;
 
-        [Tooltip("이 라인에서 처음 등장할 때 사용하는 연출 방식")]
+        [Tooltip("Pose key for sprite/animation lookup.")]
+        public string poseKey = "";
+
+        [Tooltip("Expression key for sprite/animation lookup.")]
+        public string expressionKey = "";
+
+        [Tooltip("Optional motion profile key for shared presets in later authoring steps.")]
+        public string motionProfileKey = "";
+
+        [Tooltip("Transition used when this actor enters the accumulated stage state.")]
         public StoryEnterMotionType enterMotion = StoryEnterMotionType.FadeIn;
 
-        [Tooltip("등장 연출 시간(초). Instant 일 때는 무시됨.")]
-        [Range(0f, 2f)]
+        [Range(0f, 3f)]
         public float enterDuration = 0.35f;
 
-        [Tooltip("이전 라인 대비 위치가 달라질 때 이동 연출 시간(초)")]
-        [Range(0f, 2f)]
+        [Tooltip("Transition used when this actor moves between line states.")]
+        public StoryStageMoveMotionType moveMotion = StoryStageMoveMotionType.Linear;
+
+        [Range(0f, 3f)]
         public float moveDuration = 0.2f;
 
-        [Tooltip("포즈/표정 키 (향후 애니메이션 시스템 확장용)")]
-        public string poseKey = "";
+        [Tooltip("Transition used when this actor exits the accumulated stage state.")]
+        public StoryEnterMotionType exitMotion = StoryEnterMotionType.FadeIn;
+
+        [Range(0f, 3f)]
+        public float exitDuration = 0.25f;
+
+        public string ResolvedActorKey =>
+            !string.IsNullOrWhiteSpace(actorInstanceKey)
+                ? actorInstanceKey
+                : ResolvedCharacterKey;
+
+        public string ResolvedCharacterKey =>
+            !string.IsNullOrWhiteSpace(actorKey)
+                ? actorKey
+                : ResolveActorKey(actor);
+
+        public Vector2 EffectiveScale
+        {
+            get
+            {
+                Vector2 baseScale = ResolveNonZeroScale(actor != null ? actor.DefaultStageScale : Vector2.one);
+                Vector2 lineScale = ResolveNonZeroScale(scale);
+                return new Vector2(baseScale.x * lineScale.x * scaleX, baseScale.y * lineScale.y);
+            }
+        }
+
+        public Vector2 EffectiveOffset =>
+            actor != null ? actor.DefaultStageOffset : Vector2.zero;
+
+        public Vector2 EffectivePivot =>
+            actor != null ? actor.DefaultStagePivot : new Vector2(0.5f, 0f);
+
+        public void SyncActorKey()
+        {
+            if (string.IsNullOrWhiteSpace(actorKey))
+                actorKey = ResolveActorKey(actor);
+        }
+
+        public void EnsureActorInstanceKey(string fallbackKey)
+        {
+            if (!string.IsNullOrWhiteSpace(actorInstanceKey))
+                return;
+
+            actorInstanceKey = !string.IsNullOrWhiteSpace(fallbackKey)
+                ? fallbackKey
+                : ResolvedCharacterKey;
+        }
+
+        public bool MatchesActor(CharacterDefinitionSO target)
+        {
+            if (target == null)
+                return false;
+
+            if (actor == target)
+                return true;
+
+            string targetKey = ResolveActorKey(target);
+            return !string.IsNullOrWhiteSpace(targetKey) && ResolvedCharacterKey == targetKey;
+        }
+
+        public bool MatchesActorInstance(string instanceKey) =>
+            !string.IsNullOrWhiteSpace(instanceKey) && ResolvedActorKey == instanceKey;
+
+        public static string ResolveActorKey(CharacterDefinitionSO actorDefinition) =>
+            actorDefinition != null
+                ? !string.IsNullOrWhiteSpace(actorDefinition.CharacterId)
+                    ? actorDefinition.CharacterId
+                    : actorDefinition.name
+                : string.Empty;
+
+        private static Vector2 ResolveNonZeroScale(Vector2 value) =>
+            Mathf.Approximately(value.x, 0f) && Mathf.Approximately(value.y, 0f)
+                ? Vector2.one
+                : value;
 
         public StoryActorStateData ShallowClone() => (StoryActorStateData)MemberwiseClone();
     }

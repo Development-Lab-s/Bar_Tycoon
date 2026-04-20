@@ -19,6 +19,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         // [SerializeField]: domain reload / Play mode 진입 후에도 값 유지
         [SerializeField] private StoryEpisodeSO episode;
         [SerializeField] private float          inspectorWidth = 300f;
+        [SerializeField] private bool           inspectorCollapsed;
 
         private StoryLineSO _selectedLine;
         private string      _saveFolder        = "";
@@ -33,6 +34,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private Label                    _statusWarning;
         private Button                   _clearNextBtn;
         private Label                    _folderDisplay;
+        private VisualElement            _splitter;
+        private Button                   _collapseInspectorBtn;
 
         // ── Splitter 드래그 상태 ─────────────────────
         private bool  _splitterDragging;
@@ -41,17 +44,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private const float InspectorMinWidth = 220f;
         private const float InspectorMaxWidth = 700f;
+        private const string GraphPrefsKeyPrefix = "CheolYee.StoryGraph.";
 
         // ── 생명주기 ─────────────────────────────────
 
         private void OnEnable()
         {
+            LoadGraphLayoutPrefs();
             Undo.undoRedoPerformed += OnUndoRedoPerformed;
         }
 
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedoPerformed;
+            SaveGraphLayoutPrefs();
             var key = EpisodePrefsKey;
             if (key != null) _canvas?.SaveViewState(key);
         }
@@ -112,6 +118,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             _inspectorPanel.LineChanged += OnInspectorLineChanged;
             center.Add(_inspectorPanel);
+            ApplyGraphInspectorCollapseState();
 
             root.Add(center);
 
@@ -158,6 +165,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     cursor = new StyleCursor(StyleKeyword.Auto)
                 }
             };
+            _splitter = s;
 
             s.RegisterCallback<MouseEnterEvent>(_ =>
                 s.style.backgroundColor = new StyleColor(new Color(0.25f, 0.45f, 0.75f)));
@@ -166,7 +174,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             s.RegisterCallback<PointerDownEvent>(evt =>
             {
-                if (evt.button != 0) return;
+                if (evt.button != 0 || inspectorCollapsed) return;
                 _splitterDragging   = true;
                 _splitterStartX     = evt.position.x;
                 _splitterStartWidth = inspectorWidth;
@@ -191,6 +199,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 if (!_splitterDragging) return;
                 _splitterDragging = false;
                 s.ReleasePointer(evt.pointerId);
+                SaveGraphLayoutPrefs();
                 evt.StopPropagation();
             });
 
@@ -376,6 +385,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             bar.Add(previewBtn);
 
+            _collapseInspectorBtn = new Button(ToggleGraphInspectorCollapsed)
+            {
+                text = inspectorCollapsed ? "Inspector +" : "Inspector -",
+                style =
+                {
+                    height = 22,
+                    paddingLeft = 8,
+                    paddingRight = 8,
+                    marginLeft = 6
+                }
+            };
+            bar.Add(_collapseInspectorBtn);
+
             return bar;
         }
 
@@ -544,6 +566,64 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         }
 
         // ── 하단 상태 바 ─────────────────────────────
+
+        private void ToggleGraphInspectorCollapsed()
+        {
+            if (!inspectorCollapsed)
+                CaptureGraphInspectorWidth();
+
+            inspectorCollapsed = !inspectorCollapsed;
+            ApplyGraphInspectorCollapseState();
+            SaveGraphLayoutPrefs();
+        }
+
+        private void ApplyGraphInspectorCollapseState()
+        {
+            if (_inspectorPanel != null)
+            {
+                if (inspectorCollapsed)
+                {
+                    _inspectorPanel.style.display = DisplayStyle.None;
+                }
+                else
+                {
+                    _inspectorPanel.style.display = DisplayStyle.Flex;
+                    _inspectorPanel.style.width = inspectorWidth;
+                }
+            }
+
+            if (_splitter != null)
+                _splitter.style.display = inspectorCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
+
+            if (_collapseInspectorBtn != null)
+                _collapseInspectorBtn.text = inspectorCollapsed ? "Inspector +" : "Inspector -";
+        }
+
+        private void CaptureGraphInspectorWidth()
+        {
+            if (_inspectorPanel == null || inspectorCollapsed)
+                return;
+
+            float width = _inspectorPanel.resolvedStyle.width > 0
+                ? _inspectorPanel.resolvedStyle.width
+                : inspectorWidth;
+            inspectorWidth = Mathf.Clamp(width, InspectorMinWidth, InspectorMaxWidth);
+        }
+
+        private void LoadGraphLayoutPrefs()
+        {
+            inspectorCollapsed = EditorPrefs.GetBool(GraphPrefsKeyPrefix + "InspectorCollapsed", inspectorCollapsed);
+            inspectorWidth = Mathf.Clamp(
+                EditorPrefs.GetFloat(GraphPrefsKeyPrefix + "InspectorWidth", inspectorWidth),
+                InspectorMinWidth,
+                InspectorMaxWidth);
+        }
+
+        private void SaveGraphLayoutPrefs()
+        {
+            EditorPrefs.SetBool(GraphPrefsKeyPrefix + "InspectorCollapsed", inspectorCollapsed);
+            EditorPrefs.SetFloat(GraphPrefsKeyPrefix + "InspectorWidth", inspectorWidth);
+        }
 
         private VisualElement BuildStatusBar()
         {

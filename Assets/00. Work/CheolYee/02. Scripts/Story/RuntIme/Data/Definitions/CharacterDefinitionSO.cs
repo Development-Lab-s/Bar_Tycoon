@@ -1,3 +1,4 @@
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
@@ -28,11 +29,22 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         [Tooltip("StoryPreviewWindow 에서 표시할 스프라이트. 없으면 LogIcon 사용.")]
         [SerializeField] private Sprite previewSprite;
 
+        [Header("Stage Defaults")]
+        [SerializeField] private Vector2 defaultStageScale = Vector2.one;
+        [SerializeField] private Vector2 defaultStageOffset = Vector2.zero;
+        [SerializeField] private Vector2 defaultStagePivot = new Vector2(0.5f, 0f);
+        [SerializeField] private StoryActorMotionProfileData defaultMotionProfile = new();
+
         //캐릭터 정의의 각 필드에 대한 공개 읽기 전용 프로퍼티입니다.
         public string CharacterId => characterId;
         public string DisplayName => displayName;
         public Sprite LogIcon => logIcon;
         public GameObject DefaultActorPrefab => defaultActorPrefab;
+        public GameObject ActorPrefab => defaultActorPrefab;
         public Sprite PreviewSprite => previewSprite != null ? previewSprite : logIcon;
+        public Vector2 DefaultStageScale => defaultStageScale;
+        public Vector2 DefaultStageOffset => defaultStageOffset;
+        public Vector2 DefaultStagePivot => defaultStagePivot;
+        public StoryActorMotionProfileData DefaultMotionProfile => defaultMotionProfile;
     }
 }

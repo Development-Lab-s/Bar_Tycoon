@@ -102,8 +102,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             var targetMap = new Dictionary<string, StoryActorStateData>();
             foreach (var data in targetActors)
             {
-                if (data?.actor == null) continue;
-                string id = data.actor.CharacterId;
+                if (data == null) continue;
+                string id = data.ResolvedActorKey;
                 if (!string.IsNullOrWhiteSpace(id))
                     targetMap[id] = data;
             }
@@ -129,7 +129,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                 if (!_actors.ContainsKey(charId))
                 {
                     // 신규 등장
-                    var prefab = data.actor.DefaultActorPrefab;
+                    var prefab = data.actor != null ? data.actor.DefaultActorPrefab : null;
                     if (prefab == null) continue;
                     var instance = Instantiate(prefab, parent);
                     var entry = new ActorEntry(instance, data.actor);
@@ -139,7 +139,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                 var actorEntry = _actors[charId];
                 if (actorEntry.Instance != null)
                 {
-                    actorEntry.Instance.transform.position = NormPosToWorld(data.normalizedPosition);
+                    actorEntry.Instance.transform.position = NormPosToWorld(data);
+                    Vector2 effectiveScale = data.EffectiveScale;
+                    actorEntry.Instance.transform.localScale = new Vector3(
+                        actorEntry.BaseScale.x * effectiveScale.x,
+                        actorEntry.BaseScale.y * effectiveScale.y,
+                        actorEntry.BaseScale.z);
                     actorEntry.Instance.SetActive(data.visible);
                     actorEntry.ApplyTint(data.focused ? focusColor : dimColor);
                 }
@@ -148,10 +153,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             return UniTask.CompletedTask;
         }
 
-        private Vector3 NormPosToWorld(Vector2 normPos)
+        private Vector3 NormPosToWorld(StoryActorStateData data)
         {
             Vector3 left  = leftAnchor  != null ? leftAnchor.position  : new Vector3(-3f, 0f, 0f);
             Vector3 right = rightAnchor != null ? rightAnchor.position : new Vector3( 3f, 0f, 0f);
+            Vector2 normPos = data.normalizedPosition + data.EffectiveOffset;
             return Vector3.Lerp(left, right, normPos.x);
         }
 
@@ -171,11 +177,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
         private sealed class ActorEntry
         {
             public GameObject Instance { get; }
+            public Vector3 BaseScale { get; }
             private readonly SpriteRenderer[] _spriteRenderers;
 
             public ActorEntry(GameObject instance, CharacterDefinitionSO character)
             {
                 Instance = instance;
+                BaseScale = instance != null ? instance.transform.localScale : Vector3.one;
                 _spriteRenderers = instance != null
                     ? instance.GetComponentsInChildren<SpriteRenderer>(true)
                     : new SpriteRenderer[0];
