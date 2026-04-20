@@ -1395,7 +1395,28 @@ MonoBehaviour:
   buttonCanvas: {fileID: 2056491710}
   content: {fileID: 1712599677}
   coinSystemSo: {fileID: 11400000, guid: aa25e2a5a26884c4cbc3fe9e1fafc54a, type: 2}
-  upgradeChannel: {fileID: 11400000, guid: 95ef563aa9b932e48b4ebc0fb05e82ed, type: 2}
+  upgradeDataList:
+  - buttonType: 0
+    upgradeGroups:
+    - upgradeDataSo: {fileID: 11400000, guid: 17463048b8b208340b68ae02da18efea, type: 2}
+      currentLevel: 0
+    - upgradeDataSo: {fileID: 11400000, guid: eca7e9da4c5ed8f4ea7ec3f8ad6d45ba, type: 2}
+      currentLevel: 0
+    upgradeChannel: {fileID: 11400000, guid: 95ef563aa9b932e48b4ebc0fb05e82ed, type: 2}
+  - buttonType: 1
+    upgradeGroups:
+    - upgradeDataSo: {fileID: 11400000, guid: 68d004919b1ed6946a9bf1dc30a81422, type: 2}
+      currentLevel: 0
+    - upgradeDataSo: {fileID: 11400000, guid: 350fa9b8bc08b1a4dba683edbccde209, type: 2}
+      currentLevel: 0
+    - upgradeDataSo: {fileID: 11400000, guid: 2f05836076dd41b4eb2ffccb041fc95e, type: 2}
+      currentLevel: 0
+    upgradeChannel: {fileID: 11400000, guid: 545f7110fd870a54ba651478ade1fcad, type: 2}
+  - buttonType: 2
+    upgradeGroups:
+    - upgradeDataSo: {fileID: 11400000, guid: 43d0116fea95b5a4aba4bb2d8a91d4f2, type: 2}
+      currentLevel: 0
+    upgradeChannel: {fileID: 11400000, guid: 3e898470583738a4bb978dc41a5f615c, type: 2}
 --- !u!1 &1560015414
 GameObject:
   m_ObjectHideFlags: 0
@@ -2290,6 +2311,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5810925593354823545, guid: c6cccd3a0df09dd46a02543114f69de8, type: 3}
+      propertyPath: m_ChunkCullingBounds.x
+      value: 0.005928874
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2507,11 +2532,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.Goat._02._Scripts.UI.UpgradeUI.ButtonInformation
   <ButtonType>k__BackingField: 0
   button: {fileID: 6133410168756032511}
-  <UpgradeGroups>k__BackingField:
-  - upgradeDataSo: {fileID: 11400000, guid: 17463048b8b208340b68ae02da18efea, type: 2}
-    currentLevel: 0
-  - upgradeDataSo: {fileID: 11400000, guid: eca7e9da4c5ed8f4ea7ec3f8ad6d45ba, type: 2}
-    currentLevel: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

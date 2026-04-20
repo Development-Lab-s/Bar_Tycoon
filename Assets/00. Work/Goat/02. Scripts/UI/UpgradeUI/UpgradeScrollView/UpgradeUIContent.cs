@@ -20,7 +20,8 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeScrollView
         
         private void InitSlots(int count)
         {
-            for (int i = 0; i < count; i++) CreateSlot();
+            for (int i = 0; i < count; i++) 
+                CreateSlot();
         }
         
         private void CreateSlot()
@@ -39,9 +40,8 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeScrollView
             {
                 UpgradeSlotUI slot = _slotList[i];
                 UpgradeData data = dataList[i];
-                UpgradeDataSO so = data.upgradeDataSo;
                 
-                string cost = data.currentLevel >= so.MaxLevel ? "MAX" : so.Costs[data.currentLevel].ToString();
+                string cost = data.GetCost();
                 
                 slot.gameObject.SetActive(true);
                 slot.SetView(data, cost);
