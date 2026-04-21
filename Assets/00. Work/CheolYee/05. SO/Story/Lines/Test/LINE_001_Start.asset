@@ -30,7 +30,7 @@ MonoBehaviour:
   modules:
   - {fileID: 1403048445548188280}
   - {fileID: 6427056707420760788}
-  editorNodePosition: {x: 1038.4286, y: 1666.2219}
+  editorNodePosition: {x: 1026.9244, y: 1682.6133}
   editorNodeSize: {x: 426.97174, y: 176.21661}
 --- !u!114 &1403048445548188280
 MonoBehaviour:
@@ -79,6 +79,8 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
     sortOrder: -100
+    transitionMotion: 1
+    transitionDuration: 0.35
     enterMotion: 1
     enterDuration: 0.35
     exitMotion: 1
@@ -86,9 +88,9 @@ MonoBehaviour:
   actors:
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
-    actorInstanceKey: 
-    normalizedPosition: {x: 0.8528984, y: 0.0016303639}
-    scale: {x: 1, y: 1}
+    actorInstanceKey: cian
+    normalizedPosition: {x: 1.0652355, y: 0.14817888}
+    scale: {x: 1.298518, y: 0.6596184}
     scaleX: 5
     visible: 1
     focused: 1
@@ -96,15 +98,15 @@ MonoBehaviour:
     poseKey: 
     expressionKey: 
     motionProfileKey: 
-    enterMotion: 2
+    enterMotion: 1
     enterDuration: 0.2
-    moveMotion: 0
-    moveDuration: 100
+    moveMotion: 1
+    moveDuration: 1
     exitMotion: 0
     exitDuration: 0
   - actor: {fileID: 11400000, guid: c8843c3fa860e8d4f8ace47ffb255fbe, type: 2}
     actorKey: Rin
-    actorInstanceKey: 
+    actorInstanceKey: Rin
     normalizedPosition: {x: 0.18, y: 0.0030779608}
     scale: {x: 1, y: 1}
     scaleX: 4.8
@@ -114,9 +116,10 @@ MonoBehaviour:
     poseKey: 
     expressionKey: 
     motionProfileKey: 
-    enterMotion: 2
-    enterDuration: 0.2
+    enterMotion: 1
+    enterDuration: 1
     moveMotion: 0
-    moveDuration: 100
-    exitMotion: 0
-    exitDuration: 0
+    moveDuration: 1
+    exitMotion: 1
+    exitDuration: 1
+  actorTracks: []

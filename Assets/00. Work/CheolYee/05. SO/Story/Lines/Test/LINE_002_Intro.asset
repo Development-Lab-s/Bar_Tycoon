@@ -31,7 +31,7 @@ MonoBehaviour:
   modules:
   - {fileID: 5197777546466959941}
   - {fileID: 5510174144787720421}
-  editorNodePosition: {x: 1418, y: 1673}
+  editorNodePosition: {x: 1408.0343, y: 1686.4828}
   editorNodeSize: {x: 260, y: 139}
 --- !u!114 &5197777546466959941
 MonoBehaviour:
@@ -66,8 +66,8 @@ MonoBehaviour:
   canSkip: 1
   affectsAutoAdvance: 0
   background:
-    background: {fileID: 0}
-    backgroundKey: 
+    background: {fileID: 11400000, guid: aa9cfe2edd1ce9f41b118a83f04571f8, type: 2}
+    backgroundKey: test_1
     variantKey: 
     visible: 1
     normalizedOffset: {x: 0, y: 0}
@@ -76,6 +76,8 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
     sortOrder: -100
+    transitionMotion: 1
+    transitionDuration: 2
     enterMotion: 1
     enterDuration: 0.35
     exitMotion: 1
@@ -83,8 +85,8 @@ MonoBehaviour:
   actors:
   - actor: {fileID: 11400000, guid: c8843c3fa860e8d4f8ace47ffb255fbe, type: 2}
     actorKey: Rin
-    actorInstanceKey: 
-    normalizedPosition: {x: 0.8055073, y: -0.008685581}
+    actorInstanceKey: Rin
+    normalizedPosition: {x: 0.81579524, y: -0.008685581}
     scale: {x: 0, y: 0}
     scaleX: 5
     visible: 1
@@ -96,12 +98,12 @@ MonoBehaviour:
     enterMotion: 0
     enterDuration: 0
     moveMotion: 0
-    moveDuration: 0
+    moveDuration: 1
     exitMotion: 0
     exitDuration: 0
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
-    actorInstanceKey: 
+    actorInstanceKey: cian
     normalizedPosition: {x: 0.13118395, y: -0.003964059}
     scale: {x: 1, y: 1}
     scaleX: 5
@@ -112,8 +114,9 @@ MonoBehaviour:
     expressionKey: 
     motionProfileKey: 
     enterMotion: 2
-    enterDuration: 0.2
-    moveMotion: 0
-    moveDuration: 100
-    exitMotion: 0
-    exitDuration: 0
+    enterDuration: 1
+    moveMotion: 2
+    moveDuration: 1
+    exitMotion: 1
+    exitDuration: 1
+  actorTracks: []

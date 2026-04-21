@@ -83,6 +83,8 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
     sortOrder: -100
+    transitionMotion: 1
+    transitionDuration: 0.35
     enterMotion: 1
     enterDuration: 0.35
     exitMotion: 1
@@ -90,6 +92,7 @@ MonoBehaviour:
   actors:
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
+    actorInstanceKey: 
     normalizedPosition: {x: 0.85, y: 0.001321353}
     scale: {x: 1, y: 1}
     scaleX: 5
@@ -105,3 +108,22 @@ MonoBehaviour:
     moveDuration: 100
     exitMotion: 0
     exitDuration: 0
+  - actor: {fileID: 11400000, guid: c8843c3fa860e8d4f8ace47ffb255fbe, type: 2}
+    actorKey: Rin
+    actorInstanceKey: Rin
+    normalizedPosition: {x: 0.13811912, y: -0.005303547}
+    scale: {x: 0, y: 0}
+    scaleX: 5
+    visible: 1
+    focused: 0
+    sortOrder: 0
+    poseKey: 
+    expressionKey: 
+    motionProfileKey: 
+    enterMotion: 0
+    enterDuration: 0
+    moveMotion: 0
+    moveDuration: 0
+    exitMotion: 0
+    exitDuration: 0
+  actorTracks: []

@@ -28,6 +28,77 @@ MonoBehaviour:
     allowReplayInLog: 1
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
-  modules: []
+  modules:
+  - {fileID: 3076370241938198291}
   editorNodePosition: {x: 2099.569, y: 1803}
   editorNodeSize: {x: -1, y: -1}
+--- !u!114 &3076370241938198291
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb28fc288a95cfd42b44da0593857113, type: 3}
+  m_Name: StoryStageLayoutModuleSO
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules.StoryStageLayoutModuleSO
+  timing: 0
+  isBlocking: 0
+  canSkip: 1
+  affectsAutoAdvance: 0
+  background:
+    background: {fileID: 11400000, guid: aa9cfe2edd1ce9f41b118a83f04571f8, type: 2}
+    backgroundKey: test_1
+    variantKey: 
+    visible: 1
+    normalizedOffset: {x: 0, y: 0}
+    scale: {x: 1, y: 1}
+    pivot: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    sortOrder: -100
+    transitionMotion: 1
+    transitionDuration: 2
+    enterMotion: 1
+    enterDuration: 0.35
+    exitMotion: 1
+    exitDuration: 0.25
+  actors:
+  - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
+    actorKey: cian
+    actorInstanceKey: cian
+    normalizedPosition: {x: 0.85, y: 0.001321353}
+    scale: {x: 1, y: 1}
+    scaleX: 5
+    visible: 1
+    focused: 1
+    sortOrder: 0
+    poseKey: 
+    expressionKey: 
+    motionProfileKey: 
+    enterMotion: 2
+    enterDuration: 0.2
+    moveMotion: 0
+    moveDuration: 100
+    exitMotion: 0
+    exitDuration: 0
+  - actor: {fileID: 11400000, guid: c8843c3fa860e8d4f8ace47ffb255fbe, type: 2}
+    actorKey: Rin
+    actorInstanceKey: Rin
+    normalizedPosition: {x: 0.14253487, y: -0.005303547}
+    scale: {x: 0, y: 0}
+    scaleX: 5
+    visible: 1
+    focused: 0
+    sortOrder: 0
+    poseKey: 
+    expressionKey: 
+    motionProfileKey: 
+    enterMotion: 0
+    enterDuration: 0
+    moveMotion: 0
+    moveDuration: 0
+    exitMotion: 0
+    exitDuration: 0

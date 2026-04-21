@@ -29,8 +29,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 previewMode = (PreviewMode)e.newValue;
                 ApplyPreviewModeVisibility();
+                RebuildActorLayer();
+                RefreshActorInspector();
             });
             bar.Add(_previewModeField);
+
+            _dialogueDisplayField = new EnumField("Dialogue", dialogueDisplayMode) { style = { width = 165, marginRight = 8 } };
+            _dialogueDisplayField.RegisterValueChangedCallback(e =>
+            {
+                dialogueDisplayMode = (DialogueDisplayMode)e.newValue;
+                RefreshDialogue();
+                RefreshChoices();
+                ApplyPreviewModeVisibility();
+            });
+            bar.Add(_dialogueDisplayField);
 
             _workspaceModeBtn = MakeBtn("Workspace", new Color(0.24f, 0.24f, 0.28f), TogglePreviewWorkspaceMode);
             _collapseInspectorBtn = MakeBtn("Inspector -", new Color(0.22f, 0.22f, 0.26f), TogglePreviewInspectorCollapsed);
@@ -39,6 +51,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _playBtn           = MakeBtn("▶ Play",      new Color(0.18f, 0.50f, 0.18f), OnPlay);
             _fromHereBtn       = MakeBtn("▶ From Here", new Color(0.18f, 0.35f, 0.55f), OnFromHere);
             _sampleLineBtn     = MakeBtn("Sample Line", new Color(0.35f, 0.35f, 0.18f), OnSampleLine);
+            _prevLineBtn       = MakeBtn("Prev Line",   new Color(0.24f, 0.28f, 0.34f), OnPreviousLine);
+            _nextLineAuthoringBtn = MakeBtn("Next Line", new Color(0.24f, 0.28f, 0.34f), OnNextLine);
             _stopBtn           = MakeBtn("■ Stop",      new Color(0.50f, 0.18f, 0.18f), OnStop);
             _nextBtn           = MakeBtn("▷ Next",      new Color(0.30f, 0.30f, 0.30f), OnNext);
             _refreshGameViewBtn = MakeBtn("↻ Game View", new Color(0.25f, 0.25f, 0.32f), RefreshRenderAreaFromGameView);
@@ -47,6 +61,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             bar.Add(_collapseInspectorBtn);
             bar.Add(_collapseRuntimeUiBtn);
             bar.Add(_playBtn); bar.Add(_fromHereBtn); bar.Add(_sampleLineBtn);
+            bar.Add(_prevLineBtn); bar.Add(_nextLineAuthoringBtn);
             bar.Add(_stopBtn); bar.Add(_nextBtn);     bar.Add(_refreshGameViewBtn);
 
             _statusLabel = new Label("정지") { style = { marginLeft = 10, fontSize = 10, color = new StyleColor(new Color(0.55f, 0.55f, 0.55f)) } };
@@ -109,22 +124,29 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void ApplyPreviewLayoutVisibility()
         {
+            ApplyInspectorPanelVisibility();
+            RefreshPreviewLayoutButtons();
+            ApplyPreviewModeVisibility();
+        }
+
+        private void ApplyInspectorPanelVisibility()
+        {
+            bool showInspector = IsStageAuthoringMode && !_previewInspectorCollapsed;
+
             if (_inspectorPanel != null)
             {
-                if (_previewInspectorCollapsed)
-                {
-                    _inspectorPanel.style.display = DisplayStyle.None;
-                }
-                else
+                if (showInspector)
                 {
                     _inspectorPanel.style.display = DisplayStyle.Flex;
                     _inspectorPanel.style.width = Mathf.Clamp(_previewInspectorExpandedWidth, MinInspectorWidth, MaxInspectorWidth);
                 }
+                else
+                {
+                    _inspectorPanel.style.display = DisplayStyle.None;
+                }
             }
 
-            SetElementVisible(_inspectorSplitter, !_previewInspectorCollapsed);
-            RefreshPreviewLayoutButtons();
-            ApplyPreviewModeVisibility();
+            SetElementVisible(_inspectorSplitter, showInspector);
         }
 
         private void RefreshPreviewLayoutButtons()
@@ -195,8 +217,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _stageWorld = new VisualElement
             {
                 name = "StageWorld",
-                style = { position = Position.Absolute, left = 0, top = 0, overflow = Overflow.Visible }
+                style =
+                {
+                    position = Position.Absolute,
+                    left = 0,
+                    top = 0,
+                    width = DefaultUnitPixels,
+                    height = DefaultUnitPixels,
+                    overflow = Overflow.Visible
+                }
             };
+            _stageWorld.style.transformOrigin = new TransformOrigin(
+                new Length(0, LengthUnit.Pixel),
+                new Length(0, LengthUnit.Pixel),
+                0);
 
             _authoringGridLayer = BuildAuthoringGridLayer();
 

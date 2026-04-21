@@ -3,6 +3,12 @@
 @.claude/shared/project-summary.md
 @.claude/shared/glossary.md
 
+## Encoding
+- Save Markdown, C# source, and Unity text assets as UTF-8.
+- When using PowerShell to read files, prefer `Get-Content -Encoding UTF8`.
+- When a tool must write text directly, specify UTF-8 explicitly and verify Korean text did not become mojibake.
+- Prefer patch-based edits for shared docs and source files so Claude/Codex do not disagree on encoding.
+
 ## How to work in this repo
 - Read the relevant rule files before making large edits.
 - Prefer small, reviewable changes over broad refactors.

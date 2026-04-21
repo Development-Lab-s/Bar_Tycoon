@@ -53,6 +53,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             _authoringToolsRoot.Add(MakeBoldLabel("Stage Authoring"));
 
+            _importPreviousStageBtn = new Button(OnImportPreviousStageClicked)
+            {
+                text = "Import Previous Stage",
+                style = { height = 22, marginBottom = 4 }
+            };
+            _authoringToolsRoot.Add(_importPreviousStageBtn);
+
+            _previewTransitionBtn = new Button(OnPreviewTransitionClicked)
+            {
+                text = "Preview Line Motion",
+                style = { height = 22, marginBottom = 8 }
+            };
+            _authoringToolsRoot.Add(_previewTransitionBtn);
+
             _addActorField = new ObjectField("Actor")
             {
                 objectType = typeof(CharacterDefinitionSO),
@@ -312,6 +326,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_inspectorRoot == null) return;
             _inspectorRoot.Clear();
 
+            if (!IsStageAuthoringMode)
+            {
+                _inspectorRoot.Add(new Label("Runtime Preview is read-only.")
+                {
+                    style = { fontSize = 10, color = new StyleColor(new Color(0.55f, 0.55f, 0.58f)), marginTop = 8 }
+                });
+                return;
+            }
+
             if (_selectionKind == StageSelectionKind.Background)
             {
                 BuildBackgroundInspector();
@@ -322,7 +345,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 || string.IsNullOrWhiteSpace(_selectedActorKey)
                 || !_stageState.TryGetValue(_selectedActorKey, out var data))
             {
-                _inspectorRoot.Add(new Label("No actor selected")
+            _inspectorRoot.Add(new Label("No actor selected")
                 {
                     style = { fontSize = 10, color = new StyleColor(new Color(0.5f, 0.5f, 0.5f)), marginTop = 8 }
                 });
@@ -330,6 +353,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
 
             CharacterDefinitionSO actor = data.actor;
+            _inspectorRoot.Add(MakeBoldLabel("Actor"));
             _inspectorRoot.Add(MakeBoldLabel(actor != null ? actor.DisplayName : data.ResolvedActorKey));
             _inspectorRoot.Add(MakeSeparator());
 
@@ -350,6 +374,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             characterField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 var nextActor = e.newValue as CharacterDefinitionSO;
                 data.actor = nextActor;
                 data.actorKey = StoryActorStateData.ResolveActorKey(nextActor);
@@ -373,6 +398,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             posField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.normalizedPosition = e.newValue;
                 RepositionActors();
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.normalizedPosition = e.newValue);
@@ -389,8 +415,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             actorScaleField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.scale = ResolveNonZeroScale(e.newValue);
-                RebuildActorLayer();
+                PositionSelectedActorElement();
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.scale = data.scale);
             });
             _inspectorRoot.Add(actorScaleField);
@@ -406,8 +433,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             scaleField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.scaleX = e.newValue;
-                RebuildActorLayer();
+                PositionSelectedActorElement();
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.scaleX = e.newValue);
             });
             _inspectorRoot.Add(scaleField);
@@ -423,6 +451,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             visToggle.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.visible = e.newValue;
                 RebuildActorLayer();
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.visible = e.newValue);
@@ -439,6 +468,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             focToggle.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.focused = e.newValue;
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.focused = e.newValue);
                 RebuildActorLayer();
@@ -457,6 +487,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             sortField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.sortOrder = e.newValue;
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.sortOrder = e.newValue);
                 RebuildActorLayer();
@@ -464,9 +495,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _inspectorRoot.Add(sortField);
 
             _inspectorRoot.Add(MakeSeparator());
-            _inspectorRoot.Add(MakeBoldLabel("Enter Motion"));
+            _inspectorRoot.Add(MakeBoldLabel("Motion"));
+            _inspectorRoot.Add(new Label("Preview: previous accumulated state -> current line state")
+            {
+                style =
+                {
+                    fontSize = 9,
+                    color = new StyleColor(new Color(0.58f, 0.60f, 0.66f)),
+                    whiteSpace = WhiteSpace.Normal,
+                    marginBottom = 4
+                }
+            });
 
-            var motionField = new EnumField("Motion", data.enterMotion)
+            var motionField = new EnumField("Enter", data.enterMotion)
             {
                 style =
                 {
@@ -475,13 +516,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             motionField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 var v = (StoryEnterMotionType)e.newValue;
                 data.enterMotion = v;
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.enterMotion = v);
             });
             _inspectorRoot.Add(motionField);
 
-            var durField = new FloatField("Duration")
+            var durField = new FloatField("Enter Duration")
             {
                 value = data.enterDuration,
                 style =
@@ -491,10 +533,63 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             durField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.enterDuration = Mathf.Clamp(e.newValue, 0f, 3f);
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.enterDuration = data.enterDuration);
             });
             _inspectorRoot.Add(durField);
+
+            var moveField = new EnumField("Move", data.moveMotion)
+            {
+                style = { marginBottom = 3 }
+            };
+            moveField.RegisterValueChangedCallback(e =>
+            {
+                if (!IsStageAuthoringMode) return;
+                var v = (StoryStageMoveMotionType)e.newValue;
+                data.moveMotion = v;
+                SaveActorStateToCurrent(_selectedActorKey, entry => entry.moveMotion = v);
+            });
+            _inspectorRoot.Add(moveField);
+
+            var moveDurationField = new FloatField("Move Duration")
+            {
+                value = data.moveDuration,
+                style = { marginBottom = 3 }
+            };
+            moveDurationField.RegisterValueChangedCallback(e =>
+            {
+                if (!IsStageAuthoringMode) return;
+                data.moveDuration = Mathf.Clamp(e.newValue, 0f, 3f);
+                SaveActorStateToCurrent(_selectedActorKey, entry => entry.moveDuration = data.moveDuration);
+            });
+            _inspectorRoot.Add(moveDurationField);
+
+            var exitField = new EnumField("Exit", data.exitMotion)
+            {
+                style = { marginBottom = 3 }
+            };
+            exitField.RegisterValueChangedCallback(e =>
+            {
+                if (!IsStageAuthoringMode) return;
+                var v = (StoryEnterMotionType)e.newValue;
+                data.exitMotion = v;
+                SaveActorStateToCurrent(_selectedActorKey, entry => entry.exitMotion = v);
+            });
+            _inspectorRoot.Add(exitField);
+
+            var exitDurationField = new FloatField("Exit Duration")
+            {
+                value = data.exitDuration,
+                style = { marginBottom = 3 }
+            };
+            exitDurationField.RegisterValueChangedCallback(e =>
+            {
+                if (!IsStageAuthoringMode) return;
+                data.exitDuration = Mathf.Clamp(e.newValue, 0f, 3f);
+                SaveActorStateToCurrent(_selectedActorKey, entry => entry.exitDuration = data.exitDuration);
+            });
+            _inspectorRoot.Add(exitDurationField);
             return;
 
             void RepositionActors()
@@ -525,6 +620,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             definitionField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 var next = e.newValue as BackgroundDefinitionSO;
                 data.background = next;
                 data.backgroundKey = ResolveBackgroundKey(next);
@@ -545,6 +641,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             keyField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.backgroundKey = e.newValue ?? "";
                 SaveBackgroundStateToCurrent(entry => entry.backgroundKey = data.backgroundKey);
             });
@@ -557,6 +654,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             visibleToggle.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.visible = e.newValue;
                 SaveBackgroundStateToCurrent(entry => entry.visible = e.newValue);
             });
@@ -569,6 +667,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             offsetField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.normalizedOffset = e.newValue;
                 SaveBackgroundStateToCurrent(entry => entry.normalizedOffset = e.newValue);
             });
@@ -581,6 +680,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             scaleField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.scale = ResolveNonZeroScale(e.newValue);
                 SaveBackgroundStateToCurrent(entry => entry.scale = data.scale);
             });
@@ -593,14 +693,47 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             sortField.RegisterValueChangedCallback(e =>
             {
+                if (!IsStageAuthoringMode) return;
                 data.sortOrder = e.newValue;
                 SaveBackgroundStateToCurrent(entry => entry.sortOrder = e.newValue);
             });
             _inspectorRoot.Add(sortField);
+
+            _inspectorRoot.Add(MakeSeparator());
+            _inspectorRoot.Add(MakeBoldLabel("Transition"));
+
+            var transitionField = new EnumField("Motion", data.transitionMotion)
+            {
+                style = { marginBottom = 3 }
+            };
+            transitionField.RegisterValueChangedCallback(e =>
+            {
+                if (!IsStageAuthoringMode) return;
+                var v = (StoryEnterMotionType)e.newValue;
+                data.transitionMotion = v;
+                SaveBackgroundStateToCurrent(entry => entry.transitionMotion = v);
+            });
+            _inspectorRoot.Add(transitionField);
+
+            var transitionDurationField = new FloatField("Duration")
+            {
+                value = data.transitionDuration,
+                style = { marginBottom = 3 }
+            };
+            transitionDurationField.RegisterValueChangedCallback(e =>
+            {
+                if (!IsStageAuthoringMode) return;
+                data.transitionDuration = Mathf.Clamp(e.newValue, 0f, 3f);
+                SaveBackgroundStateToCurrent(entry => entry.transitionDuration = data.transitionDuration);
+            });
+            _inspectorRoot.Add(transitionDurationField);
         }
 
         private void OnAddActorClicked()
         {
+            if (!IsStageAuthoringMode)
+                return;
+
             var actor = _addActorField?.value as CharacterDefinitionSO;
             if (_currentLine == null || actor == null)
                 return;
@@ -628,8 +761,49 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             SaveLayoutAndRefresh(layout);
         }
 
+        private void OnImportPreviousStageClicked()
+        {
+            if (!IsStageAuthoringMode || _currentLine == null || FindCurrentStageLayout() != null)
+                return;
+
+            if (!TryBuildStageStateBeforeLine(_currentLine, out var previousActors, out var previousBackground))
+                return;
+
+            if (previousActors.Count == 0 && previousBackground == null)
+                return;
+
+            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Import Previous Stage");
+            if (layout == null)
+                return;
+
+            Undo.RecordObject(layout, "Import Previous Stage");
+            layout.ActorsEditable.Clear();
+
+            foreach (var pair in previousActors)
+            {
+                StoryActorStateData clone = pair.Value.ShallowClone();
+                clone.EnsureActorInstanceKey(pair.Key);
+                clone.SyncActorKey();
+                layout.ActorsEditable.Add(clone);
+            }
+
+            CopyBackgroundState(previousBackground, layout.BackgroundEditable);
+            SaveLayoutAndRefresh(layout);
+        }
+
+        private void OnPreviewTransitionClicked()
+        {
+            if (!IsStageAuthoringMode || _currentLine == null)
+                return;
+
+            StartLineTransitionPreview(_currentLine);
+        }
+
         private void OnRemoveSelectedActorClicked()
         {
+            if (!IsStageAuthoringMode)
+                return;
+
             if (_currentLine == null || _selectionKind != StageSelectionKind.Actor || string.IsNullOrWhiteSpace(_selectedActorKey))
                 return;
 
@@ -655,6 +829,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void OnSetBackgroundClicked()
         {
+            if (!IsStageAuthoringMode)
+                return;
+
             var background = _setBackgroundField?.value as BackgroundDefinitionSO;
             if (_currentLine == null || background == null)
                 return;
@@ -679,6 +856,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void OnClearBackgroundClicked()
         {
+            if (!IsStageAuthoringMode)
+                return;
+
             if (_currentLine == null)
                 return;
 
@@ -700,14 +880,22 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void RefreshAuthoringControls()
         {
-            bool isAuthoring = previewMode == PreviewMode.StageAuthoring;
+            bool isAuthoring = IsStageAuthoringMode;
             bool hasLine = _currentLine != null;
+            bool hasCurrentStageLayout = FindCurrentStageLayout() != null;
+            bool hasPreviousStage = hasLine && TryBuildStageStateBeforeLine(
+                _currentLine,
+                out var previousActors,
+                out var previousBackground)
+                && (previousActors.Count > 0 || previousBackground != null);
 
             SetElementVisible(_authoringToolsRoot, isAuthoring);
-            _addActorBtn?.SetEnabled(hasLine && _addActorField?.value is CharacterDefinitionSO);
-            _removeSelectedActorBtn?.SetEnabled(hasLine && _selectionKind == StageSelectionKind.Actor && !string.IsNullOrWhiteSpace(_selectedActorKey));
-            _setBackgroundBtn?.SetEnabled(hasLine && _setBackgroundField?.value is BackgroundDefinitionSO);
-            _clearBackgroundBtn?.SetEnabled(hasLine);
+            _importPreviousStageBtn?.SetEnabled(isAuthoring && hasLine && !hasCurrentStageLayout && hasPreviousStage);
+            _previewTransitionBtn?.SetEnabled(isAuthoring && hasLine && (hasCurrentStageLayout || _stageState.Count > 0 || hasPreviousStage));
+            _addActorBtn?.SetEnabled(isAuthoring && hasLine && _addActorField?.value is CharacterDefinitionSO);
+            _removeSelectedActorBtn?.SetEnabled(isAuthoring && hasLine && _selectionKind == StageSelectionKind.Actor && !string.IsNullOrWhiteSpace(_selectedActorKey));
+            _setBackgroundBtn?.SetEnabled(isAuthoring && hasLine && _setBackgroundField?.value is BackgroundDefinitionSO);
+            _clearBackgroundBtn?.SetEnabled(isAuthoring && hasLine);
         }
 
         private StoryStageLayoutModuleSO FindCurrentStageLayout()
@@ -779,10 +967,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return null;
         }
 
-        private void SaveLayoutAndRefresh(StoryStageLayoutModuleSO layout)
+        private void SaveLayoutAndRefresh(StoryStageLayoutModuleSO layout, bool saveNow = true)
         {
-            EditorUtility.SetDirty(layout);
-            AssetDatabase.SaveAssets();
+            MarkLayoutDirty(layout, saveNow);
 
             BuildStageStateAt(_currentLine);
             if (_selectionKind == StageSelectionKind.Actor && !_stageState.ContainsKey(_selectedActorKey))
@@ -802,8 +989,56 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 : background.name;
         }
 
+        private static void CopyBackgroundState(StoryBackgroundStateData source, StoryBackgroundStateData target)
+        {
+            if (target == null)
+                return;
+
+            if (source == null)
+            {
+                target.background = null;
+                target.backgroundKey = "";
+                target.variantKey = "";
+                target.visible = false;
+                target.normalizedOffset = Vector2.zero;
+                target.scale = Vector2.one;
+                target.pivot = new Vector2(0.5f, 0.5f);
+                target.tint = Color.white;
+                target.opacity = 1f;
+                target.sortOrder = -100;
+                target.transitionMotion = StoryEnterMotionType.FadeIn;
+                target.transitionDuration = 0.35f;
+                target.enterMotion = StoryEnterMotionType.FadeIn;
+                target.enterDuration = 0.35f;
+                target.exitMotion = StoryEnterMotionType.FadeIn;
+                target.exitDuration = 0.25f;
+                return;
+            }
+
+            target.background = source.background;
+            target.backgroundKey = source.backgroundKey;
+            target.variantKey = source.variantKey;
+            target.visible = source.visible;
+            target.normalizedOffset = source.normalizedOffset;
+            target.scale = source.scale;
+            target.pivot = source.pivot;
+            target.tint = source.tint;
+            target.opacity = source.opacity;
+            target.sortOrder = source.sortOrder;
+            target.transitionMotion = source.transitionMotion;
+            target.transitionDuration = source.transitionDuration;
+            target.enterMotion = source.enterMotion;
+            target.enterDuration = source.enterDuration;
+            target.exitMotion = source.exitMotion;
+            target.exitDuration = source.exitDuration;
+            target.SyncBackgroundKey();
+        }
+
         private void SaveBackgroundStateToCurrent(Action<StoryBackgroundStateData> setter)
         {
+            if (!IsStageAuthoringMode)
+                return;
+
             if (_currentLine == null)
                 return;
 
@@ -813,11 +1048,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             Undo.RecordObject(layout, "Edit Stage Background");
             setter(layout.BackgroundEditable);
-            SaveLayoutAndRefresh(layout);
+            layout.BackgroundEditable.SyncBackgroundKey();
+            _bgState = layout.Background.ShallowClone();
+            MarkLayoutDirty(layout, saveNow: false);
+            RefreshBackgroundLayer();
+            RefreshActorList();
+            RefreshAuthoringControls();
         }
 
         private void SelectActor(string actorInstanceKey, bool refreshInspector = true)
         {
+            if (!IsStageAuthoringMode)
+                return;
+
             _selectionKind = StageSelectionKind.Actor;
             _selectedActorKey = actorInstanceKey;
             RefreshActorList();
@@ -829,6 +1072,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void SelectBackground()
         {
+            if (!IsStageAuthoringMode)
+                return;
+
             _selectionKind = StageSelectionKind.Background;
             _selectedActorKey = null;
             RefreshActorList();
@@ -851,6 +1097,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private bool DeleteCurrentStageSelection()
         {
+            if (!IsStageAuthoringMode)
+                return false;
+
             if (_selectionKind == StageSelectionKind.Actor && !string.IsNullOrWhiteSpace(_selectedActorKey))
             {
                 OnRemoveSelectedActorClicked();
@@ -866,8 +1115,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return false;
         }
 
-        private void SaveActorStateToCurrent(string actorInstanceKey, Action<StoryActorStateData> setter)
+        private void SaveActorStateToCurrent(string actorInstanceKey, Action<StoryActorStateData> setter, bool saveNow = false)
         {
+            if (!IsStageAuthoringMode)
+                return;
+
             if (_currentLine == null || string.IsNullOrWhiteSpace(actorInstanceKey)) return;
 
             StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Actor Stage State");
@@ -887,9 +1139,21 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
 
             setter(entry);
+            entry.SyncActorKey();
+            entry.EnsureActorInstanceKey(actorInstanceKey);
+            _stageState[entry.ResolvedActorKey] = entry.ShallowClone();
+
+            MarkLayoutDirty(layout, saveNow);
+        }
+
+        private static void MarkLayoutDirty(StoryStageLayoutModuleSO layout, bool saveNow)
+        {
+            if (layout == null)
+                return;
 
             EditorUtility.SetDirty(layout);
-            AssetDatabase.SaveAssets();
+            if (saveNow)
+                AssetDatabase.SaveAssets();
         }
     }
 }
