@@ -23,7 +23,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
     public sealed partial class StoryPreviewWindow : EditorWindow
     {
         private enum PreviewMode { RuntimePreview, StageAuthoring }
+        private enum DialogueDisplayMode { RenderOnly, EditorOnly, Both, None }
         private enum StageSelectionKind { None, Actor, Background }
+        private enum DragAxisLock { None, X, Y }
+        private enum ActorScaleHandle { None, TopLeft, TopRight, BottomLeft, BottomRight }
 
         // ── 메뉴 / 열기 ──────────────────────────────
 
@@ -70,6 +73,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private const float WorldPaddingPixels = 960f;
         private const float GridMinorPixels = 40f;
         private const float GridMajorPixels = 160f;
+        private const float AuthoringFitFill = 0.88f;
+        private const float RuntimeFitFill   = 0.92f;
         private const float MinZoom           = 0.12f;
         private const float MaxZoom           = 4f;
         private const float ZoomStep          = 0.12f;
@@ -80,6 +85,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         [SerializeField] private StoryEpisodeSO episode;
         [SerializeField] private PreviewMode    previewMode = PreviewMode.RuntimePreview;
+        [SerializeField] private DialogueDisplayMode dialogueDisplayMode = DialogueDisplayMode.RenderOnly;
 
         private StoryLineSO _currentLine;
         private bool        _isPlaying;
@@ -111,15 +117,27 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private string              _draggingActorKey;
         private Vector2               _dragStartPanelPos;
         private Vector2               _dragStartNormPos;
+        private DragAxisLock          _dragAxisLock;
+
+        private string           _scalingActorKey;
+        private ActorScaleHandle _activeScaleHandle;
+        private Vector2          _scaleStartPanelPos;
+        private Vector2          _scaleStartNormPos;
+        private Vector2          _scaleStartScale;
+        private Rect             _scaleStartRect;
+        private DragAxisLock     _scaleAxisLock;
 
         // ── UI 참조: 상단 바 ──────────────────────────
 
         private ObjectField _episodeField;
         private EnumField   _previewModeField;
+        private EnumField   _dialogueDisplayField;
         private Label       _statusLabel;
         private Button      _playBtn;
         private Button      _fromHereBtn;
         private Button      _sampleLineBtn;
+        private Button      _prevLineBtn;
+        private Button      _nextLineAuthoringBtn;
         private Button      _stopBtn;
         private Button      _nextBtn;
         private Button      _refreshGameViewBtn;
@@ -132,6 +150,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private ObjectField   _setBackgroundField;
         private Button        _addActorBtn;
         private Button        _removeSelectedActorBtn;
+        private Button        _importPreviousStageBtn;
+        private Button        _previewTransitionBtn;
         private Button        _setBackgroundBtn;
         private Button        _clearBackgroundBtn;
 
@@ -176,6 +196,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         // actor → VisualElement 매핑
         private readonly Dictionary<string, VisualElement> _actorElements = new();
 
+        // ── Line transition preview ────────────────────
+
+        private bool _isTransitionPreviewing;
+        private bool _transitionActorsInitialized; // true after first RebuildActorLayer for this transition
+        private double _transitionPreviewStartedAt;
+        private float _transitionPreviewDuration = 0.35f;
+        private readonly Dictionary<string, StoryActorStateData> _transitionFromActors = new();
+        private readonly Dictionary<string, StoryActorStateData> _transitionToActors = new();
+        private StoryBackgroundStateData _transitionFromBackground;
+        private StoryBackgroundStateData _transitionToBackground;
+
         // ── 생명주기 ─────────────────────────────────
 
         private void CreateGUI()
@@ -197,16 +228,23 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             ApplyPreviewModeVisibility();
         }
 
-        private void OnEnable()  => Undo.undoRedoPerformed += OnUndoRedo;
+        private void OnEnable()
+        {
+            Undo.undoRedoPerformed += OnUndoRedo;
+            EditorApplication.update += UpdateTransitionPreview;
+        }
+
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedo;
+            EditorApplication.update -= UpdateTransitionPreview;
             SavePreviewLayoutPrefs();
         }
         private void OnFocus()   => RefreshRenderAreaFromGameView();
 
         private void OnUndoRedo()
         {
+            StopTransitionPreview(applyTargetState: false);
             BuildStageStateAt(_currentLine);
             if (_selectionKind == StageSelectionKind.Actor && !_stageState.ContainsKey(_selectedActorKey))
                 ClearStageSelection();
@@ -276,6 +314,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 text = text,
                 style = { height = 22, paddingLeft = 8, paddingRight = 8, marginRight = 4, backgroundColor = new StyleColor(bg), fontSize = 10 }
             };
+
+        private bool IsStageAuthoringMode => previewMode == PreviewMode.StageAuthoring;
+        private bool IsRuntimePreviewMode => previewMode == PreviewMode.RuntimePreview;
 
         internal static Color ActorPlaceholderColor(CharacterDefinitionSO actor)
         {

@@ -21,15 +21,22 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         [Tooltip("Absolute actor states visible at this line.")]
         [SerializeField] private List<StoryActorStateData> actors = new();
 
+        [Header("Per-Line Timeline (optional)")]
+        [Tooltip("Optional per-actor keyframe tracks for intra-line motion. " +
+                 "Does not replace the actors snapshot. actorInstanceKey must match StoryActorStateData.actorInstanceKey.")]
+        [SerializeField] private List<StoryActorTrackData> actorTracks = new();
+
         public StoryBackgroundStateData Background => background;
         public bool HasBackground => background is { HasBackground: true };
         public IReadOnlyList<StoryActorStateData> Actors => actors;
+        public IReadOnlyList<StoryActorTrackData> ActorTracks => actorTracks;
 
         public override string DisplayName => "Stage Layout";
 
 #if UNITY_EDITOR
         public StoryBackgroundStateData BackgroundEditable => background;
         public List<StoryActorStateData> ActorsEditable => actors;
+        public List<StoryActorTrackData> ActorTracksEditable => actorTracks;
 #endif
 
         private void OnValidate()

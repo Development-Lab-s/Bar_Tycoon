@@ -1,4 +1,7 @@
+using System.Collections.Generic;
+using UnityEditor;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -7,10 +10,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 {
     public sealed partial class StoryPreviewWindow
     {
-        // ?? 踰꾪듉 ?몃뱾????????????????????????????????
+        // ── 재생 버튼 콜백 ──────────────────────────────────────────────────────
 
         private void OnPlay()
         {
+            EnsureEpisodeForLine(_pendingFromLine ?? _currentLine);
             if (episode == null) return;
             if (!episode.TryGetLine(episode.EntryLineId, out var entry)) return;
 
@@ -23,6 +27,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void OnFromHere()
         {
             if (_pendingFromLine == null) return;
+            EnsureEpisodeForLine(_pendingFromLine);
 
             _isPlaying    = true;
             _isLineSample = false;
@@ -33,6 +38,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void OnSampleLine()
         {
             if (_pendingFromLine == null) return;
+            EnsureEpisodeForLine(_pendingFromLine);
 
             _isLineSample = true;
             ShowLineSnapshot(_pendingFromLine);
@@ -43,6 +49,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void OnNext()
         {
+            EnsureEpisodeForLine(_currentLine);
             if (_currentLine == null || string.IsNullOrEmpty(_currentLine.NextLineId)) return;
             if (episode == null || !episode.TryGetLine(_currentLine.NextLineId, out var next)) return;
 
@@ -50,10 +57,35 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             RefreshButtons();
         }
 
-        // ?? ?ъ깮 ?곹깭 珥덇린???????????????????????????
+        private void OnPreviousLine()
+        {
+            if (_currentLine == null) return;
+            EnsureEpisodeForLine(_currentLine);
+            if (!TryGetPreviousLine(_currentLine, out var previous)) return;
+
+            _pendingFromLine = previous;
+            _isLineSample    = true;
+            ShowLineSnapshot(previous);
+            RefreshButtons();
+        }
+
+        private void OnNextLine()
+        {
+            if (_currentLine == null) return;
+            EnsureEpisodeForLine(_currentLine);
+            if (!TryGetNextLine(_currentLine, out var next)) return;
+
+            _pendingFromLine = next;
+            _isLineSample    = true;
+            ShowLineSnapshot(next);
+            RefreshButtons();
+        }
+
+        // ── 재생 상태 정지 ─────────────────────────────────────────────────────
 
         private void StopPlayback()
         {
+            StopTransitionPreview(applyTargetState: false);
             _isPlaying    = false;
             _isLineSample = false;
             _currentLine  = null;
@@ -65,13 +97,32 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             RefreshButtons();
         }
 
-        // ?? ?ㅻ깄???쒖떆 ??????????????????????????????
+        // ── 라인 스냅샷 표시 ──────────────────────────────────────────────────
 
-        /// <summary>?ъ깮 ?놁씠 ?뱀젙 ?쇱씤???ㅽ뀒?댁? ?곹깭瑜??ㅻ깄?룹쑝濡??쒖떆?쒕떎.</summary>
+        /// <summary>
+        /// 재생 없이 지정 라인의 스테이지 상태를 즉시 또는 전환 애니메이션으로 표시한다.
+        /// RuntimePreview 모드에서 재생 중이면 자동으로 전환 애니메이션을 시작한다.
+        /// </summary>
         private void ShowLineSnapshot(StoryLineSO line)
         {
+            StopTransitionPreview(applyTargetState: false);
+            EnsureEpisodeForLine(line);
             _currentLine = line;
-            BuildStageStateAt(line);
+
+            // RuntimePreview 재생 중 자동 전환: 기존 스테이지 상태가 있을 때만 적용
+            bool autoTransition = IsRuntimePreviewMode
+                && _isPlaying
+                && (_stageState.Count > 0 || _bgState != null);
+
+            if (autoTransition)
+            {
+                StartLineTransitionPreview(line);
+            }
+            else
+            {
+                BuildStageStateAt(line);
+            }
+
             ValidateStageSelection();
             RebuildActorLayer();
             RefreshActorInspector();
@@ -79,19 +130,25 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             RefreshChoices();
         }
 
-        // ?? ?ㅽ뀒?댁? ?곹깭 ?꾩쟻 ????????????????????????
+        // ── 스테이지 상태 누적 ────────────────────────────────────────────────
 
         /// <summary>
-        /// episode 吏꾩엯 ?쇱씤遺??targetLine 源뚯? nextLineId 泥댁씤???곕씪
-        /// StoryStageLayoutModuleSO 瑜??곸슜??_stageState / _bgState 瑜?援ъ텞?쒕떎.
-        /// targetLine ??泥댁씤???놁쑝硫?怨좎븘 ?쇱씤) targetLine ?먯껜 紐⑤뱢留??곸슜?쒕떎.
+        /// episode 진입 라인에서 targetLine 까지 nextLineId 체인을 따라
+        /// StoryStageLayoutModuleSO 를 적용해 _stageState / _bgState 를 구축한다.
+        /// targetLine 이 체인에 없으면 에피소드 라인 순서로 fallback.
         /// </summary>
         private void BuildStageStateAt(StoryLineSO targetLine)
         {
             _stageState.Clear();
             _bgState = null;
 
-            if (episode == null || targetLine == null) return;
+            EnsureEpisodeForLine(targetLine);
+            if (targetLine == null) return;
+            if (episode == null)
+            {
+                ApplyStageModulesToState(targetLine, _stageState, ref _bgState);
+                return;
+            }
 
             string currentId = episode.EntryLineId;
             const int maxSteps = 500;
@@ -102,7 +159,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 if (!episode.TryGetLine(currentId, out var line)) break;
 
-                ApplyStageModulesToState(line);
+                ApplyStageModulesToState(line, _stageState, ref _bgState);
 
                 if (line == targetLine) { found = true; break; }
 
@@ -114,11 +171,63 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 _stageState.Clear();
                 _bgState = null;
-                ApplyStageModulesToState(targetLine);
+                if (!TryBuildStageStateByEpisodeOrder(targetLine, includeTargetLine: true, _stageState, ref _bgState))
+                    ApplyStageModulesToState(targetLine, _stageState, ref _bgState);
             }
         }
 
-        private void ApplyStageModulesToState(StoryLineSO line)
+        private bool TryBuildStageStateBeforeLine(
+            StoryLineSO targetLine,
+            out Dictionary<string, StoryActorStateData> actors,
+            out StoryBackgroundStateData background)
+        {
+            actors     = new Dictionary<string, StoryActorStateData>();
+            background = null;
+
+            EnsureEpisodeForLine(targetLine);
+            if (targetLine == null || episode == null)
+                return false;
+
+            string currentId = episode.EntryLineId;
+            const int maxSteps = 500;
+            int steps = 0;
+
+            while (!string.IsNullOrEmpty(currentId) && steps < maxSteps)
+            {
+                if (!episode.TryGetLine(currentId, out var line)) break;
+                if (line == targetLine) return true;
+
+                ApplyStageModulesToState(line, actors, ref background);
+                currentId = line.NextLineId;
+                steps++;
+            }
+
+            return TryBuildStageStateByEpisodeOrder(targetLine, includeTargetLine: false, actors, ref background);
+        }
+
+        private bool TryBuildStageStateByEpisodeOrder(
+            StoryLineSO targetLine,
+            bool includeTargetLine,
+            Dictionary<string, StoryActorStateData> actors,
+            ref StoryBackgroundStateData background)
+        {
+            if (episode == null || targetLine == null || actors == null)
+                return false;
+
+            int targetIndex = FindLineIndex(targetLine);
+            if (targetIndex < 0) return false;
+
+            int lastIndex = includeTargetLine ? targetIndex : targetIndex - 1;
+            for (int i = 0; i <= lastIndex; i++)
+                ApplyStageModulesToState(episode.Lines[i], actors, ref background);
+
+            return true;
+        }
+
+        private static void ApplyStageModulesToState(
+            StoryLineSO line,
+            Dictionary<string, StoryActorStateData> actors,
+            ref StoryBackgroundStateData background)
         {
             if (line == null) return;
 
@@ -127,7 +236,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 if (module is not StoryStageLayoutModuleSO layout) continue;
 
                 if (layout.HasBackground)
-                    _bgState = layout.Background.ShallowClone();
+                    background = layout.Background.ShallowClone();
 
                 foreach (var actorData in layout.Actors)
                 {
@@ -137,12 +246,239 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     string actorKey = clone.ResolvedActorKey;
                     if (string.IsNullOrWhiteSpace(actorKey)) continue;
 
-                    _stageState[actorKey] = clone;
+                    actors[actorKey] = clone;
                 }
             }
         }
 
-        // ?? ???/ ?좏깮吏 媛깆떊 ???????????????????????
+        private void EnsureEpisodeForLine(StoryLineSO line)
+        {
+            if (line == null) return;
+            if (episode != null && ContainsLine(episode, line)) return;
+            if (!TryResolveEpisodeForLine(line, out var resolved)) return;
+
+            episode = resolved;
+            _episodeField?.SetValueWithoutNotify(resolved);
+        }
+
+        private static bool TryResolveEpisodeForLine(StoryLineSO line, out StoryEpisodeSO resolved)
+        {
+            resolved = null;
+            if (line == null) return false;
+
+            string linePath = AssetDatabase.GetAssetPath(line);
+            string[] guids  = AssetDatabase.FindAssets("t:StoryEpisodeSO", new[] { "Assets/00. Work/CheolYee" });
+            foreach (string guid in guids)
+            {
+                string path      = AssetDatabase.GUIDToAssetPath(guid);
+                var candidate    = AssetDatabase.LoadAssetAtPath<StoryEpisodeSO>(path);
+                if (candidate == null) continue;
+
+                foreach (StoryLineSO candidateLine in candidate.Lines)
+                {
+                    if (candidateLine == line
+                        || (!string.IsNullOrEmpty(linePath)
+                            && AssetDatabase.GetAssetPath(candidateLine) == linePath))
+                    {
+                        resolved = candidate;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ContainsLine(StoryEpisodeSO targetEpisode, StoryLineSO line)
+        {
+            if (targetEpisode == null || line == null) return false;
+            foreach (StoryLineSO candidate in targetEpisode.Lines)
+                if (candidate == line) return true;
+            return false;
+        }
+
+        private int FindLineIndex(StoryLineSO line)
+        {
+            if (episode == null || line == null) return -1;
+            for (int i = 0; i < episode.Lines.Count; i++)
+                if (episode.Lines[i] == line) return i;
+            return -1;
+        }
+
+        private bool TryGetPreviousLine(StoryLineSO line, out StoryLineSO previous)
+        {
+            previous = null;
+            if (line == null || episode == null) return false;
+
+            foreach (StoryLineSO candidate in episode.Lines)
+            {
+                if (candidate != null && candidate.NextLineId == line.LineId)
+                {
+                    previous = candidate;
+                    return true;
+                }
+            }
+
+            int index = FindLineIndex(line);
+            if (index > 0) previous = episode.Lines[index - 1];
+            return previous != null;
+        }
+
+        private bool TryGetNextLine(StoryLineSO line, out StoryLineSO next)
+        {
+            next = null;
+            if (line == null || episode == null) return false;
+
+            if (!string.IsNullOrEmpty(line.NextLineId) && episode.TryGetLine(line.NextLineId, out next))
+                return true;
+
+            int index = FindLineIndex(line);
+            if (index >= 0 && index + 1 < episode.Lines.Count)
+                next = episode.Lines[index + 1];
+
+            return next != null;
+        }
+
+        private static Dictionary<string, StoryActorStateData> CloneActorStateMap(
+            Dictionary<string, StoryActorStateData> source)
+        {
+            var result = new Dictionary<string, StoryActorStateData>();
+            foreach (var pair in source)
+            {
+                if (pair.Value == null) continue;
+                StoryActorStateData clone = pair.Value.ShallowClone();
+                clone.EnsureActorInstanceKey(pair.Key);
+                result[pair.Key] = clone;
+            }
+            return result;
+        }
+
+        private static StoryBackgroundStateData CloneBackgroundState(StoryBackgroundStateData source) =>
+            source != null ? source.ShallowClone() : null;
+
+        // ── Line transition preview ────────────────────────────────────────────
+
+        private void StartLineTransitionPreview(StoryLineSO line)
+        {
+            if (line == null) return;
+
+            StopTransitionPreview(applyTargetState: false);
+
+            TryBuildStageStateBeforeLine(line, out var fromActors, out var fromBackground);
+
+            BuildStageStateAt(line);
+            var toActors     = CloneActorStateMap(_stageState);
+            var toBackground = CloneBackgroundState(_bgState);
+
+            _transitionFromActors.Clear();
+            _transitionToActors.Clear();
+            foreach (var pair in fromActors) _transitionFromActors[pair.Key] = pair.Value.ShallowClone();
+            foreach (var pair in toActors)   _transitionToActors[pair.Key]   = pair.Value.ShallowClone();
+
+            _transitionFromBackground   = CloneBackgroundState(fromBackground);
+            _transitionToBackground     = CloneBackgroundState(toBackground);
+            _transitionPreviewDuration  = Mathf.Max(0.05f, CalculateTransitionDuration());
+            _transitionPreviewStartedAt = EditorApplication.timeSinceStartup;
+            _transitionActorsInitialized = false;
+            _isTransitionPreviewing     = true;
+
+            ApplyTransitionPreviewFrame(0f);
+        }
+
+        private void UpdateTransitionPreview()
+        {
+            if (!_isTransitionPreviewing) return;
+
+            float elapsed = (float)(EditorApplication.timeSinceStartup - _transitionPreviewStartedAt);
+            ApplyTransitionPreviewFrame(elapsed);
+
+            if (elapsed >= _transitionPreviewDuration)
+                StopTransitionPreview(applyTargetState: true);
+        }
+
+        private void StopTransitionPreview(bool applyTargetState)
+        {
+            if (!_isTransitionPreviewing) return;
+
+            _isTransitionPreviewing      = false;
+            _transitionActorsInitialized = false;
+
+            if (applyTargetState)
+            {
+                _stageState.Clear();
+                foreach (var pair in _transitionToActors)
+                    _stageState[pair.Key] = pair.Value.ShallowClone();
+                _bgState = CloneBackgroundState(_transitionToBackground);
+                RebuildActorLayer(refreshInspectorLists: false);
+                RefreshActorInspector();
+                RefreshAuthoringControls();
+            }
+
+            _transitionFromActors.Clear();
+            _transitionToActors.Clear();
+            _transitionFromBackground = null;
+            _transitionToBackground   = null;
+        }
+
+        private float CalculateTransitionDuration()
+        {
+            float duration = 0.05f;
+            var keys = new HashSet<string>(_transitionFromActors.Keys);
+            keys.UnionWith(_transitionToActors.Keys);
+
+            foreach (string key in keys)
+            {
+                _transitionFromActors.TryGetValue(key, out var from);
+                _transitionToActors.TryGetValue(key, out var to);
+                duration = Mathf.Max(duration, StoryTransitionSampler.ActorTransitionDuration(from, to));
+            }
+
+            duration = Mathf.Max(
+                duration,
+                StoryTransitionSampler.BackgroundTransitionDuration(_transitionFromBackground, _transitionToBackground));
+            return duration;
+        }
+
+        /// <summary>
+        /// Samples the transition at <paramref name="elapsed"/> seconds and updates the
+        /// stage display. Uses fast in-place style updates after the first full rebuild,
+        /// avoiding per-frame DOM recreation for the common case of static actor sets.
+        /// </summary>
+        private void ApplyTransitionPreviewFrame(float elapsed)
+        {
+            _stageState.Clear();
+
+            var keys = new HashSet<string>(_transitionFromActors.Keys);
+            keys.UnionWith(_transitionToActors.Keys);
+
+            foreach (string key in keys)
+            {
+                _transitionFromActors.TryGetValue(key, out var from);
+                _transitionToActors.TryGetValue(key, out var to);
+                StoryActorStateData sample = StoryTransitionSampler.SampleActor(key, from, to, elapsed);
+                if (sample != null)
+                    _stageState[key] = sample;
+            }
+
+            _bgState = StoryTransitionSampler.SampleBackground(
+                _transitionFromBackground, _transitionToBackground, elapsed);
+
+            // First frame: full DOM rebuild to initialise _actorElements for this transition.
+            // Subsequent frames: fast style-only update (no Clear/re-add).
+            if (!_transitionActorsInitialized)
+            {
+                RebuildActorLayer(refreshInspectorLists: false);
+                _transitionActorsInitialized = true;
+            }
+            else
+            {
+                UpdateActorLayerPositions();
+            }
+
+            Repaint();
+        }
+
+        // ── 대화 / 선택지 텍스트 갱신 ─────────────────────────────────────────
 
         private void RefreshDialogue()
         {
@@ -156,8 +492,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_renderDialogueLabel != null) _renderDialogueLabel.text = text;
 
             bool hasContent = !string.IsNullOrEmpty(text);
-            SetElementVisible(_renderDialoguePanel,
-                hasContent && previewMode == PreviewMode.RuntimePreview && !_previewRuntimeUiCollapsed);
+            SetElementVisible(_renderDialoguePanel, hasContent && ShouldShowRenderDialogue());
+            SetElementVisible(_dialoguePanel, ShouldShowEditorDialogue());
         }
 
         private void RefreshChoices()
@@ -174,22 +510,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private static IStoryChoiceLikeModule FindChoiceLikeModule(StoryLineSO line)
         {
-            if (line == null)
-                return null;
-
+            if (line == null) return null;
             foreach (var module in line.Modules)
-            {
-                if (module is IStoryChoiceLikeModule choiceLike)
-                    return choiceLike;
-            }
-
+                if (module is IStoryChoiceLikeModule choiceLike) return choiceLike;
             return null;
         }
 
         private void BuildChoiceButtons(IStoryChoiceLikeModule choiceLike)
         {
-            if (choiceLike.Options == null || choiceLike.Options.Count == 0)
-                return;
+            if (choiceLike.Options == null || choiceLike.Options.Count == 0) return;
 
             _choiceArea?.Add(new Label("Choices")
             {
@@ -253,29 +582,40 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (episode == null || !episode.TryGetLine(reactionStartLineId, out var next))
                 return;
 
-            if (!_isPlaying)
-                _isLineSample = true;
+            if (!_isPlaying) _isLineSample = true;
 
             ShowLineSnapshot(next);
             RefreshButtons();
         }
 
-        // ?? 踰꾪듉 媛?쒖꽦 / ?곹깭 ???????????????????????
+        // ── 버튼 활성화 / 상태 갱신 ──────────────────────────────────────────
 
         private void RefreshButtons()
         {
-            bool isRuntime  = previewMode == PreviewMode.RuntimePreview;
-            bool hasEpisode = episode != null;
+            EnsureEpisodeForLine(_currentLine ?? _pendingFromLine);
 
-            SetElementVisible(_playBtn,      isRuntime && !_isPlaying && hasEpisode);
-            SetElementVisible(_fromHereBtn,  isRuntime && !_isPlaying && hasEpisode && _pendingFromLine != null);
-            SetElementVisible(_stopBtn,      isRuntime && _isPlaying);
-            SetElementVisible(_nextBtn,      isRuntime && _isPlaying);
-            SetElementVisible(_statusLabel,  isRuntime && !_previewRuntimeUiCollapsed);
-            SetElementVisible(_sampleLineBtn, hasEpisode);
+            bool isRuntime      = previewMode == PreviewMode.RuntimePreview;
+            bool hasEpisode     = episode != null;
+            bool isAuthoring    = IsStageAuthoringMode;
+            bool hasCurrentLine = _currentLine != null;
+
+            SetElementVisible(_playBtn,              isRuntime && !_isPlaying && hasEpisode);
+            SetElementVisible(_fromHereBtn,          isRuntime && !_isPlaying && hasEpisode && _pendingFromLine != null);
+            SetElementVisible(_stopBtn,              isRuntime && _isPlaying);
+            SetElementVisible(_nextBtn,              isRuntime && _isPlaying);
+            SetElementVisible(_statusLabel,          isRuntime && !_previewRuntimeUiCollapsed);
+            SetElementVisible(_sampleLineBtn,        hasEpisode);
+            SetElementVisible(_prevLineBtn,          isAuthoring);
+            SetElementVisible(_nextLineAuthoringBtn, isAuthoring);
 
             if (_nextBtn != null)
                 _nextBtn.SetEnabled(_currentLine != null && !string.IsNullOrEmpty(_currentLine.NextLineId));
+
+            if (_prevLineBtn != null)
+                _prevLineBtn.SetEnabled(isAuthoring && hasCurrentLine && TryGetPreviousLine(_currentLine, out _));
+
+            if (_nextLineAuthoringBtn != null)
+                _nextLineAuthoringBtn.SetEnabled(isAuthoring && hasCurrentLine && TryGetNextLine(_currentLine, out _));
 
             if (_statusLabel != null)
             {
@@ -285,27 +625,44 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
         }
 
-        // ?? 紐⑤뱶 ?꾪솚 媛?쒖꽦 ?????????????????????????
+        // ── 모드 전환 가시성 갱신 ──────────────────────────────────────────────
 
-        /// <summary>RuntimePreview / StageAuthoring 紐⑤뱶???곕씪 UI ?붿냼 媛?쒖꽦??議곗젙?쒕떎.</summary>
+        /// <summary>RuntimePreview / StageAuthoring 모드에 따라 UI 요소 가시성을 결정한다.</summary>
         private void ApplyPreviewModeVisibility()
         {
-            bool isRuntime = previewMode == PreviewMode.RuntimePreview;
+            bool isRuntime    = IsRuntimePreviewMode;
             bool showRuntimeUi = isRuntime && !_previewRuntimeUiCollapsed;
 
-            SetElementVisible(_dialoguePanel, showRuntimeUi);
-            SetElementVisible(_choiceArea,    showRuntimeUi);
+            ApplyInspectorPanelVisibility();
+            ApplyCameraFrameModeStyles();
+            if (isRuntime) FitRuntimePreviewToWrapper();
+
+            SetElementVisible(_dialoguePanel, ShouldShowEditorDialogue());
+            SetElementVisible(_choiceArea,    ShouldShowEditorDialogue());
             SetElementVisible(_authoringToolsRoot, !isRuntime);
             SetElementVisible(_authoringGridLayer, !isRuntime);
-            SetElementVisible(_cameraGizmoLayer, !isRuntime);
+            SetElementVisible(_cameraGizmoLayer,   !isRuntime);
+            SetEmptyStageVisible(!isRuntime && _stageState.Count == 0);
 
             SetElementVisible(_renderDialoguePanel,
-                showRuntimeUi && _renderDialoguePanel != null
-                          && !string.IsNullOrEmpty(_renderDialogueLabel?.text));
-            SetElementVisible(_renderChoiceArea, showRuntimeUi);
+                ShouldShowRenderDialogue()
+                && _renderDialoguePanel != null
+                && !string.IsNullOrEmpty(_renderDialogueLabel?.text));
+            SetElementVisible(_renderChoiceArea,  ShouldShowRenderDialogue());
+            SetElementVisible(_dialogueDisplayField, isRuntime && showRuntimeUi);
 
             RefreshButtons();
             RefreshAuthoringControls();
         }
+
+        private bool ShouldShowEditorDialogue() =>
+            IsRuntimePreviewMode
+            && !_previewRuntimeUiCollapsed
+            && dialogueDisplayMode is DialogueDisplayMode.EditorOnly or DialogueDisplayMode.Both;
+
+        private bool ShouldShowRenderDialogue() =>
+            IsRuntimePreviewMode
+            && !_previewRuntimeUiCollapsed
+            && dialogueDisplayMode is DialogueDisplayMode.RenderOnly or DialogueDisplayMode.Both;
     }
 }

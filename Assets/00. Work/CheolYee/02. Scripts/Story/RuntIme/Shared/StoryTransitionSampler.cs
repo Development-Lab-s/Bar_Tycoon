@@ -1,0 +1,214 @@
+using UnityEngine;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
+
+namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
+{
+    /// <summary>
+    /// Pure-static math for actor and background line-transition sampling.
+    /// Used by both StoryPreviewWindow (editor) and StoryStageLayoutModuleExecutor (runtime).
+    /// No allocation-heavy operations; callers supply from/to state, get a sampled clone back.
+    /// </summary>
+    public static class StoryTransitionSampler
+    {
+        // ── Actor sampling ────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Returns a sampled StoryActorStateData at <paramref name="elapsed"/> seconds into
+        /// the transition from <paramref name="from"/> to <paramref name="to"/>.
+        /// Returns null when both states are invisible (actor not on stage).
+        /// </summary>
+        public static StoryActorStateData SampleActor(
+            string actorKey,
+            StoryActorStateData from,
+            StoryActorStateData to,
+            float elapsed)
+        {
+            bool fromVisible = from is { visible: true };
+            bool toVisible   = to   is { visible: true };
+
+            if (!fromVisible && !toVisible)
+                return null;
+
+            if (!fromVisible && toVisible)
+            {
+                float p = ResolveEnterProgress(to.enterMotion, to.enterDuration, elapsed);
+                StoryActorStateData sample = to.ShallowClone();
+                sample.EnsureActorInstanceKey(actorKey);
+                sample.normalizedPosition = Vector2.LerpUnclamped(EnterStartPosition(to), to.normalizedPosition, p);
+                sample.scale              = Vector2.LerpUnclamped(EnterStartScale(to), to.scale, p);
+                sample.visible            = true;
+                return sample;
+            }
+
+            if (fromVisible && !toVisible)
+            {
+                float p = ResolveEnterProgress(from.exitMotion, from.exitDuration, elapsed);
+                StoryActorStateData sample = from.ShallowClone();
+                sample.EnsureActorInstanceKey(actorKey);
+                sample.normalizedPosition = Vector2.LerpUnclamped(from.normalizedPosition, ExitEndPosition(from), p);
+                sample.scale              = Vector2.LerpUnclamped(from.scale, ExitEndScale(from), p);
+                sample.visible            = p < 1f;
+                return sample.visible ? sample : null;
+            }
+
+            // Both visible — move transition
+            float moveP = ResolveMoveProgress(to.moveMotion, to.moveDuration, elapsed);
+            StoryActorStateData moved = to.ShallowClone();
+            moved.EnsureActorInstanceKey(actorKey);
+            moved.normalizedPosition = Vector2.LerpUnclamped(from.normalizedPosition, to.normalizedPosition, moveP);
+            moved.scale              = Vector2.LerpUnclamped(from.scale, to.scale, moveP);
+            moved.scaleX             = Mathf.LerpUnclamped(from.scaleX, to.scaleX, moveP);
+            moved.visible            = true;
+            return moved;
+        }
+
+        // ── Background sampling ───────────────────────────────────────────────
+
+        public static StoryBackgroundStateData SampleBackground(
+            StoryBackgroundStateData from,
+            StoryBackgroundStateData to,
+            float elapsed)
+        {
+            bool fromVisible = from != null && from.HasBackground && from.visible;
+            bool toVisible   = to   != null && to.HasBackground   && to.visible;
+
+            if (!fromVisible && !toVisible)
+                return null;
+
+            if (!fromVisible && toVisible)
+            {
+                float p = ResolveEnterProgress(to.transitionMotion, to.transitionDuration, elapsed);
+                StoryBackgroundStateData sample = to.ShallowClone();
+                sample.normalizedOffset = Vector2.LerpUnclamped(BgEnterOffset(to), to.normalizedOffset, p);
+                sample.scale            = Vector2.LerpUnclamped(BgEnterScale(to), to.scale, p);
+                sample.opacity          = Mathf.Lerp(0f, to.opacity, p);
+                return sample;
+            }
+
+            if (fromVisible && !toVisible)
+            {
+                float p = ResolveEnterProgress(from.exitMotion, from.exitDuration, elapsed);
+                StoryBackgroundStateData sample = from.ShallowClone();
+                sample.normalizedOffset = Vector2.LerpUnclamped(from.normalizedOffset, BgExitOffset(from), p);
+                sample.opacity          = Mathf.Lerp(from.opacity, 0f, p);
+                sample.visible          = p < 1f;
+                return sample.visible ? sample : null;
+            }
+
+            // Both visible — blend
+            float progress = ResolveEnterProgress(to.transitionMotion, to.transitionDuration, elapsed);
+            StoryBackgroundStateData blended = to.ShallowClone();
+            blended.normalizedOffset = Vector2.LerpUnclamped(from.normalizedOffset, to.normalizedOffset, progress);
+            blended.scale            = Vector2.LerpUnclamped(from.scale, to.scale, progress);
+            blended.opacity          = Mathf.Lerp(from.opacity, to.opacity, progress);
+            blended.tint             = Color.Lerp(from.tint, to.tint, progress);
+            return blended;
+        }
+
+        // ── Duration helpers ─────────────────────────────────────────────────
+
+        public static float ActorTransitionDuration(StoryActorStateData from, StoryActorStateData to)
+        {
+            bool fv = from is { visible: true };
+            bool tv = to   is { visible: true };
+
+            if (!fv && tv) return to.enterMotion  == StoryEnterMotionType.Instant ? 0.05f : Mathf.Max(0.05f, to.enterDuration);
+            if (fv && !tv) return from.exitMotion  == StoryEnterMotionType.Instant ? 0.05f : Mathf.Max(0.05f, from.exitDuration);
+            if (fv)        return to.moveMotion    == StoryStageMoveMotionType.Instant ? 0.05f : Mathf.Max(0.05f, to.moveDuration);
+            return 0.05f;
+        }
+
+        public static float BackgroundTransitionDuration(StoryBackgroundStateData from, StoryBackgroundStateData to)
+        {
+            bool fv = from != null && from.HasBackground && from.visible;
+            bool tv = to   != null && to.HasBackground   && to.visible;
+
+            if (!fv && tv) return to.transitionMotion == StoryEnterMotionType.Instant ? 0.05f : Mathf.Max(0.05f, to.transitionDuration);
+            if (fv && !tv) return from.exitMotion     == StoryEnterMotionType.Instant ? 0.05f : Mathf.Max(0.05f, from.exitDuration);
+            if (tv)        return to.transitionMotion == StoryEnterMotionType.Instant ? 0.05f : Mathf.Max(0.05f, to.transitionDuration);
+            return 0.05f;
+        }
+
+        // ── Progress curves ───────────────────────────────────────────────────
+
+        /// <summary>
+        /// Maps elapsed time to a [0,1] progress value using the given enter motion curve.
+        /// Returns 1 immediately for Instant or zero/negative duration.
+        /// </summary>
+        public static float ResolveEnterProgress(StoryEnterMotionType motion, float duration, float elapsed)
+        {
+            if (motion == StoryEnterMotionType.Instant || duration <= 0f)
+                return 1f;
+
+            float t = Mathf.Clamp01(elapsed / duration);
+            return motion switch
+            {
+                StoryEnterMotionType.FadeIn          => Mathf.SmoothStep(0f, 1f, t),
+                StoryEnterMotionType.ZoomIn          => t * t,                      // ease-in quad (pop-in feel)
+                StoryEnterMotionType.SlideFromLeft   => t * t * (3f - 2f * t),     // smoothstep slide
+                StoryEnterMotionType.SlideFromRight  => t * t * (3f - 2f * t),
+                _                                    => Mathf.SmoothStep(0f, 1f, t)
+            };
+        }
+
+        public static float ResolveMoveProgress(StoryStageMoveMotionType motion, float duration, float elapsed)
+        {
+            if (motion == StoryStageMoveMotionType.Instant || duration <= 0f)
+                return 1f;
+
+            float t = Mathf.Clamp01(elapsed / duration);
+            return motion switch
+            {
+                StoryStageMoveMotionType.EaseIn        => t * t * t,
+                StoryStageMoveMotionType.EaseOut       => 1f - Mathf.Pow(1f - t, 3f),
+                StoryStageMoveMotionType.EaseInOut     => Mathf.SmoothStep(0f, 1f, t),
+                StoryStageMoveMotionType.SmoothStep    => Mathf.SmoothStep(0f, 1f, t),
+                StoryStageMoveMotionType.SmootherStep  => t * t * t * (t * (6f * t - 15f) + 10f),
+                _                                      => t
+            };
+        }
+
+        // ── Position / scale helpers ─────────────────────────────────────────
+
+        public static Vector2 EnterStartPosition(StoryActorStateData target) =>
+            target.enterMotion switch
+            {
+                StoryEnterMotionType.SlideFromLeft  => target.normalizedPosition + new Vector2(-0.45f, 0f),
+                StoryEnterMotionType.SlideFromRight => target.normalizedPosition + new Vector2( 0.45f, 0f),
+                _                                   => target.normalizedPosition
+            };
+
+        public static Vector2 ExitEndPosition(StoryActorStateData source) =>
+            source.exitMotion switch
+            {
+                StoryEnterMotionType.SlideFromLeft  => source.normalizedPosition + new Vector2(-0.45f, 0f),
+                StoryEnterMotionType.SlideFromRight => source.normalizedPosition + new Vector2( 0.45f, 0f),
+                _                                   => source.normalizedPosition
+            };
+
+        public static Vector2 EnterStartScale(StoryActorStateData target) =>
+            target.enterMotion == StoryEnterMotionType.ZoomIn ? Vector2.zero : target.scale;
+
+        public static Vector2 ExitEndScale(StoryActorStateData source) =>
+            source.exitMotion == StoryEnterMotionType.ZoomIn ? Vector2.zero : source.scale;
+
+        public static Vector2 BgEnterOffset(StoryBackgroundStateData target) =>
+            target.transitionMotion switch
+            {
+                StoryEnterMotionType.SlideFromLeft  => target.normalizedOffset + new Vector2(-1f, 0f),
+                StoryEnterMotionType.SlideFromRight => target.normalizedOffset + new Vector2( 1f, 0f),
+                _                                   => target.normalizedOffset
+            };
+
+        public static Vector2 BgExitOffset(StoryBackgroundStateData source) =>
+            source.exitMotion switch
+            {
+                StoryEnterMotionType.SlideFromLeft  => source.normalizedOffset + new Vector2(-1f, 0f),
+                StoryEnterMotionType.SlideFromRight => source.normalizedOffset + new Vector2( 1f, 0f),
+                _                                   => source.normalizedOffset
+            };
+
+        public static Vector2 BgEnterScale(StoryBackgroundStateData target) =>
+            target.transitionMotion == StoryEnterMotionType.ZoomIn ? Vector2.zero : target.scale;
+    }
+}
