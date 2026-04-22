@@ -276,6 +276,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _dragAxisLock = DragAxisLock.None;
                 el.ReleasePointer(e.pointerId);
                 SaveActorStateToCurrent(actorKey, entry => entry.normalizedPosition = data.normalizedPosition, saveNow: true);
+                RecordActorKeyframeFromState(actorKey, data, includePosition: true, includeScale: false);
                 RefreshActorInspector();
                 e.StopPropagation();
             });
@@ -381,6 +382,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     entry.normalizedPosition = data.normalizedPosition;
                     entry.scale = data.scale;
                 }, saveNow: true);
+                RecordActorKeyframeFromState(actorKey, data, includePosition: false, includeScale: true);
                 RefreshActorInspector();
                 e.StopPropagation();
             });

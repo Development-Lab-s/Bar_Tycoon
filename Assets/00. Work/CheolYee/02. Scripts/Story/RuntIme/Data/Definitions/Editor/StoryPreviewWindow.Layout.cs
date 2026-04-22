@@ -113,6 +113,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "InspectorWidth", InspectorWidth),
                 MinInspectorWidth,
                 MaxInspectorWidth);
+            _timelineHeight = Mathf.Clamp(
+                UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "TimelineHeight", DefaultTimelineHeight),
+                MinTimelineHeight,
+                MaxTimelineHeight);
+            _timelinePixelsPerSecond = Mathf.Clamp(
+                UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "TimelinePixelsPerSecond", DefaultTimelinePixelsPerSecond),
+                MinTimelinePixelsPerSecond,
+                MaxTimelinePixelsPerSecond);
+            _timelinePlaybackSpeed = Mathf.Max(0.1f, UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "TimelinePlaybackSpeed", 1f));
         }
 
         private void SavePreviewLayoutPrefs()
@@ -120,6 +129,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             UnityEditor.EditorPrefs.SetBool(PrefsKeyPrefix + "InspectorCollapsed", _previewInspectorCollapsed);
             UnityEditor.EditorPrefs.SetBool(PrefsKeyPrefix + "RuntimeUiCollapsed", _previewRuntimeUiCollapsed);
             UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "InspectorWidth", _previewInspectorExpandedWidth);
+            UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "TimelineHeight", _timelineHeight);
+            UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "TimelinePixelsPerSecond", _timelinePixelsPerSecond);
+            UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "TimelinePlaybackSpeed", _timelinePlaybackSpeed);
         }
 
         private void ApplyPreviewLayoutVisibility()
@@ -185,6 +197,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _stageWrapper.RegisterCallback<GeometryChangedEvent>(OnStageWrapperResized);
             RegisterPanZoomCallbacks();
             left.Add(_stageWrapper);
+
+            left.Add(BuildTimelineResizeHandle());
+            left.Add(BuildTimelinePanel());
 
             // RuntimePreview 전용 하단 대화 패널
             _dialoguePanel = new VisualElement

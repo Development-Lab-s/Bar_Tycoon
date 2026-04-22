@@ -80,6 +80,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private const float ZoomStep          = 0.12f;
         private const float MinInspectorWidth = 180f;
         private const float MaxInspectorWidth = 460f;
+        private const float DefaultTimelineHeight = 210f;
+        private const float MinTimelineHeight = 120f;
+        private const float MaxTimelineHeight = 420f;
+        private const float DefaultTimelinePixelsPerSecond = 120f;
+        private const float MinTimelinePixelsPerSecond = 48f;
+        private const float MaxTimelinePixelsPerSecond = 360f;
 
         // ── 에피소드 / 재생 상태 ──────────────────────
 
@@ -185,6 +191,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private VisualElement _actorListRoot;
         private VisualElement _inspectorRoot;
         private VisualElement _inspectorPanel;
+        private ScrollView    _inspectorScrollView;
         private VisualElement _inspectorSplitter;
         private bool _previewInspectorCollapsed;
         private bool _previewRuntimeUiCollapsed;
@@ -192,6 +199,39 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private bool _isInspectorResizing;
         private float _inspectorResizeStartX;
         private float _inspectorResizeStartWidth;
+
+        // ── UI 참조: Keyframe timeline ────────────────
+
+        private VisualElement _timelineResizeHandle;
+        private VisualElement _timelinePanel;
+        private VisualElement _timelineToolbar;
+        private VisualElement _timelineRuler;
+        private VisualElement _timelineRows;
+        private VisualElement _timelinePlayhead;
+        private Label _timelineTitleLabel;
+        private Button _timelinePlayBtn;
+        private Button _timelineRecordBtn;
+        private FloatField _timelineSpeedField;
+        private float _timelineHeight = DefaultTimelineHeight;
+        private float _timelinePixelsPerSecond = DefaultTimelinePixelsPerSecond;
+        private float _timelinePlayheadTime;
+        private float _timelinePlaybackSpeed = 1f;
+        private bool _timelineRecordEnabled;
+        private bool _timelineIsPlaying;
+        private string _timelineRecordActorKey;
+        private bool _isTimelinePlayheadDragging;
+        private double _timelinePlaybackStartedAt;
+        private float _timelinePlaybackStartTime;
+        private bool _isTimelineResizing;
+        private float _timelineResizeStartY;
+        private float _timelineResizeStartHeight;
+        private int _selectedTimelineKeyIndex = -1;
+        private bool _isTimelineKeyDragging;
+        private string _draggingTimelineActorKey;
+        private int _draggingTimelineKeyIndex = -1;
+        private StoryActorKeyframeProperty _selectedTimelineProperty = StoryActorKeyframeProperty.Position;
+        private StoryActorKeyframeData _timelineClipboardKey;
+        private StoryActorKeyframeProperty _timelineClipboardProperty = StoryActorKeyframeProperty.Position;
 
         // actor → VisualElement 매핑
         private readonly Dictionary<string, VisualElement> _actorElements = new();
@@ -204,6 +244,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private float _transitionPreviewDuration = 0.35f;
         private readonly Dictionary<string, StoryActorStateData> _transitionFromActors = new();
         private readonly Dictionary<string, StoryActorStateData> _transitionToActors = new();
+        private readonly Dictionary<string, StoryActorTrackData> _transitionActorTracks = new();
         private StoryBackgroundStateData _transitionFromBackground;
         private StoryBackgroundStateData _transitionToBackground;
 
@@ -232,12 +273,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             Undo.undoRedoPerformed += OnUndoRedo;
             EditorApplication.update += UpdateTransitionPreview;
+            EditorApplication.update += UpdateTimelinePlayback;
         }
 
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedo;
             EditorApplication.update -= UpdateTransitionPreview;
+            EditorApplication.update -= UpdateTimelinePlayback;
             SavePreviewLayoutPrefs();
         }
         private void OnFocus()   => RefreshRenderAreaFromGameView();
@@ -264,6 +307,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (IsFocusedOnTextInput(rootVisualElement))
                 return;
+
+            if (HandleTimelineShortcut(e))
+            {
+                e.Use();
+                return;
+            }
 
             if (DeleteCurrentStageSelection())
                 e.Use();

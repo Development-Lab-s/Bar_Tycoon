@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using Cysharp.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
     {
         [Header("Roots")]
         [SerializeField] private Transform actorRoot;
+        [SerializeField] private Transform backgroundRoot;
         [SerializeField] private Transform leftAnchor;
         [SerializeField] private Transform centerAnchor;
         [SerializeField] private Transform rightAnchor;
@@ -25,6 +27,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
         [SerializeField] private Color dimColor = new Color(0.55f, 0.55f, 0.55f, 1f);
 
         private readonly Dictionary<string, ActorEntry> _actors = new();
+        private GameObject _backgroundInstance;
+        private string _backgroundKey = "";
+        private StoryBackgroundStateData _backgroundState;
 
         public UniTask EnsureSpeakerVisibleAsync(StoryLineSO line, System.Threading.CancellationToken ct)
         {
@@ -57,6 +62,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             }
 
             ActorEntry entry = new ActorEntry(instance, line.Speaker);
+            entry.CurrentState = new StoryActorStateData
+            {
+                actor = line.Speaker,
+                actorKey = characterId,
+                actorInstanceKey = characterId,
+                normalizedPosition = new Vector2(0.5f, 0f),
+                visible = true,
+                focused = false
+            };
             entry.ApplyTint(dimColor);
 
             _actors[characterId] = entry;
@@ -92,14 +106,67 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             }
 
             _actors.Clear();
+            if (_backgroundInstance != null)
+                Destroy(_backgroundInstance);
+            _backgroundInstance = null;
+            _backgroundKey = "";
+            _backgroundState = null;
         }
 
         // ── IStoryStageDirector ───────────────────────────────────────────────
 
+        public async UniTask ApplyStageLayoutAsync(StoryStageLayoutModuleSO layout, CancellationToken ct)
+        {
+            if (layout == null)
+            {
+                await ApplyStageStateAsync(null, ct);
+                return;
+            }
+
+            var targetMap = BuildTargetMap(layout.Actors);
+            var trackMap = BuildTrackMap(layout.ActorTracks);
+            var fromMap = BuildCurrentActorStateMap();
+            StoryBackgroundStateData fromBackground = _backgroundState != null
+                ? _backgroundState.ShallowClone()
+                : null;
+
+            float duration = CalculateRuntimeTransitionDuration(fromMap, targetMap, trackMap, fromBackground, layout.Background);
+            if (duration <= 0.05f)
+            {
+                ApplyActorSamples(targetMap);
+                ApplyBackgroundState(layout.Background);
+                return;
+            }
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                ct.ThrowIfCancellationRequested();
+                float normalized = Mathf.Clamp01(elapsed / duration);
+                var samples = SampleRuntimeActors(fromMap, targetMap, trackMap, elapsed, normalized);
+                ApplyActorSamples(samples);
+                ApplyBackgroundState(StoryTransitionSampler.SampleBackground(fromBackground, layout.Background, elapsed));
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                elapsed += Time.deltaTime;
+            }
+
+            ApplyActorSamples(SampleRuntimeActors(fromMap, targetMap, trackMap, duration, 1f));
+            ApplyBackgroundState(layout.Background);
+        }
+
         public UniTask ApplyStageStateAsync(IReadOnlyList<StoryActorStateData> targetActors, CancellationToken ct)
         {
-            // 타겟 세트 구성
+            var targetMap = BuildTargetMap(targetActors);
+            ApplyActorSamples(targetMap);
+            return UniTask.CompletedTask;
+        }
+
+        private Dictionary<string, StoryActorStateData> BuildTargetMap(IReadOnlyList<StoryActorStateData> targetActors)
+        {
             var targetMap = new Dictionary<string, StoryActorStateData>();
+            if (targetActors == null)
+                return targetMap;
+
             foreach (var data in targetActors)
             {
                 if (data == null) continue;
@@ -108,6 +175,92 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                     targetMap[id] = data;
             }
 
+            return targetMap;
+        }
+
+        private static Dictionary<string, StoryActorTrackData> BuildTrackMap(IReadOnlyList<StoryActorTrackData> tracks)
+        {
+            var result = new Dictionary<string, StoryActorTrackData>();
+            if (tracks == null)
+                return result;
+
+            foreach (StoryActorTrackData track in tracks)
+            {
+                if (track == null || string.IsNullOrWhiteSpace(track.actorInstanceKey))
+                    continue;
+
+                result[track.actorInstanceKey] = track;
+            }
+
+            return result;
+        }
+
+        private Dictionary<string, StoryActorStateData> BuildCurrentActorStateMap()
+        {
+            var result = new Dictionary<string, StoryActorStateData>();
+            foreach (var pair in _actors)
+            {
+                if (pair.Value.CurrentState != null)
+                    result[pair.Key] = pair.Value.CurrentState.ShallowClone();
+            }
+
+            return result;
+        }
+
+        private float CalculateRuntimeTransitionDuration(
+            Dictionary<string, StoryActorStateData> fromMap,
+            Dictionary<string, StoryActorStateData> toMap,
+            Dictionary<string, StoryActorTrackData> trackMap,
+            StoryBackgroundStateData fromBackground,
+            StoryBackgroundStateData background)
+        {
+            float duration = StoryTransitionSampler.BackgroundTransitionDuration(fromBackground, background);
+            var keys = new HashSet<string>(fromMap.Keys);
+            keys.UnionWith(toMap.Keys);
+
+            foreach (string key in keys)
+            {
+                fromMap.TryGetValue(key, out var from);
+                toMap.TryGetValue(key, out var to);
+                duration = Mathf.Max(duration, StoryTransitionSampler.ActorTransitionDuration(from, to));
+                if (trackMap.TryGetValue(key, out var track))
+                    duration = Mathf.Max(duration, StoryTransitionSampler.GetActorTrackDuration(track));
+            }
+
+            return duration;
+        }
+
+        private Dictionary<string, StoryActorStateData> SampleRuntimeActors(
+            Dictionary<string, StoryActorStateData> fromMap,
+            Dictionary<string, StoryActorStateData> toMap,
+            Dictionary<string, StoryActorTrackData> trackMap,
+            float elapsed,
+            float normalized)
+        {
+            var samples = new Dictionary<string, StoryActorStateData>();
+            var keys = new HashSet<string>(fromMap.Keys);
+            keys.UnionWith(toMap.Keys);
+
+            foreach (string key in keys)
+            {
+                fromMap.TryGetValue(key, out var from);
+                toMap.TryGetValue(key, out var to);
+                StoryActorStateData sample = StoryTransitionSampler.SampleActor(key, from, to, elapsed);
+                if (sample == null)
+                    continue;
+
+                if (trackMap.TryGetValue(key, out var track))
+                    sample = StoryTransitionSampler.SampleActorTrackAtTime(sample, track, elapsed);
+
+                if (sample != null)
+                    samples[key] = sample;
+            }
+
+            return samples;
+        }
+
+        private void ApplyActorSamples(Dictionary<string, StoryActorStateData> targetMap)
+        {
             // 타겟에 없는 액터 퇴장
             var toExit = new List<string>();
             foreach (var id in _actors.Keys)
@@ -147,10 +300,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                         actorEntry.BaseScale.z);
                     actorEntry.Instance.SetActive(data.visible);
                     actorEntry.ApplyTint(data.focused ? focusColor : dimColor);
+                    actorEntry.CurrentState = data.ShallowClone();
                 }
             }
-
-            return UniTask.CompletedTask;
         }
 
         private Vector3 NormPosToWorld(StoryActorStateData data)
@@ -159,6 +311,64 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             Vector3 right = rightAnchor != null ? rightAnchor.position : new Vector3( 3f, 0f, 0f);
             Vector2 normPos = data.normalizedPosition + data.EffectiveOffset;
             return Vector3.Lerp(left, right, normPos.x);
+        }
+
+        private void ApplyBackgroundState(StoryBackgroundStateData state)
+        {
+            if (state == null || !state.HasBackground || !state.visible)
+            {
+                if (_backgroundInstance != null)
+                    _backgroundInstance.SetActive(false);
+                _backgroundState = state != null ? state.ShallowClone() : null;
+                return;
+            }
+
+            string key = state.ResolvedBackgroundKey;
+            if (_backgroundInstance == null || _backgroundKey != key)
+                RecreateBackgroundInstance(state, key);
+
+            if (_backgroundInstance == null)
+                return;
+
+            _backgroundInstance.SetActive(true);
+            Transform bgTransform = _backgroundInstance.transform;
+            Vector3 left = leftAnchor != null ? leftAnchor.position : new Vector3(-3f, 0f, 1f);
+            Vector3 right = rightAnchor != null ? rightAnchor.position : new Vector3(3f, 0f, 1f);
+            Vector3 center = Vector3.Lerp(left, right, 0.5f + state.EffectiveOffset.x);
+            center.y += state.EffectiveOffset.y;
+            bgTransform.position = center;
+            Vector2 scale = state.EffectiveScale;
+            bgTransform.localScale = new Vector3(scale.x, scale.y, bgTransform.localScale.z == 0f ? 1f : bgTransform.localScale.z);
+
+            Color tint = state.EffectiveTint;
+            tint.a *= state.EffectiveOpacity;
+            foreach (SpriteRenderer renderer in _backgroundInstance.GetComponentsInChildren<SpriteRenderer>(true))
+                renderer.color = tint;
+
+            _backgroundState = state.ShallowClone();
+        }
+
+        private void RecreateBackgroundInstance(StoryBackgroundStateData state, string key)
+        {
+            if (_backgroundInstance != null)
+                Destroy(_backgroundInstance);
+
+            Transform parent = backgroundRoot != null ? backgroundRoot : transform;
+            if (state.background != null && state.background.RuntimePrefab != null)
+            {
+                _backgroundInstance = Instantiate(state.background.RuntimePrefab, parent);
+            }
+            else
+            {
+                _backgroundInstance = new GameObject("Story Background");
+                _backgroundInstance.transform.SetParent(parent, false);
+                SpriteRenderer renderer = _backgroundInstance.AddComponent<SpriteRenderer>();
+                if (state.background != null)
+                    renderer.sprite = state.background.PreviewSprite;
+                renderer.sortingOrder = state.EffectiveSortOrder;
+            }
+
+            _backgroundKey = key;
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -178,6 +388,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
         {
             public GameObject Instance { get; }
             public Vector3 BaseScale { get; }
+            public StoryActorStateData CurrentState { get; set; }
             private readonly SpriteRenderer[] _spriteRenderers;
 
             public ActorEntry(GameObject instance, CharacterDefinitionSO character)

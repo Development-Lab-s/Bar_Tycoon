@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 
@@ -60,6 +61,178 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             moved.scaleX             = Mathf.LerpUnclamped(from.scaleX, to.scaleX, moveP);
             moved.visible            = true;
             return moved;
+        }
+
+        public static StoryActorStateData SampleActorTrack(
+            StoryActorStateData baseState,
+            StoryActorTrackData track,
+            float normalizedTime)
+        {
+            return SampleActorTrackAtTime(baseState, track, normalizedTime * GetActorTrackDuration(track));
+        }
+
+        public static StoryActorStateData SampleActorTrackAtTime(
+            StoryActorStateData baseState,
+            StoryActorTrackData track,
+            float timeSeconds)
+        {
+            if (baseState == null || track == null || track.keyframes == null || track.keyframes.Count == 0)
+                return baseState != null ? baseState.ShallowClone() : null;
+
+            StoryActorStateData sample = baseState.ShallowClone();
+            float t = Mathf.Max(0f, timeSeconds);
+
+            if (TrySampleVector2(track, StoryActorKeyframeProperty.Position, t, k => k.normalizedPosition, out Vector2 position))
+                sample.normalizedPosition = position;
+
+            if (TrySampleVector2(track, StoryActorKeyframeProperty.Scale, t, k => k.scale, out Vector2 scale))
+                sample.scale = scale;
+
+            if (TrySampleFloat(track, StoryActorKeyframeProperty.Scale, t, k => k.scaleX, out float scaleX))
+                sample.scaleX = scaleX;
+
+            return sample;
+        }
+
+        public static float GetActorTrackDuration(StoryActorTrackData track)
+        {
+            if (track == null || track.keyframes == null || track.keyframes.Count == 0)
+                return 0f;
+
+            float duration = 0f;
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe == null)
+                    continue;
+
+                duration = Mathf.Max(duration, GetKeyTime(keyframe));
+            }
+
+            return duration;
+        }
+
+        public static float GetKeyTime(StoryActorKeyframeData keyframe)
+        {
+            if (keyframe == null)
+                return 0f;
+
+            return keyframe.timeSeconds > 0f
+                ? keyframe.timeSeconds
+                : keyframe.normalizedTime;
+        }
+
+        private static bool TrySampleVector2(
+            StoryActorTrackData track,
+            StoryActorKeyframeProperty property,
+            float time,
+            System.Func<StoryActorKeyframeData, Vector2> selector,
+            out Vector2 value)
+        {
+            value = default;
+            if (!TryFindSegment(track, property, time, out var from, out var to, out float local))
+                return false;
+
+            if (to == null || from == to)
+            {
+                value = selector(from);
+                return true;
+            }
+
+            local = ResolveMoveProgress(ResolveOutgoingEasing(track, from), 1f, local);
+            value = Vector2.LerpUnclamped(selector(from), selector(to), local);
+            return true;
+        }
+
+        private static bool TrySampleFloat(
+            StoryActorTrackData track,
+            StoryActorKeyframeProperty property,
+            float time,
+            System.Func<StoryActorKeyframeData, float> selector,
+            out float value)
+        {
+            value = default;
+            if (!TryFindSegment(track, property, time, out var from, out var to, out float local))
+                return false;
+
+            if (to == null || from == to)
+            {
+                value = selector(from);
+                return true;
+            }
+
+            local = ResolveMoveProgress(ResolveOutgoingEasing(track, from), 1f, local);
+            value = Mathf.LerpUnclamped(selector(from), selector(to), local);
+            return true;
+        }
+
+        private static bool TryFindSegment(
+            StoryActorTrackData track,
+            StoryActorKeyframeProperty property,
+            float time,
+            out StoryActorKeyframeData from,
+            out StoryActorKeyframeData to,
+            out float local)
+        {
+            from = null;
+            to = null;
+            local = 0f;
+
+            var keys = new List<StoryActorKeyframeData>();
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe != null && keyframe.property == property)
+                    keys.Add(keyframe);
+            }
+
+            keys.Sort((a, b) => GetKeyTime(a).CompareTo(GetKeyTime(b)));
+            if (keys.Count == 0)
+                return false;
+
+            if (time <= GetKeyTime(keys[0]))
+            {
+                from = keys[0];
+                to = keys[0];
+                return true;
+            }
+
+            StoryActorKeyframeData last = keys[keys.Count - 1];
+            if (time >= GetKeyTime(last))
+            {
+                from = last;
+                to = last;
+                return true;
+            }
+
+            from = keys[0];
+            to = last;
+            for (int i = 1; i < keys.Count; i++)
+            {
+                if (GetKeyTime(keys[i]) >= time)
+                {
+                    to = keys[i];
+                    break;
+                }
+                from = keys[i];
+            }
+
+            float fromTime = GetKeyTime(from);
+            float toTime = GetKeyTime(to);
+            local = Mathf.Clamp01((time - fromTime) / Mathf.Max(0.0001f, toTime - fromTime));
+            return true;
+        }
+
+        private static StoryStageMoveMotionType ResolveOutgoingEasing(StoryActorTrackData track, StoryActorKeyframeData from)
+        {
+            float time = GetKeyTime(from);
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe != null
+                    && keyframe.property == StoryActorKeyframeProperty.Easing
+                    && Mathf.Approximately(GetKeyTime(keyframe), time))
+                    return keyframe.easing;
+            }
+
+            return from.easing;
         }
 
         // ── Background sampling ───────────────────────────────────────────────

@@ -372,8 +372,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             _transitionFromActors.Clear();
             _transitionToActors.Clear();
+            _transitionActorTracks.Clear();
             foreach (var pair in fromActors) _transitionFromActors[pair.Key] = pair.Value.ShallowClone();
             foreach (var pair in toActors)   _transitionToActors[pair.Key]   = pair.Value.ShallowClone();
+
+            if (FindCurrentStageLayout() is { } currentLayout)
+            {
+                foreach (StoryActorTrackData track in currentLayout.ActorTracks)
+                {
+                    if (track == null || string.IsNullOrWhiteSpace(track.actorInstanceKey))
+                        continue;
+
+                    _transitionActorTracks[track.actorInstanceKey] = track;
+                }
+            }
 
             _transitionFromBackground   = CloneBackgroundState(fromBackground);
             _transitionToBackground     = CloneBackgroundState(toBackground);
@@ -416,6 +428,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             _transitionFromActors.Clear();
             _transitionToActors.Clear();
+            _transitionActorTracks.Clear();
             _transitionFromBackground = null;
             _transitionToBackground   = null;
         }
@@ -456,6 +469,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _transitionFromActors.TryGetValue(key, out var from);
                 _transitionToActors.TryGetValue(key, out var to);
                 StoryActorStateData sample = StoryTransitionSampler.SampleActor(key, from, to, elapsed);
+                if (sample != null && _transitionActorTracks.TryGetValue(key, out var track))
+                    sample = StoryTransitionSampler.SampleActorTrack(sample, track, Mathf.Clamp01(elapsed / _transitionPreviewDuration));
+
                 if (sample != null)
                     _stageState[key] = sample;
             }
@@ -642,6 +658,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             SetElementVisible(_authoringToolsRoot, !isRuntime);
             SetElementVisible(_authoringGridLayer, !isRuntime);
             SetElementVisible(_cameraGizmoLayer,   !isRuntime);
+            SetElementVisible(_timelinePanel, !isRuntime);
+            SetElementVisible(_timelineResizeHandle, !isRuntime);
             SetEmptyStageVisible(!isRuntime && _stageState.Count == 0);
 
             SetElementVisible(_renderDialoguePanel,
@@ -653,6 +671,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             RefreshButtons();
             RefreshAuthoringControls();
+            RefreshTimelinePanel();
         }
 
         private bool ShouldShowEditorDialogue() =>

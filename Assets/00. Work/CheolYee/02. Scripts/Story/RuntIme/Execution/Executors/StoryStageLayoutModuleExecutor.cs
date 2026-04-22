@@ -60,7 +60,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
                 return UniTask.CompletedTask;
             }
 
-            return _stageDirector.ApplyStageStateAsync(layout.Actors, ct);
+            return _stageDirector.ApplyStageLayoutAsync(layout, ct);
         }
     }
 }
