@@ -1,0 +1,16 @@
+# .codex/config.example.toml
+
+# Optional: if you want Codex to also recognize old Claude-style files
+project_doc_fallback_filenames = ["CLAUDE.md"]
+project_doc_max_bytes = 65536
+
+# Example MCP block
+[mcp_servers.unityMCP]
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+
+# Fill these per machine in local .codex/config.toml
+# command = "C:/Path/To/uvx.exe"
+# args = ["--from", "mcpforunityserver", "mcp-for-unity", "--transport", "stdio"]

@@ -1,0 +1,403 @@
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
+{
+    public sealed partial class StoryPreviewWindow
+    {
+        // ── 상단 바 ──────────────────────────────────
+
+        private VisualElement BuildTopBar()
+        {
+            var bar = new VisualElement
+            {
+                style =
+                {
+                    flexDirection = FlexDirection.Row, alignItems = Align.Center,
+                    paddingLeft = 8, paddingRight = 8, paddingTop = 5, paddingBottom = 5,
+                    borderBottomWidth = 1, borderBottomColor = new StyleColor(new Color(0.1f, 0.1f, 0.1f))
+                }
+            };
+
+            _episodeField = new ObjectField("Episode") { objectType = typeof(StoryEpisodeSO), style = { flexGrow = 1, marginRight = 12 } };
+            _episodeField.RegisterValueChangedCallback(e => SetEpisode(e.newValue as StoryEpisodeSO));
+            bar.Add(_episodeField);
+
+            _previewModeField = new EnumField("Mode", previewMode) { style = { width = 180, marginRight = 8 } };
+            _previewModeField.RegisterValueChangedCallback(e =>
+            {
+                previewMode = (PreviewMode)e.newValue;
+                ApplyPreviewModeVisibility();
+            });
+            bar.Add(_previewModeField);
+
+            _workspaceModeBtn = MakeBtn("Workspace", new Color(0.24f, 0.24f, 0.28f), TogglePreviewWorkspaceMode);
+            _collapseInspectorBtn = MakeBtn("Inspector -", new Color(0.22f, 0.22f, 0.26f), TogglePreviewInspectorCollapsed);
+            _collapseRuntimeUiBtn = MakeBtn("Runtime UI -", new Color(0.22f, 0.22f, 0.26f), TogglePreviewRuntimeUiCollapsed);
+
+            _playBtn           = MakeBtn("▶ Play",      new Color(0.18f, 0.50f, 0.18f), OnPlay);
+            _fromHereBtn       = MakeBtn("▶ From Here", new Color(0.18f, 0.35f, 0.55f), OnFromHere);
+            _sampleLineBtn     = MakeBtn("Sample Line", new Color(0.35f, 0.35f, 0.18f), OnSampleLine);
+            _stopBtn           = MakeBtn("■ Stop",      new Color(0.50f, 0.18f, 0.18f), OnStop);
+            _nextBtn           = MakeBtn("▷ Next",      new Color(0.30f, 0.30f, 0.30f), OnNext);
+            _refreshGameViewBtn = MakeBtn("↻ Game View", new Color(0.25f, 0.25f, 0.32f), RefreshRenderAreaFromGameView);
+
+            bar.Add(_workspaceModeBtn);
+            bar.Add(_collapseInspectorBtn);
+            bar.Add(_collapseRuntimeUiBtn);
+            bar.Add(_playBtn); bar.Add(_fromHereBtn); bar.Add(_sampleLineBtn);
+            bar.Add(_stopBtn); bar.Add(_nextBtn);     bar.Add(_refreshGameViewBtn);
+
+            _statusLabel = new Label("정지") { style = { marginLeft = 10, fontSize = 10, color = new StyleColor(new Color(0.55f, 0.55f, 0.55f)) } };
+            bar.Add(_statusLabel);
+
+            _renderAreaLabel = new Label("") { style = { marginLeft = 10, fontSize = 10, color = new StyleColor(new Color(0.62f, 0.68f, 0.78f)) } };
+            bar.Add(_renderAreaLabel);
+
+            RefreshPreviewLayoutButtons();
+            return bar;
+        }
+
+        // ── 좌측 패널 ─────────────────────────────────
+
+        private void TogglePreviewWorkspaceMode()
+        {
+            bool collapse = !_previewInspectorCollapsed || !_previewRuntimeUiCollapsed;
+            if (collapse)
+                CapturePreviewInspectorWidth();
+
+            _previewInspectorCollapsed = collapse;
+            _previewRuntimeUiCollapsed = collapse;
+            ApplyPreviewLayoutVisibility();
+            SavePreviewLayoutPrefs();
+        }
+
+        private void TogglePreviewInspectorCollapsed()
+        {
+            if (!_previewInspectorCollapsed)
+                CapturePreviewInspectorWidth();
+
+            _previewInspectorCollapsed = !_previewInspectorCollapsed;
+            ApplyPreviewLayoutVisibility();
+            SavePreviewLayoutPrefs();
+        }
+
+        private void TogglePreviewRuntimeUiCollapsed()
+        {
+            _previewRuntimeUiCollapsed = !_previewRuntimeUiCollapsed;
+            ApplyPreviewLayoutVisibility();
+            SavePreviewLayoutPrefs();
+        }
+
+        private void LoadPreviewLayoutPrefs()
+        {
+            _previewInspectorCollapsed = UnityEditor.EditorPrefs.GetBool(PrefsKeyPrefix + "InspectorCollapsed", false);
+            _previewRuntimeUiCollapsed = UnityEditor.EditorPrefs.GetBool(PrefsKeyPrefix + "RuntimeUiCollapsed", false);
+            _previewInspectorExpandedWidth = Mathf.Clamp(
+                UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "InspectorWidth", InspectorWidth),
+                MinInspectorWidth,
+                MaxInspectorWidth);
+        }
+
+        private void SavePreviewLayoutPrefs()
+        {
+            UnityEditor.EditorPrefs.SetBool(PrefsKeyPrefix + "InspectorCollapsed", _previewInspectorCollapsed);
+            UnityEditor.EditorPrefs.SetBool(PrefsKeyPrefix + "RuntimeUiCollapsed", _previewRuntimeUiCollapsed);
+            UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "InspectorWidth", _previewInspectorExpandedWidth);
+        }
+
+        private void ApplyPreviewLayoutVisibility()
+        {
+            if (_inspectorPanel != null)
+            {
+                if (_previewInspectorCollapsed)
+                {
+                    _inspectorPanel.style.display = DisplayStyle.None;
+                }
+                else
+                {
+                    _inspectorPanel.style.display = DisplayStyle.Flex;
+                    _inspectorPanel.style.width = Mathf.Clamp(_previewInspectorExpandedWidth, MinInspectorWidth, MaxInspectorWidth);
+                }
+            }
+
+            SetElementVisible(_inspectorSplitter, !_previewInspectorCollapsed);
+            RefreshPreviewLayoutButtons();
+            ApplyPreviewModeVisibility();
+        }
+
+        private void RefreshPreviewLayoutButtons()
+        {
+            if (_workspaceModeBtn != null)
+                _workspaceModeBtn.text = _previewInspectorCollapsed && _previewRuntimeUiCollapsed ? "Workspace On" : "Workspace";
+
+            if (_collapseInspectorBtn != null)
+                _collapseInspectorBtn.text = _previewInspectorCollapsed ? "Inspector +" : "Inspector -";
+
+            if (_collapseRuntimeUiBtn != null)
+                _collapseRuntimeUiBtn.text = _previewRuntimeUiCollapsed ? "Runtime UI +" : "Runtime UI -";
+        }
+
+        private void CapturePreviewInspectorWidth()
+        {
+            if (_inspectorPanel == null || _previewInspectorCollapsed)
+                return;
+
+            float width = _inspectorPanel.resolvedStyle.width > 0
+                ? _inspectorPanel.resolvedStyle.width
+                : _previewInspectorExpandedWidth;
+            _previewInspectorExpandedWidth = Mathf.Clamp(width, MinInspectorWidth, MaxInspectorWidth);
+        }
+
+        private VisualElement BuildLeftPanel()
+        {
+            var left = new VisualElement { style = { flexGrow = 1, flexDirection = FlexDirection.Column } };
+
+            _stageWrapper = new VisualElement
+            {
+                style = { flexGrow = 1, overflow = Overflow.Hidden, backgroundColor = new StyleColor(new Color(0.04f, 0.04f, 0.05f)) }
+            };
+            BuildStoryRenderingRoot();
+            _stageWrapper.Add(_stageWorld);
+            _stageWrapper.RegisterCallback<GeometryChangedEvent>(OnStageWrapperResized);
+            RegisterPanZoomCallbacks();
+            left.Add(_stageWrapper);
+
+            // RuntimePreview 전용 하단 대화 패널
+            _dialoguePanel = new VisualElement
+            {
+                style =
+                {
+                    flexShrink = 0, height = DialoguePanelH,
+                    paddingLeft = 14, paddingRight = 14, paddingTop = 8, paddingBottom = 8,
+                    backgroundColor = new StyleColor(new Color(0.12f, 0.12f, 0.14f)),
+                    borderTopWidth = 1, borderTopColor = new StyleColor(new Color(0.08f, 0.08f, 0.08f))
+                }
+            };
+            _speakerLabel  = new Label("") { style = { fontSize = 10, color = new StyleColor(new Color(0.7f, 0.7f, 0.4f)), marginBottom = 3 } };
+            _dialogueLabel = new Label("") { style = { fontSize = 12, whiteSpace = WhiteSpace.Normal, color = new StyleColor(new Color(0.92f, 0.92f, 0.92f)) } };
+            _dialoguePanel.Add(_speakerLabel);
+            _dialoguePanel.Add(_dialogueLabel);
+            left.Add(_dialoguePanel);
+
+            _choiceArea = new VisualElement { style = { flexDirection = FlexDirection.Row, flexWrap = Wrap.Wrap, paddingLeft = 8, paddingRight = 8, paddingTop = 4, paddingBottom = 4 } };
+            left.Add(_choiceArea);
+
+            return left;
+        }
+
+        // ── Stage Rendering Root 구축 ─────────────────
+
+        private void BuildStoryRenderingRoot()
+        {
+            // Stage World: pan/zoom transform 대상. overflow=Visible 로 카메라 프레임 밖도 표시.
+            _stageWorld = new VisualElement
+            {
+                name = "StageWorld",
+                style = { position = Position.Absolute, left = 0, top = 0, overflow = Overflow.Visible }
+            };
+
+            _authoringGridLayer = BuildAuthoringGridLayer();
+
+            // 배경 레이어: UpdateCameraFrameGeometry() 에서 크기 갱신.
+            _backgroundLayer = new VisualElement
+            {
+                name = "StoryPreviewBackground",
+                pickingMode = PickingMode.Ignore,
+                style = { position = Position.Absolute, left = 0, top = 0, overflow = Overflow.Visible }
+            };
+
+            // 액터 레이어: world 좌표계, 카메라 프레임 밖 배치 허용.
+            _actorLayer = new VisualElement
+            {
+                name = "StoryPreviewActorStage",
+                style = { position = Position.Absolute, left = 0, top = 0, overflow = Overflow.Visible }
+            };
+
+            // 카메라 프레임 가이드: 게임 카메라가 보는 영역을 나타내는 테두리.
+            // 크기는 DefaultUnitPixels × (DefaultUnitPixels / aspect). UpdateCameraFrameGeometry() 에서 갱신.
+            _cameraFrameGuide = new VisualElement
+            {
+                name = "CameraFrameGuide",
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute, left = 0, top = 0,
+                    width = DefaultUnitPixels, height = DefaultUnitPixels,
+                    borderTopWidth = 1, borderRightWidth = 1, borderBottomWidth = 1, borderLeftWidth = 1,
+                    borderTopColor    = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
+                    borderRightColor  = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
+                    borderBottomColor = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
+                    borderLeftColor   = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
+                    overflow = Overflow.Visible
+                }
+            };
+            _cameraGizmoLayer = BuildCameraGizmoLayer();
+            _cameraFrameGuide.Add(_cameraGizmoLayer);
+
+            // 대화 오버레이 (카메라 프레임 내부 하단)
+            _renderDialoguePanel = new VisualElement
+            {
+                name = "StoryPreviewDialogueOverlay",
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute, left = 18, right = 18, bottom = 18, minHeight = 82,
+                    paddingLeft = 12, paddingRight = 12, paddingTop = 8, paddingBottom = 8,
+                    backgroundColor = new StyleColor(new Color(0.04f, 0.04f, 0.05f, 0.82f)),
+                    borderTopWidth = 1, borderRightWidth = 1, borderBottomWidth = 1, borderLeftWidth = 1,
+                    borderTopColor    = new StyleColor(new Color(0.7f, 0.7f, 0.76f, 0.55f)),
+                    borderRightColor  = new StyleColor(new Color(0.7f, 0.7f, 0.76f, 0.55f)),
+                    borderBottomColor = new StyleColor(new Color(0.7f, 0.7f, 0.76f, 0.55f)),
+                    borderLeftColor   = new StyleColor(new Color(0.7f, 0.7f, 0.76f, 0.55f))
+                }
+            };
+            _renderSpeakerLabel  = new Label("") { pickingMode = PickingMode.Ignore, style = { fontSize = 10, marginBottom = 4, color = new StyleColor(new Color(0.88f, 0.82f, 0.5f)) } };
+            _renderDialogueLabel = new Label("") { pickingMode = PickingMode.Ignore, style = { fontSize = 12, whiteSpace = WhiteSpace.Normal, color = new StyleColor(new Color(0.94f, 0.94f, 0.96f)) } };
+            _renderDialoguePanel.Add(_renderSpeakerLabel);
+            _renderDialoguePanel.Add(_renderDialogueLabel);
+
+            // 선택지 오버레이 (카메라 프레임 내부)
+            _renderChoiceArea = new VisualElement
+            {
+                name = "StoryPreviewChoiceOverlay",
+                style = { position = Position.Absolute, left = 18, right = 18, bottom = 118, flexDirection = FlexDirection.Column, alignItems = Align.Stretch }
+            };
+
+            // 빈 스테이지 안내 라벨
+            _emptyStageLabel = new Label("Stage Layout 모듈 또는 표시 중인 액터가 없습니다.")
+            {
+                name = "StoryPreviewEmptyStageLabel",
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute, left = 12, right = 12, top = 12,
+                    unityTextAlign = TextAnchor.UpperCenter,
+                    whiteSpace = WhiteSpace.Normal, fontSize = 11,
+                    color = new StyleColor(new Color(0.65f, 0.65f, 0.7f))
+                }
+            };
+
+            _cameraFrameGuide.Add(_emptyStageLabel);
+            _cameraFrameGuide.Add(_renderChoiceArea);
+            _cameraFrameGuide.Add(_renderDialoguePanel);
+
+            _stageWorld.Add(_authoringGridLayer);
+            _stageWorld.Add(_backgroundLayer);
+            _stageWorld.Add(_actorLayer);
+            _stageWorld.Add(_cameraFrameGuide);
+        }
+
+        private static VisualElement BuildAuthoringGridLayer()
+        {
+            float size = DefaultUnitPixels + WorldPaddingPixels * 2f;
+            var grid = new VisualElement
+            {
+                name = "StageAuthoringGrid",
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    left = -WorldPaddingPixels,
+                    top = -WorldPaddingPixels,
+                    width = size,
+                    height = size,
+                    backgroundColor = new StyleColor(new Color(0.18f, 0.18f, 0.19f))
+                }
+            };
+
+            AddGridLines(grid, size, GridMinorPixels, new Color(0.26f, 0.26f, 0.27f, 0.55f), 1f);
+            AddGridLines(grid, size, GridMajorPixels, new Color(0.34f, 0.34f, 0.36f, 0.72f), 1.5f);
+            return grid;
+        }
+
+        private static void AddGridLines(VisualElement grid, float size, float interval, Color color, float thickness)
+        {
+            for (float p = 0f; p <= size; p += interval)
+            {
+                grid.Add(new VisualElement
+                {
+                    pickingMode = PickingMode.Ignore,
+                    style =
+                    {
+                        position = Position.Absolute,
+                        left = p,
+                        top = 0,
+                        width = thickness,
+                        height = size,
+                        backgroundColor = new StyleColor(color)
+                    }
+                });
+
+                grid.Add(new VisualElement
+                {
+                    pickingMode = PickingMode.Ignore,
+                    style =
+                    {
+                        position = Position.Absolute,
+                        left = 0,
+                        top = p,
+                        width = size,
+                        height = thickness,
+                        backgroundColor = new StyleColor(color)
+                    }
+                });
+            }
+        }
+
+        private static VisualElement BuildCameraGizmoLayer()
+        {
+            var layer = new VisualElement
+            {
+                name = "CameraGizmoOverlay",
+                pickingMode = PickingMode.Ignore,
+                style = { position = Position.Absolute, left = 0, top = 0, right = 0, bottom = 0 }
+            };
+
+            layer.Add(new Label("CAMERA FRAME")
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    left = 8,
+                    top = 6,
+                    fontSize = 9,
+                    color = new StyleColor(new Color(0.72f, 0.84f, 1f, 0.9f)),
+                    unityFontStyleAndWeight = FontStyle.Bold
+                }
+            });
+
+            layer.Add(new VisualElement
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    left = new StyleLength(new Length(50, LengthUnit.Percent)),
+                    top = 0,
+                    width = 1,
+                    bottom = 0,
+                    backgroundColor = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.2f))
+                }
+            });
+
+            layer.Add(new VisualElement
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    left = 0,
+                    right = 0,
+                    top = new StyleLength(new Length(50, LengthUnit.Percent)),
+                    height = 1,
+                    backgroundColor = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.2f))
+                }
+            });
+
+            return layer;
+        }
+    }
+}
