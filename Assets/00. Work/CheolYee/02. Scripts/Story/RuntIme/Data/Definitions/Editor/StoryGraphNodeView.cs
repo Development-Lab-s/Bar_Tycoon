@@ -1,5 +1,4 @@
 using System;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,18 +9,23 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         // ── 기본 크기 상수 ───────────────────────────
         public const float DefaultW      = 260f;
         public const float DefaultH      = 120f;
-        public const float MinW          = 220f;
-        public const float MinH          = 100f;
+        private const float MinW          = 220f;
+        private const float MinH          = 100f;
         private const float PortRadius   = 10f;   // 더 크게 해서 클릭/드래그 쉽게
         private const float PortDiameter = PortRadius * 2f;
         private const float GripSize     = 14f;
         private const float IconSize     = 20f;
 
         // ── 공개 이벤트 ──────────────────────────────
-        public event Action<StoryGraphNodeView>          Clicked;
+        /// <summary>클릭. bool = Ctrl 키 누름 여부.</summary>
+        public event Action<StoryGraphNodeView, bool>    Clicked;
         public event Action<StoryGraphNodeView>          DoubleClicked;
         /// <summary>출력 포트 PointerDown → 드래그 연결 시작 (click-to-connect도 이 이벤트 사용)</summary>
         public event Action<StoryGraphNodeView>          OutputPortDragStart;
+        /// <summary>드래그 이동 시작 (캔버스가 다중 선택 노드 시작 위치 기록에 사용)</summary>
+        public event Action<StoryGraphNodeView>          DragStarted;
+        /// <summary>드래그 중 총 canvas-pixel delta (드래그 시작 위치 기준 누적). 캔버스가 다른 선택 노드 동기 이동에 사용.</summary>
+        public event Action<StoryGraphNodeView, Vector2> DragTotalDelta;
         /// <summary>드래그 이동 종료 → (node, finalPos)</summary>
         public event Action<StoryGraphNodeView, Vector2> Dragged;
         /// <summary>리사이즈 종료 → (node, finalSize)</summary>
@@ -31,7 +35,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         // ── 외부 주입 ────────────────────────────────
         /// <summary>연결 모드 중이면 드래그/리사이즈 금지. Canvas가 주입.</summary>
-        public Func<bool> IsConnectModeActive;
+        public Func<bool> isConnectModeActive;
 
         // ── 데이터 ──────────────────────────────────
         public StoryLineSO Line { get; }
@@ -53,12 +57,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         /// <summary>canvas zoom 배율. 드래그·리사이즈 delta 보정에 사용.</summary>
         public float ZoomScale { get; set; } = 1f;
 
+        // ── 선택 / 프리뷰 상태 ─────────────────────
+        private bool _isSelected;
+        private bool _isPreviewActive;
+
         // ── 드래그(이동) 상태 ────────────────────────
         private bool    _dragging;
         private bool    _dragMoved;
         private Vector2 _dragStartScreen;
         private Vector2 _nodeStartPos;
         private const float DragThreshold = 5f;
+
+        // ── 공개 API (다중 이동 지원) ─────────────────
+        /// <summary>캔버스가 다중 이동 중 외부에서 이 노드를 이동시킬 때 호출.</summary>
+        public void ApplyExternalDelta(Vector2 canvasDelta)
+        {
+            style.left = Mathf.Max(0f, resolvedStyle.left + canvasDelta.x);
+            style.top  = Mathf.Max(0f, resolvedStyle.top  + canvasDelta.y);
+        }
 
         // ── 리사이즈 상태 ────────────────────────────
         private bool    _resizing;
@@ -79,25 +95,35 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             ApplyBorder(new Color(0.35f, 0.35f, 0.35f), 1f);
 
             // ── Header (Row: icon + lineId) ───────────
-            var header = new VisualElement();
-            header.style.backgroundColor      = new StyleColor(new Color(0.14f, 0.27f, 0.44f));
-            header.style.paddingLeft          = 6;
-            header.style.paddingRight         = 6;
-            header.style.paddingTop           = 4;
-            header.style.paddingBottom        = 4;
-            header.style.borderTopLeftRadius  = 3;
-            header.style.borderTopRightRadius = 3;
-            header.style.flexShrink           = 0;
-            header.style.flexDirection        = FlexDirection.Row;
-            header.style.alignItems           = Align.Center;
+            var header = new VisualElement
+            {
+                style =
+                {
+                    backgroundColor = new StyleColor(new Color(0.14f, 0.27f, 0.44f)),
+                    paddingLeft = 6,
+                    paddingRight = 6,
+                    paddingTop = 4,
+                    paddingBottom = 4,
+                    borderTopLeftRadius = 3,
+                    borderTopRightRadius = 3,
+                    flexShrink = 0,
+                    flexDirection = FlexDirection.Row,
+                    alignItems = Align.Center
+                }
+            };
 
             // speaker 아이콘 (좌측)
-            _iconElement = new VisualElement();
-            _iconElement.style.width           = IconSize;
-            _iconElement.style.height          = IconSize;
-            _iconElement.style.flexShrink      = 0;
-            _iconElement.style.marginRight     = 5;
-            _iconElement.style.backgroundColor = new StyleColor(new Color(0.3f, 0.3f, 0.3f, 0.5f));
+            _iconElement = new VisualElement
+            {
+                style =
+                {
+                    width = IconSize,
+                    height = IconSize,
+                    flexShrink = 0,
+                    marginRight = 5,
+                    backgroundColor = new StyleColor(new Color(0.3f, 0.3f, 0.3f, 0.5f))
+                }
+            };
             _iconElement.style.borderTopLeftRadius    = _iconElement.style.borderTopRightRadius    =
             _iconElement.style.borderBottomLeftRadius = _iconElement.style.borderBottomRightRadius = 3;
             _iconElement.style.backgroundSize  = new StyleBackgroundSize(
@@ -105,31 +131,51 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             header.Add(_iconElement);
 
             // lineId 레이블 (우측)
-            _idLabel = new Label(IdText(line));
-            _idLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            _idLabel.style.fontSize = 11;
-            _idLabel.style.overflow = Overflow.Hidden;
-            _idLabel.style.flexGrow = 1;
+            _idLabel = new Label(IdText(line))
+            {
+                style =
+                {
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    fontSize = 11,
+                    overflow = Overflow.Hidden,
+                    flexGrow = 1
+                }
+            };
             header.Add(_idLabel);
             Add(header);
 
             // ── Body ─────────────────────────────────
-            var body = new VisualElement();
-            body.style.paddingLeft  = 8;
-            body.style.paddingRight = 8;
-            body.style.paddingTop   = 4;
-            body.style.flexGrow     = 1;
-            body.style.overflow     = Overflow.Hidden;
+            var body = new VisualElement
+            {
+                style =
+                {
+                    paddingLeft = 8,
+                    paddingRight = 8,
+                    paddingTop = 4,
+                    flexGrow = 1,
+                    overflow = Overflow.Hidden
+                }
+            };
 
-            _speakerLabel = new Label(SpeakerText(line));
-            _speakerLabel.style.fontSize = 10;
-            _speakerLabel.style.color    = new StyleColor(new Color(0.65f, 0.65f, 0.65f));
+            _speakerLabel = new Label(SpeakerText(line))
+            {
+                style =
+                {
+                    fontSize = 10,
+                    color = new StyleColor(new Color(0.65f, 0.65f, 0.65f))
+                }
+            };
             body.Add(_speakerLabel);
 
-            _dialogueLabel = new Label(Trunc(line?.DialogueText, 60));
-            _dialogueLabel.style.fontSize    = 10;
-            _dialogueLabel.style.overflow    = Overflow.Hidden;
-            _dialogueLabel.style.whiteSpace  = WhiteSpace.Normal;
+            _dialogueLabel = new Label(Trunc(line?.DialogueText, 60))
+            {
+                style =
+                {
+                    fontSize = 10,
+                    overflow = Overflow.Hidden,
+                    whiteSpace = WhiteSpace.Normal
+                }
+            };
             body.Add(_dialogueLabel);
             Add(body);
 
@@ -157,12 +203,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Add(_outputPort);
 
             // ── Resize Handle ─────────────────────────
-            _resizeHandle = new VisualElement();
-            _resizeHandle.style.position        = Position.Absolute;
-            _resizeHandle.style.width           = GripSize;
-            _resizeHandle.style.height          = GripSize;
-            _resizeHandle.style.backgroundColor = new StyleColor(new Color(0.35f, 0.35f, 0.35f, 0.7f));
-            _resizeHandle.tooltip               = "드래그하여 크기 조절";
+            _resizeHandle = new VisualElement
+            {
+                style =
+                {
+                    position = Position.Absolute,
+                    width = GripSize,
+                    height = GripSize,
+                    backgroundColor = new StyleColor(new Color(0.35f, 0.35f, 0.35f, 0.7f))
+                },
+                tooltip = "드래그하여 크기 조절"
+            };
             _resizeHandle.generateVisualContent += DrawGrip;
             Add(_resizeHandle);
 
@@ -184,8 +235,30 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         // ── 공개 API ─────────────────────────────────
 
-        public void SetSelected(bool on) =>
-            ApplyBorder(on ? new Color(0.9f, 0.7f, 0.2f) : new Color(0.35f, 0.35f, 0.35f), on ? 2f : 1f);
+        /// <summary>카드 영역(header+body)의 현재 높이. 모듈 스택 top 계산에 사용.</summary>
+        public float CardHeight => _h;
+
+        public void SetSelected(bool on)
+        {
+            _isSelected = on;
+            ApplyBorderStyle();
+        }
+
+        public void SetPreviewActive(bool on)
+        {
+            _isPreviewActive = on;
+            ApplyBorderStyle();
+        }
+
+        private void ApplyBorderStyle()
+        {
+            if (_isSelected)
+                ApplyBorder(new Color(0.9f, 0.7f, 0.2f), 2f);
+            else if (_isPreviewActive)
+                ApplyBorder(new Color(0.25f, 0.95f, 0.65f), 2.5f);
+            else
+                ApplyBorder(new Color(0.35f, 0.35f, 0.35f), 1f);
+        }
 
         public void SetPendingSource(bool on) =>
             _outputPort.style.backgroundColor = new StyleColor(on
@@ -210,15 +283,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void RefreshIcon()
         {
             var sprite = Line?.Speaker?.LogIcon;
-            if (sprite != null)
-            {
-                _iconElement.style.backgroundImage = new StyleBackground(sprite);
-            }
-            else
-            {
+            _iconElement.style.backgroundImage = sprite != null 
+                ? new StyleBackground(sprite) :
                 // 아이콘 없음: 배경 이미지만 지우고 placeholder 색상 유지
-                _iconElement.style.backgroundImage = StyleKeyword.None;
-            }
+                StyleKeyword.None;
         }
 
         // ── SetSize ──────────────────────────────────
@@ -264,13 +332,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             if (e.button != 0) return;
             if (e.target == _outputPort || e.target == _resizeHandle) return;
-            if (IsConnectModeActive?.Invoke() == true) return;
+            if (isConnectModeActive?.Invoke() == true) return;
 
             _dragging        = true;
             _dragMoved       = false;
             _dragStartScreen = e.position;
             _nodeStartPos    = new Vector2(resolvedStyle.left, resolvedStyle.top);
             this.CapturePointer(e.pointerId);
+            DragStarted?.Invoke(this);
         }
 
         private void OnPointerMove(PointerMoveEvent e)
@@ -279,9 +348,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Vector2 screenDelta = (Vector2)e.position - _dragStartScreen;
             if (screenDelta.magnitude < DragThreshold) return;
             _dragMoved = true;
-            Vector2 cd = screenDelta / ZoomScale;   // canvas-pixel delta
+            Vector2 cd = screenDelta / ZoomScale;   // canvas-pixel delta (시작 기준 누적)
             style.left = Mathf.Max(0f, _nodeStartPos.x + cd.x);
             style.top  = Mathf.Max(0f, _nodeStartPos.y + cd.y);
+            DragTotalDelta?.Invoke(this, cd);
             e.StopPropagation();
         }
 
@@ -305,7 +375,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void OnResizePointerDown(PointerDownEvent e)
         {
             if (e.button != 0) return;
-            if (IsConnectModeActive?.Invoke() == true) return;
+            if (isConnectModeActive?.Invoke() == true) return;
             _resizing           = true;
             _resizeStartScreen  = e.position;
             _sizeAtResizeStart  = new Vector2(_w, _h);
@@ -337,7 +407,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_dragMoved) { _dragMoved = false; return; }
             if (e.target == _outputPort) return;
             if (e.clickCount == 2) { DoubleClicked?.Invoke(this); e.StopPropagation(); return; }
-            Clicked?.Invoke(this);
+            Clicked?.Invoke(this, e.ctrlKey);
             e.StopPropagation();
         }
 
@@ -361,11 +431,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private static VisualElement MakePort(Color col)
         {
-            var p = new VisualElement();
-            p.style.position  = Position.Absolute;
-            p.style.width     = PortDiameter;
-            p.style.height    = PortDiameter;
-            p.style.backgroundColor = new StyleColor(col);
+            var p = new VisualElement
+            {
+                style =
+                {
+                    position = Position.Absolute,
+                    width = PortDiameter,
+                    height = PortDiameter,
+                    backgroundColor = new StyleColor(col)
+                }
+            };
             p.style.borderTopLeftRadius    = p.style.borderTopRightRadius    =
             p.style.borderBottomLeftRadius = p.style.borderBottomRightRadius = PortRadius;
             return p;

@@ -28,18 +28,92 @@ MonoBehaviour:
     allowReplayInLog: 1
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
-  modules: []
-  inlineModules:
-  - rid: 2437039337276178527
-  editorNodePosition: {x: 355, y: 102}
+  modules:
+  - {fileID: 5197777546466959941}
+  - {fileID: 5510174144787720421}
+  editorNodePosition: {x: 1418, y: 1673}
   editorNodeSize: {x: 260, y: 139}
-  references:
-    version: 2
-    RefIds:
-    - rid: 2437039337276178527
-      type: {class: CharacterClearInlineModuleData, ns: _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules, asm: Assembly-CSharp}
-      data:
-        timing: 1
-        isBlocking: 0
-        canSkip: 1
-        affectsAutoAdvance: 0
+--- !u!114 &5197777546466959941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5cba6040f64741f289e8c398e05f0bd4, type: 3}
+  m_Name: '[Migrated] Character Clear #0'
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules.StoryCharacterClearModuleSO
+  timing: 1
+  isBlocking: 0
+  canSkip: 1
+  affectsAutoAdvance: 0
+--- !u!114 &5510174144787720421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb28fc288a95cfd42b44da0593857113, type: 3}
+  m_Name: Stage Layout
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules.StoryStageLayoutModuleSO
+  timing: 0
+  isBlocking: 0
+  canSkip: 1
+  affectsAutoAdvance: 0
+  background:
+    background: {fileID: 0}
+    backgroundKey: 
+    variantKey: 
+    visible: 1
+    normalizedOffset: {x: 0, y: 0}
+    scale: {x: 1, y: 1}
+    pivot: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    sortOrder: -100
+    enterMotion: 1
+    enterDuration: 0.35
+    exitMotion: 1
+    exitDuration: 0.25
+  actors:
+  - actor: {fileID: 11400000, guid: c8843c3fa860e8d4f8ace47ffb255fbe, type: 2}
+    actorKey: Rin
+    actorInstanceKey: 
+    normalizedPosition: {x: 0.8055073, y: -0.008685581}
+    scale: {x: 0, y: 0}
+    scaleX: 5
+    visible: 1
+    focused: 0
+    sortOrder: 0
+    poseKey: 
+    expressionKey: 
+    motionProfileKey: 
+    enterMotion: 0
+    enterDuration: 0
+    moveMotion: 0
+    moveDuration: 0
+    exitMotion: 0
+    exitDuration: 0
+  - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
+    actorKey: cian
+    actorInstanceKey: 
+    normalizedPosition: {x: 0.13118395, y: -0.003964059}
+    scale: {x: 1, y: 1}
+    scaleX: 5
+    visible: 1
+    focused: 1
+    sortOrder: 0
+    poseKey: 
+    expressionKey: 
+    motionProfileKey: 
+    enterMotion: 2
+    enterDuration: 0.2
+    moveMotion: 0
+    moveDuration: 100
+    exitMotion: 0
+    exitDuration: 0
