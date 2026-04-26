@@ -8,19 +8,19 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
 {
     public class UpgradeCategorySelector
     {
-        private readonly Dictionary<ButtonType, ButtonUpgradeData> _upgradeDataDict;
+        private readonly Dictionary<ButtonType, UpgradeCategoryData> _upgradeDataDict;
         public List<UpgradeData> CurrentDataList { get; private set; }
         public EventChannelSO CurrentEventChannel { get; private set; }
 
-        public UpgradeCategorySelector(List<ButtonUpgradeData> upgradeDataList)
+        public UpgradeCategorySelector(List<UpgradeCategoryData> upgradeDataList)
         {     
-            _upgradeDataDict = new Dictionary<ButtonType, ButtonUpgradeData>();
+            _upgradeDataDict = new Dictionary<ButtonType, UpgradeCategoryData>();
 
-            foreach (ButtonUpgradeData upgradeData in upgradeDataList)
+            foreach (UpgradeCategoryData upgradeData in upgradeDataList)
             {
-                if (!_upgradeDataDict.TryAdd(upgradeData.buttonType, upgradeData))
+                if (!_upgradeDataDict.TryAdd(upgradeData.ButtonType, upgradeData))
                 {
-                    Debug.LogError($"{upgradeData.buttonType} 중복 등록됨");
+                    Debug.LogError($"{upgradeData.ButtonType} 중복 등록됨");
                 }
             }
 
@@ -28,7 +28,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
 
         public bool TrySelect(ButtonType btnType)
         {
-            if (!_upgradeDataDict.TryGetValue(btnType, out ButtonUpgradeData dataList))
+            if (!_upgradeDataDict.TryGetValue(btnType, out UpgradeCategoryData dataList))
             {
                 Debug.LogWarning($"{btnType} 에 해당하는 업그레이드 데이터가 없음");
                 CurrentDataList = null;
@@ -36,8 +36,8 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
                 return false;
             }
 
-            CurrentEventChannel = dataList.upgradeChannel;
-            CurrentDataList = dataList.upgradeGroups;
+            CurrentEventChannel = dataList.UpgradeChannel;
+            CurrentDataList = dataList.UpgradeGroups;
             return true;
         }
     }

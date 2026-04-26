@@ -17,7 +17,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
         [SerializeField] private CoinSystemSo coinSystemSo;
         
         [Header("UpgradeData")]
-        [SerializeField] private List<ButtonUpgradeData> upgradeDataList;
+        [SerializeField] private List<UpgradeCategoryData> upgradeDataList;
         
         private UpgradeCategorySelector _categorySelector;
         private UpgradeService _upgradeService;

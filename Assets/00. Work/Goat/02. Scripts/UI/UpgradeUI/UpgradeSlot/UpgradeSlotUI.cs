@@ -40,7 +40,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
         public void SetView(UpgradeData data, string cost)
         {
             _data = data;
-            UpgradeDataSO dataSo = _data.upgradeDataSo;
+            UpgradeDataSO dataSo = _data.UpgradeDataSo;
             titleText.text = dataSo.Title;
             descriptionText.text = dataSo.Description;
             costText.text = cost;
