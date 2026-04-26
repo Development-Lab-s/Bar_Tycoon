@@ -80,8 +80,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private const float ZoomStep          = 0.12f;
         private const float MinInspectorWidth = 180f;
         private const float MaxInspectorWidth = 460f;
-        private const float DefaultTimelineHeight = 210f;
-        private const float MinTimelineHeight = 120f;
+        private const float DefaultTimelineHeight = 260f;
+        private const float MinTimelineHeight = 180f;
         private const float MaxTimelineHeight = 420f;
         private const float DefaultTimelinePixelsPerSecond = 120f;
         private const float MinTimelinePixelsPerSecond = 48f;
@@ -220,16 +220,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private bool _timelineIsPlaying;
         private string _timelineRecordActorKey;
         private bool _isTimelinePlayheadDragging;
+        private int _activeTimelinePointerId = -1;
         private double _timelinePlaybackStartedAt;
         private float _timelinePlaybackStartTime;
         private bool _isTimelineResizing;
         private float _timelineResizeStartY;
         private float _timelineResizeStartHeight;
         private int _selectedTimelineKeyIndex = -1;
+        private int _selectedTimelineSegmentKeyIndex = -1;
         private bool _isTimelineKeyDragging;
         private string _draggingTimelineActorKey;
         private int _draggingTimelineKeyIndex = -1;
         private StoryActorKeyframeProperty _selectedTimelineProperty = StoryActorKeyframeProperty.Position;
+        private StoryActorKeyframeProperty _selectedTimelineSegmentProperty = StoryActorKeyframeProperty.Position;
         private StoryActorKeyframeData _timelineClipboardKey;
         private StoryActorKeyframeProperty _timelineClipboardProperty = StoryActorKeyframeProperty.Position;
 
@@ -287,32 +290,46 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void OnUndoRedo()
         {
+            CancelTimelinePointerDrag();
             StopTransitionPreview(applyTargetState: false);
             BuildStageStateAt(_currentLine);
             if (_selectionKind == StageSelectionKind.Actor && !_stageState.ContainsKey(_selectedActorKey))
                 ClearStageSelection();
+            ValidateTimelineSelection();
             RebuildActorLayer();
+            ApplyTimelinePlayheadSample();
             RefreshActorInspector();
             RefreshAuthoringControls();
+            RefreshTimelinePanel();
+            Repaint();
         }
 
         private void OnGUI()
         {
             var e = Event.current;
-            if (previewMode != PreviewMode.StageAuthoring || e.type != EventType.KeyDown)
+            if (previewMode != PreviewMode.StageAuthoring)
                 return;
 
-            if (e.keyCode != KeyCode.Delete && e.keyCode != KeyCode.Backspace)
+            if (e.type == EventType.MouseUp && _activeTimelinePointerId >= 0)
+            {
+                CancelTimelinePointerDrag();
+                return;
+            }
+
+            if (e.type != EventType.KeyDown)
                 return;
 
             if (IsFocusedOnTextInput(rootVisualElement))
                 return;
 
-            if (HandleTimelineShortcut(e))
+            if (HandleTimelineShortcut(e.keyCode, e.control || e.command, e.shift))
             {
                 e.Use();
                 return;
             }
+
+            if (e.keyCode != KeyCode.Delete && e.keyCode != KeyCode.Backspace)
+                return;
 
             if (DeleteCurrentStageSelection())
                 e.Use();

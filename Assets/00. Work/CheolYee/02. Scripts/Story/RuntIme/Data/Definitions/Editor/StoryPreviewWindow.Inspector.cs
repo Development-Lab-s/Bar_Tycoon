@@ -363,6 +363,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
 
             CharacterDefinitionSO actor = data.actor;
+            ValidateTimelineSelection();
+            bool isEditingTimelineKey = _selectedTimelineKeyIndex >= 0;
             _inspectorRoot.Add(MakeBoldLabel("Actor"));
             _inspectorRoot.Add(MakeBoldLabel(actor != null ? actor.DisplayName : data.ResolvedActorKey));
             _inspectorRoot.Add(MakeSeparator());
@@ -406,12 +408,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     marginBottom = 3
                 }
             };
+            posField.SetEnabled(!isEditingTimelineKey);
             posField.RegisterValueChangedCallback(e =>
             {
                 if (!IsStageAuthoringMode) return;
                 data.normalizedPosition = e.newValue;
                 RepositionActors();
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.normalizedPosition = e.newValue);
+                RecordActorKeyframeFromState(_selectedActorKey, data, includePosition: true, includeScale: false);
             });
             _inspectorRoot.Add(posField);
 
@@ -423,12 +427,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     marginBottom = 3
                 }
             };
+            actorScaleField.SetEnabled(!isEditingTimelineKey);
             actorScaleField.RegisterValueChangedCallback(e =>
             {
                 if (!IsStageAuthoringMode) return;
                 data.scale = ResolveNonZeroScale(e.newValue);
                 PositionSelectedActorElement();
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.scale = data.scale);
+                RecordActorKeyframeFromState(_selectedActorKey, data, includePosition: false, includeScale: true);
             });
             _inspectorRoot.Add(actorScaleField);
 
@@ -441,6 +447,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     marginBottom = 3
                 }
             };
+            scaleField.SetEnabled(!isEditingTimelineKey);
             scaleField.RegisterValueChangedCallback(e =>
             {
                 if (!IsStageAuthoringMode) return;
@@ -505,8 +512,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _inspectorRoot.Add(sortField);
 
             _inspectorRoot.Add(MakeSeparator());
-            _inspectorRoot.Add(MakeBoldLabel("Motion"));
-            _inspectorRoot.Add(new Label("Preview: previous accumulated state -> current line state")
+            _inspectorRoot.Add(MakeBoldLabel("Transition"));
+            _inspectorRoot.Add(new Label("Line transition defaults are still stored on the snapshot, but timeline editing is now the main UI.")
             {
                 style =
                 {
@@ -517,89 +524,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 }
             });
 
-            var motionField = new EnumField("Enter", data.enterMotion)
-            {
-                style =
-                {
-                    marginBottom = 3
-                }
-            };
-            motionField.RegisterValueChangedCallback(e =>
-            {
-                if (!IsStageAuthoringMode) return;
-                var v = (StoryEnterMotionType)e.newValue;
-                data.enterMotion = v;
-                SaveActorStateToCurrent(_selectedActorKey, entry => entry.enterMotion = v);
-            });
-            _inspectorRoot.Add(motionField);
-
-            var durField = new FloatField("Enter Duration")
-            {
-                value = data.enterDuration,
-                style =
-                {
-                    marginBottom = 3
-                }
-            };
-            durField.RegisterValueChangedCallback(e =>
-            {
-                if (!IsStageAuthoringMode) return;
-                data.enterDuration = Mathf.Clamp(e.newValue, 0f, 3f);
-                SaveActorStateToCurrent(_selectedActorKey, entry => entry.enterDuration = data.enterDuration);
-            });
-            _inspectorRoot.Add(durField);
-
-            var moveField = new EnumField("Move", data.moveMotion)
-            {
-                style = { marginBottom = 3 }
-            };
-            moveField.RegisterValueChangedCallback(e =>
-            {
-                if (!IsStageAuthoringMode) return;
-                var v = (StoryStageMoveMotionType)e.newValue;
-                data.moveMotion = v;
-                SaveActorStateToCurrent(_selectedActorKey, entry => entry.moveMotion = v);
-            });
-            _inspectorRoot.Add(moveField);
-
-            var moveDurationField = new FloatField("Move Duration")
-            {
-                value = data.moveDuration,
-                style = { marginBottom = 3 }
-            };
-            moveDurationField.RegisterValueChangedCallback(e =>
-            {
-                if (!IsStageAuthoringMode) return;
-                data.moveDuration = Mathf.Clamp(e.newValue, 0f, 3f);
-                SaveActorStateToCurrent(_selectedActorKey, entry => entry.moveDuration = data.moveDuration);
-            });
-            _inspectorRoot.Add(moveDurationField);
-
-            var exitField = new EnumField("Exit", data.exitMotion)
-            {
-                style = { marginBottom = 3 }
-            };
-            exitField.RegisterValueChangedCallback(e =>
-            {
-                if (!IsStageAuthoringMode) return;
-                var v = (StoryEnterMotionType)e.newValue;
-                data.exitMotion = v;
-                SaveActorStateToCurrent(_selectedActorKey, entry => entry.exitMotion = v);
-            });
-            _inspectorRoot.Add(exitField);
-
-            var exitDurationField = new FloatField("Exit Duration")
-            {
-                value = data.exitDuration,
-                style = { marginBottom = 3 }
-            };
-            exitDurationField.RegisterValueChangedCallback(e =>
-            {
-                if (!IsStageAuthoringMode) return;
-                data.exitDuration = Mathf.Clamp(e.newValue, 0f, 3f);
-                SaveActorStateToCurrent(_selectedActorKey, entry => entry.exitDuration = data.exitDuration);
-            });
-            _inspectorRoot.Add(exitDurationField);
+            BuildSelectedTimelineKeyInspector();
+            BuildSelectedTimelineSegmentInspector();
 
             return;
 
@@ -613,138 +539,138 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
         }
 
-        private void BuildActorTimelineInspector(StoryActorStateData actorState)
+        private void BuildSelectedTimelineKeyInspector()
         {
+            if (_selectedTimelineKeyIndex < 0 || string.IsNullOrWhiteSpace(_selectedActorKey))
+                return;
+
+            StoryActorTrackData track = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
+            if (track == null || _selectedTimelineKeyIndex >= track.keyframes.Count)
+                return;
+
+            StoryActorKeyframeData key = track.keyframes[_selectedTimelineKeyIndex];
+            if (key == null)
+                return;
+            StoryActorKeyframeData selectedKeyRef = key;
+
             _inspectorRoot.Add(MakeSeparator());
-            _inspectorRoot.Add(MakeBoldLabel("Line Keyframes"));
-
-            if (string.IsNullOrWhiteSpace(_selectedActorKey))
+            _inspectorRoot.Add(MakeBoldLabel("Selected Key"));
+            _inspectorRoot.Add(new Label($"{key.property} @ {StoryTransitionSampler.GetKeyTime(key):0.00}s")
             {
-                _inspectorRoot.Add(new Label("No actor instance selected."));
-                return;
-            }
+                style = { marginBottom = 4, color = new StyleColor(new Color(0.70f, 0.72f, 0.78f)) }
+            });
 
-            StoryStageLayoutModuleSO layout = FindCurrentStageLayout();
-            StoryActorTrackData track = FindActorTrack(layout, _selectedActorKey);
-            int keyframeCount = track?.keyframes?.Count ?? 0;
-
-            var buttonRow = new VisualElement
+            var timeField = new FloatField("Time")
             {
-                style = { flexDirection = FlexDirection.Row, marginBottom = 4 }
+                value = StoryTransitionSampler.GetKeyTime(key),
+                style = { marginBottom = 3 }
             };
-
-            buttonRow.Add(new Button(() => AddActorKeyframeFromCurrent(actorState))
+            timeField.RegisterValueChangedCallback(e =>
             {
-                text = "Add Key",
-                style = { flexGrow = 1, marginRight = 4, height = 22 }
+                float time = Mathf.Max(0f, e.newValue);
+                SaveActorTrackToCurrent(_selectedActorKey, trackData =>
+                {
+                    int index = trackData.keyframes.IndexOf(selectedKeyRef);
+                    if (index < 0)
+                        return;
+
+                    StoryActorKeyframeData currentKey = trackData.keyframes[index];
+                    currentKey.timeSeconds = time;
+                    currentKey.normalizedTime = Mathf.Clamp01(time / Mathf.Max(1f, GetTimelineDuration()));
+                }, refresh: false);
+                _timelinePlayheadTime = Mathf.Max(0f, e.newValue);
+                ApplyTimelinePlayheadSample();
+                RefreshTimelinePanel();
             });
-            buttonRow.Add(new Button(() => RemoveLastActorKeyframe())
+            _inspectorRoot.Add(timeField);
+
+            if (key.property == StoryActorKeyframeProperty.Position)
             {
-                text = "Remove Last",
-                style = { flexGrow = 1, height = 22 }
-            });
-            _inspectorRoot.Add(buttonRow);
-
-            if (keyframeCount == 0)
-            {
-                _inspectorRoot.Add(new Label("No keyframes. Add Key stores the selected actor's current state.")
-                {
-                    style =
-                    {
-                        fontSize = 9,
-                        color = new StyleColor(new Color(0.58f, 0.60f, 0.66f)),
-                        whiteSpace = WhiteSpace.Normal
-                    }
-                });
-                return;
-            }
-
-            for (int i = 0; i < keyframeCount; i++)
-            {
-                StoryActorKeyframeData keyframe = track.keyframes[i];
-                if (keyframe == null)
-                    continue;
-
-                _inspectorRoot.Add(MakeBoldLabel($"Key {i + 1}"));
-
-                int index = i;
-                var timeField = new Slider("Time", 0f, 1f)
-                {
-                    value = keyframe.normalizedTime,
-                    showInputField = true,
-                    style = { marginBottom = 2 }
-                };
-                timeField.RegisterValueChangedCallback(e =>
-                {
-                    SaveActorTrackToCurrent(_selectedActorKey, currentTrack =>
-                    {
-                        if (index < currentTrack.keyframes.Count)
-                            currentTrack.keyframes[index].normalizedTime = Mathf.Clamp01(e.newValue);
-                    });
-                });
-                _inspectorRoot.Add(timeField);
-
                 var positionField = new Vector2Field("Position")
                 {
-                    value = keyframe.normalizedPosition,
-                    style = { marginBottom = 2 }
+                    value = key.normalizedPosition,
+                    style = { marginBottom = 3 }
                 };
                 positionField.RegisterValueChangedCallback(e =>
                 {
-                    SaveActorTrackToCurrent(_selectedActorKey, currentTrack =>
+                    SaveActorTrackToCurrent(_selectedActorKey, trackData =>
                     {
-                        if (index < currentTrack.keyframes.Count)
-                            currentTrack.keyframes[index].normalizedPosition = e.newValue;
-                    });
+                        int index = trackData.keyframes.IndexOf(selectedKeyRef);
+                        if (index >= 0)
+                            trackData.keyframes[index].normalizedPosition = e.newValue;
+                    }, refresh: false);
+                    ApplyTimelinePlayheadSample();
+                    RefreshTimelinePanel();
                 });
                 _inspectorRoot.Add(positionField);
-
+            }
+            else if (key.property == StoryActorKeyframeProperty.Scale)
+            {
                 var scaleField = new Vector2Field("Scale")
                 {
-                    value = keyframe.scale,
-                    style = { marginBottom = 2 }
+                    value = key.scale,
+                    style = { marginBottom = 3 }
                 };
                 scaleField.RegisterValueChangedCallback(e =>
                 {
-                    SaveActorTrackToCurrent(_selectedActorKey, currentTrack =>
+                    SaveActorTrackToCurrent(_selectedActorKey, trackData =>
                     {
-                        if (index < currentTrack.keyframes.Count)
-                            currentTrack.keyframes[index].scale = ResolveNonZeroScale(e.newValue);
-                    });
+                        int index = trackData.keyframes.IndexOf(selectedKeyRef);
+                        if (index >= 0)
+                            trackData.keyframes[index].scale = ResolveNonZeroScale(e.newValue);
+                    }, refresh: false);
+                    ApplyTimelinePlayheadSample();
+                    RefreshTimelinePanel();
                 });
                 _inspectorRoot.Add(scaleField);
-
-                var visibleToggle = new Toggle("Visible")
-                {
-                    value = keyframe.visible,
-                    style = { marginBottom = 2 }
-                };
-                visibleToggle.RegisterValueChangedCallback(e =>
-                {
-                    SaveActorTrackToCurrent(_selectedActorKey, currentTrack =>
-                    {
-                        if (index < currentTrack.keyframes.Count)
-                            currentTrack.keyframes[index].visible = e.newValue;
-                    });
-                });
-                _inspectorRoot.Add(visibleToggle);
-
-                var easingField = new EnumField("Easing", keyframe.easing)
-                {
-                    style = { marginBottom = 5 }
-                };
-                easingField.RegisterValueChangedCallback(e =>
-                {
-                    SaveActorTrackToCurrent(_selectedActorKey, currentTrack =>
-                    {
-                        if (index < currentTrack.keyframes.Count)
-                            currentTrack.keyframes[index].easing = (StoryStageMoveMotionType)e.newValue;
-                    });
-                });
-                _inspectorRoot.Add(easingField);
             }
+
         }
 
+        private void BuildSelectedTimelineSegmentInspector()
+        {
+            if (_selectedTimelineSegmentKeyIndex < 0 || string.IsNullOrWhiteSpace(_selectedActorKey))
+                return;
+
+            StoryActorTrackData track = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
+            if (track == null
+                || _selectedTimelineSegmentKeyIndex >= track.keyframes.Count
+                || track.keyframes[_selectedTimelineSegmentKeyIndex] == null)
+                return;
+
+            int fromIndex = _selectedTimelineSegmentKeyIndex;
+            int toIndex = FindNextKeyIndex(track, fromIndex, _selectedTimelineSegmentProperty);
+            if (toIndex < 0)
+                return;
+
+            StoryActorKeyframeData from = track.keyframes[fromIndex];
+            StoryActorKeyframeData to = track.keyframes[toIndex];
+            StoryActorKeyframeData segmentKeyRef = from;
+
+            _inspectorRoot.Add(MakeSeparator());
+            _inspectorRoot.Add(MakeBoldLabel("Selected Segment"));
+            _inspectorRoot.Add(new Label($"{from.property}: {StoryTransitionSampler.GetKeyTime(from):0.00}s -> {StoryTransitionSampler.GetKeyTime(to):0.00}s")
+            {
+                style = { marginBottom = 4, color = new StyleColor(new Color(0.70f, 0.72f, 0.78f)) }
+            });
+
+            var easingField = new EnumField("Easing", from.easing)
+            {
+                style = { marginBottom = 3 }
+            };
+            easingField.RegisterValueChangedCallback(e =>
+            {
+                SaveActorTrackToCurrent(_selectedActorKey, trackData =>
+                {
+                    int index = trackData.keyframes.IndexOf(segmentKeyRef);
+                    if (index >= 0)
+                        trackData.keyframes[index].easing = (StoryStageMoveMotionType)e.newValue;
+                }, refresh: false);
+                ApplyTimelinePlayheadSample();
+                RefreshTimelinePanel();
+            });
+            _inspectorRoot.Add(easingField);
+        }
 
         //
         private void BuildBackgroundInspector()
@@ -1138,39 +1064,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return track;
         }
 
-        private void AddActorKeyframeFromCurrent(StoryActorStateData actorState)
-        {
-            if (!IsStageAuthoringMode || _currentLine == null || string.IsNullOrWhiteSpace(_selectedActorKey) || actorState == null)
-                return;
-
-            SaveActorTrackToCurrent(_selectedActorKey, track =>
-            {
-                float time = track.keyframes.Count == 0 ? 0f : 1f;
-                track.keyframes.Add(new StoryActorKeyframeData
-                {
-                    normalizedTime = time,
-                    timeSeconds = time,
-                    normalizedPosition = actorState.normalizedPosition,
-                    scale = actorState.scale,
-                    scaleX = actorState.scaleX,
-                    visible = actorState.visible,
-                    easing = actorState.moveMotion
-                });
-            }, refresh: true);
-        }
-
-        private void RemoveLastActorKeyframe()
-        {
-            if (!IsStageAuthoringMode || _currentLine == null || string.IsNullOrWhiteSpace(_selectedActorKey))
-                return;
-
-            SaveActorTrackToCurrent(_selectedActorKey, track =>
-            {
-                if (track.keyframes.Count > 0)
-                    track.keyframes.RemoveAt(track.keyframes.Count - 1);
-            }, refresh: true);
-        }
-
         private void SaveActorTrackToCurrent(string actorInstanceKey, Action<StoryActorTrackData> setter, bool refresh = false)
         {
             if (!IsStageAuthoringMode || _currentLine == null || string.IsNullOrWhiteSpace(actorInstanceKey))
@@ -1185,9 +1078,29 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (track == null)
                 return;
 
+            StoryActorKeyframeData selectedKey = _selectedTimelineKeyIndex >= 0 && _selectedTimelineKeyIndex < track.keyframes.Count
+                ? track.keyframes[_selectedTimelineKeyIndex]
+                : null;
+            StoryActorKeyframeData selectedSegmentKey = _selectedTimelineSegmentKeyIndex >= 0 && _selectedTimelineSegmentKeyIndex < track.keyframes.Count
+                ? track.keyframes[_selectedTimelineSegmentKeyIndex]
+                : null;
+
             setter(track);
             track.keyframes.RemoveAll(k => k == null);
-            track.keyframes.Sort((a, b) => StoryTransitionSampler.GetKeyTime(a).CompareTo(StoryTransitionSampler.GetKeyTime(b)));
+            track.keyframes.Sort((a, b) =>
+            {
+                int prop = a.property.CompareTo(b.property);
+                return prop != 0
+                    ? prop
+                    : StoryTransitionSampler.GetKeyTime(a).CompareTo(StoryTransitionSampler.GetKeyTime(b));
+            });
+
+            if (selectedKey != null)
+                _selectedTimelineKeyIndex = track.keyframes.IndexOf(selectedKey);
+            if (selectedSegmentKey != null)
+                _selectedTimelineSegmentKeyIndex = track.keyframes.IndexOf(selectedSegmentKey);
+            ValidateTimelineSelection();
+
             MarkLayoutDirty(layout, saveNow: false);
 
             if (refresh)
@@ -1297,9 +1210,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 && actorInstanceKey != _timelineRecordActorKey)
                 return;
 
+            bool sameActor = _selectionKind == StageSelectionKind.Actor && _selectedActorKey == actorInstanceKey;
             _selectionKind = StageSelectionKind.Actor;
             _selectedActorKey = actorInstanceKey;
-            _selectedTimelineKeyIndex = -1;
+            if (!sameActor)
+                ClearTimelineSelection(refresh: false);
             RefreshActorList();
             HighlightSelectedActor();
             if (refreshInspector)
@@ -1313,9 +1228,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (!IsStageAuthoringMode)
                 return;
 
+            if (_timelineRecordEnabled && !string.IsNullOrWhiteSpace(_timelineRecordActorKey))
+                return;
+
             _selectionKind = StageSelectionKind.Background;
             _selectedActorKey = null;
-            _selectedTimelineKeyIndex = -1;
+            ClearTimelineSelection(refresh: false);
             RefreshActorList();
             HighlightSelectedActor();
             RefreshActorInspector();
@@ -1327,7 +1245,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             _selectionKind = StageSelectionKind.None;
             _selectedActorKey = null;
-            _selectedTimelineKeyIndex = -1;
+            ClearTimelineSelection(refresh: false);
             RefreshTimelinePanel();
         }
 

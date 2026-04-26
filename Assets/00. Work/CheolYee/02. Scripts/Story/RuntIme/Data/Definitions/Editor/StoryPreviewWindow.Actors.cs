@@ -238,6 +238,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 if (!IsStageAuthoringMode) return;
                 if (e.button != 0) return;
+                if (_timelineRecordEnabled
+                    && !string.IsNullOrWhiteSpace(_timelineRecordActorKey)
+                    && actorKey != _timelineRecordActorKey)
+                    return;
+                if (BlocksActorManipulationBySelectedKey(actorKey, StoryActorKeyframeProperty.Position))
+                    return;
+                if (_stageState.TryGetValue(actorKey, out StoryActorStateData currentData))
+                    data = currentData;
                 SelectActor(actorKey);
                 _draggingActorKey  = actorKey;
                 _dragStartPanelPos = e.position;
@@ -275,8 +283,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _draggingActorKey = null;
                 _dragAxisLock = DragAxisLock.None;
                 el.ReleasePointer(e.pointerId);
-                SaveActorStateToCurrent(actorKey, entry => entry.normalizedPosition = data.normalizedPosition, saveNow: true);
-                RecordActorKeyframeFromState(actorKey, data, includePosition: true, includeScale: false);
+                if (!TryApplySelectedTimelineKeyFromState(actorKey, data, StoryActorKeyframeProperty.Position))
+                {
+                    SaveActorStateToCurrent(actorKey, entry => entry.normalizedPosition = data.normalizedPosition, saveNow: true);
+                    RecordActorKeyframeFromState(actorKey, data, includePosition: true, includeScale: false);
+                }
                 RefreshActorInspector();
                 e.StopPropagation();
             });
@@ -340,6 +351,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             handle.RegisterCallback<PointerDownEvent>(e =>
             {
                 if (!IsStageAuthoringMode || e.button != 0) return;
+                if (_timelineRecordEnabled
+                    && !string.IsNullOrWhiteSpace(_timelineRecordActorKey)
+                    && actorKey != _timelineRecordActorKey)
+                    return;
+                if (BlocksActorManipulationBySelectedKey(actorKey, StoryActorKeyframeProperty.Scale))
+                    return;
+                if (_stageState.TryGetValue(actorKey, out StoryActorStateData currentData))
+                    data = currentData;
 
                 SelectActor(actorKey);
                 _scalingActorKey = actorKey;
@@ -377,12 +396,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _activeScaleHandle = ActorScaleHandle.None;
                 _scaleAxisLock = DragAxisLock.None;
                 handle.ReleasePointer(e.pointerId);
-                SaveActorStateToCurrent(actorKey, entry =>
+                if (!TryApplySelectedTimelineKeyFromState(actorKey, data, StoryActorKeyframeProperty.Scale))
                 {
-                    entry.normalizedPosition = data.normalizedPosition;
-                    entry.scale = data.scale;
-                }, saveNow: true);
-                RecordActorKeyframeFromState(actorKey, data, includePosition: false, includeScale: true);
+                    SaveActorStateToCurrent(actorKey, entry =>
+                    {
+                        entry.normalizedPosition = data.normalizedPosition;
+                        entry.scale = data.scale;
+                    }, saveNow: true);
+                    RecordActorKeyframeFromState(actorKey, data, includePosition: false, includeScale: true);
+                }
                 RefreshActorInspector();
                 e.StopPropagation();
             });
