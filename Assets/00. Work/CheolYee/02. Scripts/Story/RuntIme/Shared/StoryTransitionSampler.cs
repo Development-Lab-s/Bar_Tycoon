@@ -11,6 +11,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
     /// </summary>
     public static class StoryTransitionSampler
     {
+        public const float FocusedActorFocusAlpha = 1f;
+        public const float DimmedActorFocusAlpha = 0.65f;
+        private const float FocusFadeDuration = 0.18f;
+
         // ── Actor sampling ────────────────────────────────────────────────────
 
         /// <summary>
@@ -38,6 +42,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
                 sample.normalizedPosition = Vector2.LerpUnclamped(EnterStartPosition(to), to.normalizedPosition, p);
                 sample.scale              = Vector2.LerpUnclamped(EnterStartScale(to), to.scale, p);
                 sample.visible            = true;
+                sample.focusVisualAlpha   = ResolveFocusAlpha(to.focused);
                 return sample;
             }
 
@@ -49,6 +54,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
                 sample.normalizedPosition = Vector2.LerpUnclamped(from.normalizedPosition, ExitEndPosition(from), p);
                 sample.scale              = Vector2.LerpUnclamped(from.scale, ExitEndScale(from), p);
                 sample.visible            = p < 1f;
+                sample.focusVisualAlpha   = ResolveFocusAlpha(from.focused);
                 return sample.visible ? sample : null;
             }
 
@@ -60,6 +66,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             moved.scale              = Vector2.LerpUnclamped(from.scale, to.scale, moveP);
             moved.scaleX             = Mathf.LerpUnclamped(from.scaleX, to.scaleX, moveP);
             moved.visible            = true;
+            moved.focusVisualAlpha   = SampleFocusAlpha(from, to, elapsed);
             return moved;
         }
 
@@ -80,6 +87,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
                 return baseState != null ? baseState.ShallowClone() : null;
 
             StoryActorStateData sample = baseState.ShallowClone();
+            if (sample.focusVisualAlpha < 0f)
+                sample.focusVisualAlpha = ResolveFocusAlpha(sample.focused);
             float t = Mathf.Max(0f, timeSeconds);
 
             if (TrySampleVector2(track, StoryActorKeyframeProperty.Position, t, k => k.normalizedPosition, out Vector2 position))
@@ -92,6 +101,25 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
                 sample.scaleX = scaleX;
 
             return sample;
+        }
+
+        public static float ResolveFocusAlpha(bool focused) =>
+            focused ? FocusedActorFocusAlpha : DimmedActorFocusAlpha;
+
+        public static float ResolveFocusBlend(float focusAlpha) =>
+            Mathf.InverseLerp(DimmedActorFocusAlpha, FocusedActorFocusAlpha, Mathf.Clamp01(focusAlpha));
+
+        public static float SampleFocusAlpha(StoryActorStateData from, StoryActorStateData to, float elapsed)
+        {
+            bool fromFocused = from?.focused ?? to?.focused ?? true;
+            bool toFocused = to?.focused ?? fromFocused;
+            float fromAlpha = ResolveFocusAlpha(fromFocused);
+            float toAlpha = ResolveFocusAlpha(toFocused);
+            if (Mathf.Approximately(fromAlpha, toAlpha))
+                return toAlpha;
+
+            float p = ResolveMoveProgress(StoryStageMoveMotionType.EaseInOut, FocusFadeDuration, elapsed);
+            return Mathf.Lerp(fromAlpha, toAlpha, p);
         }
 
         public static float GetActorTrackDuration(StoryActorTrackData track)

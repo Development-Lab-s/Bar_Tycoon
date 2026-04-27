@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
@@ -13,6 +15,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private const float TimelineRowHeight = 24f;
         private const float TimelineMarkerSize = 10f;
         private const float TimelineKeyHitSeconds = 0.04f;
+        private const float TimelineSegmentHitHeight = 16f;
+        private const float TimelineSegmentHeight = 5f;
+        private const float TimelineSelectedSegmentHeight = 7f;
 
         private VisualElement BuildTimelineResizeHandle()
         {
@@ -83,6 +88,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     flexShrink = 0,
                     flexDirection = FlexDirection.Row,
                     alignItems = Align.Center,
+                    overflow = Overflow.Hidden,
                     paddingLeft = 6,
                     paddingRight = 6
                 }
@@ -97,19 +103,53 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     color = new StyleColor(new Color(0.86f, 0.86f, 0.9f))
                 }
             };
-            _timelineToolbar.Add(_timelineTitleLabel);
+            var coreToolbar = new VisualElement
+            {
+                style =
+                {
+                    flexDirection = FlexDirection.Row,
+                    alignItems = Align.Center,
+                    flexShrink = 0
+                }
+            };
+            var extendedScroll = new ScrollView(ScrollViewMode.Horizontal)
+            {
+                style =
+                {
+                    flexGrow = 1,
+                    flexShrink = 1,
+                    height = 30,
+                    marginLeft = 4,
+                    overflow = Overflow.Hidden
+                }
+            };
+            var extendedToolbar = new VisualElement
+            {
+                style =
+                {
+                    flexDirection = FlexDirection.Row,
+                    alignItems = Align.Center,
+                    flexShrink = 0
+                }
+            };
+            extendedScroll.Add(extendedToolbar);
+            _timelineToolbar.Add(coreToolbar);
+            _timelineToolbar.Add(extendedScroll);
+
+            coreToolbar.Add(_timelineTitleLabel);
 
             _timelinePlayBtn = MakeBtn("Play", new Color(0.20f, 0.35f, 0.25f), ToggleTimelinePlayback);
             _timelineRecordBtn = MakeBtn("Record", new Color(0.36f, 0.18f, 0.18f), ToggleTimelineRecord);
-            _timelineToolbar.Add(_timelinePlayBtn);
-            _timelineToolbar.Add(MakeBtn("|<", new Color(0.23f, 0.23f, 0.27f), SelectFirstTimelineKey));
-            _timelineToolbar.Add(MakeBtn("<", new Color(0.23f, 0.23f, 0.27f), SelectPreviousTimelineKey));
-            _timelineToolbar.Add(MakeBtn(">", new Color(0.23f, 0.23f, 0.27f), SelectNextTimelineKey));
-            _timelineToolbar.Add(MakeBtn(">|", new Color(0.23f, 0.23f, 0.27f), SelectLastTimelineKey));
-            _timelineToolbar.Add(_timelineRecordBtn);
-            _timelineToolbar.Add(MakeBtn("Add Property", new Color(0.24f, 0.28f, 0.34f), ShowAddPropertyMenu));
-            _timelineToolbar.Add(MakeBtn("Add Key", new Color(0.24f, 0.30f, 0.24f), AddTimelineKeyAtPlayhead));
-            _timelineToolbar.Add(MakeBtn("Remove Key", new Color(0.34f, 0.20f, 0.20f), RemoveSelectedTimelineKey));
+            coreToolbar.Add(_timelinePlayBtn);
+            coreToolbar.Add(MakeBtn("|<", new Color(0.23f, 0.23f, 0.27f), SelectFirstTimelineKey));
+            coreToolbar.Add(MakeBtn("<", new Color(0.23f, 0.23f, 0.27f), SelectPreviousTimelineKey));
+            coreToolbar.Add(MakeBtn(">", new Color(0.23f, 0.23f, 0.27f), SelectNextTimelineKey));
+            coreToolbar.Add(MakeBtn(">|", new Color(0.23f, 0.23f, 0.27f), SelectLastTimelineKey));
+            coreToolbar.Add(_timelineRecordBtn);
+            extendedToolbar.Add(MakeBtn("Add Property", new Color(0.24f, 0.28f, 0.34f), ShowAddPropertyMenu));
+            extendedToolbar.Add(MakeBtn("Add Key", new Color(0.24f, 0.30f, 0.24f), AddTimelineKeyAtPlayhead));
+            extendedToolbar.Add(MakeBtn("Remove Key", new Color(0.34f, 0.20f, 0.20f), RemoveSelectedTimelineKey));
+            extendedToolbar.Add(MakeBtn("Preset Library", new Color(0.25f, 0.25f, 0.34f), StoryMotionPresetLibraryWindow.Open));
 
             var speedSlider = new Slider(0.25f, 4f)
             {
@@ -122,7 +162,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 if (_timelineSpeedField != null) _timelineSpeedField.SetValueWithoutNotify(_timelinePlaybackSpeed);
                 SavePreviewLayoutPrefs();
             });
-            _timelineToolbar.Add(speedSlider);
+            extendedToolbar.Add(speedSlider);
 
             _timelineSpeedField = new FloatField("Speed")
             {
@@ -135,7 +175,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 speedSlider.SetValueWithoutNotify(Mathf.Clamp(_timelinePlaybackSpeed, 0.25f, 4f));
                 SavePreviewLayoutPrefs();
             });
-            _timelineToolbar.Add(_timelineSpeedField);
+            extendedToolbar.Add(_timelineSpeedField);
 
             _timelinePanel.Add(_timelineToolbar);
 
@@ -174,6 +214,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _timelinePanel.style.height = _timelineHeight;
             _timelineRows.Clear();
             _timelineRuler.Clear();
+            _timelineKeyElements.Clear();
 
             if (_timelineTitleLabel != null) _timelineTitleLabel.text = ResolveTimelineTitle();
             if (_timelineRecordBtn != null) _timelineRecordBtn.text = _timelineRecordEnabled ? "Record On" : "Record";
@@ -226,7 +267,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             });
 
             float duration = Mathf.Max(2f, GetTimelineDuration() + 0.5f, _timelinePlayheadTime + 0.5f);
-            var lane = CreateTimelineLane(duration, 28f, StoryActorKeyframeProperty.Position);
+            var lane = CreateTimelineLane(duration, 28f, StoryActorKeyframeProperty.Position, allowKeyContext: false);
             float tick = ResolveTimelineTickSeconds();
             for (float t = 0f; t <= duration + 0.001f; t += tick) AddTimelineTick(lane, t, true);
             AddTimelinePlayhead(lane, duration, 28f);
@@ -290,7 +331,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             var row = CreateTimelineRow("Transition");
             float duration = Mathf.Max(2f, state.transitionDuration + 0.5f);
-            var lane = CreateTimelineLane(duration, TimelineRowHeight, StoryActorKeyframeProperty.Easing);
+            var lane = CreateTimelineLane(duration, TimelineRowHeight, StoryActorKeyframeProperty.Easing, allowKeyContext: false);
             AddBackgroundTransitionMarker(lane, state);
             AddTimelinePlayhead(lane, duration, TimelineRowHeight);
             row.Add(lane);
@@ -313,7 +354,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return row;
         }
 
-        private VisualElement CreateTimelineLane(float duration, float height, StoryActorKeyframeProperty property)
+        private VisualElement CreateTimelineLane(float duration, float height, StoryActorKeyframeProperty property, bool allowKeyContext = true)
         {
             var lane = new VisualElement
             {
@@ -328,18 +369,66 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             lane.RegisterCallback<PointerDownEvent>(e =>
             {
-                if (!IsStageAuthoringMode || e.button != 0) return;
+                if (!IsStageAuthoringMode) return;
+                if (e.button == 1 && allowKeyContext && IsEditableTimelineProperty(property))
+                {
+                    _timelinePanel?.Focus();
+                    _selectedTimelineProperty = property;
+                    ClearTimelineSelection(refresh: false);
+                    float time = ResolveTimelineTimeFromLaneX(e.localPosition.x);
+                    _timelinePlayheadTime = time;
+                    ApplyTimelinePlayheadSample();
+                    ShowRowKeyContextMenu(property, time);
+                    RefreshActorInspector();
+                    RefreshTimelinePanel();
+                    e.StopPropagation();
+                    return;
+                }
+
+                if (e.button != 0) return;
                 _timelinePanel?.Focus();
                 _selectedTimelineProperty = property;
-                ClearTimelineSelection(refresh: false);
-                _isTimelinePlayheadDragging = true;
-                _activeTimelinePointerId = e.pointerId;
-                _timelinePanel?.CapturePointer(e.pointerId);
-                SetTimelinePlayheadFromLocalX(e.localPosition.x);
-                RefreshActorInspector();
-                RefreshTimelinePanel();
+                if (allowKeyContext && IsEditableTimelineProperty(property))
+                {
+                    BeginTimelineBoxSelection(e);
+                }
+                else
+                {
+                    ClearTimelineSelection(refresh: false);
+                    _isTimelinePlayheadDragging = true;
+                    _activeTimelinePointerId = e.pointerId;
+                    _timelinePanel?.CapturePointer(e.pointerId);
+                    SetTimelinePlayheadFromLocalX(e.localPosition.x);
+                    RefreshActorInspector();
+                    RefreshTimelinePanel();
+                }
                 e.StopPropagation();
             });
+
+            if (allowKeyContext && IsEditableTimelineProperty(property))
+            {
+                lane.RegisterCallback<DragUpdatedEvent>(e =>
+                {
+                    StoryMotionPresetSO preset = GetDraggedMotionPreset();
+                    if (!CanApplyMotionPresetToProperty(preset, property))
+                        return;
+
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                    e.StopPropagation();
+                });
+
+                lane.RegisterCallback<DragPerformEvent>(e =>
+                {
+                    StoryMotionPresetSO preset = GetDraggedMotionPreset();
+                    if (!CanApplyMotionPresetToProperty(preset, property))
+                        return;
+
+                    DragAndDrop.AcceptDrag();
+                    _selectedTimelineProperty = property;
+                    ApplyMotionPresetToCurrentTrack(preset, property, ResolveTimelineTimeFromLaneX(e.localMousePosition.x));
+                    e.StopPropagation();
+                });
+            }
 
             return lane;
         }
@@ -347,7 +436,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void AddActorKeyMarker(VisualElement lane, int index, StoryActorKeyframeData keyframe, StoryActorKeyframeProperty property)
         {
             float x = StoryTransitionSampler.GetKeyTime(keyframe) * _timelinePixelsPerSecond;
-            bool selected = index == _selectedTimelineKeyIndex && property == _selectedTimelineProperty;
+            bool selected = IsTimelineKeySelected(keyframe, index, property);
             var marker = new VisualElement
             {
                 name = $"ActorKey_{property}_{index}",
@@ -375,14 +464,32 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 if (e.button != 0) return;
                 _timelinePanel?.Focus();
-                _selectedTimelineKeyIndex = index;
-                _selectedTimelineProperty = property;
-                _selectedTimelineSegmentKeyIndex = -1;
-                _isTimelineKeyDragging = true;
-                _draggingTimelineActorKey = _selectedActorKey;
-                _draggingTimelineKeyIndex = index;
-                _activeTimelinePointerId = e.pointerId;
-                _timelinePanel?.CapturePointer(e.pointerId);
+
+                if (e.ctrlKey || e.commandKey)
+                {
+                    ToggleTimelineKeySelection(keyframe, index, property);
+                    _timelinePlayheadTime = StoryTransitionSampler.GetKeyTime(keyframe);
+                    ApplyTimelinePlayheadSample();
+                    RefreshActorInspector();
+                    RefreshTimelinePanel();
+                    e.StopPropagation();
+                    return;
+                }
+
+                if (_selectedTimelineKeys.Count > 1 && _selectedTimelineKeys.Contains(keyframe))
+                {
+                    BeginTimelineGroupKeyDrag(e);
+                }
+                else
+                {
+                    SelectSingleTimelineKey(keyframe, index, property);
+                    _isTimelineKeyDragging = true;
+                    _draggingTimelineActorKey = _selectedActorKey;
+                    _draggingTimelineKeyIndex = index;
+                    _activeTimelinePointerId = e.pointerId;
+                    _timelinePanel?.CapturePointer(e.pointerId);
+                }
+
                 _timelinePlayheadTime = StoryTransitionSampler.GetKeyTime(keyframe);
                 ApplyTimelinePlayheadSample();
                 RefreshActorInspector();
@@ -390,6 +497,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 e.StopPropagation();
             });
             lane.Add(marker);
+            _timelineKeyElements[keyframe] = marker;
         }
 
         private void AddSegmentBar(VisualElement lane, StoryActorTrackData track, int fromIndex, int toIndex)
@@ -398,8 +506,27 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             StoryActorKeyframeData to = track.keyframes[toIndex];
             float fromX = StoryTransitionSampler.GetKeyTime(from) * _timelinePixelsPerSecond;
             float toX = StoryTransitionSampler.GetKeyTime(to) * _timelinePixelsPerSecond;
+            float width = Mathf.Max(2f, toX - fromX);
             bool selected = _selectedTimelineSegmentKeyIndex == fromIndex
                 && _selectedTimelineSegmentProperty == from.property;
+            Color segmentColor = ResolveEasingColor(from.easing);
+            var hitArea = new VisualElement
+            {
+                tooltip = $"{from.property} segment {from.easing}",
+                style =
+                {
+                    position = Position.Absolute,
+                    left = fromX,
+                    top = (TimelineRowHeight - TimelineSegmentHitHeight) * 0.5f,
+                    width = width,
+                    height = TimelineSegmentHitHeight,
+                    backgroundColor = new StyleColor(new Color(1f, 1f, 1f, 0.001f))
+                }
+            };
+            hitArea.RegisterCallback<PointerDownEvent>(e => HandleSegmentPointerDown(e, from, to, fromIndex));
+            lane.Add(hitArea);
+
+            float visualHeight = selected ? TimelineSelectedSegmentHeight : TimelineSegmentHeight;
             var bar = new VisualElement
             {
                 tooltip = $"{from.property} segment {from.easing}",
@@ -407,28 +534,76 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 {
                     position = Position.Absolute,
                     left = fromX,
-                    top = TimelineRowHeight * 0.5f - (selected ? 2 : 1),
-                    width = Mathf.Max(2f, toX - fromX),
-                    height = selected ? 4 : 2,
-                    backgroundColor = new StyleColor(selected
-                        ? new Color(1f, 0.60f, 0.18f, 0.88f)
-                        : new Color(0.74f, 0.74f, 0.78f, 0.55f))
+                    top = TimelineRowHeight * 0.5f - visualHeight * 0.5f,
+                    width = width,
+                    height = visualHeight,
+                    backgroundColor = new StyleColor(selected ? Color.Lerp(segmentColor, new Color(1f, 0.60f, 0.18f, 0.95f), 0.45f) : segmentColor),
+                    borderTopWidth = selected ? 1 : 0,
+                    borderBottomWidth = selected ? 1 : 0,
+                    borderTopColor = new StyleColor(new Color(1f, 0.88f, 0.30f, 0.95f)),
+                    borderBottomColor = new StyleColor(new Color(1f, 0.88f, 0.30f, 0.95f))
                 }
             };
-            bar.RegisterCallback<PointerDownEvent>(e =>
-            {
-                if (e.button != 0 && e.button != 1) return;
-                SelectTimelineSegment(fromIndex, from.property);
-                _timelinePlayheadTime = StoryTransitionSampler.GetKeyTime(from);
-                ApplyTimelinePlayheadSample();
-                if (e.button == 1)
-                    ShowEasingMenu(fromIndex, from.property);
-                else
-                    RefreshTimelinePanel();
-                RefreshActorInspector();
-                e.StopPropagation();
-            });
+            bar.RegisterCallback<PointerDownEvent>(e => HandleSegmentPointerDown(e, from, to, fromIndex));
             lane.Add(bar);
+
+            if (width >= 56f)
+            {
+                lane.Add(new Label(ShortEasingLabel(from.easing))
+                {
+                    pickingMode = PickingMode.Ignore,
+                    style =
+                    {
+                        position = Position.Absolute,
+                        left = fromX + width * 0.5f - 38f,
+                        top = 1,
+                        width = 76,
+                        height = 12,
+                        fontSize = 8,
+                        unityTextAlign = TextAnchor.MiddleCenter,
+                        color = new StyleColor(selected ? new Color(1f, 0.84f, 0.38f) : ResolveEasingLabelColor(from.easing))
+                    }
+                });
+            }
+        }
+
+        private void HandleSegmentPointerDown(
+            PointerDownEvent e,
+            StoryActorKeyframeData from,
+            StoryActorKeyframeData to,
+            int fromIndex)
+        {
+            if (e.button != 0 && e.button != 1)
+                return;
+
+            _timelinePanel?.Focus();
+            if (ShouldStartTimelineGroupDragFromSegment(e, from, to))
+            {
+                BeginTimelineGroupKeyDrag(e);
+                e.StopPropagation();
+                return;
+            }
+
+            SelectTimelineSegment(fromIndex, from.property);
+            _timelinePlayheadTime = StoryTransitionSampler.GetKeyTime(from);
+            ApplyTimelinePlayheadSample();
+            if (e.button == 1)
+                ShowEasingMenu(fromIndex, from.property);
+            else
+                RefreshTimelinePanel();
+            RefreshActorInspector();
+            e.StopPropagation();
+        }
+
+        private bool ShouldStartTimelineGroupDragFromSegment(
+            PointerDownEvent e,
+            StoryActorKeyframeData from,
+            StoryActorKeyframeData to)
+        {
+            return e.button == 0
+                && _selectedTimelineKeys.Count > 1
+                && (from != null && _selectedTimelineKeys.Contains(from)
+                    || to != null && _selectedTimelineKeys.Contains(to));
         }
 
         private Color ResolveKeyColor(StoryActorKeyframeProperty property) =>
@@ -438,6 +613,34 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 StoryActorKeyframeProperty.Scale => new Color(0.60f, 0.82f, 0.35f),
                 StoryActorKeyframeProperty.Easing => new Color(0.82f, 0.56f, 1f),
                 _ => Color.white
+            };
+
+        private static Color ResolveEasingColor(StoryStageMoveMotionType easing) =>
+            easing switch
+            {
+                StoryStageMoveMotionType.Instant => new Color(0.70f, 0.70f, 0.72f, 0.62f),
+                StoryStageMoveMotionType.Linear => new Color(0.42f, 0.70f, 1f, 0.76f),
+                StoryStageMoveMotionType.EaseIn => new Color(0.95f, 0.56f, 0.38f, 0.78f),
+                StoryStageMoveMotionType.EaseOut => new Color(0.48f, 0.86f, 0.52f, 0.78f),
+                StoryStageMoveMotionType.EaseInOut => new Color(0.82f, 0.64f, 1f, 0.80f),
+                StoryStageMoveMotionType.SmoothStep => new Color(0.98f, 0.78f, 0.35f, 0.80f),
+                StoryStageMoveMotionType.SmootherStep => new Color(0.42f, 0.88f, 0.82f, 0.80f),
+                _ => new Color(0.74f, 0.74f, 0.78f, 0.55f)
+            };
+
+        private static Color ResolveEasingLabelColor(StoryStageMoveMotionType easing)
+        {
+            Color color = ResolveEasingColor(easing);
+            return new Color(Mathf.Min(1f, color.r + 0.22f), Mathf.Min(1f, color.g + 0.22f), Mathf.Min(1f, color.b + 0.22f), 0.95f);
+        }
+
+        private static string ShortEasingLabel(StoryStageMoveMotionType easing) =>
+            easing switch
+            {
+                StoryStageMoveMotionType.EaseInOut => "InOut",
+                StoryStageMoveMotionType.SmoothStep => "Smooth",
+                StoryStageMoveMotionType.SmootherStep => "Smoother",
+                _ => easing.ToString()
             };
 
         private void AddBackgroundTransitionMarker(VisualElement lane, StoryBackgroundStateData state)
@@ -538,6 +741,102 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return indexes;
         }
 
+        private bool IsTimelineKeySelected(StoryActorKeyframeData key, int index, StoryActorKeyframeProperty property)
+        {
+            return key != null && _selectedTimelineKeys.Contains(key)
+                || (index == _selectedTimelineKeyIndex && property == _selectedTimelineProperty);
+        }
+
+        private void SelectSingleTimelineKey(StoryActorKeyframeData key, int index, StoryActorKeyframeProperty property)
+        {
+            _selectedTimelineKeys.Clear();
+            if (key != null)
+                _selectedTimelineKeys.Add(key);
+            _selectedTimelineKeyIndex = index;
+            _selectedTimelineProperty = property;
+            _selectedTimelineSegmentKeyIndex = -1;
+        }
+
+        private void ToggleTimelineKeySelection(StoryActorKeyframeData key, int index, StoryActorKeyframeProperty property)
+        {
+            if (key == null)
+                return;
+
+            _selectedTimelineSegmentKeyIndex = -1;
+            if (_selectedTimelineKeys.Contains(key))
+                _selectedTimelineKeys.Remove(key);
+            else
+                _selectedTimelineKeys.Add(key);
+
+            NormalizeTimelineSelectionFromSet(property);
+        }
+
+        private void NormalizeTimelineSelectionFromSet(StoryActorKeyframeProperty fallbackProperty)
+        {
+            StoryActorTrackData track = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
+            ValidateTimelineSelectionSet(track);
+
+            if (_selectedTimelineKeys.Count == 1)
+            {
+                foreach (StoryActorKeyframeData key in _selectedTimelineKeys)
+                {
+                    _selectedTimelineKeyIndex = track != null ? track.keyframes.IndexOf(key) : -1;
+                    _selectedTimelineProperty = key != null ? key.property : fallbackProperty;
+                    break;
+                }
+            }
+            else
+            {
+                _selectedTimelineKeyIndex = -1;
+                _selectedTimelineProperty = fallbackProperty;
+            }
+
+            _selectedTimelineSegmentKeyIndex = -1;
+        }
+
+        private void ValidateTimelineSelectionSet(StoryActorTrackData track)
+        {
+            if (_selectedTimelineKeys.Count == 0)
+                return;
+
+            if (track?.keyframes == null)
+            {
+                _selectedTimelineKeys.Clear();
+                return;
+            }
+
+            _selectedTimelineKeys.RemoveWhere(key =>
+                key == null
+                || !track.keyframes.Contains(key)
+                || !IsEditableTimelineProperty(key.property));
+        }
+
+        private bool HasTimelineMultiSelection => _selectedTimelineKeys.Count > 1;
+
+        private List<StoryActorKeyframeData> GetSelectedTimelineKeys(StoryActorTrackData track)
+        {
+            var result = new List<StoryActorKeyframeData>();
+            if (track?.keyframes == null)
+                return result;
+
+            ValidateTimelineSelectionSet(track);
+            foreach (StoryActorKeyframeData key in track.keyframes)
+            {
+                if (key != null && _selectedTimelineKeys.Contains(key))
+                    result.Add(key);
+            }
+
+            if (result.Count == 0
+                && _selectedTimelineKeyIndex >= 0
+                && _selectedTimelineKeyIndex < track.keyframes.Count
+                && track.keyframes[_selectedTimelineKeyIndex] != null)
+            {
+                result.Add(track.keyframes[_selectedTimelineKeyIndex]);
+            }
+
+            return result;
+        }
+
         private void AddTimelineEmpty(string message)
         {
             var empty = new Label(message)
@@ -577,10 +876,149 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return 1f;
         }
 
+        private float ResolveTimelineTimeFromLaneX(float localX) =>
+            Mathf.Max(0f, localX / Mathf.Max(1f, _timelinePixelsPerSecond));
+
         private void SetTimelinePlayheadFromLocalX(float localX)
         {
-            _timelinePlayheadTime = Mathf.Max(0f, localX / Mathf.Max(1f, _timelinePixelsPerSecond));
+            _timelinePlayheadTime = ResolveTimelineTimeFromLaneX(localX);
             ApplyTimelinePlayheadSample();
+            RefreshTimelinePanel();
+        }
+
+        private void BeginTimelineBoxSelection(PointerDownEvent e)
+        {
+            if (!(e.ctrlKey || e.commandKey))
+                ClearTimelineSelection(refresh: false);
+
+            _isTimelineBoxSelecting = true;
+            _activeTimelinePointerId = e.pointerId;
+            _timelineBoxSelectStart = e.position;
+            _timelinePanel?.CapturePointer(e.pointerId);
+
+            _timelineSelectionBox?.RemoveFromHierarchy();
+            _timelineSelectionBox = new VisualElement
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    backgroundColor = new StyleColor(new Color(0.30f, 0.52f, 1f, 0.18f)),
+                    borderTopWidth = 1,
+                    borderRightWidth = 1,
+                    borderBottomWidth = 1,
+                    borderLeftWidth = 1,
+                    borderTopColor = new StyleColor(new Color(0.45f, 0.68f, 1f, 0.72f)),
+                    borderRightColor = new StyleColor(new Color(0.45f, 0.68f, 1f, 0.72f)),
+                    borderBottomColor = new StyleColor(new Color(0.45f, 0.68f, 1f, 0.72f)),
+                    borderLeftColor = new StyleColor(new Color(0.45f, 0.68f, 1f, 0.72f))
+                }
+            };
+            _timelinePanel?.Add(_timelineSelectionBox);
+            UpdateTimelineBoxSelection(e.position);
+        }
+
+        private void UpdateTimelineBoxSelection(Vector2 worldPosition)
+        {
+            if (_timelineSelectionBox == null || _timelinePanel == null)
+                return;
+
+            Rect worldRect = MakeRect(_timelineBoxSelectStart, worldPosition);
+            Vector2 min = _timelinePanel.WorldToLocal(worldRect.min);
+            Vector2 max = _timelinePanel.WorldToLocal(worldRect.max);
+            Rect localRect = MakeRect(min, max);
+            _timelineSelectionBox.style.left = localRect.xMin;
+            _timelineSelectionBox.style.top = localRect.yMin;
+            _timelineSelectionBox.style.width = localRect.width;
+            _timelineSelectionBox.style.height = localRect.height;
+        }
+
+        private void FinishTimelineBoxSelection(Vector2 worldPosition)
+        {
+            Rect worldRect = MakeRect(_timelineBoxSelectStart, worldPosition);
+            bool wasDrag = worldRect.width > 4f || worldRect.height > 4f;
+            if (wasDrag)
+            {
+                SelectTimelineKeysInWorldRect(worldRect);
+            }
+            else
+            {
+                NormalizeTimelineSelectionFromSet(_selectedTimelineProperty);
+            }
+
+            RefreshActorInspector();
+            RefreshTimelinePanel();
+        }
+
+        private void SelectTimelineKeysInWorldRect(Rect worldRect)
+        {
+            foreach (var pair in _timelineKeyElements)
+            {
+                StoryActorKeyframeData key = pair.Key;
+                VisualElement marker = pair.Value;
+                if (key == null || marker == null)
+                    continue;
+
+                if (worldRect.Overlaps(marker.worldBound))
+                    _selectedTimelineKeys.Add(key);
+            }
+
+            NormalizeTimelineSelectionFromSet(_selectedTimelineProperty);
+        }
+
+        private static Rect MakeRect(Vector2 a, Vector2 b)
+        {
+            float xMin = Mathf.Min(a.x, b.x);
+            float yMin = Mathf.Min(a.y, b.y);
+            float xMax = Mathf.Max(a.x, b.x);
+            float yMax = Mathf.Max(a.y, b.y);
+            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+        }
+
+        private void BeginTimelineGroupKeyDrag(PointerDownEvent e)
+        {
+            _timelineKeyDragStates.Clear();
+            StoryActorTrackData track = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
+            if (track?.keyframes == null)
+                return;
+
+            ValidateTimelineSelectionSet(track);
+            foreach (StoryActorKeyframeData key in _selectedTimelineKeys)
+            {
+                _timelineKeyDragStates.Add(new TimelineKeyDragState
+                {
+                    key = key,
+                    startTime = StoryTransitionSampler.GetKeyTime(key)
+                });
+            }
+
+            if (_timelineKeyDragStates.Count == 0)
+                return;
+
+            _isTimelineGroupKeyDragging = true;
+            _draggingTimelineActorKey = _selectedActorKey;
+            _activeTimelinePointerId = e.pointerId;
+            _timelineKeyDragStartPanelX = e.position.x;
+            _timelinePanel?.CapturePointer(e.pointerId);
+        }
+
+        private void MoveTimelineGroupKeys(float currentPanelX)
+        {
+            float deltaTime = (currentPanelX - _timelineKeyDragStartPanelX) / Mathf.Max(1f, _timelinePixelsPerSecond);
+            SaveActorTrackToCurrent(_draggingTimelineActorKey, track =>
+            {
+                foreach (TimelineKeyDragState state in _timelineKeyDragStates)
+                {
+                    int index = track.keyframes.IndexOf(state.key);
+                    if (index < 0)
+                        continue;
+
+                    StoryActorKeyframeData key = track.keyframes[index];
+                    key.timeSeconds = Mathf.Max(0f, state.startTime + deltaTime);
+                    key.normalizedTime = Mathf.Clamp01(key.timeSeconds / Mathf.Max(1f, GetTimelineDuration()));
+                }
+            }, refresh: false);
+            NormalizeTimelineSelectionFromSet(_selectedTimelineProperty);
             RefreshTimelinePanel();
         }
 
@@ -589,9 +1027,23 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (e.pointerId != _activeTimelinePointerId)
                 return;
 
+            if (_isTimelineBoxSelecting)
+            {
+                UpdateTimelineBoxSelection(e.position);
+                e.StopPropagation();
+                return;
+            }
+
             if (_isTimelinePlayheadDragging)
             {
                 SetTimelinePlayheadFromLocalX(e.localPosition.x - TimelinePropertyWidth);
+                e.StopPropagation();
+                return;
+            }
+
+            if (_isTimelineGroupKeyDragging && !string.IsNullOrWhiteSpace(_draggingTimelineActorKey))
+            {
+                MoveTimelineGroupKeys(e.position.x);
                 e.StopPropagation();
                 return;
             }
@@ -613,6 +1065,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (e.pointerId != _activeTimelinePointerId)
                 return;
 
+            if (_isTimelineBoxSelecting)
+                FinishTimelineBoxSelection(e.position);
+
             CancelTimelinePointerDrag();
             e.StopPropagation();
         }
@@ -625,7 +1080,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (HandleTimelineShortcut(e.keyCode, e.ctrlKey || e.commandKey, e.shiftKey))
             {
                 e.StopPropagation();
-                e.PreventDefault();
             }
         }
 
@@ -677,8 +1131,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             _isTimelinePlayheadDragging = false;
             _isTimelineKeyDragging = false;
+            _isTimelineGroupKeyDragging = false;
+            _isTimelineBoxSelecting = false;
             _draggingTimelineActorKey = null;
             _draggingTimelineKeyIndex = -1;
+            _timelineKeyDragStates.Clear();
+
+            if (_timelineSelectionBox != null)
+            {
+                _timelineSelectionBox.RemoveFromHierarchy();
+                _timelineSelectionBox = null;
+            }
 
             if (_timelinePanel != null && _activeTimelinePointerId >= 0 && _timelinePanel.HasPointerCapture(_activeTimelinePointerId))
                 _timelinePanel.ReleasePointer(_activeTimelinePointerId);
@@ -690,6 +1153,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             _selectedTimelineKeyIndex = -1;
             _selectedTimelineSegmentKeyIndex = -1;
+            _selectedTimelineKeys.Clear();
             if (!refresh)
                 return;
 
@@ -699,6 +1163,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void SelectTimelineSegment(int keyIndex, StoryActorKeyframeProperty property)
         {
+            _selectedTimelineKeys.Clear();
             _selectedTimelineKeyIndex = -1;
             _selectedTimelineSegmentKeyIndex = keyIndex;
             _selectedTimelineSegmentProperty = property;
@@ -739,10 +1204,36 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 RefreshTimelinePanel();
                 return;
             }
+
+            float duration = GetTimelineDuration();
+            if (_timelinePlayheadTime >= duration - 0.001f)
+            {
+                _timelinePlayheadTime = GetTimelineRestartTime();
+                ApplyTimelinePlayheadSample();
+            }
+
             _timelinePlaybackStartTime = _timelinePlayheadTime;
             _timelinePlaybackStartedAt = EditorApplication.timeSinceStartup;
             _timelineIsPlaying = true;
             RefreshTimelinePanel();
+        }
+
+        private float GetTimelineRestartTime()
+        {
+            StoryActorTrackData track = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
+            if (track?.keyframes == null)
+                return 0f;
+
+            float first = float.MaxValue;
+            foreach (StoryActorKeyframeData key in track.keyframes)
+            {
+                if (key == null || !IsEditableTimelineProperty(key.property))
+                    continue;
+
+                first = Mathf.Min(first, StoryTransitionSampler.GetKeyTime(key));
+            }
+
+            return first == float.MaxValue ? 0f : first;
         }
 
         private void UpdateTimelinePlayback()
@@ -805,6 +1296,31 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             menu.ShowAsContext();
         }
 
+        private void ShowRowKeyContextMenu(StoryActorKeyframeProperty property, float time)
+        {
+            var menu = new GenericMenu();
+            if (_selectionKind != StageSelectionKind.Actor
+                || string.IsNullOrWhiteSpace(_selectedActorKey)
+                || !_stageState.TryGetValue(_selectedActorKey, out var actorState))
+            {
+                menu.AddDisabledItem(new GUIContent($"Add {property} Key"));
+                menu.ShowAsContext();
+                return;
+            }
+
+            string label = $"Add/Update {property} Key @ {time:0.00}s";
+            menu.AddItem(new GUIContent(label), false, () =>
+            {
+                _selectedTimelineProperty = property;
+                _timelinePlayheadTime = time;
+                AddOrUpdateKey(_selectedActorKey, actorState, property, time, createIfMissing: true);
+                ApplyTimelinePlayheadSample();
+                RefreshActorInspector();
+                RefreshTimelinePanel();
+            });
+            menu.ShowAsContext();
+        }
+
         private void AddPropertyMenuItem(GenericMenu menu, StoryActorTrackData track, StoryActorKeyframeProperty property, string label)
         {
             if (HasProperty(track, property))
@@ -842,16 +1358,201 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             RefreshTimelinePanel();
         }
 
-        private void RemoveSelectedTimelineKey()
+        internal bool ApplyMotionPresetToCurrentTrack(
+            StoryMotionPresetSO preset,
+            StoryActorKeyframeProperty? propertyOverride = null,
+            float? timeOverride = null)
         {
-            if (_selectionKind != StageSelectionKind.Actor || string.IsNullOrWhiteSpace(_selectedActorKey) || _selectedTimelineKeyIndex < 0) return;
-            int index = _selectedTimelineKeyIndex;
+            if (preset == null
+                || _selectionKind != StageSelectionKind.Actor
+                || string.IsNullOrWhiteSpace(_selectedActorKey))
+                return false;
+
+            StoryActorKeyframeProperty property = propertyOverride ?? preset.property;
+            if (propertyOverride.HasValue && !CanApplyMotionPresetToProperty(preset, property))
+                return false;
+
+            float offset = Mathf.Max(0f, timeOverride ?? _timelinePlayheadTime);
+            bool appliedAny = false;
             SaveActorTrackToCurrent(_selectedActorKey, track =>
             {
-                if (index >= 0 && index < track.keyframes.Count) track.keyframes.RemoveAt(index);
+                _selectedTimelineKeys.Clear();
+                foreach (StoryActorKeyframeData sourceKey in preset.keyframes)
+                {
+                    if (sourceKey == null || !IsEditableTimelineProperty(sourceKey.property))
+                        continue;
+                    if (propertyOverride.HasValue && sourceKey.property != property)
+                        continue;
+
+                    StoryActorKeyframeData clone = sourceKey.ShallowClone();
+                    clone.property = sourceKey.property;
+                    clone.timeSeconds = offset + StoryTransitionSampler.GetKeyTime(sourceKey);
+                    clone.normalizedTime = Mathf.Clamp01(clone.timeSeconds / Mathf.Max(1f, GetTimelineDuration()));
+
+                    int existing = FindKeyIndexNearTime(track, clone.property, clone.timeSeconds);
+                    if (existing >= 0)
+                    {
+                        track.keyframes[existing] = clone;
+                    }
+                    else
+                    {
+                        track.keyframes.Add(clone);
+                    }
+
+                    _selectedTimelineKeys.Add(clone);
+                    appliedAny = true;
+                }
+
+                _selectedTimelineProperty = property;
                 _selectedTimelineKeyIndex = -1;
                 _selectedTimelineSegmentKeyIndex = -1;
-            }, refresh: true);
+            }, refresh: false);
+
+            if (!appliedAny)
+                return false;
+
+            NormalizeTimelineSelectionFromSet(property);
+            ApplyTimelinePlayheadSample();
+            RefreshActorInspector();
+            RefreshTimelinePanel();
+            return true;
+        }
+
+        internal bool SaveSelectedTimelineKeysAsMotionPreset()
+        {
+            if (_selectionKind != StageSelectionKind.Actor || string.IsNullOrWhiteSpace(_selectedActorKey))
+                return false;
+
+            StoryActorTrackData track = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
+            List<StoryActorKeyframeData> selectedKeys = GetSelectedTimelineKeys(track);
+            if (selectedKeys.Count == 0)
+            {
+                EditorUtility.DisplayDialog("Save Motion Preset", "Select one or more timeline keys first.", "OK");
+                return false;
+            }
+
+            EnsureMotionPresetFolder();
+            selectedKeys.Sort((a, b) =>
+            {
+                int timeCompare = StoryTransitionSampler.GetKeyTime(a).CompareTo(StoryTransitionSampler.GetKeyTime(b));
+                return timeCompare != 0 ? timeCompare : a.property.CompareTo(b.property);
+            });
+
+            StoryActorKeyframeProperty primaryProperty = selectedKeys[0].property;
+            string defaultName = $"MotionPreset_{SanitizePresetAssetName(_selectedActorKey)}_Selection";
+            string path = EditorUtility.SaveFilePanelInProject(
+                "Save Motion Preset",
+                defaultName,
+                "asset",
+                "Choose where to save the motion preset asset.",
+                MotionPresetFolder);
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            StoryMotionPresetSO preset = AssetDatabase.LoadAssetAtPath<StoryMotionPresetSO>(path);
+            if (preset == null)
+            {
+                if (AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path) != null)
+                {
+                    EditorUtility.DisplayDialog("Cannot Save Preset", "The selected asset is not a StoryMotionPresetSO.", "OK");
+                    return false;
+                }
+
+                preset = CreateInstance<StoryMotionPresetSO>();
+                AssetDatabase.CreateAsset(preset, path);
+            }
+            else
+            {
+                Undo.RecordObject(preset, "Edit Motion Preset");
+            }
+
+            preset.presetId = $"{primaryProperty}_{DateTime.Now:yyyyMMddHHmmss}";
+            preset.property = primaryProperty;
+            preset.keyframes.Clear();
+
+            float firstTime = StoryTransitionSampler.GetKeyTime(selectedKeys[0]);
+            float lastTime = firstTime;
+            foreach (StoryActorKeyframeData key in selectedKeys)
+                lastTime = Mathf.Max(lastTime, StoryTransitionSampler.GetKeyTime(key));
+
+            float duration = Mathf.Max(1f, lastTime - firstTime);
+            foreach (StoryActorKeyframeData key in selectedKeys)
+            {
+                StoryActorKeyframeData clone = key.ShallowClone();
+                clone.timeSeconds = Mathf.Max(0f, StoryTransitionSampler.GetKeyTime(clone) - firstTime);
+                clone.normalizedTime = Mathf.Clamp01(clone.timeSeconds / duration);
+                preset.keyframes.Add(clone);
+            }
+
+            EditorUtility.SetDirty(preset);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            StoryMotionPresetLibraryWindow.RefreshOpenWindows();
+            return true;
+        }
+
+        private bool CanApplyMotionPresetToProperty(StoryMotionPresetSO preset, StoryActorKeyframeProperty property)
+        {
+            return preset != null
+                && IsEditableTimelineProperty(property)
+                && preset.keyframes != null
+                && preset.keyframes.Exists(key => key != null && key.property == property);
+        }
+
+        private static StoryMotionPresetSO GetDraggedMotionPreset()
+        {
+            foreach (UnityEngine.Object obj in DragAndDrop.objectReferences)
+            {
+                if (obj is StoryMotionPresetSO preset)
+                    return preset;
+            }
+
+            return null;
+        }
+
+        private static void EnsureMotionPresetFolder()
+        {
+            string[] parts = MotionPresetFolder.Split('/');
+            string current = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                string next = $"{current}/{parts[i]}";
+                if (!AssetDatabase.IsValidFolder(next))
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                current = next;
+            }
+        }
+
+        private static string SanitizePresetAssetName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return "Actor";
+
+            char[] chars = value.ToCharArray();
+            for (int i = 0; i < chars.Length; i++)
+            {
+                if (!char.IsLetterOrDigit(chars[i]) && chars[i] != '_' && chars[i] != '-')
+                    chars[i] = '_';
+            }
+
+            return new string(chars);
+        }
+
+        private void RemoveSelectedTimelineKey()
+        {
+            if (_selectionKind != StageSelectionKind.Actor || string.IsNullOrWhiteSpace(_selectedActorKey)) return;
+            StoryActorTrackData currentTrack = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
+            var keysToRemove = GetSelectedTimelineKeys(currentTrack);
+            if (keysToRemove.Count == 0) return;
+
+            SaveActorTrackToCurrent(_selectedActorKey, track =>
+            {
+                track.keyframes.RemoveAll(keysToRemove.Contains);
+                _selectedTimelineKeyIndex = -1;
+                _selectedTimelineSegmentKeyIndex = -1;
+                _selectedTimelineKeys.Clear();
+            }, refresh: false);
+            RefreshActorInspector();
             RefreshTimelinePanel();
         }
 
@@ -882,8 +1583,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             else if (offset == int.MaxValue) currentVisibleIndex = count - 1;
             else currentVisibleIndex = Mathf.Clamp(currentVisibleIndex + offset, 0, count - 1);
             _selectedTimelineKeyIndex = visibleIndexes[currentVisibleIndex];
-            _selectedTimelineProperty = track.keyframes[_selectedTimelineKeyIndex].property;
-            _selectedTimelineSegmentKeyIndex = -1;
+            SelectSingleTimelineKey(track.keyframes[_selectedTimelineKeyIndex], _selectedTimelineKeyIndex, track.keyframes[_selectedTimelineKeyIndex].property);
             _timelinePlayheadTime = StoryTransitionSampler.GetKeyTime(track.keyframes[_selectedTimelineKeyIndex]);
             ApplyTimelinePlayheadSample();
             RefreshActorInspector();
@@ -905,22 +1605,27 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             if (!_timelineRecordEnabled || !IsStageAuthoringMode || state == null || string.IsNullOrWhiteSpace(actorKey)) return;
             if (!string.Equals(actorKey, _timelineRecordActorKey, StringComparison.Ordinal)) return;
-            if (includePosition) AddOrUpdateKey(actorKey, state, StoryActorKeyframeProperty.Position, _timelinePlayheadTime, createIfMissing: true);
-            if (includeScale) AddOrUpdateKey(actorKey, state, StoryActorKeyframeProperty.Scale, _timelinePlayheadTime, createIfMissing: true);
+            if (includePosition) AddOrUpdateKey(actorKey, state, StoryActorKeyframeProperty.Position, _timelinePlayheadTime, createIfMissing: true, selectKey: false, refreshInspector: false);
+            if (includeScale) AddOrUpdateKey(actorKey, state, StoryActorKeyframeProperty.Scale, _timelinePlayheadTime, createIfMissing: true, selectKey: false, refreshInspector: false);
             RefreshTimelinePanel();
         }
 
         private bool BlocksActorManipulationBySelectedKey(string actorKey, StoryActorKeyframeProperty property)
         {
-            return _selectedTimelineKeyIndex >= 0
-                && string.Equals(actorKey, _selectedActorKey, StringComparison.Ordinal)
-                && _selectedTimelineProperty != property;
+            if (!string.Equals(actorKey, _selectedActorKey, StringComparison.Ordinal))
+                return false;
+
+            if (HasTimelineMultiSelection)
+                return true;
+
+            return _selectedTimelineKeyIndex >= 0 && _selectedTimelineProperty != property;
         }
 
         private bool TryApplySelectedTimelineKeyFromState(string actorKey, StoryActorStateData state, StoryActorKeyframeProperty property)
         {
             if (state == null
                 || string.IsNullOrWhiteSpace(actorKey)
+                || HasTimelineMultiSelection
                 || _selectedTimelineKeyIndex < 0
                 || !string.Equals(actorKey, _selectedActorKey, StringComparison.Ordinal)
                 || _selectedTimelineProperty != property)
@@ -951,8 +1656,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return true;
         }
 
-        private void AddOrUpdateKey(string actorKey, StoryActorStateData state, StoryActorKeyframeProperty property, float time, bool createIfMissing)
+        private void AddOrUpdateKey(
+            string actorKey,
+            StoryActorStateData state,
+            StoryActorKeyframeProperty property,
+            float time,
+            bool createIfMissing,
+            bool selectKey = true,
+            bool refreshInspector = true)
         {
+            int previousKeyIndex = _selectedTimelineKeyIndex;
+            int previousSegmentIndex = _selectedTimelineSegmentKeyIndex;
+            StoryActorKeyframeProperty previousProperty = _selectedTimelineProperty;
+            StoryActorKeyframeProperty previousSegmentProperty = _selectedTimelineSegmentProperty;
+
             SaveActorTrackToCurrent(actorKey, track =>
             {
                 int index = FindKeyIndexNearTime(track, property, time);
@@ -974,12 +1691,34 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     key.scale = state.scale;
                     key.scaleX = state.scaleX;
                 }
-                _selectedTimelineProperty = property;
-                _selectedTimelineSegmentKeyIndex = -1;
-            }, refresh: true);
+                if (selectKey)
+                {
+                    _selectedTimelineProperty = property;
+                    _selectedTimelineSegmentKeyIndex = -1;
+                }
+            }, refresh: false);
 
             StoryActorTrackData refreshed = FindActorTrack(FindCurrentStageLayout(), actorKey);
-            _selectedTimelineKeyIndex = FindKeyIndexNearTime(refreshed, property, time);
+            if (selectKey)
+            {
+                _selectedTimelineKeyIndex = FindKeyIndexNearTime(refreshed, property, time);
+                _selectedTimelineKeys.Clear();
+                if (refreshed != null
+                    && _selectedTimelineKeyIndex >= 0
+                    && _selectedTimelineKeyIndex < refreshed.keyframes.Count)
+                    _selectedTimelineKeys.Add(refreshed.keyframes[_selectedTimelineKeyIndex]);
+            }
+            else
+            {
+                _selectedTimelineKeyIndex = previousKeyIndex;
+                _selectedTimelineSegmentKeyIndex = previousSegmentIndex;
+                _selectedTimelineProperty = previousProperty;
+                _selectedTimelineSegmentProperty = previousSegmentProperty;
+                ValidateTimelineSelection();
+            }
+
+            if (refreshInspector)
+                RefreshActorInspector();
         }
 
         private static int FindKeyIndexNearTime(StoryActorTrackData track, StoryActorKeyframeProperty property, float timeSeconds)
@@ -1002,6 +1741,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 _selectedTimelineKeyIndex = -1;
                 _selectedTimelineSegmentKeyIndex = -1;
+                _selectedTimelineKeys.Clear();
                 return;
             }
 
@@ -1010,8 +1750,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 _selectedTimelineKeyIndex = -1;
                 _selectedTimelineSegmentKeyIndex = -1;
+                _selectedTimelineKeys.Clear();
                 return;
             }
+
+            ValidateTimelineSelectionSet(track);
 
             if (_selectedTimelineKeyIndex >= 0
                 && (_selectedTimelineKeyIndex >= track.keyframes.Count
@@ -1088,28 +1831,42 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void CopySelectedTimelineKey()
         {
             StoryActorTrackData track = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
-            if (track == null || _selectedTimelineKeyIndex < 0 || _selectedTimelineKeyIndex >= track.keyframes.Count) return;
-            _timelineClipboardKey = track.keyframes[_selectedTimelineKeyIndex].ShallowClone();
-            _timelineClipboardProperty = _timelineClipboardKey.property;
+            var selected = GetSelectedTimelineKeys(track);
+            if (selected.Count == 0) return;
+
+            selected.Sort((a, b) => StoryTransitionSampler.GetKeyTime(a).CompareTo(StoryTransitionSampler.GetKeyTime(b)));
+            _timelineClipboardKeys.Clear();
+            foreach (StoryActorKeyframeData key in selected)
+                _timelineClipboardKeys.Add(key.ShallowClone());
+
+            _timelineClipboardKey = _timelineClipboardKeys.Count == 1 ? _timelineClipboardKeys[0] : null;
+            _timelineClipboardProperty = _timelineClipboardKeys[0].property;
         }
 
         private void PasteTimelineKeyAtPlayhead()
         {
-            if (_timelineClipboardKey == null || string.IsNullOrWhiteSpace(_selectedActorKey)) return;
-            if (_timelineClipboardProperty != _selectedTimelineProperty)
-                return;
+            if (_timelineClipboardKeys.Count == 0 || string.IsNullOrWhiteSpace(_selectedActorKey)) return;
+            float firstTime = float.MaxValue;
+            foreach (StoryActorKeyframeData key in _timelineClipboardKeys)
+                firstTime = Mathf.Min(firstTime, StoryTransitionSampler.GetKeyTime(key));
+
             SaveActorTrackToCurrent(_selectedActorKey, track =>
             {
-                StoryActorKeyframeData clone = _timelineClipboardKey.ShallowClone();
-                clone.property = _timelineClipboardProperty;
-                clone.timeSeconds = _timelinePlayheadTime;
-                clone.normalizedTime = Mathf.Clamp01(_timelinePlayheadTime / Mathf.Max(1f, GetTimelineDuration()));
-                track.keyframes.Add(clone);
-                _selectedTimelineProperty = clone.property;
+                _selectedTimelineKeys.Clear();
+                foreach (StoryActorKeyframeData source in _timelineClipboardKeys)
+                {
+                    StoryActorKeyframeData clone = source.ShallowClone();
+                    clone.timeSeconds = _timelinePlayheadTime + Mathf.Max(0f, StoryTransitionSampler.GetKeyTime(source) - firstTime);
+                    clone.normalizedTime = Mathf.Clamp01(clone.timeSeconds / Mathf.Max(1f, GetTimelineDuration()));
+                    track.keyframes.Add(clone);
+                    _selectedTimelineKeys.Add(clone);
+                }
+
+                _selectedTimelineProperty = _timelineClipboardProperty;
+                _selectedTimelineKeyIndex = -1;
                 _selectedTimelineSegmentKeyIndex = -1;
             }, refresh: true);
-            StoryActorTrackData refreshed = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
-            _selectedTimelineKeyIndex = FindKeyIndexNearTime(refreshed, _timelineClipboardProperty, _timelinePlayheadTime);
+            NormalizeTimelineSelectionFromSet(_timelineClipboardProperty);
             RefreshTimelinePanel();
         }
 
@@ -1117,6 +1874,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             if (!IsStageAuthoringMode)
                 return false;
+
+            if (!control && keyCode == KeyCode.Space)
+            {
+                ToggleTimelinePlayback();
+                return true;
+            }
 
             if (control && keyCode == KeyCode.Z)
             {
@@ -1135,7 +1898,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (keyCode == KeyCode.Delete || keyCode == KeyCode.Backspace)
             {
-                if (_selectedTimelineKeyIndex >= 0)
+                if (_selectedTimelineKeyIndex >= 0 || _selectedTimelineKeys.Count > 0)
                 {
                     RemoveSelectedTimelineKey();
                     return true;

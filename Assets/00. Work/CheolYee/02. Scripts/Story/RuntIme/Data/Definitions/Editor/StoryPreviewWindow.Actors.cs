@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 {
@@ -50,7 +51,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 style = { position = Position.Absolute, overflow = Overflow.Visible, borderTopLeftRadius = 3, borderTopRightRadius = 3 }
             };
 
-            var sprite = actor.PreviewSprite;
+            var sprite = StoryStageVisualSizing.ResolveActorSprite(data);
             if (sprite != null)
             {
                 el.style.backgroundImage = new StyleBackground(sprite);
@@ -109,8 +110,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private static void ApplyActorFocusStyle(VisualElement el, StoryActorStateData data)
         {
-            el.style.unityBackgroundImageTintColor = new StyleColor(data.focused ? Color.white : new Color(0.5f, 0.5f, 0.5f));
-            el.style.opacity = data.focused ? 1f : 0.65f;
+            float focusBlend = StoryTransitionSampler.ResolveFocusBlend(data.EffectiveFocusAlpha);
+            el.style.unityBackgroundImageTintColor = new StyleColor(Color.Lerp(new Color(0.5f, 0.5f, 0.5f), Color.white, focusBlend));
+            el.style.opacity = data.EffectiveFocusAlpha;
         }
 
         // ── 액터 배치 (Stage World 좌표계) ────────────
@@ -139,40 +141,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private Rect GetActorWorldRect(StoryActorStateData data, Vector2 lineScale)
         {
-            float camW = DefaultUnitPixels;
+            StoryActorStateData sample = data.ShallowClone();
+            sample.scale = lineScale;
             float camH = DefaultUnitPixels / GetRenderAspect();
-            Vector2 size = CalculateActorVisualSize(data, lineScale);
-            Vector2 normPos = data.normalizedPosition + data.EffectiveOffset;
-            Vector2 pivot = data.EffectivePivot;
-
-            float x = normPos.x * camW - size.x * Mathf.Clamp01(pivot.x);
-            float y = (1f - normPos.y) * camH - size.y * (1f - Mathf.Clamp01(pivot.y));
-            return new Rect(x, y, size.x, size.y);
+            return StoryStageVisualSizing.CalculateActorPreviewRect(
+                sample,
+                StoryStageVisualSizing.ResolveActorSprite(sample),
+                new Vector2(DefaultUnitPixels, camH));
         }
 
         private Vector2 CalculateActorVisualSize(StoryActorStateData data, Vector2 lineScale)
         {
+            StoryActorStateData sample = data.ShallowClone();
+            sample.scale = lineScale;
             float camH = DefaultUnitPixels / GetRenderAspect();
-            Vector2 effectiveScale = CalculateActorEffectiveScale(data, lineScale);
-            float width = GetActorPreviewWidth(effectiveScale, camH);
-            float aspect = GetActorVisualAspect(data);
-            float height = width * aspect * Mathf.Abs(effectiveScale.y);
-            return new Vector2(Mathf.Max(8f, width), Mathf.Max(8f, height));
-        }
-
-        private static Vector2 CalculateActorEffectiveScale(StoryActorStateData data, Vector2 lineScale)
-        {
-            Vector2 baseScale = ResolveNonZeroScale(data.actor != null ? data.actor.DefaultStageScale : Vector2.one);
-            Vector2 safeLineScale = ResolveNonZeroScale(lineScale);
-            return new Vector2(baseScale.x * safeLineScale.x * data.scaleX, baseScale.y * safeLineScale.y);
-        }
-
-        private static float GetActorVisualAspect(StoryActorStateData data)
-        {
-            var sprite = data.actor?.PreviewSprite;
-            return sprite != null && sprite.rect.width > 0
-                ? sprite.rect.height / sprite.rect.width
-                : DefaultActorAspect;
+            return StoryStageVisualSizing.CalculateActorPreviewSize(
+                sample,
+                StoryStageVisualSizing.ResolveActorSprite(sample),
+                new Vector2(DefaultUnitPixels, camH));
         }
 
         private void SetEmptyStageVisible(bool visible)
@@ -216,6 +202,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 if (_stageState.TryGetValue(kvp.Key, out var data) && data is { visible: true, actor: not null })
                 {
                     kvp.Value.style.display = DisplayStyle.Flex;
+                    ApplyActorFocusStyle(kvp.Value, data);
                     PositionActorElement(kvp.Value, data);
                 }
                 else
@@ -454,18 +441,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private Vector2 ResolveLineScaleForVisualSize(StoryActorStateData data, Vector2 targetSize)
         {
+            StoryActorStateData baseSample = data.ShallowClone();
+            baseSample.scale = Vector2.one;
             float camH = DefaultUnitPixels / GetRenderAspect();
-            float heightScale = Mathf.Clamp(
-                camH / (DefaultUnitPixels * FallbackRenderHeight / FallbackRenderWidth),
-                ActorMinHeightScale,
-                ActorMaxHeightScale);
-            float widthBase = Mathf.Max(0.0001f, DefaultUnitPixels * ActorWidthFrac * heightScale);
-            Vector2 baseScale = ResolveNonZeroScale(data.actor != null ? data.actor.DefaultStageScale : Vector2.one);
-            float legacyX = Mathf.Max(0.0001f, Mathf.Abs(data.scaleX));
-            float lineX = targetSize.x / Mathf.Max(0.0001f, widthBase * Mathf.Abs(baseScale.x) * legacyX);
-
-            float aspect = GetActorVisualAspect(data);
-            float lineY = targetSize.y / Mathf.Max(0.0001f, targetSize.x * aspect * Mathf.Abs(baseScale.y));
+            Vector2 baseSize = StoryStageVisualSizing.CalculateActorPreviewSize(
+                baseSample,
+                StoryStageVisualSizing.ResolveActorSprite(baseSample),
+                new Vector2(DefaultUnitPixels, camH));
+            float lineX = targetSize.x / Mathf.Max(0.0001f, baseSize.x);
+            float lineY = targetSize.y / Mathf.Max(0.0001f, baseSize.y);
             return ResolveNonZeroScale(new Vector2(lineX, lineY));
         }
 

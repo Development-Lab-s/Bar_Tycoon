@@ -38,6 +38,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return w;
         }
 
+        internal static bool TryGetOpenPreviewWindow(out StoryPreviewWindow window)
+        {
+            window = HasOpenInstances<StoryPreviewWindow>()
+                ? GetWindow<StoryPreviewWindow>(false, null, false)
+                : null;
+            return window != null;
+        }
+
         // ── 외부 진입점 ──────────────────────────────
 
         /// <summary>그래프 에디터가 에피소드를 변경했을 때 호출.</summary>
@@ -86,6 +94,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private const float DefaultTimelinePixelsPerSecond = 120f;
         private const float MinTimelinePixelsPerSecond = 48f;
         private const float MaxTimelinePixelsPerSecond = 360f;
+        private const string MotionPresetFolder = "Assets/00. Work/CheolYee/05. SO/Story/MotionPresets";
 
         // ── 에피소드 / 재생 상태 ──────────────────────
 
@@ -229,12 +238,27 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private int _selectedTimelineKeyIndex = -1;
         private int _selectedTimelineSegmentKeyIndex = -1;
         private bool _isTimelineKeyDragging;
+        private bool _isTimelineGroupKeyDragging;
+        private bool _isTimelineBoxSelecting;
         private string _draggingTimelineActorKey;
         private int _draggingTimelineKeyIndex = -1;
+        private float _timelineKeyDragStartPanelX;
+        private Vector2 _timelineBoxSelectStart;
+        private VisualElement _timelineSelectionBox;
         private StoryActorKeyframeProperty _selectedTimelineProperty = StoryActorKeyframeProperty.Position;
         private StoryActorKeyframeProperty _selectedTimelineSegmentProperty = StoryActorKeyframeProperty.Position;
         private StoryActorKeyframeData _timelineClipboardKey;
         private StoryActorKeyframeProperty _timelineClipboardProperty = StoryActorKeyframeProperty.Position;
+        private readonly HashSet<StoryActorKeyframeData> _selectedTimelineKeys = new();
+        private readonly Dictionary<StoryActorKeyframeData, VisualElement> _timelineKeyElements = new();
+        private readonly List<TimelineKeyDragState> _timelineKeyDragStates = new();
+        private readonly List<StoryActorKeyframeData> _timelineClipboardKeys = new();
+
+        private sealed class TimelineKeyDragState
+        {
+            public StoryActorKeyframeData key;
+            public float startTime;
+        }
 
         // actor → VisualElement 매핑
         private readonly Dictionary<string, VisualElement> _actorElements = new();

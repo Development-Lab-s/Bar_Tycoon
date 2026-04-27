@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Views;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
@@ -15,11 +16,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
         [Header("Roots")]
         [SerializeField] private Transform actorRoot;
         [SerializeField] private Transform backgroundRoot;
+        [Header("Deprecated Anchor Fallback")]
+        [Tooltip("Deprecated fallback only. Stage layout now uses camera frame coordinates.")]
         [SerializeField] private Transform leftAnchor;
+        [Tooltip("Deprecated fallback only. New speaker fallback no longer requires this anchor.")]
         [SerializeField] private Transform centerAnchor;
+        [Tooltip("Deprecated fallback only. Stage layout now uses camera frame coordinates.")]
         [SerializeField] private Transform rightAnchor;
 
-        [Header("Default Spawn")]
+        [Header("Shared Visual Prefabs")]
+        [SerializeField] private StoryActorVisualView sharedActorPrefab;
+        [SerializeField] private StoryBackgroundVisualView sharedBackgroundPrefab;
+        [SerializeField] private bool useLegacyCharacterPrefabFallback;
+        [SerializeField] private bool useLegacyBackgroundPrefabFallback;
+        [SerializeField] private float fallbackAspect = 9f / 16f;
+        [SerializeField] private float fallbackCameraWorldWidth = StoryStageVisualSizing.DefaultCameraWorldWidth;
+
+        [Header("Deprecated Default Spawn")]
+        [Tooltip("Deprecated. Stage layout normalized position now controls runtime placement.")]
         [SerializeField] private StageAnchorType defaultSpawnAnchor = StageAnchorType.Center;
 
         [Header("Focus")]
@@ -28,6 +42,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
         private readonly Dictionary<string, ActorEntry> _actors = new();
         private GameObject _backgroundInstance;
+        private StoryBackgroundVisualView _backgroundView;
         private string _backgroundKey = "";
         private StoryBackgroundStateData _backgroundState;
 
@@ -43,25 +58,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             if (_actors.ContainsKey(characterId))
                 return UniTask.CompletedTask;
 
-            GameObject prefab = line.Speaker.DefaultActorPrefab;
-            if (prefab == null)
-            {
-                Debug.LogWarning($"Character '{line.Speaker.name}' has no default actor prefab.");
-                return UniTask.CompletedTask;
-            }
-
             Transform parent = actorRoot != null ? actorRoot : transform;
-            Transform anchor = GetAnchor(defaultSpawnAnchor);
+            ActorEntry entry = CreateActorEntry(characterId, line.Speaker, parent);
+            if (entry == null)
+                return UniTask.CompletedTask;
 
-            GameObject instance = Instantiate(prefab, parent);
-
-            if (anchor != null)
-            {
-                instance.transform.position = anchor.position;
-                instance.transform.rotation = anchor.rotation;
-            }
-
-            ActorEntry entry = new ActorEntry(instance, line.Speaker);
             entry.CurrentState = new StoryActorStateData
             {
                 actor = line.Speaker,
@@ -71,7 +72,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                 visible = true,
                 focused = false
             };
-            entry.ApplyTint(dimColor);
+
+            ApplyActorEntry(entry, entry.CurrentState);
 
             _actors[characterId] = entry;
             return UniTask.CompletedTask;
@@ -109,6 +111,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             if (_backgroundInstance != null)
                 Destroy(_backgroundInstance);
             _backgroundInstance = null;
+            _backgroundView = null;
             _backgroundKey = "";
             _backgroundState = null;
         }
@@ -282,35 +285,78 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                 if (!_actors.ContainsKey(charId))
                 {
                     // 신규 등장
-                    var prefab = data.actor != null ? data.actor.DefaultActorPrefab : null;
-                    if (prefab == null) continue;
-                    var instance = Instantiate(prefab, parent);
-                    var entry = new ActorEntry(instance, data.actor);
+                    var entry = CreateActorEntry(charId, data.actor, parent);
+                    if (entry == null) continue;
                     _actors[charId] = entry;
                 }
 
-                var actorEntry = _actors[charId];
-                if (actorEntry.Instance != null)
-                {
-                    actorEntry.Instance.transform.position = NormPosToWorld(data);
-                    Vector2 effectiveScale = data.EffectiveScale;
-                    actorEntry.Instance.transform.localScale = new Vector3(
-                        actorEntry.BaseScale.x * effectiveScale.x,
-                        actorEntry.BaseScale.y * effectiveScale.y,
-                        actorEntry.BaseScale.z);
-                    actorEntry.Instance.SetActive(data.visible);
-                    actorEntry.ApplyTint(data.focused ? focusColor : dimColor);
-                    actorEntry.CurrentState = data.ShallowClone();
-                }
+                ApplyActorEntry(_actors[charId], data);
             }
+        }
+
+        private ActorEntry CreateActorEntry(string actorKey, CharacterDefinitionSO character, Transform parent)
+        {
+            GameObject instance = null;
+            StoryActorVisualView view = null;
+
+            if (sharedActorPrefab != null)
+            {
+                view = Instantiate(sharedActorPrefab, parent);
+                instance = view.gameObject;
+            }
+            else if (useLegacyCharacterPrefabFallback && character != null && character.DefaultActorPrefab != null)
+            {
+                instance = Instantiate(character.DefaultActorPrefab, parent);
+                view = instance.GetComponent<StoryActorVisualView>();
+                if (view == null)
+                    view = instance.AddComponent<StoryActorVisualView>();
+            }
+            else
+            {
+                instance = new GameObject(string.IsNullOrWhiteSpace(actorKey) ? "Story Actor" : $"Story Actor {actorKey}");
+                instance.transform.SetParent(parent, false);
+                view = instance.AddComponent<StoryActorVisualView>();
+            }
+
+            return instance != null ? new ActorEntry(instance, view, character) : null;
+        }
+
+        private void ApplyActorEntry(ActorEntry actorEntry, StoryActorStateData data)
+        {
+            if (actorEntry == null || actorEntry.Instance == null || data == null)
+                return;
+
+            actorEntry.Instance.transform.position = NormPosToWorld(data);
+            float focusBlend = StoryTransitionSampler.ResolveFocusBlend(data.EffectiveFocusAlpha);
+            Color tint = Color.Lerp(dimColor, focusColor, focusBlend);
+            if (actorEntry.View != null)
+                actorEntry.View.Apply(data, tint);
+            else
+            {
+                actorEntry.Instance.SetActive(data.visible);
+                actorEntry.ApplyTint(tint);
+            }
+
+            actorEntry.CurrentState = data.ShallowClone();
         }
 
         private Vector3 NormPosToWorld(StoryActorStateData data)
         {
-            Vector3 left  = leftAnchor  != null ? leftAnchor.position  : new Vector3(-3f, 0f, 0f);
-            Vector3 right = rightAnchor != null ? rightAnchor.position : new Vector3( 3f, 0f, 0f);
-            Vector2 normPos = data.normalizedPosition + data.EffectiveOffset;
-            return Vector3.Lerp(left, right, normPos.x);
+            return ResolveStageCameraMetrics().ActorPosition(data.normalizedPosition, data.EffectiveOffset, 0f);
+        }
+
+        private StoryStageCameraMetrics ResolveStageCameraMetrics()
+        {
+            Camera camera = Camera.main;
+            if (camera != null && camera.orthographic)
+                return StoryStageCameraMetrics.FromOrthographicCamera(camera);
+
+            float aspect = camera != null ? camera.aspect : fallbackAspect;
+            if (leftAnchor != null && rightAnchor != null)
+                return new StoryStageCameraMetrics(leftAnchor.position, rightAnchor.position, aspect);
+
+            Vector3 center = transform.position;
+            return StoryStageCameraMetrics.FromCenteredFrame(center, fallbackCameraWorldWidth, aspect);
         }
 
         private void ApplyBackgroundState(StoryBackgroundStateData state)
@@ -331,19 +377,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                 return;
 
             _backgroundInstance.SetActive(true);
-            Transform bgTransform = _backgroundInstance.transform;
-            Vector3 left = leftAnchor != null ? leftAnchor.position : new Vector3(-3f, 0f, 1f);
-            Vector3 right = rightAnchor != null ? rightAnchor.position : new Vector3(3f, 0f, 1f);
-            Vector3 center = Vector3.Lerp(left, right, 0.5f + state.EffectiveOffset.x);
-            center.y += state.EffectiveOffset.y;
-            bgTransform.position = center;
-            Vector2 scale = state.EffectiveScale;
-            bgTransform.localScale = new Vector3(scale.x, scale.y, bgTransform.localScale.z == 0f ? 1f : bgTransform.localScale.z);
-
-            Color tint = state.EffectiveTint;
-            tint.a *= state.EffectiveOpacity;
-            foreach (SpriteRenderer renderer in _backgroundInstance.GetComponentsInChildren<SpriteRenderer>(true))
-                renderer.color = tint;
+            if (_backgroundView != null)
+            {
+                StoryStageCameraMetrics camera = ResolveStageCameraMetrics();
+                _backgroundView.Apply(state, camera);
+            }
 
             _backgroundState = state.ShallowClone();
         }
@@ -354,18 +392,23 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                 Destroy(_backgroundInstance);
 
             Transform parent = backgroundRoot != null ? backgroundRoot : transform;
-            if (state.background != null && state.background.RuntimePrefab != null)
+            if (sharedBackgroundPrefab != null)
+            {
+                _backgroundView = Instantiate(sharedBackgroundPrefab, parent);
+                _backgroundInstance = _backgroundView.gameObject;
+            }
+            else if (useLegacyBackgroundPrefabFallback && state.background != null && state.background.RuntimePrefab != null)
             {
                 _backgroundInstance = Instantiate(state.background.RuntimePrefab, parent);
+                _backgroundView = _backgroundInstance.GetComponent<StoryBackgroundVisualView>();
+                if (_backgroundView == null)
+                    _backgroundView = _backgroundInstance.AddComponent<StoryBackgroundVisualView>();
             }
             else
             {
                 _backgroundInstance = new GameObject("Story Background");
                 _backgroundInstance.transform.SetParent(parent, false);
-                SpriteRenderer renderer = _backgroundInstance.AddComponent<SpriteRenderer>();
-                if (state.background != null)
-                    renderer.sprite = state.background.PreviewSprite;
-                renderer.sortingOrder = state.EffectiveSortOrder;
+                _backgroundView = _backgroundInstance.AddComponent<StoryBackgroundVisualView>();
             }
 
             _backgroundKey = key;
@@ -387,14 +430,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
         private sealed class ActorEntry
         {
             public GameObject Instance { get; }
-            public Vector3 BaseScale { get; }
+            public StoryActorVisualView View { get; }
             public StoryActorStateData CurrentState { get; set; }
             private readonly SpriteRenderer[] _spriteRenderers;
 
-            public ActorEntry(GameObject instance, CharacterDefinitionSO character)
+            public ActorEntry(GameObject instance, StoryActorVisualView view, CharacterDefinitionSO character)
             {
                 Instance = instance;
-                BaseScale = instance != null ? instance.transform.localScale : Vector3.one;
+                View = view;
                 _spriteRenderers = instance != null
                     ? instance.GetComponentsInChildren<SpriteRenderer>(true)
                     : new SpriteRenderer[0];

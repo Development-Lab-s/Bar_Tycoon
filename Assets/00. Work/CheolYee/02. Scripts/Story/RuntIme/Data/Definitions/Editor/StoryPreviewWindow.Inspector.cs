@@ -524,8 +524,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 }
             });
 
-            BuildSelectedTimelineKeyInspector();
-            BuildSelectedTimelineSegmentInspector();
+            if (HasTimelineMultiSelection)
+            {
+                BuildSelectedTimelineGroupInspector();
+            }
+            else
+            {
+                BuildSelectedTimelineKeyInspector();
+                BuildSelectedTimelineSegmentInspector();
+            }
 
             return;
 
@@ -625,6 +632,56 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _inspectorRoot.Add(scaleField);
             }
 
+        }
+
+        private void BuildSelectedTimelineGroupInspector()
+        {
+            StoryActorTrackData track = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
+            List<StoryActorKeyframeData> selected = GetSelectedTimelineKeys(track);
+            if (selected.Count <= 1)
+                return;
+
+            float minTime = float.MaxValue;
+            float maxTime = 0f;
+            var properties = new SortedSet<string>();
+            foreach (StoryActorKeyframeData key in selected)
+            {
+                if (key == null)
+                    continue;
+
+                float time = StoryTransitionSampler.GetKeyTime(key);
+                minTime = Mathf.Min(minTime, time);
+                maxTime = Mathf.Max(maxTime, time);
+                properties.Add(key.property.ToString());
+            }
+
+            _inspectorRoot.Add(MakeSeparator());
+            _inspectorRoot.Add(MakeBoldLabel("Selected Keys"));
+            _inspectorRoot.Add(new Label($"{selected.Count} keys / {string.Join(", ", properties)}")
+            {
+                style = { marginBottom = 3, color = new StyleColor(new Color(0.70f, 0.72f, 0.78f)) }
+            });
+            _inspectorRoot.Add(new Label($"Range: {minTime:0.00}s -> {maxTime:0.00}s")
+            {
+                style = { marginBottom = 5, color = new StyleColor(new Color(0.70f, 0.72f, 0.78f)) }
+            });
+
+            _inspectorRoot.Add(new Label("Multiple keys are selected. Direct value editing is disabled; use group move, Delete, Copy/Paste, or save as preset.")
+            {
+                style =
+                {
+                    whiteSpace = WhiteSpace.Normal,
+                    marginBottom = 5,
+                    color = new StyleColor(new Color(0.58f, 0.60f, 0.66f))
+                }
+            });
+
+            _inspectorRoot.Add(MakeBtn("Save Selection as Preset", new Color(0.22f, 0.30f, 0.31f), () =>
+            {
+                if (SaveSelectedTimelineKeysAsMotionPreset())
+                    StoryMotionPresetLibraryWindow.Open();
+            }));
+            _inspectorRoot.Add(MakeBtn("Delete Selected Keys", new Color(0.34f, 0.20f, 0.20f), RemoveSelectedTimelineKey));
         }
 
         private void BuildSelectedTimelineSegmentInspector()
@@ -769,33 +826,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _inspectorRoot.Add(sortField);
 
             _inspectorRoot.Add(MakeSeparator());
-            _inspectorRoot.Add(MakeBoldLabel("Transition"));
-
-            var transitionField = new EnumField("Motion", data.transitionMotion)
+            _inspectorRoot.Add(new Label("Legacy background transition values are kept for runtime fallback. Timeline editing will replace this UI.")
             {
-                style = { marginBottom = 3 }
-            };
-            transitionField.RegisterValueChangedCallback(e =>
-            {
-                if (!IsStageAuthoringMode) return;
-                var v = (StoryEnterMotionType)e.newValue;
-                data.transitionMotion = v;
-                SaveBackgroundStateToCurrent(entry => entry.transitionMotion = v);
+                style =
+                {
+                    whiteSpace = WhiteSpace.Normal,
+                    fontSize = 10,
+                    color = new StyleColor(new Color(0.55f, 0.56f, 0.60f)),
+                    marginBottom = 4
+                }
             });
-            _inspectorRoot.Add(transitionField);
-
-            var transitionDurationField = new FloatField("Duration")
-            {
-                value = data.transitionDuration,
-                style = { marginBottom = 3 }
-            };
-            transitionDurationField.RegisterValueChangedCallback(e =>
-            {
-                if (!IsStageAuthoringMode) return;
-                data.transitionDuration = Mathf.Clamp(e.newValue, 0f, 3f);
-                SaveBackgroundStateToCurrent(entry => entry.transitionDuration = data.transitionDuration);
-            });
-            _inspectorRoot.Add(transitionDurationField);
         }
 
         private void OnAddActorClicked()
