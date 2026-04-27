@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -37,18 +36,28 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             style.backgroundColor = new StyleColor(new Color(0.19f, 0.19f, 0.19f));
             style.flexShrink      = 0;
 
-            var header = new Label("Line 편집");
-            header.style.unityFontStyleAndWeight = FontStyle.Bold;
-            header.style.fontSize       = 12;
-            header.style.paddingLeft    = 10;
-            header.style.paddingTop     = 8;
-            header.style.paddingBottom  = 6;
-            header.style.borderBottomWidth = 1;
-            header.style.borderBottomColor = new StyleColor(new Color(0.12f, 0.12f, 0.12f));
+            var header = new Label("Line 편집")
+            {
+                style =
+                {
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    fontSize = 12,
+                    paddingLeft = 10,
+                    paddingTop = 8,
+                    paddingBottom = 6,
+                    borderBottomWidth = 1,
+                    borderBottomColor = new StyleColor(new Color(0.12f, 0.12f, 0.12f))
+                }
+            };
             Add(header);
 
-            var scroll = new ScrollView();
-            scroll.style.flexGrow = 1;
+            var scroll = new ScrollView
+            {
+                style =
+                {
+                    flexGrow = 1
+                }
+            };
             scroll.contentContainer.style.paddingLeft  = 10;
             scroll.contentContainer.style.paddingRight = 10;
             scroll.contentContainer.style.paddingTop   = 8;
@@ -64,6 +73,44 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _episode = episode ?? _episode;   // episode가 null이면 기존 유지
             _so      = line != null ? new SerializedObject(line) : null;
             Rebuild();
+        }
+
+        /// <summary>다중 선택 상태일 때 편집 불가 메시지를 표시한다.</summary>
+        public void SetMultipleSelection(int count)
+        {
+            _line = null;
+            _so   = null;
+            _content.Unbind();
+            _content.Clear();
+
+            var msg = new Label($"여러 개의 라인을 선택 중입니다. ({count}개)")
+            {
+                style =
+                {
+                    color = new StyleColor(new Color(0.6f, 0.6f, 0.6f)),
+                    whiteSpace = WhiteSpace.Normal,
+                    unityTextAlign = TextAnchor.MiddleCenter,
+                    marginTop = 20,
+                    paddingLeft = 10,
+                    paddingRight = 10
+                }
+            };
+            _content.Add(msg);
+
+            var hint = new Label("단일 노드를 선택하면 편집할 수 있습니다.")
+            {
+                style =
+                {
+                    color = new StyleColor(new Color(0.4f, 0.4f, 0.4f)),
+                    fontSize = 10,
+                    whiteSpace = WhiteSpace.Normal,
+                    unityTextAlign = TextAnchor.MiddleCenter,
+                    marginTop = 6,
+                    paddingLeft = 10,
+                    paddingRight = 10
+                }
+            };
+            _content.Add(hint);
         }
 
         public void SetEpisode(StoryEpisodeSO episode)
@@ -89,10 +136,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (_line == null || _so == null)
             {
-                var hint = new Label("노드를 선택하세요");
-                hint.style.color          = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
-                hint.style.unityTextAlign = TextAnchor.MiddleCenter;
-                hint.style.marginTop      = 20;
+                var hint = new Label("노드를 선택하세요")
+                {
+                    style =
+                    {
+                        color = new StyleColor(new Color(0.5f, 0.5f, 0.5f)),
+                        unityTextAlign = TextAnchor.MiddleCenter,
+                        marginTop = 20
+                    }
+                };
                 _content.Add(hint);
                 return;
             }
@@ -112,10 +164,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             // 다음 라인 섹션 (드롭다운 헬퍼)
             AddSectionLabel("다음 라인");
             BuildNextLineSection();
-
-            // 모듈 섹션
-            AddSectionLabel("모듈");
-            BuildModuleSection();
 
             _content.Bind(_so);
         }
@@ -149,10 +197,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (_episode == null)
             {
-                var noEp = new Label("에피소드 없음 — 드롭다운 사용 불가");
-                noEp.style.fontSize = 10;
-                noEp.style.color    = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
-                noEp.style.marginTop = 4;
+                var noEp = new Label("에피소드 없음 — 드롭다운 사용 불가")
+                {
+                    style =
+                    {
+                        fontSize = 10,
+                        color = new StyleColor(new Color(0.5f, 0.5f, 0.5f)),
+                        marginTop = 4
+                    }
+                };
                 _content.Add(noEp);
                 return;
             }
@@ -163,8 +216,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             // 드롭다운
             var (labels, ids, selectedIdx) = BuildDropdownChoices();
 
-            var dropdown = new DropdownField("드롭다운 선택", labels, selectedIdx);
-            dropdown.style.marginTop = 4;
+            var dropdown = new DropdownField("드롭다운 선택", labels, selectedIdx)
+            {
+                style =
+                {
+                    marginTop = 4
+                }
+            };
             dropdown.RegisterValueChangedCallback(evt =>
             {
                 int idx = labels.IndexOf(evt.newValue);
@@ -182,9 +240,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _content.Add(dropdown);
 
             // 버튼 행: 순서 다음 + Clear
-            var btnRow = new VisualElement();
-            btnRow.style.flexDirection = FlexDirection.Row;
-            btnRow.style.marginTop     = 4;
+            var btnRow = new VisualElement
+            {
+                style =
+                {
+                    flexDirection = FlexDirection.Row,
+                    marginTop = 4
+                }
+            };
 
             // 순서 다음 버튼
             int myIdx       = FindIndexInEpisode(_line, _episode);
@@ -205,8 +268,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 EditorUtility.SetDirty(_line);
                 LineChanged?.Invoke();
                 Reload();
-            });
-            nextBtn.text = nextInList != null ? $"순서 다음 → {Trunc(nextInList.LineId, 14)}" : "순서 다음 없음";
+            })
+            {
+                text = nextInList != null ? $"순서 다음 → {Trunc(nextInList.LineId, 14)}" : "순서 다음 없음"
+            };
             nextBtn.SetEnabled(nextInList != null);
             nextBtn.style.flexGrow    = 1;
             nextBtn.style.height      = 20;
@@ -224,12 +289,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 EditorUtility.SetDirty(_line);
                 LineChanged?.Invoke();
                 Reload();
-            });
-            clearBtn.text          = "Clear";
-            clearBtn.style.width   = 48;
-            clearBtn.style.height  = 20;
-            clearBtn.style.fontSize = 10;
-            clearBtn.style.marginLeft = 4;
+            })
+            {
+                text = "Clear",
+                style =
+                {
+                    width = 48,
+                    height = 20,
+                    fontSize = 10,
+                    marginLeft = 4
+                }
+            };
             btnRow.Add(clearBtn);
 
             _content.Add(btnRow);
@@ -250,8 +320,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             // 에피소드에 없음
             bool found = false;
-            for (int i = 0; i < _episode.Lines.Count; i++)
-                if (_episode.Lines[i] != null && _episode.Lines[i].LineId == nextId)
+            foreach (StoryLineSO epLine in _episode.Lines)
+                if (epLine != null && epLine.LineId == nextId)
                 { found = true; break; }
 
             if (!found)
@@ -285,199 +355,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return (labels, ids, selected);
         }
 
-        // ── 모듈 섹션 (IMGUIContainer) ─────────────────
-
-        private void BuildModuleSection()
-        {
-            var container = new IMGUIContainer(DrawModuleSectionIMGUI);
-            container.style.marginTop    = 2;
-            container.style.marginBottom = 4;
-            _content.Add(container);
-        }
-
-        private void DrawModuleSectionIMGUI()
-        {
-            if (_line == null || _so == null) return;
-            _so.Update();
-
-            DrawSoModulesIMGUI();
-            DrawInlineModulesIMGUI();
-
-            EditorGUILayout.Space(4);
-            if (GUILayout.Button("+ 모듈 추가", GUILayout.Height(22)))
-                ShowModuleTypeMenu();
-
-            _so.ApplyModifiedProperties();
-        }
-
-        private void DrawSoModulesIMGUI()
-        {
-            var prop = _so.FindProperty("modules");
-            if (prop == null || prop.arraySize == 0) return;
-
-            EditorGUILayout.LabelField("SO 모듈 (Legacy)", EditorStyles.centeredGreyMiniLabel);
-
-            for (int i = 0; i < prop.arraySize; i++)
-            {
-                var elem  = prop.GetArrayElementAtIndex(i);
-                var asset = elem.objectReferenceValue as StoryModuleSO;
-
-                if (asset == null)
-                {
-                    EditorGUILayout.HelpBox($"#{i}: null SO 참조", MessageType.Warning);
-                    continue;
-                }
-
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
-                // 헤더
-                EditorGUILayout.BeginHorizontal();
-                elem.isExpanded = EditorGUILayout.Foldout(
-                    elem.isExpanded,
-                    $"[SO] {asset.DisplayName}  ({asset.Timing})",
-                    true);
-                if (GUILayout.Button("선택", GUILayout.Width(38), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
-                {
-                    Selection.activeObject = asset;
-                    EditorGUIUtility.PingObject(asset);
-                }
-                EditorGUILayout.EndHorizontal();
-
-                // 인라인 필드 편집
-                if (elem.isExpanded)
-                {
-                    EditorGUI.indentLevel++;
-                    var nested = new SerializedObject(asset);
-                    nested.Update();
-                    var iter  = nested.GetIterator();
-                    bool enter = true;
-                    while (iter.NextVisible(enter))
-                    {
-                        enter = false;
-                        if (iter.name == "m_Script") continue;
-                        EditorGUILayout.PropertyField(iter, true);
-                    }
-                    nested.ApplyModifiedProperties();
-                    EditorGUI.indentLevel--;
-                }
-
-                EditorGUILayout.EndVertical();
-                EditorGUILayout.Space(1);
-            }
-
-            EditorGUILayout.Space(4);
-        }
-
-        private void DrawInlineModulesIMGUI()
-        {
-            var prop = _so.FindProperty("inlineModules");
-            if (prop == null || prop.arraySize == 0) return;
-
-            EditorGUILayout.LabelField("인라인 모듈", EditorStyles.centeredGreyMiniLabel);
-
-            int toDelete = -1;
-
-            for (int i = 0; i < prop.arraySize; i++)
-            {
-                var elem = prop.GetArrayElementAtIndex(i);
-                var data = elem.managedReferenceValue as StoryInlineModuleData;
-                string label = data?.DisplayName ?? $"Unknown #{i}";
-
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
-                // 헤더 행
-                EditorGUILayout.BeginHorizontal();
-                elem.isExpanded = EditorGUILayout.Foldout(elem.isExpanded, label, true);
-
-                var prevBg = GUI.backgroundColor;
-                GUI.backgroundColor = new Color(1f, 0.45f, 0.45f);
-                if (GUILayout.Button("✕", GUILayout.Width(22), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
-                    toDelete = i;
-                GUI.backgroundColor = prevBg;
-
-                EditorGUILayout.EndHorizontal();
-
-                // 필드 (열린 상태)
-                if (elem.isExpanded)
-                {
-                    EditorGUI.indentLevel++;
-                    var child = elem.Copy();
-                    var end   = elem.GetEndProperty();
-                    bool first = true;
-                    while (child.NextVisible(first))
-                    {
-                        first = false;
-                        if (SerializedProperty.EqualContents(child, end)) break;
-                        EditorGUILayout.PropertyField(child, true);
-                    }
-                    EditorGUI.indentLevel--;
-                }
-
-                EditorGUILayout.EndVertical();
-                EditorGUILayout.Space(1);
-            }
-
-            // 이터레이션 후 삭제 처리
-            if (toDelete >= 0)
-            {
-                Undo.RecordObject(_line, "Remove Inline Module");
-                prop.DeleteArrayElementAtIndex(toDelete);
-                _so.ApplyModifiedProperties();
-                EditorUtility.SetDirty(_line);
-            }
-        }
-
-        private void ShowModuleTypeMenu()
-        {
-            var menu  = new GenericMenu();
-            var types = TypeCache.GetTypesDerivedFrom<StoryInlineModuleData>();
-
-            foreach (var type in types)
-            {
-                if (type.IsAbstract) continue;
-
-                var temp = Activator.CreateInstance(type) as StoryInlineModuleData;
-                string displayName  = temp?.DisplayName ?? type.Name;
-                var    capturedType = type;
-
-                menu.AddItem(new GUIContent(displayName), false, () => AddInlineModule(capturedType));
-            }
-
-            if (menu.GetItemCount() == 0)
-                menu.AddDisabledItem(new GUIContent("등록된 인라인 모듈 없음"));
-
-            menu.ShowAsContext();
-        }
-
-        private void AddInlineModule(Type type)
-        {
-            if (_line == null || _so == null) return;
-
-            Undo.RecordObject(_line, $"Add Inline Module: {type.Name}");
-            _so.Update();
-
-            var prop = _so.FindProperty("inlineModules");
-            prop.arraySize++;
-            var newElem = prop.GetArrayElementAtIndex(prop.arraySize - 1);
-            newElem.managedReferenceValue = Activator.CreateInstance(type);
-
-            _so.ApplyModifiedProperties();
-            EditorUtility.SetDirty(_line);
-        }
-
         // ── 공통 헬퍼 ─────────────────────────────────
 
         private void AddSectionLabel(string text)
         {
-            var lbl = new Label(text);
-            lbl.style.unityFontStyleAndWeight = FontStyle.Bold;
-            lbl.style.fontSize          = 10;
-            lbl.style.color             = new StyleColor(new Color(0.55f, 0.55f, 0.55f));
-            lbl.style.marginTop         = 10;
-            lbl.style.marginBottom      = 2;
-            lbl.style.paddingBottom     = 2;
-            lbl.style.borderBottomWidth = 1;
-            lbl.style.borderBottomColor = new StyleColor(new Color(0.3f, 0.3f, 0.3f));
+            var lbl = new Label(text)
+            {
+                style =
+                {
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    fontSize = 10,
+                    color = new StyleColor(new Color(0.55f, 0.55f, 0.55f)),
+                    marginTop = 10,
+                    marginBottom = 2,
+                    paddingBottom = 2,
+                    borderBottomWidth = 1,
+                    borderBottomColor = new StyleColor(new Color(0.3f, 0.3f, 0.3f))
+                }
+            };
             _content.Add(lbl);
         }
 
@@ -492,10 +387,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void AddWarningLabel(string text)
         {
-            var lbl = new Label(text);
-            lbl.style.fontSize  = 10;
-            lbl.style.color     = new StyleColor(new Color(1f, 0.6f, 0.2f));
-            lbl.style.marginTop = 2;
+            var lbl = new Label(text)
+            {
+                style =
+                {
+                    fontSize = 10,
+                    color = new StyleColor(new Color(1f, 0.6f, 0.2f)),
+                    marginTop = 2
+                }
+            };
             _content.Add(lbl);
         }
 

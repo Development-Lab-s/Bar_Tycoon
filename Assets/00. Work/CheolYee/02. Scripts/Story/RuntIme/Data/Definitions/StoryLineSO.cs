@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using UnityEngine;
 
@@ -53,11 +52,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         [SerializeField] private float autoAdvanceDelay = 1.0f;
 
         [Header("Modules")]
-        //이 대사에 연결된 모듈들의 리스트입니다. 각 모듈은 대사 진행 타이밍, 차단성 여부, 건너뛸 수 있는지 여부,
-        //자동 진행에 영향을 미치는지 여부 등의 공통 속성을 가집니다.
+        [HideInInspector]
         [SerializeField] private List<StoryModuleSO> modules = new();
-        // SO 자산 없이 직접 직렬화되는 인라인 모듈 리스트입니다.
-        [SerializeReference] private List<StoryInlineModuleData> inlineModules = new();
 
         // 에디터 전용 — 런타임에서 사용하지 않음
         [HideInInspector]
@@ -77,7 +73,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         public bool UseAutoAdvanceOverride => useAutoAdvanceOverride;
         public float AutoAdvanceDelay => autoAdvanceDelay;
         public IReadOnlyList<StoryModuleSO> Modules => modules;
-        public IReadOnlyList<StoryInlineModuleData> InlineModules => inlineModules;
 
         // 에디터 전용 프로퍼티
         public Vector2 EditorNodePosition    => editorNodePosition;

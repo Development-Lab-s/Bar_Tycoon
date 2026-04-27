@@ -5,7 +5,6 @@ using _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeScrollView;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot;
 using Gamelib.EventSystem;
-using TMPro;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
@@ -16,13 +15,16 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
         [SerializeField] private ButtonCanvas buttonCanvas;
         [SerializeField] private UpgradeUIContent content;
         [SerializeField] private CoinSystemSo coinSystemSo;
-        [SerializeField] private EventChannelSO upgradeChannel;
-
+        
+        [Header("UpgradeData")]
+        [SerializeField] private List<ButtonUpgradeData> upgradeDataList;
+        
+        private UpgradeCategorySelector _categorySelector;
         private UpgradeService _upgradeService;
-        private List<UpgradeData> _currentDataList;
 
         private void Awake()
         {
+            _categorySelector = new UpgradeCategorySelector(upgradeDataList);
             _upgradeService = new UpgradeService(coinSystemSo);
             
             buttonCanvas.OnClickButton += HandleClickButton;
@@ -37,17 +39,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
 
         private void HandleClickButton(ButtonType btnType)
         {
-            List<UpgradeData> dataList = buttonCanvas.GetButtonInformations(btnType);
-
-            if (dataList == null)
-            {
-                Debug.LogError($"{btnType} 데이터 없음");
-                content.ResetSlots();
-                _currentDataList = null;
-                return;
-            }
-            
-            _currentDataList = dataList;
+            _categorySelector.TrySelect(btnType);
             RefreshContent();
         }
         
@@ -56,15 +48,15 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
             if (_upgradeService.TryUpgrade(upgradeData))
             {
                 RefreshContent();
-                upgradeChannel.RaiseEvent(UpgradeEvents.UpgradeEvent.Init(upgradeData));
+                _categorySelector.CurrentEventChannel?.RaiseEvent(UpgradeEvents.UpgradeEvent.Init(upgradeData));
             }
         }
         
         private void RefreshContent()
         {
             content.ResetSlots();
-            if (_currentDataList != null)
-                content.ShowUpgradeList(_currentDataList);
+            if (_categorySelector.CurrentDataList != null)
+                content.ShowUpgradeList(_categorySelector.CurrentDataList);
         }
     }
 }

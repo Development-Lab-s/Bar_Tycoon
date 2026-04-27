@@ -10,6 +10,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
     /// 노드 박스 + 연결선을 그리는 캔버스 VisualElement.
     /// pan:  미들 마우스 드래그 (자연스러운 방향 – 드래그 방향으로 캔버스 이동)
     /// zoom: Ctrl + 마우스 휠 스크롤 (마우스 커서 위치 기준 zoom-in/out)
+    /// multi-select: Ctrl+클릭 토글 / 박스 드래그(marquee)
+    /// multi-move:   선택된 노드 전체를 동일 delta로 이동
     /// </summary>
     public sealed class StoryGraphCanvasView : VisualElement
     {
@@ -17,34 +19,42 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private const float StartX             = 40f;
         private const float StartY             = 30f;
         private const float StepY              = 110f;
-        private const float CanvasMinW         = 6000f;
-        private const float CanvasMinH         = 4000f;
+        private const float CanvasMinW         = 12000f;
+        private const float CanvasMinH         = 8000f;
+        private const float PanMargin          = 200f;   // viewport 안에 항상 최소 이 px만큼 canvas 유지
         private const float EdgeHitThreshold   = 8f;
         private const float InputPortHitRadius = 18f;
         private const float DragConnectThresh  = 6f;
-        private const float ChoiceOffsetX      = 20f;
-        private const float ChoiceOffsetY      = 10f;
+
+        // ── 그리드 상수 ──────────────────────────────
+        private const float GridMinor          = 20f;    // canvas-space 마이너 간격
+        private const float GridMajor          = 100f;   // canvas-space 메이저 간격
+        private const float GridMinorHideBelow = 5f;     // 화면상 px 미만이면 마이너 생략
 
         // ── 줌 상수 ──────────────────────────────────
-        public const float MinZoom = 0.4f;
-        public const float MaxZoom = 2.0f;
+        private const float MinZoom = 0.1f;
+        private const float MaxZoom = 2.2f;
 
         // ── 이벤트 ───────────────────────────────────
         public event Action<StoryGraphNodeView, StoryGraphNodeView> ConnectionMade;
-        public event Action<StoryGraphNodeView> NodeSelected;
+        /// <summary>선택 상태 변경. 빈 리스트 = 선택 없음.</summary>
+        public event Action<IReadOnlyList<StoryGraphNodeView>> SelectionChanged;
         public event Action<StoryGraphNodeView> NodeDisconnected;
+        /// <summary>빈 캔버스 공간 우클릭 → 컨텍스트 메뉴에서 "새 라인 생성" 선택 시. canvas-space 좌표.</summary>
+        public event Action<Vector2> CreateLineRequested;
 
         // ── UI 요소 참조 ─────────────────────────────
         private readonly VisualElement            _canvas;
         private readonly VisualElement            _viewport;
         private readonly List<StoryGraphNodeView> _nodes = new();
 
-        // ── Choice 노드 ──────────────────────────────
-        private readonly List<StoryChoiceNodeView>                           _choiceNodes  = new();
-        private readonly Dictionary<StoryGraphNodeView, StoryChoiceNodeView> _nodeToChoice = new();
+        // ── 모듈 스택 ─────────────────────────────────
+        private readonly List<StoryNodeModuleStackView>                           _moduleStacks      = new();
+        private readonly Dictionary<StoryGraphNodeView, StoryNodeModuleStackView> _nodeToModuleStack = new();
 
         // ── 선택 상태 ────────────────────────────────
-        private StoryGraphNodeView _selectedNode;
+        private readonly HashSet<StoryGraphNodeView> _selectedNodes = new();
+        private StoryGraphNodeView _primaryNode;       // inspector 표시용 (단일 선택 시 해당 노드)
         private StoryGraphNodeView _selectedEdgeSrc;
 
         // ── 연결 상태 (라인 노드 → 라인 노드) ──────────
@@ -52,10 +62,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private bool               _isDragConnecting;
         private Vector2            _dragConnectCurrentPos;
 
-        // ── 연결 상태 (choice option → 라인 노드) ──────
-        private StoryChoiceNodeView _pendingChoiceNode;
-        private int                 _pendingChoiceOptIdx;
-        private bool                _isChoiceDragConnecting;
+        // ── 연결 상태 (connectable 포트 → 라인 노드) ───
+        private StoryNodeModuleStackView _pendingConnectableStack;
+        private int                      _pendingConnectableOptIdx;
+        private bool                     _isConnectableDragConnecting;
+
+        // ── connectable 엣지 선택 상태 ─────────────────
+        private StoryNodeModuleStackView _selectedConnectableEdgeStack;
+        private int                      _selectedConnectableEdgeOptIdx = -1;
 
         // ── 뷰 상태 (pan + zoom) ──────────────────────
         private bool    _isPanning;
@@ -70,25 +84,63 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private Vector2 _zoomAnchorCanvas;   // 고정할 캔버스 좌표
         private IVisualElementScheduledItem _zoomSchedule;
 
+        // ── 박스 선택 (marquee) 상태 ──────────────────
+        private bool    _isMarqueeSelecting;
+        private Vector2 _marqueeStart;   // canvas 로컬 좌표
+        private Vector2 _marqueeEnd;     // canvas 로컬 좌표
+        private int     _marqueePointerId = -1;
+
+        // ── 다중 이동 상태 ────────────────────────────
+        private readonly Dictionary<StoryGraphNodeView, Vector2> _dragStartPositions = new();
+
+        // ── 마우스 위치 / 호버 추적 ─────────────────────────
+        private Vector2 _canvasMousePos;
+        private bool    _isPointerOverViewport;
+        private int     _childHoverCount;
+
+        // ── 프리뷰 하이라이트 ────────────────────────────────
+        private string _previewLineId;
+
         // ── 생성자 ───────────────────────────────────
 
         public StoryGraphCanvasView()
         {
             style.flexGrow = 1;
 
-            _viewport = new VisualElement();
-            _viewport.style.flexGrow = 1;
-            _viewport.style.overflow = Overflow.Hidden;
+            _viewport = new VisualElement
+            {
+                style =
+                {
+                    flexGrow = 1,
+                    overflow = Overflow.Hidden
+                }
+            };
+            _viewport.generateVisualContent += DrawBackground;
+            _viewport.RegisterCallback<PointerEnterEvent>(_ => _isPointerOverViewport = true);
+            _viewport.RegisterCallback<PointerLeaveEvent>(_ => _isPointerOverViewport = false);
+            _viewport.RegisterCallback<PointerMoveEvent>(e =>
+                _canvasMousePos = _canvas.WorldToLocal(e.position));
 
-            _canvas = new VisualElement();
-            _canvas.style.position = Position.Absolute;
-            _canvas.style.left     = 0;
-            _canvas.style.top      = 0;
-            _canvas.style.width    = CanvasMinW;
-            _canvas.style.height   = CanvasMinH;
-            _canvas.style.transformOrigin = new TransformOrigin(0, 0);
+            _canvas = new VisualElement
+            {
+                style =
+                {
+                    position = Position.Absolute,
+                    left = 0,
+                    top = 0,
+                    width = CanvasMinW,
+                    height = CanvasMinH,
+                    transformOrigin = new TransformOrigin(0, 0)
+                }
+            };
             _canvas.generateVisualContent += DrawConnections;
             _canvas.RegisterCallback<PointerDownEvent>(OnCanvasPointerDown);
+            _canvas.AddManipulator(new ContextualMenuManipulator(evt =>
+            {
+                // 빈 공간에서만 "새 라인 생성" 표시 (노드/스택 위 우클릭 시 IsPointerOverChild = true)
+                if (IsPointerOverChild) return;
+                evt.menu.AppendAction("새 라인 생성", _ => CreateLineRequested?.Invoke(_canvasMousePos));
+            }));
 
             _viewport.Add(_canvas);
             Add(_viewport);
@@ -106,14 +158,18 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             _canvas.Clear();
             _nodes.Clear();
-            _choiceNodes.Clear();
-            _nodeToChoice.Clear();
-            _selectedNode           = null;
-            _selectedEdgeSrc        = null;
-            _pendingSource          = null;
-            _isDragConnecting       = false;
-            _pendingChoiceNode      = null;
-            _isChoiceDragConnecting = false;
+            _moduleStacks.Clear();
+            _nodeToModuleStack.Clear();
+            ClearAllSelected();
+            _selectedEdgeSrc               = null;
+            _pendingSource                 = null;
+            _isDragConnecting              = false;
+            _pendingConnectableStack       = null;
+            _isConnectableDragConnecting   = false;
+            _isMarqueeSelecting            = false;
+            _dragStartPositions.Clear();
+            _childHoverCount               = 0;
+            _isPointerOverViewport         = false;
 
             for (int i = 0; i < lines.Count; i++)
             {
@@ -135,17 +191,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _canvas.Add(node);
                 _nodes.Add(node);
 
-                var choice = FindChoiceModule(lines[i]);
-                if (choice != null)
-                {
-                    var choiceNode = CreateChoiceNode(node, choice, lines[i]);
-                    _canvas.Add(choiceNode);
-                    _choiceNodes.Add(choiceNode);
-                    _nodeToChoice[node] = choiceNode;
-
-                    // 레이아웃 완료 후 정확한 위치 배치
-                    node.RegisterCallback<GeometryChangedEvent>(_ => RepositionChoiceNode(node));
-                }
+                var ms = CreateModuleStack(node, lines[i]);
+                _canvas.Add(ms);
+                _moduleStacks.Add(ms);
+                _nodeToModuleStack[node] = ms;
+                node.RegisterCallback<GeometryChangedEvent>(_ => RepositionModuleStack(node));
             }
 
             _canvas.MarkDirtyRepaint();
@@ -153,19 +203,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         public void SelectNode(StoryLineSO line)
         {
+            ClearAllSelected();
             foreach (var n in _nodes)
             {
-                bool isTarget = n.Line == line;
-                n.SetSelected(isTarget);
-                if (isTarget) _selectedNode = n;
+                if (n.Line == line)
+                {
+                    AddToSelection(n);
+                    break;
+                }
             }
+            FireSelectionChanged();
             _canvas.MarkDirtyRepaint();
         }
 
         public void RefreshAll()
         {
-            foreach (var n  in _nodes)       n.Refresh();
-            foreach (var cn in _choiceNodes) cn.Refresh();
+            foreach (var n  in _nodes)        n.Refresh();
+            foreach (var ms in _moduleStacks) ms.Refresh();
+            foreach (var n  in _nodes)        RepositionModuleStack(n);
             _canvas.MarkDirtyRepaint();
         }
 
@@ -180,18 +235,53 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     n.style.left = pos.x;
                     n.style.top  = pos.y;
                 }
-                if (_nodeToChoice.ContainsKey(n))
-                    RepositionChoiceNode(n);
+                RepositionModuleStack(n);
             }
             _canvas.MarkDirtyRepaint();
         }
 
-        public StoryGraphNodeView SelectedNode    => _selectedNode;
+        // ── 단일 선택 접근자 (이전 코드 호환) ──────────
+
+        /// <summary>단일 선택 시 해당 노드, 다중/미선택 시 null.</summary>
+        public StoryGraphNodeView SelectedNode    => _selectedNodes.Count == 1 ? _primaryNode : null;
         public StoryGraphNodeView SelectedEdgeSrc => _selectedEdgeSrc;
+
+        // ── 마우스 / 호버 공개 API ────────────────────
+        public Vector2 CanvasMousePosition   => _canvasMousePos;
+        public bool    IsPointerOverViewport => _isPointerOverViewport;
+        public bool    IsPointerOverChild    => _childHoverCount > 0;
+
+        // ── 프리뷰 하이라이트 ─────────────────────────
+        public void SetPreviewLine(string lineId)
+        {
+            _previewLineId = lineId;
+            foreach (var n in _nodes)
+                n.SetPreviewActive(n.Line?.LineId == lineId);
+            _canvas.MarkDirtyRepaint();
+        }
 
         public void ClearSelectedEdge()
         {
             _selectedEdgeSrc = null;
+            _canvas.MarkDirtyRepaint();
+        }
+
+        public bool HasSelectedConnectableEdge => _selectedConnectableEdgeStack != null;
+
+        private void ClearSelectedConnectableEdge()
+        {
+            _selectedConnectableEdgeStack  = null;
+            _selectedConnectableEdgeOptIdx = -1;
+            _canvas.MarkDirtyRepaint();
+        }
+
+        public void DisconnectSelectedConnectableEdge()
+        {
+            if (_selectedConnectableEdgeStack == null) return;
+            var stack  = _selectedConnectableEdgeStack;
+            var optIdx = _selectedConnectableEdgeOptIdx;
+            ClearSelectedConnectableEdge();
+            stack.ApplyDisconnect(optIdx);
             _canvas.MarkDirtyRepaint();
         }
 
@@ -214,10 +304,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             e.StopPropagation();
         }
 
-        /// <summary>
-        /// 16ms 간격 zoom 애니메이션 틱.
-        /// exponential smoothing: 매 프레임 잔여 거리의 ~21% 이동 (60fps 기준).
-        /// </summary>
         private void SmoothZoomTick(TimerState ts)
         {
             float dt       = ts.deltaTime / 1000f;
@@ -264,51 +350,145 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private StoryGraphNodeView CreateNode(StoryLineSO line)
         {
-            var node = new StoryGraphNodeView(line);
-            node.ZoomScale           = _zoomScale;
-            node.IsConnectModeActive = () => _isPanning || _pendingSource != null || _pendingChoiceNode != null;
+            var node = new StoryGraphNodeView(line)
+            {
+                ZoomScale = _zoomScale,
+                isConnectModeActive = () => _isPanning || _pendingSource != null || _pendingConnectableStack != null
+            };
             node.Clicked             += OnNodeClicked;
             node.DoubleClicked       += OnNodeDoubleClicked;
             node.OutputPortDragStart += OnOutputPortDragStart;
+            node.DragStarted         += OnNodeDragStarted;
+            node.DragTotalDelta      += OnNodeDragTotalDelta;
             node.Dragged             += OnNodeDragged;
             node.Resized             += OnNodeResized;
             node.DisconnectRequested += OnNodeDisconnectRequested;
 
             node.RegisterCallback<GeometryChangedEvent>(_ => _canvas.MarkDirtyRepaint());
+            node.RegisterCallback<PointerEnterEvent>(_ => _childHoverCount++);
+            node.RegisterCallback<PointerLeaveEvent>(_ => _childHoverCount = Mathf.Max(0, _childHoverCount - 1));
             return node;
         }
 
-        private StoryChoiceNodeView CreateChoiceNode(StoryGraphNodeView parent, StoryChoiceModuleSO choice, StoryLineSO line)
+        private StoryNodeModuleStackView CreateModuleStack(StoryGraphNodeView node, StoryLineSO line)
         {
-            var cn = new StoryChoiceNodeView(line, choice);
-            cn.ZoomScale             = _zoomScale;
-            cn.ReactionPortDragStart += OnChoiceReactionPortDragStart;
-            cn.Changed               += () => _canvas.MarkDirtyRepaint();
-            cn.RegisterCallback<GeometryChangedEvent>(_ => _canvas.MarkDirtyRepaint());
-            return cn;
-        }
-
-        private void RepositionChoiceNode(StoryGraphNodeView parent)
-        {
-            if (!_nodeToChoice.TryGetValue(parent, out var cn)) return;
-            float left  = parent.resolvedStyle.left;
-            float top   = parent.resolvedStyle.top;
-            float width = parent.resolvedStyle.width;
-            if (float.IsNaN(left) || float.IsNaN(top)) return;
-            if (float.IsNaN(width) || width <= 0f) width = StoryGraphNodeView.DefaultW;
-            cn.style.left = left  + width + ChoiceOffsetX;
-            cn.style.top  = top   + ChoiceOffsetY;
-        }
-
-        private void OnNodeDragged(StoryGraphNodeView node, Vector2 pos)
-        {
-            StoryEditorUtility.SetEditorNodePosition(node.Line, pos, recordUndo: true);
-            if (_nodeToChoice.TryGetValue(node, out var cn))
+            var ms = new StoryNodeModuleStackView(line);
+            ms.Changed += () =>
             {
-                float w = node.resolvedStyle.width;
-                if (float.IsNaN(w) || w <= 0f) w = StoryGraphNodeView.DefaultW;
-                cn.style.left = pos.x + w + ChoiceOffsetX;
-                cn.style.top  = pos.y + ChoiceOffsetY;
+                ms.Refresh();
+                RepositionModuleStack(node);
+                _canvas.MarkDirtyRepaint();
+            };
+            ms.ConnectablePortDragStart += OnConnectablePortDragStart;
+            ms.RegisterCallback<GeometryChangedEvent>(_ => _canvas.MarkDirtyRepaint());
+            ms.RegisterCallback<PointerEnterEvent>(_ => _childHoverCount++);
+            ms.RegisterCallback<PointerLeaveEvent>(_ => _childHoverCount = Mathf.Max(0, _childHoverCount - 1));
+            return ms;
+        }
+
+        private void RepositionModuleStack(StoryGraphNodeView node)
+        {
+            if (!_nodeToModuleStack.TryGetValue(node, out var ms)) return;
+            float left = node.resolvedStyle.left;
+            float top  = node.resolvedStyle.top;
+            if (float.IsNaN(left) || float.IsNaN(top)) return;
+            float w = node.resolvedStyle.width;
+            if (float.IsNaN(w) || w <= 0f) w = StoryGraphNodeView.DefaultW;
+            ms.style.left  = left;
+            ms.style.top   = top + node.CardHeight;
+            ms.style.width = w;
+        }
+
+        // ── 드래그 이벤트 핸들러 (다중 이동 지원) ────────
+
+        private void OnNodeDragStarted(StoryGraphNodeView node)
+        {
+            _dragStartPositions.Clear();
+
+            // 드래그하는 노드가 선택 안 됐으면 단독 이동
+            var targets = _selectedNodes.Contains(node) ? _selectedNodes : null;
+
+            if (targets != null)
+                foreach (var n in targets)
+                    _dragStartPositions[n] = new Vector2(n.resolvedStyle.left, n.resolvedStyle.top);
+            else
+                _dragStartPositions[node] = new Vector2(node.resolvedStyle.left, node.resolvedStyle.top);
+        }
+
+        private void OnNodeDragTotalDelta(StoryGraphNodeView primary, Vector2 totalDelta)
+        {
+            if (!_dragStartPositions.TryGetValue(primary, out _)) return;
+            if (_dragStartPositions.Count <= 1) return;   // 단일 이동은 노드 스스로 처리
+
+            foreach (var kvp in _dragStartPositions)
+            {
+                var n = kvp.Key;
+                if (n == primary) continue;
+                var newPos = new Vector2(
+                    Mathf.Max(0f, kvp.Value.x + totalDelta.x),
+                    Mathf.Max(0f, kvp.Value.y + totalDelta.y));
+                n.style.left = newPos.x;
+                n.style.top  = newPos.y;
+                if (_nodeToModuleStack.TryGetValue(n, out var ms))
+                {
+                    ms.style.left = newPos.x;
+                    ms.style.top  = newPos.y + n.CardHeight;
+                }
+            }
+            _canvas.MarkDirtyRepaint();
+        }
+
+        private void OnNodeDragged(StoryGraphNodeView node, Vector2 finalPos)
+        {
+            if (_dragStartPositions.Count > 1 && _dragStartPositions.TryGetValue(node, out var primaryStart))
+            {
+                // ── 다중 이동 저장 ──────────────────────
+                Vector2 totalDelta = finalPos - primaryStart;
+
+                var objs = new List<UnityEngine.Object>(_dragStartPositions.Count);
+                foreach (var kvp in _dragStartPositions)
+                    if (kvp.Key.Line != null) objs.Add(kvp.Key.Line);
+
+                if (objs.Count > 0)
+                    Undo.RecordObjects(objs.ToArray(), "Move Nodes");
+
+                foreach (var kvp in _dragStartPositions)
+                {
+                    var n        = kvp.Key;
+                    var nFinal   = new Vector2(
+                        Mathf.Max(0f, kvp.Value.x + totalDelta.x),
+                        Mathf.Max(0f, kvp.Value.y + totalDelta.y));
+
+                    if (n.Line != null)
+                    {
+                        var so = new SerializedObject(n.Line);
+                        so.FindProperty("editorNodePosition").vector2Value = nFinal;
+                        so.ApplyModifiedPropertiesWithoutUndo();
+                        EditorUtility.SetDirty(n.Line);
+                    }
+
+                    if (_nodeToModuleStack.TryGetValue(n, out var ms))
+                    {
+                        float w = n.resolvedStyle.width;
+                        if (float.IsNaN(w) || w <= 0f) w = StoryGraphNodeView.DefaultW;
+                        ms.style.left  = nFinal.x;
+                        ms.style.top   = nFinal.y + n.CardHeight;
+                        ms.style.width = w;
+                    }
+                }
+            }
+            else
+            {
+                // ── 단일 이동 저장 ──────────────────────
+                StoryEditorUtility.SetEditorNodePosition(node.Line, finalPos, recordUndo: true);
+                if (_nodeToModuleStack.TryGetValue(node, out var ms))
+                {
+                    float w = node.resolvedStyle.width;
+                    if (float.IsNaN(w) || w <= 0f) w = StoryGraphNodeView.DefaultW;
+                    ms.style.left  = finalPos.x;
+                    ms.style.top   = finalPos.y + node.CardHeight;
+                    ms.style.width = w;
+                }
             }
             _canvas.MarkDirtyRepaint();
         }
@@ -316,20 +496,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void OnNodeResized(StoryGraphNodeView node, Vector2 size)
         {
             StoryEditorUtility.SetEditorNodeSize(node.Line, size, recordUndo: true);
-            if (_nodeToChoice.ContainsKey(node))
-                RepositionChoiceNode(node);
+            RepositionModuleStack(node);
             _canvas.MarkDirtyRepaint();
         }
 
         // ── 노드 클릭 핸들러 ─────────────────────────
 
-        private void OnNodeClicked(StoryGraphNodeView node)
+        private void OnNodeClicked(StoryGraphNodeView node, bool isCtrl)
         {
-            // choice option click-to-connect 완료
-            if (_pendingChoiceNode != null && !_isChoiceDragConnecting)
+            // connectable 포트 click-to-connect 완료
+            if (_pendingConnectableStack != null && !_isConnectableDragConnecting)
             {
-                SetChoiceOptionReaction(_pendingChoiceNode, _pendingChoiceOptIdx, node.Line);
-                ClearChoicePending();
+                _pendingConnectableStack.ApplyConnection(_pendingConnectableOptIdx, node.Line.LineId);
+                ClearConnectablePending();
                 return;
             }
 
@@ -341,9 +520,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
             }
 
-            _selectedEdgeSrc = null;
-            SetSelected(node);
-            NodeSelected?.Invoke(node);
+            _selectedEdgeSrc               = null;
+            _selectedConnectableEdgeStack  = null;
+            _selectedConnectableEdgeOptIdx = -1;
+
+            if (isCtrl)
+            {
+                // Ctrl+클릭: 토글 다중 선택
+                if (_selectedNodes.Contains(node))
+                    RemoveFromSelection(node);
+                else
+                    AddToSelection(node);
+            }
+            else
+            {
+                // 단일 선택
+                SetSingleSelected(node);
+            }
+            FireSelectionChanged();
         }
 
         private void OnNodeDoubleClicked(StoryGraphNodeView node)
@@ -352,12 +546,35 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Selection.activeObject = node.Line;
         }
 
+        // ── Connectable 포트 드래그 시작 ─────────────
+
+        private void OnConnectablePortDragStart(StoryNodeModuleStackView stack, int slotIdx)
+        {
+            ClearPending();
+            ClearConnectablePending();
+
+            _pendingConnectableStack     = stack;
+            _pendingConnectableOptIdx    = slotIdx;
+            _isConnectableDragConnecting = false;
+            _dragConnectCurrentPos       = stack.GetConnectablePortCanvasPos(slotIdx, _canvas);
+
+            this.CapturePointer(PointerId.mousePointerId);
+            _canvas.MarkDirtyRepaint();
+        }
+
+        private void ClearConnectablePending()
+        {
+            _pendingConnectableStack     = null;
+            _pendingConnectableOptIdx    = 0;
+            _isConnectableDragConnecting = false;
+        }
+
         // ── 출력 포트 드래그 시작 ────────────────────
 
         private void OnOutputPortDragStart(StoryGraphNodeView node)
         {
             ClearPending();
-            ClearChoicePending();
+            ClearConnectablePending();
             _pendingSource         = node;
             _isDragConnecting      = false;
             _dragConnectCurrentPos = node.OutPos;
@@ -367,22 +584,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _canvas.MarkDirtyRepaint();
         }
 
-        // ── Choice option 포트 드래그 시작 ───────────
-
-        private void OnChoiceReactionPortDragStart(StoryChoiceNodeView choiceNode, int optIdx)
-        {
-            ClearPending();
-            ClearChoicePending();
-            _pendingChoiceNode      = choiceNode;
-            _pendingChoiceOptIdx    = optIdx;
-            _isChoiceDragConnecting = false;
-            _dragConnectCurrentPos  = choiceNode.ReactionPortPos(optIdx);
-
-            this.CapturePointer(PointerId.mousePointerId);
-            _canvas.MarkDirtyRepaint();
-        }
-
-        // ── 캔버스 포인터 다운 (edge 선택) ───────────
+        // ── 캔버스 포인터 다운 (edge 선택 / marquee 시작) ──
 
         private void OnCanvasPointerDown(PointerDownEvent e)
         {
@@ -391,21 +593,54 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             Vector2 localPos = _canvas.WorldToLocal(e.position);
 
+            // 일반 연결선 hit
             var hitSrc = FindEdgeAt(localPos);
             if (hitSrc != null)
             {
-                _selectedEdgeSrc = hitSrc;
-                SetSelected(null);
-                NodeSelected?.Invoke(null);
+                _selectedEdgeSrc               = hitSrc;
+                _selectedConnectableEdgeStack  = null;
+                _selectedConnectableEdgeOptIdx = -1;
+                ClearAllSelected();
+                FireSelectionChanged();
                 _canvas.MarkDirtyRepaint();
                 e.StopPropagation();
                 return;
             }
 
+            // connectable 연결선 hit
+            var (connectableStack, connectableOpt) = FindConnectableEdgeAt(localPos);
+            if (connectableStack != null)
+            {
+                _selectedConnectableEdgeStack  = connectableStack;
+                _selectedConnectableEdgeOptIdx = connectableOpt;
+                _selectedEdgeSrc               = null;
+                ClearAllSelected();
+                FireSelectionChanged();
+                _canvas.MarkDirtyRepaint();
+                e.StopPropagation();
+                return;
+            }
+
+            // 빈 공간 → 박스 선택 시작
             ClearPending();
-            ClearChoicePending();
-            SetSelected(null);
-            _selectedEdgeSrc = null;
+            if (!e.ctrlKey)
+            {
+                ClearAllSelected();
+                _selectedEdgeSrc               = null;
+                _selectedConnectableEdgeStack  = null;
+                _selectedConnectableEdgeOptIdx = -1;
+            }
+
+            _isMarqueeSelecting = true;
+            _marqueeStart       = localPos;
+            _marqueeEnd         = localPos;
+            _marqueePointerId   = e.pointerId;
+
+            if (!this.HasPointerCapture(PointerId.mousePointerId))
+                this.CapturePointer(PointerId.mousePointerId);
+
+            _canvas.MarkDirtyRepaint();
+            e.StopPropagation();
         }
 
         // ── Disconnect ──────────────────────────────
@@ -420,7 +655,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             NodeDisconnected?.Invoke(node);
         }
 
-        // ── 외부 포인터 이벤트 (pan + drag-connect) ──
+        // ── 외부 포인터 이벤트 (pan + drag-connect + marquee) ──
 
         private void OnOuterPointerDown(PointerDownEvent e)
         {
@@ -445,6 +680,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
             }
 
+            if (_isMarqueeSelecting)
+            {
+                _marqueeEnd = _canvas.WorldToLocal(e.position);
+                _canvas.MarkDirtyRepaint();
+                return;
+            }
+
             if (_pendingSource != null)
             {
                 _dragConnectCurrentPos = _canvas.WorldToLocal(e.position);
@@ -454,12 +696,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
             }
 
-            if (_pendingChoiceNode != null)
+            if (_pendingConnectableStack != null)
             {
                 _dragConnectCurrentPos = _canvas.WorldToLocal(e.position);
-                var portPos = _pendingChoiceNode.ReactionPortPos(_pendingChoiceOptIdx);
+                var portPos = _pendingConnectableStack.GetConnectablePortCanvasPos(_pendingConnectableOptIdx, _canvas);
                 if (Vector2.Distance(_dragConnectCurrentPos, portPos) > DragConnectThresh)
-                    _isChoiceDragConnecting = true;
+                    _isConnectableDragConnecting = true;
                 _canvas.MarkDirtyRepaint();
             }
         }
@@ -470,6 +712,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 _isPanning = false;
                 this.ReleasePointer(e.pointerId);
+                e.StopPropagation();
+                return;
+            }
+
+            if (_isMarqueeSelecting && e.button == 0)
+            {
+                _isMarqueeSelecting = false;
+                this.ReleasePointer(_marqueePointerId);
+                _marqueePointerId = -1;
+                FinishMarqueeSelection(e.ctrlKey);
                 e.StopPropagation();
                 return;
             }
@@ -493,56 +745,121 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
             }
 
-            if (_pendingChoiceNode != null && e.button == 0)
+            if (_pendingConnectableStack != null && e.button == 0)
             {
                 this.ReleasePointer(e.pointerId);
 
-                if (_isChoiceDragConnecting)
+                if (_isConnectableDragConnecting)
                 {
                     Vector2 canvasPos = _canvas.WorldToLocal(e.position);
                     var target = FindNodeNearInputPort(canvasPos);
                     if (target != null)
-                        SetChoiceOptionReaction(_pendingChoiceNode, _pendingChoiceOptIdx, target.Line);
+                        _pendingConnectableStack.ApplyConnection(_pendingConnectableOptIdx, target.Line.LineId);
                     e.StopPropagation();
                 }
 
-                ClearChoicePending();
+                ClearConnectablePending();
                 _canvas.MarkDirtyRepaint();
             }
         }
 
         private void CancelAllOuter()
         {
-            if (_isPanning)             { _isPanning = false; }
-            if (_isDragConnecting)      { ClearPending();       _isDragConnecting       = false; }
-            if (_isChoiceDragConnecting){ ClearChoicePending(); _isChoiceDragConnecting = false; }
+            if (_isPanning)               { _isPanning = false; }
+            if (_isMarqueeSelecting)      { _isMarqueeSelecting = false; }
+            if (_isDragConnecting)        { ClearPending();           _isDragConnecting            = false; }
+            if (_isConnectableDragConnecting) { ClearConnectablePending(); }
         }
 
-        // ── Choice reaction 설정 ─────────────────────
+        // ── 박스 선택 완료 ────────────────────────────
 
-        private static void SetChoiceOptionReaction(StoryChoiceNodeView choiceNode, int optIdx, StoryLineSO targetLine)
+        private void FinishMarqueeSelection(bool additive)
         {
-            if (choiceNode?.Choice == null || targetLine == null) return;
-            Undo.RecordObject(choiceNode.Choice, "Connect Choice Reaction");
-            var so = new SerializedObject(choiceNode.Choice);
-            so.Update();
-            so.FindProperty("options")
-              .GetArrayElementAtIndex(optIdx)
-              .FindPropertyRelative("reactionStartLineId")
-              .stringValue = targetLine.LineId;
-            so.ApplyModifiedProperties();
-            EditorUtility.SetDirty(choiceNode.Choice);
-            choiceNode.Refresh();
-        }
+            var rect = GetMarqueeRect();
+            if (!additive) ClearAllSelected();
 
-        // ── 상태 헬퍼 ────────────────────────────────
+            // 드래그 거리가 거의 없으면 노드 선택 없이 종료
+            if (rect is { width: < 4f, height: < 4f })
+            {
+                FireSelectionChanged();
+                _canvas.MarkDirtyRepaint();
+                return;
+            }
 
-        private void SetSelected(StoryGraphNodeView node)
-        {
-            if (_selectedNode != null) _selectedNode.SetSelected(false);
-            _selectedNode = node;
-            if (_selectedNode != null) _selectedNode.SetSelected(true);
+            foreach (var n in _nodes)
+            {
+                float left   = n.resolvedStyle.left;
+                float top    = n.resolvedStyle.top;
+                float width  = n.resolvedStyle.width;
+                float height = n.resolvedStyle.height;
+                if (float.IsNaN(left) || float.IsNaN(top)) continue;
+                if (float.IsNaN(width) || width <= 0f) width = StoryGraphNodeView.DefaultW;
+                if (float.IsNaN(height) || height <= 0f) height = StoryGraphNodeView.DefaultH;
+
+                var nodeRect = new Rect(left, top, width, height);
+                if (rect.Overlaps(nodeRect))
+                    AddToSelection(n);
+            }
+
+            FireSelectionChanged();
             _canvas.MarkDirtyRepaint();
+        }
+
+        private Rect GetMarqueeRect()
+        {
+            float x = Mathf.Min(_marqueeStart.x, _marqueeEnd.x);
+            float y = Mathf.Min(_marqueeStart.y, _marqueeEnd.y);
+            float w = Mathf.Abs(_marqueeEnd.x - _marqueeStart.x);
+            float h = Mathf.Abs(_marqueeEnd.y - _marqueeStart.y);
+            return new Rect(x, y, w, h);
+        }
+
+        // ── 선택 상태 헬퍼 ────────────────────────────
+
+        private void SetSingleSelected(StoryGraphNodeView node)
+        {
+            ClearAllSelected();
+            if (node != null)
+            {
+                _selectedNodes.Add(node);
+                node.SetSelected(true);
+                _primaryNode = node;
+            }
+        }
+
+        private void AddToSelection(StoryGraphNodeView node)
+        {
+            if (_selectedNodes.Add(node))
+            {
+                node.SetSelected(true);
+                _primaryNode ??= node;
+            }
+        }
+
+        private void RemoveFromSelection(StoryGraphNodeView node)
+        {
+            if (_selectedNodes.Remove(node))
+            {
+                node.SetSelected(false);
+                if (_primaryNode == node)
+                {
+                    _primaryNode = null;
+                    foreach (var n in _selectedNodes) { _primaryNode = n; break; }
+                }
+            }
+        }
+
+        private void ClearAllSelected()
+        {
+            foreach (var n in _selectedNodes) n.SetSelected(false);
+            _selectedNodes.Clear();
+            _primaryNode = null;
+        }
+
+        private void FireSelectionChanged()
+        {
+            var list = new List<StoryGraphNodeView>(_selectedNodes);
+            SelectionChanged?.Invoke(list);
         }
 
         private void ClearPending()
@@ -557,25 +874,104 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _canvas.MarkDirtyRepaint();
         }
 
-        private void ClearChoicePending()
+        private void ClampPanOffset()
         {
-            _pendingChoiceNode      = null;
-            _pendingChoiceOptIdx    = 0;
-            _isChoiceDragConnecting = false;
-            _dragConnectCurrentPos  = Vector2.zero;
+            float viewW   = _viewport.resolvedStyle.width;
+            float viewH   = _viewport.resolvedStyle.height;
+            if (float.IsNaN(viewW) || viewW <= 0f || float.IsNaN(viewH) || viewH <= 0f) return;
+
+            float canvasW = CanvasMinW * _zoomScale;
+            float canvasH = CanvasMinH * _zoomScale;
+
+            // canvas가 완전히 viewport 밖으로 나가지 않도록 (margin만큼은 항상 보임)
+            float minX = -(canvasW - PanMargin);
+            float maxX =   viewW   - PanMargin;
+            float minY = -(canvasH - PanMargin);
+            float maxY =   viewH   - PanMargin;
+
+            _panOffset.x = Mathf.Clamp(_panOffset.x, minX, maxX);
+            _panOffset.y = Mathf.Clamp(_panOffset.y, minY, maxY);
         }
 
         private void ApplyTransform()
         {
+            ClampPanOffset();
             _canvas.style.translate = new Vector3(_panOffset.x, _panOffset.y, 0f);
             _canvas.style.scale    = new Vector3(_zoomScale, _zoomScale, 1f);
             _canvas.MarkDirtyRepaint();
+            _viewport.MarkDirtyRepaint();   // 그리드 재드로우
         }
 
         private void UpdateNodeZoom()
         {
-            foreach (var n  in _nodes)       n.ZoomScale  = _zoomScale;
-            foreach (var cn in _choiceNodes) cn.ZoomScale = _zoomScale;
+            foreach (var n in _nodes) n.ZoomScale = _zoomScale;
+        }
+
+        // ── 배경 그리드 드로잉 ───────────────────────
+
+        private void DrawBackground(MeshGenerationContext ctx)
+        {
+            var p = ctx.painter2D;
+            float w = _viewport.resolvedStyle.width;
+            float h = _viewport.resolvedStyle.height;
+            if (float.IsNaN(w) || w <= 0f || float.IsNaN(h) || h <= 0f) return;
+
+            // ── 배경 fill ────────────────────────────
+            p.fillColor = new Color(0.155f, 0.155f, 0.155f);
+            p.BeginPath();
+            p.MoveTo(Vector2.zero);
+            p.LineTo(new Vector2(w, 0f));
+            p.LineTo(new Vector2(w, h));
+            p.LineTo(new Vector2(0f, h));
+            p.ClosePath();
+            p.Fill();
+
+            // ── 마이너 그리드 ─────────────────────────
+            float minorPx = GridMinor * _zoomScale;
+            if (minorPx >= GridMinorHideBelow)
+            {
+                float ox = ((_panOffset.x % minorPx) + minorPx) % minorPx;
+                float oy = ((_panOffset.y % minorPx) + minorPx) % minorPx;
+
+                p.strokeColor = new Color(1f, 1f, 1f, 0.035f);
+                p.lineWidth   = 1f;
+
+                p.BeginPath();
+                for (float x = ox; x <= w; x += minorPx)
+                {
+                    p.MoveTo(new Vector2(x, 0f));
+                    p.LineTo(new Vector2(x, h));
+                }
+                for (float y = oy; y <= h; y += minorPx)
+                {
+                    p.MoveTo(new Vector2(0f, y));
+                    p.LineTo(new Vector2(w, y));
+                }
+                p.Stroke();
+            }
+
+            // ── 메이저 그리드 ─────────────────────────
+            float majorPx = GridMajor * _zoomScale;
+            {
+                float ox = ((_panOffset.x % majorPx) + majorPx) % majorPx;
+                float oy = ((_panOffset.y % majorPx) + majorPx) % majorPx;
+
+                p.strokeColor = new Color(1f, 1f, 1f, 0.085f);
+                p.lineWidth   = 1f;
+
+                p.BeginPath();
+                for (float x = ox; x <= w; x += majorPx)
+                {
+                    p.MoveTo(new Vector2(x, 0f));
+                    p.LineTo(new Vector2(x, h));
+                }
+                for (float y = oy; y <= h; y += majorPx)
+                {
+                    p.MoveTo(new Vector2(0f, y));
+                    p.LineTo(new Vector2(w, y));
+                }
+                p.Stroke();
+            }
         }
 
         // ── 연결선 드로잉 ────────────────────────────
@@ -597,35 +993,34 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
                 bool selected = src == _selectedEdgeSrc;
                 DrawBezier(p, src.OutPos, dst.InPos,
-                    selected ? new Color(1f, 0.8f, 0.2f, 0.95f) : new Color(0.4f, 0.8f, 0.4f, 0.85f),
+                    selected ? new Color(1f, 0.8f, 0.2f, 0.95f) 
+                        : new Color(0.4f, 0.8f, 0.4f, 0.85f),
                     selected ? 3f : 2f);
             }
 
-            // 라인 노드 → choice 노드 부모 링크 (얇은 앰버 선)
-            foreach (var kv in _nodeToChoice)
+            // connectable 포트 → 라인 노드 연결선
+            foreach (var ms in _moduleStacks)
             {
-                Vector2 from = NodeBottomCenter(kv.Key);
-                Vector2 to   = ChoiceNodeTopCenter(kv.Value);
-                DrawBezier(p, from, to, new Color(0.72f, 0.52f, 0.18f, 0.55f), 1.5f);
-            }
-
-            // choice option → reaction 대상 라인 노드 연결선
-            foreach (var choiceNode in _choiceNodes)
-            {
-                if (choiceNode.Choice == null) continue;
-                for (int i = 0; i < choiceNode.Choice.Options.Count; i++)
+                int portCount = ms.ConnectablePortCount;
+                for (int i = 0; i < portCount; i++)
                 {
-                    if (_isChoiceDragConnecting && choiceNode == _pendingChoiceNode && i == _pendingChoiceOptIdx)
+                    if (_isConnectableDragConnecting && ms == _pendingConnectableStack && i == _pendingConnectableOptIdx)
                         continue;
 
-                    string reactionId = choiceNode.Choice.Options[i].reactionStartLineId;
-                    if (string.IsNullOrWhiteSpace(reactionId)) continue;
+                    string targetId = ms.GetConnectablePortConnection(i);
+                    if (string.IsNullOrWhiteSpace(targetId)) continue;
 
-                    var dst = FindNodeById(reactionId);
+                    var dst = FindNodeById(targetId);
                     if (dst == null) continue;
 
-                    DrawBezier(p, choiceNode.ReactionPortPos(i), dst.InPos,
-                        new Color(0.3f, 0.8f, 0.35f, 0.85f), 2f);
+                    Vector2 from = ms.GetConnectablePortCanvasPos(i, _canvas);
+                    if (from == Vector2.zero) continue;
+
+                    bool isSelected = ms == _selectedConnectableEdgeStack && i == _selectedConnectableEdgeOptIdx;
+                    DrawBezier(p, from, dst.InPos,
+                        isSelected ? new Color(1f, 0.9f, 0.2f, 0.95f) 
+                            : new Color(1f, 0.78f, 0.3f, 0.85f),
+                        isSelected ? 3f : 2f);
                 }
             }
 
@@ -636,28 +1031,43 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     new Color(0.9f, 0.9f, 0.3f, 0.7f), 1.5f);
             }
 
-            // 드래그 preview 선 (choice option 포트)
-            if (_pendingChoiceNode != null && _isChoiceDragConnecting && _dragConnectCurrentPos != Vector2.zero)
+            // 드래그 preview 선 (connectable 포트)
+            if (_pendingConnectableStack != null && _isConnectableDragConnecting && _dragConnectCurrentPos != Vector2.zero)
             {
-                DrawBezier(p,
-                    _pendingChoiceNode.ReactionPortPos(_pendingChoiceOptIdx),
-                    _dragConnectCurrentPos,
-                    new Color(0.3f, 0.9f, 0.4f, 0.7f), 1.5f);
+                Vector2 from = _pendingConnectableStack.GetConnectablePortCanvasPos(_pendingConnectableOptIdx, _canvas);
+                if (from != Vector2.zero)
+                    DrawBezier(p, from, _dragConnectCurrentPos, 
+                        new Color(1f, 0.78f, 0.3f, 0.7f), 1.5f);
             }
-        }
 
-        private static Vector2 NodeBottomCenter(StoryGraphNodeView node)
-        {
-            return new Vector2(
-                node.layout.xMin + node.layout.width  * 0.5f,
-                node.layout.yMax);
-        }
+            // 박스 선택 사각형
+            if (_isMarqueeSelecting)
+            {
+                var r = GetMarqueeRect();
+                if (r.width > 1f || r.height > 1f)
+                {
+                    // fill
+                    p.fillColor = new Color(0.35f, 0.65f, 1f, 0.08f);
+                    p.BeginPath();
+                    p.MoveTo(new Vector2(r.x,    r.y));
+                    p.LineTo(new Vector2(r.xMax, r.y));
+                    p.LineTo(new Vector2(r.xMax, r.yMax));
+                    p.LineTo(new Vector2(r.x,    r.yMax));
+                    p.ClosePath();
+                    p.Fill();
 
-        private static Vector2 ChoiceNodeTopCenter(StoryChoiceNodeView node)
-        {
-            return new Vector2(
-                node.layout.xMin + StoryChoiceNodeView.NodeW * 0.5f,
-                node.layout.yMin);
+                    // stroke
+                    p.strokeColor = new Color(0.45f, 0.75f, 1f, 0.85f);
+                    p.lineWidth   = 1.5f;
+                    p.BeginPath();
+                    p.MoveTo(new Vector2(r.x,    r.y));
+                    p.LineTo(new Vector2(r.xMax, r.y));
+                    p.LineTo(new Vector2(r.xMax, r.yMax));
+                    p.LineTo(new Vector2(r.x,    r.yMax));
+                    p.ClosePath();
+                    p.Stroke();
+                }
+            }
         }
 
         private void DrawBezier(Painter2D p, Vector2 from, Vector2 to, Color color, float lineWidth = 2f)
@@ -676,6 +1086,26 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         }
 
         // ── Edge Hit-Test ────────────────────────────
+
+        private (StoryNodeModuleStackView stack, int optIdx) FindConnectableEdgeAt(Vector2 canvasPos)
+        {
+            foreach (var ms in _moduleStacks)
+            {
+                int portCount = ms.ConnectablePortCount;
+                for (int i = 0; i < portCount; i++)
+                {
+                    string targetId = ms.GetConnectablePortConnection(i);
+                    if (string.IsNullOrWhiteSpace(targetId)) continue;
+                    var dst = FindNodeById(targetId);
+                    if (dst == null) continue;
+                    Vector2 from = ms.GetConnectablePortCanvasPos(i, _canvas);
+                    if (from == Vector2.zero) continue;
+                    if (IsNearBezier(from, dst.InPos, canvasPos, EdgeHitThreshold))
+                        return (ms, i);
+                }
+            }
+            return (null, -1);
+        }
 
         private StoryGraphNodeView FindEdgeAt(Vector2 canvasPos)
         {
@@ -735,14 +1165,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             foreach (var n in _nodes)
                 if (n.Line != null && n.Line.LineId == lineId) return n;
-            return null;
-        }
-
-        private static StoryChoiceModuleSO FindChoiceModule(StoryLineSO line)
-        {
-            if (line?.Modules == null) return null;
-            foreach (var m in line.Modules)
-                if (m is StoryChoiceModuleSO c) return c;
             return null;
         }
     }

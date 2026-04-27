@@ -66,21 +66,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             var ids    = new List<string> { "" };
             int selectedIdx = 0;
 
-            for (int i = 0; i < episode.Lines.Count; i++)
+            foreach (StoryLineSO currentLine in episode.Lines)
             {
-                StoryLineSO l = episode.Lines[i];
-                if (l == null || l == line) continue;
+                if (currentLine == null || currentLine == line) continue;
 
-                string label = l.LineId;
-                if (l.Speaker != null)
-                    label += $"  [{l.Speaker.name}]";
-                if (!string.IsNullOrEmpty(l.DialogueText))
-                    label += $"  \"{Truncate(l.DialogueText, 18)}\"";
+                string label = currentLine.LineId;
+                if (currentLine.Speaker != null)
+                    label += $"  [{currentLine.Speaker.name}]";
+                if (!string.IsNullOrEmpty(currentLine.DialogueText))
+                    label += $"  \"{Truncate(currentLine.DialogueText, 18)}\"";
 
                 labels.Add(label);
-                ids.Add(l.LineId);
+                ids.Add(currentLine.LineId);
 
-                if (l.LineId == currentNextId)
+                if (currentLine.LineId == currentNextId)
                     selectedIdx = labels.Count - 1;
             }
 
@@ -143,8 +142,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (episode == null) return;
 
             bool found = false;
-            for (int i = 0; i < episode.Lines.Count; i++)
-                if (episode.Lines[i] != null && episode.Lines[i].LineId == nextId)
+            foreach (StoryLineSO currentLine in episode.Lines)
+                if (currentLine != null && currentLine.LineId == nextId)
                 { found = true; break; }
 
             if (!found)
@@ -157,8 +156,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             if (_episode != null)
             {
-                for (int i = 0; i < _episode.Lines.Count; i++)
-                    if (_episode.Lines[i] == line) return _episode;
+                foreach (StoryLineSO episodeLine in _episode.Lines)
+                    if (episodeLine == line) return _episode;
+
                 _episode = null;
             }
 
@@ -168,8 +168,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 var ep = AssetDatabase.LoadAssetAtPath<StoryEpisodeSO>(path);
                 if (ep == null) continue;
-                for (int i = 0; i < ep.Lines.Count; i++)
-                    if (ep.Lines[i] == line) return ep;
+                foreach (StoryLineSO epLine in ep.Lines)
+                    if (epLine == line) return ep;
             }
             return null;
         }
