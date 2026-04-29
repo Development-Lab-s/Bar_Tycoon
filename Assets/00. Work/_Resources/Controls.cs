@@ -109,6 +109,24 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ScrollWheel"",
+                    ""type"": ""Value"",
+                    ""id"": ""3e35ee45-4f1f-48b2-972b-15e4bc983499"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""IntractClick"",
+                    ""type"": ""Button"",
+                    ""id"": ""abf42064-b3f9-4ad9-a413-b188a61c5421"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -131,6 +149,28 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ContractClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""44cd80e8-a296-4b85-964d-6e250ed00142"",
+                    ""path"": ""<Mouse>/scroll"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ScrollWheel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""505d0fa1-f948-45e7-a82d-12d18f75123b"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""IntractClick"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -720,6 +760,8 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Pointer = m_Player.FindAction("Pointer", throwIfNotFound: true);
         m_Player_ContractClick = m_Player.FindAction("ContractClick", throwIfNotFound: true);
+        m_Player_ScrollWheel = m_Player.FindAction("ScrollWheel", throwIfNotFound: true);
+        m_Player_IntractClick = m_Player.FindAction("IntractClick", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -815,6 +857,8 @@ public partial class @Controls: IInputActionCollection2, IDisposable
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_Pointer;
     private readonly InputAction m_Player_ContractClick;
+    private readonly InputAction m_Player_ScrollWheel;
+    private readonly InputAction m_Player_IntractClick;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -834,6 +878,14 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/ContractClick".
         /// </summary>
         public InputAction @ContractClick => m_Wrapper.m_Player_ContractClick;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/ScrollWheel".
+        /// </summary>
+        public InputAction @ScrollWheel => m_Wrapper.m_Player_ScrollWheel;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/IntractClick".
+        /// </summary>
+        public InputAction @IntractClick => m_Wrapper.m_Player_IntractClick;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -866,6 +918,12 @@ public partial class @Controls: IInputActionCollection2, IDisposable
             @ContractClick.started += instance.OnContractClick;
             @ContractClick.performed += instance.OnContractClick;
             @ContractClick.canceled += instance.OnContractClick;
+            @ScrollWheel.started += instance.OnScrollWheel;
+            @ScrollWheel.performed += instance.OnScrollWheel;
+            @ScrollWheel.canceled += instance.OnScrollWheel;
+            @IntractClick.started += instance.OnIntractClick;
+            @IntractClick.performed += instance.OnIntractClick;
+            @IntractClick.canceled += instance.OnIntractClick;
         }
 
         /// <summary>
@@ -883,6 +941,12 @@ public partial class @Controls: IInputActionCollection2, IDisposable
             @ContractClick.started -= instance.OnContractClick;
             @ContractClick.performed -= instance.OnContractClick;
             @ContractClick.canceled -= instance.OnContractClick;
+            @ScrollWheel.started -= instance.OnScrollWheel;
+            @ScrollWheel.performed -= instance.OnScrollWheel;
+            @ScrollWheel.canceled -= instance.OnScrollWheel;
+            @IntractClick.started -= instance.OnIntractClick;
+            @IntractClick.performed -= instance.OnIntractClick;
+            @IntractClick.canceled -= instance.OnIntractClick;
         }
 
         /// <summary>
@@ -1197,6 +1261,20 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnContractClick(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ScrollWheel" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnScrollWheel(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "IntractClick" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnIntractClick(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.
