@@ -48,7 +48,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
             if (_upgradeService.TryUpgrade(upgradeData))
             {
                 RefreshContent();
-                _categorySelector.CurrentEventChannel?.RaiseEvent(UpgradeEvents.UpgradeEvent.Init(upgradeData));
+                _categorySelector.CurrentEventChannel?.RaiseEvent(new UpgradeEvent().Init(upgradeData));
             }
         }
         
