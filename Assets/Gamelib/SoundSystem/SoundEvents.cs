@@ -36,6 +36,7 @@ namespace Gamelib.SoundSystem
 
         public PlaySoundEvent(SoundRef sound, Vector3 position, SoundChannelId channelId = SoundChannelId.None)
         {
+            Debug.Log(channelId + "시작한다");
             Sound = sound;
             Position = position;
             ChannelId = channelId;

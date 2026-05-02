@@ -1,3 +1,4 @@
+using Gamelib.SoundSystem;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -9,13 +10,19 @@ public class LPBOX : MonoBehaviour
     private int myId;
     private LP lpScript;
     private Button button;
+    private void Update()
+    {
+        if (Keyboard.current.aKey.wasPressedThisFrame)
+        {
+            Stop();
+        }
+    }
     public void SetUp(int id)
     {
         myId=id;
         lpScript=GetComponentInChildren<LP>();
-        Debug.Log("½ÇÇà2");
+        lpScript.sound = (BgmSounds)id;
         button = GetComponent<Button>();
-
         button.onClick.AddListener(() => OnLPClicked?.Invoke(id));        
     }
     public void Select() =>lpScript.Active();
