@@ -24,7 +24,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         //자동 진행에 영향을 미치는 모듈이 실행되는 동안에는 스토리가 자동으로 다음 대사로 넘어가지 않습니다.
 
         //각 필드에 대한 공개 읽기 전용 프로퍼티입니다.
-        public StoryModuleTiming Timing => timing;
+        public virtual StoryModuleTiming Timing => timing;
         public bool IsBlocking => isBlocking;
         public bool CanSkip => canSkip;
         public bool AffectsAutoAdvance => affectsAutoAdvance;

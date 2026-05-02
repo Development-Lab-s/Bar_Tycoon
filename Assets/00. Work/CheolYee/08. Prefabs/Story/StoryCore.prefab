@@ -1067,7 +1067,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StoryCoreFacade
   runner: {fileID: 7771075218007664946}
-  storySignalChannel: {fileID: 11400000, guid: 9efe3296d0c208547a47571a959ffbdd, type: 2}
+  storySignalChannel: {fileID: 11400000, guid: 6e583cc7bea7c1d4e8a5571c5c0dd38c, type: 2}
   saveServiceSource: {fileID: 0}
   logControllerSource: {fileID: 1837574846800730199}
   skipSummaryPanel: {fileID: 7451497733691111962}
@@ -1089,7 +1089,7 @@ MonoBehaviour:
   characterStageSource: {fileID: 6523564600807236523}
   logControllerSource: {fileID: 1837574846800730199}
   executorRegistrySource: {fileID: 8499143183203277039}
-  storySignalChannel: {fileID: 11400000, guid: 9efe3296d0c208547a47571a959ffbdd, type: 2}
+  storySignalChannel: {fileID: 11400000, guid: 6e583cc7bea7c1d4e8a5571c5c0dd38c, type: 2}
   defaultAutoAdvanceDelay: 1
 --- !u!114 &8499143183203277039
 MonoBehaviour:
@@ -1813,6 +1813,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2002031205962024264}
   - component: {fileID: 6523564600807236523}
+  - component: {fileID: 9003417118039352640}
+  - component: {fileID: 5122689518920580900}
+  - component: {fileID: 1784726914407342873}
   m_Layer: 0
   m_Name: StageRoot
   m_TagString: Untagged
@@ -1833,11 +1836,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 4892308364609244949}
   - {fileID: 1010400952256311488}
-  - {fileID: 1660180864339178914}
-  - {fileID: 6851318646470722343}
   - {fileID: 3175092546867012352}
-  - {fileID: 4407102530290334751}
   m_Father: {fileID: 6073305789744135233}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6523564600807236523
@@ -1852,20 +1853,97 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1d6ff3d0da94f90b0803c5f31ddbfc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.BasicStoryCharacterStageDirector
+  actorRuntime: {fileID: 5122689518920580900}
+  backgroundRuntime: {fileID: 1784726914407342873}
+  cameraRuntime: {fileID: 4883301311751617756}
+--- !u!114 &9003417118039352640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1720423983806341306}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 180ecf9b41d478f468eb3e9083753217, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineImpulseSource
+  ImpulseDefinition:
+    ImpulseChannel: 1
+    ImpulseShape: 3
+    CustomImpulseShape:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    ImpulseDuration: 0.2
+    ImpulseType: 0
+    DissipationRate: 0.25
+    RawSignal: {fileID: 0}
+    AmplitudeGain: 1
+    FrequencyGain: 1
+    RepeatMode: 0
+    Randomize: 1
+    TimeEnvelope:
+      AttackShape:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      DecayShape:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      AttackTime: 0
+      SustainTime: 0.2
+      DecayTime: 0.7
+      ScaleWithImpact: 1
+      HoldForever: 0
+    ImpactRadius: 100
+    DirectionMode: 0
+    DissipationMode: 2
+    DissipationDistance: 100
+    PropagationSpeed: 343
+  DefaultVelocity: {x: 0, y: -1, z: 0}
+--- !u!114 &5122689518920580900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1720423983806341306}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36f7522b91f72444c81cc40b266a159d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.StoryActorStageRuntime
   actorRoot: {fileID: 1010400952256311488}
-  backgroundRoot: {fileID: 3175092546867012352}
-  leftAnchor: {fileID: 1660180864339178914}
-  centerAnchor: {fileID: 6851318646470722343}
-  rightAnchor: {fileID: 4407102530290334751}
   sharedActorPrefab: {fileID: 2892441210471254779, guid: 0f0568d7cd6cbad43b0ae89ceef59412, type: 3}
-  sharedBackgroundPrefab: {fileID: -611376892463247490, guid: 4aa929e21626ee84bb19f85b183f8ace, type: 3}
   useLegacyCharacterPrefabFallback: 0
+  focusColor: {r: 1, g: 1, b: 1, a: 1}
+  dimColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
+--- !u!114 &1784726914407342873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1720423983806341306}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cccfc765258747e9a9b48de06842ac06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.StoryBackgroundStageRuntime
+  backgroundRoot: {fileID: 3175092546867012352}
+  cameraController: {fileID: 8566970886525410063}
+  sharedBackgroundPrefab: {fileID: -611376892463247490, guid: 4aa929e21626ee84bb19f85b183f8ace, type: 3}
   useLegacyBackgroundPrefabFallback: 0
   fallbackAspect: 0.5625
   fallbackCameraWorldWidth: 6
-  defaultSpawnAnchor: 1
-  focusColor: {r: 1, g: 1, b: 1, a: 1}
-  dimColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
 --- !u!1 &1819887542107647051
 GameObject:
   m_ObjectHideFlags: 0
@@ -2952,6 +3030,90 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &3724916489934288561
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4892308364609244949}
+  - component: {fileID: 4883301311751617756}
+  - component: {fileID: 8566970886525410063}
+  - component: {fileID: 5192773010489617352}
+  m_Layer: 0
+  m_Name: CameraSystems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4892308364609244949
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3724916489934288561}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2002031205962024264}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4883301311751617756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3724916489934288561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0ea9d31ea9ac404686a56a90d5e5c30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.CameraSystems.StoryStageCameraRuntime
+  cameraController: {fileID: 8566970886525410063}
+  cameraShakeController: {fileID: 5192773010489617352}
+  actorRuntime: {fileID: 5122689518920580900}
+--- !u!114 &8566970886525410063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3724916489934288561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25b2066e3d8102043b2fdaa9e8c686e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.CameraSystems.StoryStageCameraController
+  runtimeCamera: {fileID: 0}
+  searchSceneCameraOnceIfMissing: 1
+  cinemachineCameraSource: {fileID: 0}
+  focusTarget: {fileID: 0}
+  fallbackAspect: 0.5625
+  fallbackCameraWorldWidth: 6
+  fallbackOrthographicSize: 5.16
+  defaultFocusDuration: 0.45
+--- !u!114 &5192773010489617352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3724916489934288561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d5142289912a0b46867b2b9d92f0f3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.CameraSystems.StoryCameraShakeController
+  impulseSource: {fileID: 9003417118039352640}
+  randomizeDirection: 1
+  fallbackDirection: {x: 1, y: 1}
 --- !u!1 &3885993992736137771
 GameObject:
   m_ObjectHideFlags: 0
@@ -4146,37 +4308,6 @@ MonoBehaviour:
       positionY: 0
       rotation: 0
       ease: 8
---- !u!1 &6005175368091065942
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1660180864339178914}
-  m_Layer: 0
-  m_Name: LeftAnchor
-  m_TagString: Untagged
-  m_Icon: {fileID: -5442936267250999957, guid: 0000000000000000d000000000000000, type: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1660180864339178914
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6005175368091065942}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2002031205962024264}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6149748754578030452
 GameObject:
   m_ObjectHideFlags: 0
@@ -4533,6 +4664,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors.StoryStageLayoutModuleExecutor
   stageDirectorSource: {fileID: 6523564600807236523}
+  debugExecution: 0
 --- !u!1 &6282167402408836532
 GameObject:
   m_ObjectHideFlags: 0
@@ -5071,37 +5203,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
   m_HorizontalFit: 0
   m_VerticalFit: 2
---- !u!1 &6863387344653082418
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6851318646470722343}
-  m_Layer: 0
-  m_Name: CenterAnchor
-  m_TagString: Untagged
-  m_Icon: {fileID: -5442936267250999957, guid: 0000000000000000d000000000000000, type: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6851318646470722343
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6863387344653082418}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2002031205962024264}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7454552957495511532
 GameObject:
   m_ObjectHideFlags: 0
@@ -5756,37 +5857,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!1 &8632005449227748924
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4407102530290334751}
-  m_Layer: 0
-  m_Name: RightAnchor
-  m_TagString: Untagged
-  m_Icon: {fileID: -5442936267250999957, guid: 0000000000000000d000000000000000, type: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4407102530290334751
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8632005449227748924}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2002031205962024264}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8818468634602194371
 GameObject:
   m_ObjectHideFlags: 0

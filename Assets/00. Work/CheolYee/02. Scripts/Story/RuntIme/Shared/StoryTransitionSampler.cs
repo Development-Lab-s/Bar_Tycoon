@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using UnityEngine;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
 {
@@ -99,6 +101,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
 
             if (TrySampleFloat(track, StoryActorKeyframeProperty.Scale, t, k => k.scaleX, out float scaleX))
                 sample.scaleX = scaleX;
+
+            if (TrySampleExpression(track, t, out var expression))
+            {
+                sample.expression = expression;
+                sample.expressionKey = string.Empty;
+            }
 
             return sample;
         }
@@ -263,6 +271,33 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             return from.easing;
         }
 
+        private static bool TrySampleExpression(
+            StoryActorTrackData track,
+            float time,
+            out StoryExpressionType expression)
+        {
+            expression = default;
+            if (track == null || track.keyframes == null)
+                return false;
+
+            StoryActorKeyframeData latest = null;
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe == null || keyframe.property != StoryActorKeyframeProperty.Expression)
+                    continue;
+
+                float keyTime = GetKeyTime(keyframe);
+                if (keyTime <= time && (latest == null || keyTime >= GetKeyTime(latest)))
+                    latest = keyframe;
+            }
+
+            if (latest == null)
+                return false;
+
+            expression = latest.expression;
+            return true;
+        }
+
         // ── Background sampling ───────────────────────────────────────────────
 
         public static StoryBackgroundStateData SampleBackground(
@@ -304,6 +339,407 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             blended.opacity          = Mathf.Lerp(from.opacity, to.opacity, progress);
             blended.tint             = Color.Lerp(from.tint, to.tint, progress);
             return blended;
+        }
+
+        public static StoryBackgroundStateData SampleBackgroundTrackAtTime(
+            StoryBackgroundStateData baseState,
+            StoryBackgroundTrackData track,
+            float timeSeconds)
+        {
+            if (track == null || track.keyframes == null || track.keyframes.Count == 0)
+                return baseState != null ? baseState.ShallowClone() : null;
+
+            StoryBackgroundStateData sample = baseState != null
+                ? baseState.ShallowClone()
+                : new StoryBackgroundStateData { visible = false };
+            float t = Mathf.Max(0f, timeSeconds);
+
+            if (TrySampleBackgroundCut(track, t, out StoryActorKeyframeData cut))
+            {
+                sample.background = cut.background;
+                sample.backgroundKey = !string.IsNullOrWhiteSpace(cut.backgroundKey)
+                    ? cut.backgroundKey
+                    : ResolveBackgroundKey(cut.background);
+                sample.visible = cut.background != null || !string.IsNullOrWhiteSpace(sample.backgroundKey);
+            }
+
+            if (TrySampleBackgroundVector2(track, StoryActorKeyframeProperty.BackgroundPosition, t, k => k.normalizedPosition, out Vector2 offset))
+                sample.normalizedOffset = offset;
+
+            if (TrySampleBackgroundVector2(track, StoryActorKeyframeProperty.BackgroundScale, t, k => k.scale, out Vector2 scale))
+                sample.scale = scale;
+
+            return sample;
+        }
+
+        public static float GetBackgroundTrackDuration(StoryBackgroundTrackData track)
+        {
+            if (track == null || track.keyframes == null || track.keyframes.Count == 0)
+                return 0f;
+
+            float duration = 0f;
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe == null)
+                    continue;
+
+                duration = Mathf.Max(duration, GetKeyTime(keyframe));
+            }
+
+            return duration;
+        }
+
+        public static StoryCameraStateData SampleCameraTrackAtTime(
+            StoryCameraTrackData track,
+            string fallbackTargetActorKey,
+            float timeSeconds)
+        {
+            StoryCameraStateData sample = track?.defaultState != null
+                ? track.defaultState.ShallowClone()
+                : new StoryCameraStateData();
+
+            if (string.IsNullOrWhiteSpace(sample.targetActorInstanceKey))
+                sample.targetActorInstanceKey = fallbackTargetActorKey ?? string.Empty;
+
+            if (track == null || track.keyframes == null || track.keyframes.Count == 0)
+                return sample;
+
+            float t = Mathf.Max(0f, timeSeconds);
+            if (TrySampleCameraTarget(track, t, out StoryActorKeyframeData targetKey))
+            {
+                sample.targetActorInstanceKey = targetKey.cameraTargetActorKey ?? string.Empty;
+                sample.followMode = targetKey.cameraFollowMode;
+                sample.moveMode = targetKey.cameraMoveMode;
+                sample.snapshotNormalizedPosition = targetKey.cameraSnapshotNormalizedPosition;
+            }
+
+            if (TrySampleCameraVector2(track, StoryActorKeyframeProperty.CameraOffset, t, k => k.cameraOffset, out Vector2 offset))
+                sample.normalizedOffset = offset;
+
+            if (TrySampleCameraFloat(track, StoryActorKeyframeProperty.CameraZoom, t, k => k.cameraZoom, out float zoom))
+                sample.zoomMultiplier = Mathf.Max(0.01f, zoom);
+
+            if (string.IsNullOrWhiteSpace(sample.targetActorInstanceKey))
+                sample.targetActorInstanceKey = fallbackTargetActorKey ?? string.Empty;
+
+            return sample;
+        }
+
+        public static float GetCameraTrackDuration(StoryCameraTrackData track)
+        {
+            if (track == null || track.keyframes == null || track.keyframes.Count == 0)
+                return 0f;
+
+            float duration = 0f;
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe == null)
+                    continue;
+
+                duration = Mathf.Max(duration, GetKeyTime(keyframe));
+            }
+
+            return duration;
+        }
+
+        public static void CollectCameraShakeKeysBetween(
+            StoryCameraTrackData track,
+            float previousTime,
+            float currentTime,
+            List<StoryActorKeyframeData> results)
+        {
+            results?.Clear();
+            if (track == null || track.keyframes == null || results == null)
+                return;
+
+            float from = Mathf.Min(previousTime, currentTime);
+            float to = Mathf.Max(previousTime, currentTime);
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe == null || keyframe.property != StoryActorKeyframeProperty.CameraShake)
+                    continue;
+
+                float keyTime = GetKeyTime(keyframe);
+                if (keyTime > from && keyTime <= to)
+                    results.Add(keyframe);
+            }
+        }
+
+        private static bool TrySampleBackgroundCut(
+            StoryBackgroundTrackData track,
+            float time,
+            out StoryActorKeyframeData cut)
+        {
+            cut = null;
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe == null || keyframe.property != StoryActorKeyframeProperty.BackgroundCut)
+                    continue;
+
+                float keyTime = GetKeyTime(keyframe);
+                if (keyTime <= time && (cut == null || keyTime >= GetKeyTime(cut)))
+                    cut = keyframe;
+            }
+
+            return cut != null;
+        }
+
+        private static bool TrySampleCameraTarget(
+            StoryCameraTrackData track,
+            float time,
+            out StoryActorKeyframeData target)
+        {
+            target = null;
+            if (track == null || track.keyframes == null)
+                return false;
+
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe == null || keyframe.property != StoryActorKeyframeProperty.CameraTarget)
+                    continue;
+
+                float keyTime = GetKeyTime(keyframe);
+                if (keyTime <= time && (target == null || keyTime >= GetKeyTime(target)))
+                    target = keyframe;
+            }
+
+            return target != null;
+        }
+
+        public static bool TryGetCameraTargetKeys(
+            StoryCameraTrackData track,
+            float time,
+            out StoryActorKeyframeData previous,
+            out StoryActorKeyframeData current)
+        {
+            previous = null;
+            current = null;
+            if (track == null || track.keyframes == null)
+                return false;
+
+            var keys = new List<StoryActorKeyframeData>();
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe != null && keyframe.property == StoryActorKeyframeProperty.CameraTarget)
+                    keys.Add(keyframe);
+            }
+
+            keys.Sort((a, b) => GetKeyTime(a).CompareTo(GetKeyTime(b)));
+            if (keys.Count == 0)
+                return false;
+
+            for (int i = 0; i < keys.Count; i++)
+            {
+                float keyTime = GetKeyTime(keys[i]);
+                if (keyTime <= time)
+                {
+                    current = keys[i];
+                    if (i > 0)
+                        previous = keys[i - 1];
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return current != null;
+        }
+
+        private static bool TrySampleCameraVector2(
+            StoryCameraTrackData track,
+            StoryActorKeyframeProperty property,
+            float time,
+            System.Func<StoryActorKeyframeData, Vector2> selector,
+            out Vector2 value)
+        {
+            value = default;
+            if (!TryFindCameraSegment(track, property, time, out var from, out var to, out float local))
+                return false;
+
+            if (to == null || from == to)
+            {
+                value = selector(from);
+                return true;
+            }
+
+            local = ResolveMoveProgress(from.easing, 1f, local);
+            value = Vector2.LerpUnclamped(selector(from), selector(to), local);
+            return true;
+        }
+
+        private static bool TrySampleCameraFloat(
+            StoryCameraTrackData track,
+            StoryActorKeyframeProperty property,
+            float time,
+            System.Func<StoryActorKeyframeData, float> selector,
+            out float value)
+        {
+            value = default;
+            if (!TryFindCameraSegment(track, property, time, out var from, out var to, out float local))
+                return false;
+
+            if (to == null || from == to)
+            {
+                value = selector(from);
+                return true;
+            }
+
+            local = ResolveMoveProgress(from.easing, 1f, local);
+            value = Mathf.LerpUnclamped(selector(from), selector(to), local);
+            return true;
+        }
+
+        private static bool TryFindCameraSegment(
+            StoryCameraTrackData track,
+            StoryActorKeyframeProperty property,
+            float time,
+            out StoryActorKeyframeData from,
+            out StoryActorKeyframeData to,
+            out float local)
+        {
+            from = null;
+            to = null;
+            local = 0f;
+
+            if (track == null || track.keyframes == null)
+                return false;
+
+            var keys = new List<StoryActorKeyframeData>();
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe != null && keyframe.property == property)
+                    keys.Add(keyframe);
+            }
+
+            keys.Sort((a, b) => GetKeyTime(a).CompareTo(GetKeyTime(b)));
+            if (keys.Count == 0)
+                return false;
+
+            if (time <= GetKeyTime(keys[0]))
+            {
+                from = keys[0];
+                to = keys[0];
+                return true;
+            }
+
+            StoryActorKeyframeData last = keys[keys.Count - 1];
+            if (time >= GetKeyTime(last))
+            {
+                from = last;
+                to = last;
+                return true;
+            }
+
+            from = keys[0];
+            to = last;
+            for (int i = 1; i < keys.Count; i++)
+            {
+                if (GetKeyTime(keys[i]) >= time)
+                {
+                    to = keys[i];
+                    break;
+                }
+
+                from = keys[i];
+            }
+
+            float fromTime = GetKeyTime(from);
+            float toTime = GetKeyTime(to);
+            local = Mathf.Clamp01((time - fromTime) / Mathf.Max(0.0001f, toTime - fromTime));
+            return true;
+        }
+
+        private static bool TrySampleBackgroundVector2(
+            StoryBackgroundTrackData track,
+            StoryActorKeyframeProperty property,
+            float time,
+            System.Func<StoryActorKeyframeData, Vector2> selector,
+            out Vector2 value)
+        {
+            value = default;
+            if (!TryFindBackgroundSegment(track, property, time, out var from, out var to, out float local))
+                return false;
+
+            if (to == null || from == to)
+            {
+                value = selector(from);
+                return true;
+            }
+
+            local = ResolveMoveProgress(from.easing, 1f, local);
+            value = Vector2.LerpUnclamped(selector(from), selector(to), local);
+            return true;
+        }
+
+        private static bool TryFindBackgroundSegment(
+            StoryBackgroundTrackData track,
+            StoryActorKeyframeProperty property,
+            float time,
+            out StoryActorKeyframeData from,
+            out StoryActorKeyframeData to,
+            out float local)
+        {
+            from = null;
+            to = null;
+            local = 0f;
+
+            if (track == null || track.keyframes == null)
+                return false;
+
+            var keys = new List<StoryActorKeyframeData>();
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            {
+                if (keyframe != null && keyframe.property == property)
+                    keys.Add(keyframe);
+            }
+
+            keys.Sort((a, b) => GetKeyTime(a).CompareTo(GetKeyTime(b)));
+            if (keys.Count == 0)
+                return false;
+
+            if (time <= GetKeyTime(keys[0]))
+            {
+                from = keys[0];
+                to = keys[0];
+                return true;
+            }
+
+            StoryActorKeyframeData last = keys[keys.Count - 1];
+            if (time >= GetKeyTime(last))
+            {
+                from = last;
+                to = last;
+                return true;
+            }
+
+            from = keys[0];
+            to = last;
+            for (int i = 1; i < keys.Count; i++)
+            {
+                if (GetKeyTime(keys[i]) >= time)
+                {
+                    to = keys[i];
+                    break;
+                }
+
+                from = keys[i];
+            }
+
+            float fromTime = GetKeyTime(from);
+            float toTime = GetKeyTime(to);
+            local = Mathf.Clamp01((time - fromTime) / Mathf.Max(0.0001f, toTime - fromTime));
+            return true;
+        }
+
+        private static string ResolveBackgroundKey(BackgroundDefinitionSO background)
+        {
+            if (background == null)
+                return string.Empty;
+
+            return !string.IsNullOrWhiteSpace(background.BackgroundId)
+                ? background.BackgroundId
+                : background.name;
         }
 
         // ── Duration helpers ─────────────────────────────────────────────────

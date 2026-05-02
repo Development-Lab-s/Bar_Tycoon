@@ -24,7 +24,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
     {
         private enum PreviewMode { RuntimePreview, StageAuthoring }
         private enum DialogueDisplayMode { RenderOnly, EditorOnly, Both, None }
-        private enum StageSelectionKind { None, Actor, Background }
+        private enum StageSelectionKind { None, Actor, Background, Camera }
         private enum DragAxisLock { None, X, Y }
         private enum ActorScaleHandle { None, TopLeft, TopRight, BottomLeft, BottomRight }
 
@@ -85,7 +85,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private const float RuntimeFitFill   = 0.92f;
         private const float MinZoom           = 0.12f;
         private const float MaxZoom           = 4f;
-        private const float ZoomStep          = 0.12f;
+        private const float ZoomStep          = 0.03f;
         private const float MinInspectorWidth = 180f;
         private const float MaxInspectorWidth = 460f;
         private const float DefaultTimelineHeight = 260f;
@@ -176,6 +176,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private VisualElement _stageWorld;         // transform.position/scale 으로 pan/zoom 적용
         private VisualElement _authoringGridLayer;
         private VisualElement _cameraFrameGuide;   // 카메라 뷰 영역 가이드 테두리
+        private VisualElement _focusPreviewFrameGuide;
         private VisualElement _cameraGizmoLayer;
         private VisualElement _backgroundLayer;    // 배경 레이어 (world 공간)
         private VisualElement _actorLayer;         // 액터 레이어 (world 공간, 프레임 밖 허용)
@@ -228,6 +229,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private bool _timelineRecordEnabled;
         private bool _timelineIsPlaying;
         private string _timelineRecordActorKey;
+        private StageSelectionKind _timelineRecordSelectionKind = StageSelectionKind.None;
         private bool _isTimelinePlayheadDragging;
         private int _activeTimelinePointerId = -1;
         private double _timelinePlaybackStartedAt;
@@ -242,6 +244,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private bool _isTimelineBoxSelecting;
         private string _draggingTimelineActorKey;
         private int _draggingTimelineKeyIndex = -1;
+        private StageSelectionKind _draggingTimelineSelectionKind;
         private float _timelineKeyDragStartPanelX;
         private Vector2 _timelineBoxSelectStart;
         private VisualElement _timelineSelectionBox;
@@ -249,6 +252,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private StoryActorKeyframeProperty _selectedTimelineSegmentProperty = StoryActorKeyframeProperty.Position;
         private StoryActorKeyframeData _timelineClipboardKey;
         private StoryActorKeyframeProperty _timelineClipboardProperty = StoryActorKeyframeProperty.Position;
+        private StageSelectionKind _timelineClipboardSelectionKind;
         private readonly HashSet<StoryActorKeyframeData> _selectedTimelineKeys = new();
         private readonly Dictionary<StoryActorKeyframeData, VisualElement> _timelineKeyElements = new();
         private readonly List<TimelineKeyDragState> _timelineKeyDragStates = new();
@@ -272,8 +276,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private readonly Dictionary<string, StoryActorStateData> _transitionFromActors = new();
         private readonly Dictionary<string, StoryActorStateData> _transitionToActors = new();
         private readonly Dictionary<string, StoryActorTrackData> _transitionActorTracks = new();
+        private StoryBackgroundTrackData _transitionBackgroundTrack;
+        private StoryCameraTrackData _transitionCameraTrack;
         private StoryBackgroundStateData _transitionFromBackground;
         private StoryBackgroundStateData _transitionToBackground;
+        private string _transitionCameraFocusTarget = "";
+        private float _transitionPreviewElapsed;
+        private double _previewCameraShakeStartedAt;
+        private float _previewCameraShakeDuration;
+        private float _previewCameraShakeStrength;
+        private float _previewCameraShakeFrequency;
 
         // ── 생명주기 ─────────────────────────────────
 

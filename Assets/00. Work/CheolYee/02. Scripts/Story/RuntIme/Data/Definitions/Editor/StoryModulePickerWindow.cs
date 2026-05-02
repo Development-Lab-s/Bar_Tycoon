@@ -145,6 +145,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (t.IsGenericTypeDefinition)  return false;
             if (t.Name.Contains('<'))       return false;
             if (t == typeof(StoryModuleSO)) return false;
+            if (StoryModuleMetadataAttribute.Get(t)?.IsDeprecated == true) return false;
             return true;
         }
 

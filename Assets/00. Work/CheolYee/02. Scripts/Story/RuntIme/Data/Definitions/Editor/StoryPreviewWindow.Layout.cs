@@ -274,16 +274,34 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 {
                     position = Position.Absolute, left = 0, top = 0,
                     width = DefaultUnitPixels, height = DefaultUnitPixels,
-                    borderTopWidth = 1, borderRightWidth = 1, borderBottomWidth = 1, borderLeftWidth = 1,
-                    borderTopColor    = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
-                    borderRightColor  = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
-                    borderBottomColor = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
-                    borderLeftColor   = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
+                    borderTopWidth = 2f, borderRightWidth = 2f, borderBottomWidth = 2f, borderLeftWidth = 2f,
+                    borderTopColor    = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
+                    borderRightColor  = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
+                    borderBottomColor = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
+                    borderLeftColor   = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
                     overflow = Overflow.Visible
                 }
             };
             _cameraGizmoLayer = BuildCameraGizmoLayer();
             _cameraFrameGuide.Add(_cameraGizmoLayer);
+
+            _focusPreviewFrameGuide = new VisualElement
+            {
+                name = "FocusPreviewFrameGuide",
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute, left = 0, top = 0,
+                    width = DefaultUnitPixels, height = DefaultUnitPixels,
+                    borderTopWidth = 2f, borderRightWidth = 2f, borderBottomWidth = 2f, borderLeftWidth = 2f,
+                    borderTopColor    = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
+                    borderRightColor  = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
+                    borderBottomColor = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
+                    borderLeftColor   = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
+                    overflow = Overflow.Visible
+                }
+            };
+            _focusPreviewFrameGuide.Add(BuildFocusPreviewGizmoLayer());
 
             // 대화 오버레이 (카메라 프레임 내부 하단)
             _renderDialoguePanel = new VisualElement
@@ -335,6 +353,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _stageWorld.Add(_authoringGridLayer);
             _stageWorld.Add(_backgroundLayer);
             _stageWorld.Add(_actorLayer);
+            _stageWorld.Add(_focusPreviewFrameGuide);
             _stageWorld.Add(_cameraFrameGuide);
         }
 
@@ -404,7 +423,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 style = { position = Position.Absolute, left = 0, top = 0, right = 0, bottom = 0 }
             };
 
-            layer.Add(new Label("CAMERA FRAME")
+            layer.Add(new Label("REFERENCE FRAME")
             {
                 pickingMode = PickingMode.Ignore,
                 style =
@@ -443,6 +462,32 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     top = new StyleLength(new Length(50, LengthUnit.Percent)),
                     height = 1,
                     backgroundColor = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.2f))
+                }
+            });
+
+            return layer;
+        }
+
+        private static VisualElement BuildFocusPreviewGizmoLayer()
+        {
+            var layer = new VisualElement
+            {
+                name = "FocusPreviewOverlay",
+                pickingMode = PickingMode.Ignore,
+                style = { position = Position.Absolute, left = 0, top = 0, right = 0, bottom = 0 }
+            };
+
+            layer.Add(new Label("FOCUS PREVIEW")
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    left = 8,
+                    top = 18,
+                    fontSize = 9,
+                    color = new StyleColor(new Color(1f, 0.78f, 0.38f, 0.92f)),
+                    unityFontStyleAndWeight = FontStyle.Bold
                 }
             });
 

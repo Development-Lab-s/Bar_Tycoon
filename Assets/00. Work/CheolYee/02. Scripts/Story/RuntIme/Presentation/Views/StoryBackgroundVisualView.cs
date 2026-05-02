@@ -23,7 +23,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Views
             ValidateInitialPrefabScale();
         }
 
-        public void Apply(StoryBackgroundStateData state, StoryStageCameraMetrics camera)
+        public void Apply(StoryBackgroundStateData state, StoryStageCameraMetrics camera, Vector2 extraNormalizedOffset)
         {
             if (state == null || !state.HasBackground || !state.visible)
             {
@@ -40,7 +40,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Views
             tint.a *= state.EffectiveOpacity;
             spriteRenderer.color = tint;
 
-            transform.position = camera.BackgroundPosition(state.EffectiveOffset, transform.position.z);
+            transform.position = camera.BackgroundPosition(state.EffectiveOffset + extraNormalizedOffset, transform.position.z);
             transform.localScale = StoryStageVisualSizing.CalculateBackgroundWorldScale(state, sprite, camera);
 
             Transform renderRoot = spriteRoot != null ? spriteRoot : spriteRenderer.transform;

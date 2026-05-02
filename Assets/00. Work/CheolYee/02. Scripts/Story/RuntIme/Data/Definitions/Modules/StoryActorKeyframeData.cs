@@ -1,4 +1,6 @@
 using System;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
@@ -8,6 +10,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         Position,
         Scale,
         Easing,
+        Expression,
+        BackgroundCut,
+        BackgroundPosition,
+        BackgroundScale,
+        CameraTarget,
+        CameraOffset,
+        CameraZoom,
+        CameraShake,
     }
 
     /// <summary>
@@ -44,6 +54,49 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
 
         [Tooltip("Outgoing easing from this key to the next key in the same property row.")]
         public StoryStageMoveMotionType easing = StoryStageMoveMotionType.EaseInOut;
+
+        [Tooltip("Discrete full-body expression value used by Expression keys.")]
+        public StoryExpressionType expression = StoryExpressionType.Neutral;
+
+        [Tooltip("Discrete background definition used by Background Cut keys.")]
+        public BackgroundDefinitionSO background;
+
+        [Tooltip("Stable background key fallback used by Background Cut keys.")]
+        public string backgroundKey = "";
+
+        [Tooltip("Discrete camera target actorInstanceKey used by Camera Target keys.")]
+        public string cameraTargetActorKey = "";
+
+        [Tooltip("Camera follow mode used by Camera Target keys.")]
+        public StoryCameraFollowMode cameraFollowMode = StoryCameraFollowMode.FollowActor;
+
+        [Tooltip("Camera offset used by Camera Offset keys.")]
+        public Vector2 cameraOffset = Vector2.zero;
+
+        [Tooltip("Camera zoom multiplier used by Camera Zoom keys.")]
+        [Min(0.01f)]
+        public float cameraZoom = 1f;
+
+        [Tooltip("Snapshot target position captured when Camera Target uses SnapshotPosition.")]
+        public Vector2 cameraSnapshotNormalizedPosition = new Vector2(0.5f, 0.5f);
+
+        [Tooltip("Camera target transition mode used by Camera Target keys.")]
+        public StoryCameraMoveMode cameraMoveMode = StoryCameraMoveMode.Smooth;
+
+        [Tooltip("Camera shake strength used by Camera Shake keys.")]
+        [Min(0f)]
+        public float cameraShakeStrength = 1f;
+
+        [Tooltip("Camera shake duration used by Camera Shake keys.")]
+        [Min(0f)]
+        public float cameraShakeDuration = 0.25f;
+
+        [Tooltip("Camera shake frequency used by Camera Shake keys.")]
+        [Min(0f)]
+        public float cameraShakeFrequency = 2f;
+
+        [Tooltip("Which visual scope the camera shake should affect.")]
+        public StoryCameraShakeTargetMode cameraShakeTargetMode = StoryCameraShakeTargetMode.All;
 
         public StoryActorKeyframeData ShallowClone() => (StoryActorKeyframeData)MemberwiseClone();
     }

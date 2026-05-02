@@ -11,9 +11,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Views
 
         [SerializeField] private Transform spriteRoot;
         [SerializeField] private SpriteRenderer spriteRenderer;
+        [SerializeField, Range(0f, 1f)] private float expressionCrossFadeDuration = 0.3f;
 
         private StoryActorStateData _currentState;
         private Color _currentTint = Color.white;
+        private SpriteRenderer _fadeRenderer;
+        private float _fadeRemaining;
+        private float _fadeDuration;
         private bool _warnedAboutRootRenderer;
         private bool _warnedAboutUnsafePrefabScale;
 
@@ -39,13 +43,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Views
             _currentTint = tint;
             EnsureRenderer();
             Sprite sprite = StoryStageVisualSizing.ResolveActorSprite(state);
-            spriteRenderer.sprite = sprite;
+            ApplySprite(sprite, tint);
             spriteRenderer.drawMode = SpriteDrawMode.Simple;
             spriteRenderer.sortingOrder = state.sortOrder;
             spriteRenderer.color = tint;
             Transform renderRoot = spriteRoot != null ? spriteRoot : spriteRenderer.transform;
             if (renderRoot != transform)
                 renderRoot.localPosition = StoryStageVisualSizing.CalculatePivotLocalOffset(sprite, state.EffectivePivot);
+            if (_fadeRenderer != null)
+                _fadeRenderer.transform.localPosition = renderRoot.localPosition;
             transform.localScale = StoryStageVisualSizing.CalculateActorWorldScale(state, sprite);
             gameObject.SetActive(state.visible);
         }
@@ -94,6 +100,57 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Views
 
             if (spriteRoot == null)
                 spriteRoot = spriteRenderer.transform;
+        }
+
+        private void Update()
+        {
+            if (_fadeRenderer == null || _fadeRemaining <= 0f)
+                return;
+
+            _fadeRemaining -= Time.deltaTime;
+            float alpha = _fadeDuration > 0f ? Mathf.Clamp01(_fadeRemaining / _fadeDuration) : 0f;
+            Color color = _currentTint;
+            color.a *= alpha;
+            _fadeRenderer.color = color;
+            if (_fadeRemaining <= 0f)
+                _fadeRenderer.enabled = false;
+        }
+
+        private void ApplySprite(Sprite sprite, Color tint)
+        {
+            if (spriteRenderer.sprite != null
+                && spriteRenderer.sprite != sprite
+                && expressionCrossFadeDuration > 0f)
+            {
+                EnsureFadeRenderer();
+                if (_fadeRenderer != null)
+                {
+                    _fadeRenderer.sprite = spriteRenderer.sprite;
+                    _fadeRenderer.drawMode = SpriteDrawMode.Simple;
+                    _fadeRenderer.sortingOrder = spriteRenderer.sortingOrder - 1;
+                    _fadeRenderer.color = tint;
+                    _fadeRenderer.enabled = true;
+                    _fadeDuration = expressionCrossFadeDuration;
+                    _fadeRemaining = expressionCrossFadeDuration;
+                }
+            }
+
+            spriteRenderer.sprite = sprite;
+            spriteRenderer.color = tint;
+        }
+
+        private void EnsureFadeRenderer()
+        {
+            EnsureRenderer();
+            if (_fadeRenderer != null)
+                return;
+
+            var child = new GameObject("PreviousSprite");
+            child.transform.SetParent(spriteRoot != null ? spriteRoot.parent : transform, false);
+            child.transform.localPosition = spriteRoot != null ? spriteRoot.localPosition : Vector3.zero;
+            child.transform.SetSiblingIndex(spriteRoot != null ? spriteRoot.GetSiblingIndex() : 0);
+            _fadeRenderer = child.AddComponent<SpriteRenderer>();
+            CopyRendererSettings(spriteRenderer, _fadeRenderer);
         }
 
         private void MoveRootRendererToVisualChild()

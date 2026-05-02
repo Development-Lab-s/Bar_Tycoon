@@ -3,6 +3,7 @@ using UnityEditor;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -373,6 +374,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _transitionFromActors.Clear();
             _transitionToActors.Clear();
             _transitionActorTracks.Clear();
+            _transitionCameraFocusTarget = "";
             foreach (var pair in fromActors) _transitionFromActors[pair.Key] = pair.Value.ShallowClone();
             foreach (var pair in toActors)   _transitionToActors[pair.Key]   = pair.Value.ShallowClone();
 
@@ -385,12 +387,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
                     _transitionActorTracks[track.actorInstanceKey] = track;
                 }
+
+                _transitionBackgroundTrack = currentLayout.BackgroundTrack;
+                _transitionCameraTrack = currentLayout.CameraTrackEditable;
+                _transitionCameraFocusTarget = currentLayout.CameraFocusTarget;
             }
 
             _transitionFromBackground   = CloneBackgroundState(fromBackground);
             _transitionToBackground     = CloneBackgroundState(toBackground);
             _transitionPreviewDuration  = Mathf.Max(0.05f, CalculateTransitionDuration());
             _transitionPreviewStartedAt = EditorApplication.timeSinceStartup;
+            _transitionPreviewElapsed = 0f;
             _transitionActorsInitialized = false;
             _isTransitionPreviewing     = true;
 
@@ -401,7 +408,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             if (!_isTransitionPreviewing) return;
 
+            float previousElapsed = _transitionPreviewElapsed;
             float elapsed = (float)(EditorApplication.timeSinceStartup - _transitionPreviewStartedAt);
+            _transitionPreviewElapsed = elapsed;
+            TriggerPreviewCameraShakeKeys(_transitionCameraTrack, previousElapsed, elapsed);
             ApplyTransitionPreviewFrame(elapsed);
 
             if (elapsed >= _transitionPreviewDuration)
@@ -419,8 +429,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 _stageState.Clear();
                 foreach (var pair in _transitionToActors)
-                    _stageState[pair.Key] = pair.Value.ShallowClone();
-                _bgState = CloneBackgroundState(_transitionToBackground);
+                {
+                    StoryActorStateData target = pair.Value.ShallowClone();
+                    if (_transitionActorTracks.TryGetValue(pair.Key, out var track))
+                        target = StoryTransitionSampler.SampleActorTrackAtTime(target, track, _transitionPreviewDuration);
+                    if (target != null)
+                        _stageState[pair.Key] = target;
+                }
+                _bgState = StoryTransitionSampler.SampleBackgroundTrackAtTime(
+                    CloneBackgroundState(_transitionToBackground),
+                    _transitionBackgroundTrack,
+                    _transitionPreviewDuration);
                 RebuildActorLayer(refreshInspectorLists: false);
                 RefreshActorInspector();
                 RefreshAuthoringControls();
@@ -429,8 +448,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _transitionFromActors.Clear();
             _transitionToActors.Clear();
             _transitionActorTracks.Clear();
+            _transitionBackgroundTrack = null;
+            _transitionCameraTrack = null;
             _transitionFromBackground = null;
             _transitionToBackground   = null;
+            _transitionCameraFocusTarget = "";
+            _transitionPreviewElapsed = 0f;
+            _previewCameraShakeDuration = 0f;
         }
 
         private float CalculateTransitionDuration()
@@ -449,6 +473,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             duration = Mathf.Max(
                 duration,
                 StoryTransitionSampler.BackgroundTransitionDuration(_transitionFromBackground, _transitionToBackground));
+            duration = Mathf.Max(duration, StoryTransitionSampler.GetBackgroundTrackDuration(_transitionBackgroundTrack));
+            duration = Mathf.Max(duration, StoryTransitionSampler.GetCameraTrackDuration(_transitionCameraTrack));
+            if (!string.IsNullOrWhiteSpace(_transitionCameraFocusTarget))
+                duration = Mathf.Max(duration, 0.35f);
             return duration;
         }
 
@@ -470,7 +498,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _transitionToActors.TryGetValue(key, out var to);
                 StoryActorStateData sample = StoryTransitionSampler.SampleActor(key, from, to, elapsed);
                 if (sample != null && _transitionActorTracks.TryGetValue(key, out var track))
-                    sample = StoryTransitionSampler.SampleActorTrack(sample, track, Mathf.Clamp01(elapsed / _transitionPreviewDuration));
+                    sample = StoryTransitionSampler.SampleActorTrackAtTime(sample, track, elapsed);
 
                 if (sample != null)
                     _stageState[key] = sample;
@@ -478,6 +506,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             _bgState = StoryTransitionSampler.SampleBackground(
                 _transitionFromBackground, _transitionToBackground, elapsed);
+            _bgState = StoryTransitionSampler.SampleBackgroundTrackAtTime(_bgState, _transitionBackgroundTrack, elapsed);
 
             // First frame: full DOM rebuild to initialise _actorElements for this transition.
             // Subsequent frames: fast style-only update (no Clear/re-add).
@@ -492,6 +521,25 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
 
             Repaint();
+        }
+
+        private void TriggerPreviewCameraShakeKeys(StoryCameraTrackData track, float previousTime, float currentTime)
+        {
+            if (track == null)
+                return;
+
+            var shakeKeys = new List<StoryActorKeyframeData>();
+            StoryTransitionSampler.CollectCameraShakeKeysBetween(track, previousTime, currentTime, shakeKeys);
+            foreach (StoryActorKeyframeData key in shakeKeys)
+            {
+                if (key == null || key.cameraShakeTargetMode != StoryCameraShakeTargetMode.All)
+                    continue;
+
+                _previewCameraShakeStartedAt = EditorApplication.timeSinceStartup;
+                _previewCameraShakeDuration = Mathf.Max(0f, key.cameraShakeDuration);
+                _previewCameraShakeStrength = Mathf.Max(0f, key.cameraShakeStrength);
+                _previewCameraShakeFrequency = Mathf.Max(0f, key.cameraShakeFrequency);
+            }
         }
 
         // ── 대화 / 선택지 텍스트 갱신 ─────────────────────────────────────────
@@ -651,6 +699,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             ApplyInspectorPanelVisibility();
             ApplyCameraFrameModeStyles();
+            RefreshFocusPreviewGuide();
             if (isRuntime) FitRuntimePreviewToWrapper();
 
             SetElementVisible(_dialoguePanel, ShouldShowEditorDialogue());

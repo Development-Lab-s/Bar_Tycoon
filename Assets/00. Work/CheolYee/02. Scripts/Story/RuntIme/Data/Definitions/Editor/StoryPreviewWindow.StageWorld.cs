@@ -22,6 +22,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void InitWorldView(float wrapW, float wrapH)
         {
             if (_stageWorld == null || wrapW <= 0 || wrapH <= 0) return;
+            if (_isTransitionPreviewing) return;
 
             FitCameraFrameToWrapper(wrapW, wrapH, IsRuntimePreviewMode ? RuntimeFitFill : AuthoringFitFill);
         }
@@ -78,6 +79,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _cameraFrameGuide.style.width  = DefaultUnitPixels;
                 _cameraFrameGuide.style.height = camH;
             }
+            if (_focusPreviewFrameGuide != null)
+            {
+                _focusPreviewFrameGuide.style.width = DefaultUnitPixels;
+                _focusPreviewFrameGuide.style.height = camH;
+            }
             if (_backgroundLayer != null)
             {
                 _backgroundLayer.style.left = 0;
@@ -87,6 +93,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
 
             ApplyCameraFrameModeStyles();
+            RefreshFocusPreviewGuide();
             RefreshBackgroundLayer();
         }
 
@@ -103,12 +110,35 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_cameraFrameGuide != null)
             {
                 _cameraFrameGuide.style.overflow = isRuntime ? Overflow.Hidden : Overflow.Visible;
-                float borderWidth = isRuntime ? 0f : 1f;
+                float borderWidth = isRuntime ? 0f : 2f;
                 _cameraFrameGuide.style.borderTopWidth = borderWidth;
                 _cameraFrameGuide.style.borderRightWidth = borderWidth;
                 _cameraFrameGuide.style.borderBottomWidth = borderWidth;
                 _cameraFrameGuide.style.borderLeftWidth = borderWidth;
             }
+
+            if (_focusPreviewFrameGuide != null)
+            {
+                _focusPreviewFrameGuide.style.display = !isRuntime && !string.IsNullOrWhiteSpace(ResolveCurrentPreviewCameraFocusTarget())
+                    ? DisplayStyle.Flex
+                    : DisplayStyle.None;
+            }
+        }
+
+        private void RefreshFocusPreviewGuide()
+        {
+            if (_focusPreviewFrameGuide == null)
+                return;
+
+            Vector2 focusOffset = ResolvePreviewCameraFocusOffset();
+            float camH = DefaultUnitPixels / GetRenderAspect();
+            _focusPreviewFrameGuide.style.left = focusOffset.x * DefaultUnitPixels;
+            _focusPreviewFrameGuide.style.top = 0f;
+            _focusPreviewFrameGuide.style.width = DefaultUnitPixels;
+            _focusPreviewFrameGuide.style.height = camH;
+            _focusPreviewFrameGuide.style.display = IsStageAuthoringMode && !string.IsNullOrWhiteSpace(ResolveCurrentPreviewCameraFocusTarget())
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
         }
 
         private float GetRenderAspect()

@@ -85,15 +85,33 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             float camW = DefaultUnitPixels;
             float camH = DefaultUnitPixels / GetRenderAspect();
+            StoryBackgroundStateData sample = state.ShallowClone();
+            sample.normalizedOffset += ResolvePreviewBackgroundParallaxOffset(state);
             Rect rect = StoryStageVisualSizing.CalculateBackgroundPreviewRect(
-                state,
-                StoryStageVisualSizing.ResolveBackgroundSprite(state),
-                new Vector2(camW, camH));
+                sample,
+                StoryStageVisualSizing.ResolveBackgroundSprite(sample),
+                new Vector2(camW, camH),
+                ResolvePreviewCameraWorldWidth());
 
             el.style.width = rect.width;
             el.style.height = rect.height;
             el.style.left = rect.x;
             el.style.top = rect.y;
+        }
+
+        private Vector2 ResolvePreviewBackgroundParallaxOffset(StoryBackgroundStateData state)
+        {
+            if (!ShouldApplyCameraFocusToRenderedPreview())
+                return Vector2.zero;
+
+            if (state?.background == null)
+                return Vector2.zero;
+
+            Vector2 cameraOffset = ResolvePreviewCameraFocusOffset();
+            if (cameraOffset == Vector2.zero)
+                return Vector2.zero;
+
+            return -cameraOffset * state.background.ParallaxFactor;
         }
 
         private static Vector2 ResolveNonZeroScale(Vector2 scale) =>

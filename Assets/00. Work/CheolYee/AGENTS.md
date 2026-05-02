@@ -10,48 +10,55 @@
 - Do not reintroduce loose asset authoring or old inline authoring paths.
 - Preview-authored data should be shaped so Runtime can read the same data.
 
-## Current Story Preview State
+## Current Story Authoring State
 
 - `StoryPreviewWindow` is the active preview/authoring surface.
-- Runtime Preview is read-only and camera-frame focused.
-- Stage Authoring is the editing mode.
-- Stage Authoring supports actor/background editing, Import Previous Stage, Prev/Next Line, Preview Line Motion, actor drag, and actor scale handles.
+- Runtime Preview is read-only.
+- Stage Authoring is the edit mode.
 - Actor identity is `StoryActorStateData.actorInstanceKey`.
 - Same `CharacterDefinitionSO` can exist multiple times as separate actor instances.
-- Actor scale modifiers:
-  - Shift: axis lock
-  - Alt: center scale
-  - Ctrl: opposite-corner anchor
+- Stage Authoring currently supports:
+  - actor add/remove
+  - background set/clear
+  - Import Previous Stage
+  - Prev/Next Line
+  - Preview Line Motion
+  - actor drag / scale handles
 
 ## Current Data Model
 
 - `StoryStageLayoutModuleSO`
   - `Background`
+  - `BackgroundTrack`
   - `Actors`
   - `ActorTracks`
 - `StoryActorStateData`
   - authoritative absolute snapshot for a line
+- `StoryBackgroundStateData`
+  - authoritative absolute background snapshot for a line
 - `StoryActorTrackData`
   - optional intra-line actor timeline keyed by `actorInstanceKey`
+- `StoryBackgroundTrackData`
+  - optional intra-line background timeline for the current line
 - `StoryActorKeyframeData`
-  - optional keyframe data
-  - timeline MVP uses `Position` and `Scale` rows only
-  - easing is outgoing/segment metadata, not a row
+  - shared key payload currently used by actor/background timeline rows
 
-`StoryActorTrackData` extends the snapshot model. It must not replace `StoryActorStateData`.
+`StoryActorTrackData` and `StoryBackgroundTrackData` extend the snapshot model. They must not replace the line snapshot objects.
 
-## Keyframe Editor Progress
+## Timeline State
 
-- Bottom timeline panel exists.
-- Visible property rows are `Position` and `Scale`.
-- Add Property is a single button and only adds `Position` or `Scale`.
-- Segment bars between keys are visible and own easing selection.
-- Selected key edits only its own property.
-- Actor direct manipulation updates selected key when property matches.
-- Record ON locks the selected actor and records only the changed property at playhead time.
-- Delete / Copy / Paste work on selected key.
-- Undo / Redo refresh timeline, inspector, and preview immediately.
-- Preview/runtime sampling share `StoryTransitionSampler` for Position / Scale / segment easing.
+- Actor rows:
+  - `Position`
+  - `Scale`
+  - `Expression`
+- Background rows:
+  - `Cut`
+  - `Position`
+  - `Scale`
+- `Position` / `Scale` use segment easing.
+- `Expression` / `BackgroundCut` are discrete channels.
+- Motion presets are still actor `Position` / `Scale` only.
+- Preview/runtime sampling is shared through `StoryTransitionSampler`.
 
 ## Must Not Break
 
@@ -66,15 +73,15 @@
 
 ## Known Gaps
 
-- Background full timeline/record is not done.
-- Runtime prefab parity is incomplete.
-- PPU/pivot/scale visual parity needs work.
+- Background timeline is first pass only and needs smoke testing.
+- Actor expression channel is first pass only and needs smoke testing.
+- Background preset / expression preset are not done.
 - Full curve editor / snapping / polished scrubber / multi-actor timeline are not done.
 - Camera timeline, parallax, and branch-aware accumulation are not done.
-- Runtime stage scene wiring needs smoke testing.
+- Runtime prefab / scene wiring still needs Play Mode verification.
 
 ## Verification Note
 
-- Latest Unity MCP script compile reported 0 errors.
-- Latest Unity console error check returned 0 errors.
-- Avoid manual `csc` writes into `Library/Bee/artifacts` while Unity is open.
+- Latest direct Unity Roslyn compile passed for `Assembly-CSharp` and `Assembly-CSharp-Editor`.
+- Latest `Editor.log` tail showed no new compile error after the last fix.
+- Avoid manual writes into `Library/Bee/artifacts` while Unity is open.
