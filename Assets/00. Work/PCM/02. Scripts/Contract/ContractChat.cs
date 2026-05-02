@@ -1,21 +1,25 @@
+using _00._Work._Resources._02._Scripts.Modules;
 using TMPro;
 using UnityEngine;
 
-public class ContractChat : AbstructContractPopUp
+namespace Assets._00._Work.PCM._02._Scripts.Contract
 {
-    [SerializeField]private ChatSO chat;
-    private TextMeshPro _text;
-
-    public override void Start()
+    public class ContractChat : AbstructContractPopUp
     {
-        _text = GetComponentInChildren<TextMeshPro>();        
-        base.Start();
-    }
-    public override void Open(bool isAutoClose = false)
-    {
-        var a = chat.Line[Random.Range(0, chat.Line.Count)];
-        _text.text = a;
-        base.Open(isAutoClose);
-    }
+        [SerializeField] private ChatSO chat;
+        private TextMeshPro _text;
 
+        public override void Initialize(ModuleOwner owner)
+        {
+            base.Initialize(owner);
+            _text = GetComponentInChildren<TextMeshPro>();
+        }
+        public override void Open(bool isAutoClose = false)
+        {
+            var a = chat.Line[Random.Range(0, chat.Line.Count)];
+            _text.text = a;
+            base.Open(isAutoClose);
+        }
+
+    }
 }

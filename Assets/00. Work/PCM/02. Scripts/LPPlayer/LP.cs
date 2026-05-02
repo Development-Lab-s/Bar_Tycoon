@@ -1,14 +1,18 @@
-using UnityEngine;
+using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
 using LitMotion;
+using UnityEngine;
 
 public class LP : MonoBehaviour
 {
+    [SerializeField] private EventChannelSO EventChannel;
     [SerializeField] private Ease easeType;
     private RectTransform rect;
+    public BgmSounds sound { get; set; }
+    
 
     private MotionHandle moveMotion;
     private MotionHandle rotateMotion;
-
     private void Awake()
     {
         rect = GetComponent<RectTransform>();
@@ -25,7 +29,11 @@ public class LP : MonoBehaviour
 
         // 1. 이동 애니메이션
         moveMotion = LMotion.Create(0f, rect.rect.size.x * 0.75f, 0.5f)
-            .WithEase(easeType)
+            .WithEase(easeType).WithOnComplete
+            (()=>
+            {
+                EventChannel.RaiseEvent(new PlaySoundEvent(sound, Vector3.zero, SoundChannelId.Bgm));
+            })
             .Bind(x =>
             {
                 rect.anchoredPosition = new Vector2(x, rect.anchoredPosition.y);
@@ -41,7 +49,12 @@ public class LP : MonoBehaviour
     public void Stop()
     {
         StopExistingMotions();
-        rotateMotion= LMotion.Create(rect.localEulerAngles.z, 0f, 2f)
+        EventChannel.RaiseEvent(new StopSoundEvent(SoundChannelId.Bgm));
+
+        float currentZ = rect.localRotation.eulerAngles.z;
+        if (currentZ > 180f) currentZ -= 360f;
+
+        rotateMotion = LMotion.Create(rect.localEulerAngles.z, 0f, 2f)
         .WithEase(easeType)
         .Bind(angle =>
         {
