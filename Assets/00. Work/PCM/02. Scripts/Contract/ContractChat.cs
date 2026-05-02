@@ -6,10 +6,10 @@ public class ContractChat : AbstructContractPopUp
     [SerializeField]private ChatSO chat;
     private TextMeshPro _text;
 
-    public override void Awake()
+    public override void Start()
     {
         _text = GetComponentInChildren<TextMeshPro>();        
-        base.Awake();
+        base.Start();
     }
     public override void Open(bool isAutoClose = false)
     {

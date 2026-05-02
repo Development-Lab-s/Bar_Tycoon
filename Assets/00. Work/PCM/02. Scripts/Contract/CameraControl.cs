@@ -23,8 +23,8 @@ public class CameraControl : MonoBehaviour
 
     [Header("Camera")]
     [SerializeField] private CinemachineCamera _cam;
+    [SerializeField] private float mouseScale;
 
-    [SerializeField] private float mouseScale = 1.0f;
     private Vector3 _dragOrigin;
     private MotionHandle _zoomHandle;
     private MotionHandle _moveHandle;

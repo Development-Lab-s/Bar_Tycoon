@@ -13,7 +13,7 @@ public abstract class AbstructContractPopUp : MonoBehaviour
     private Coroutine _timerCoroutine;
     private MotionHandle _motionHandle;
 
-    public virtual void Awake()
+    public virtual void Start()
     {
         _originScale = transform.localScale;
         transform.localScale = Vector3.zero;
