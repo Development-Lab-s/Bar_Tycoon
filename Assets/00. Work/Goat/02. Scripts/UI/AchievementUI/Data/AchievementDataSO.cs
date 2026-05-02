@@ -9,5 +9,6 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
         [field: SerializeField] public string AchievementName { get; private set; }
         [field: SerializeField] public string AchievementDescription { get; private set; }
         [field: SerializeField] public int TargetAchievementDegree { get; private set; }
+        [field: SerializeField] public int AchieveCoin { get; private set; }
     }
 }

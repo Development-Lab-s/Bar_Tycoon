@@ -11,7 +11,7 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
         [field: SerializeField] public bool IsComplete { get; private set; }
         [field: SerializeField] public bool GetAward { get; private set; }
         
-        public event Action OnDegreeChange;
+        public event Action OnChanged;
         public event Action OnComplete;
         public void AddDegree(int value)
         {
@@ -25,12 +25,13 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
                 Complete();
             }
             
-            OnDegreeChange?.Invoke();
+            OnChanged?.Invoke();
         }
 
         public void GetAwardTrue()
         {
             GetAward = true;
+            OnChanged?.Invoke();
         }
         
         private void Complete()

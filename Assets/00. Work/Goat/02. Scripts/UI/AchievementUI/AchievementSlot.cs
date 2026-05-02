@@ -1,4 +1,5 @@
-﻿using _00._Work.Goat._02._Scripts.UI.AchievementUI.Data;
+﻿using System;
+using _00._Work.Goat._02._Scripts.UI.AchievementUI.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,35 +12,58 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI descriptionText;
         [SerializeField] private TextMeshProUGUI achievementSliderText;
+        [SerializeField] private TextMeshProUGUI coinTitle;
         [SerializeField] private Image panelImage;
         [SerializeField] private Slider slider;
         [SerializeField] private Button achievementButton;
-        
+
+        public event Action<AchievementData> OnClickAchievementBtn;
+
         public AchievementData MyData { get; private set; }
+
+        private void OnEnable()
+        {
+            achievementButton.onClick.AddListener(ClickAchievementBtn);
+        }
+
+        private void OnDisable()
+        {
+            achievementButton.onClick.RemoveListener(ClickAchievementBtn);
+        }
         public void SetData(AchievementData data)
         {
-            MyData = data;
+            if (MyData != null)
+                MyData.OnChanged -= Refresh;
             
-            MyData.OnDegreeChange += Refresh;
+            MyData = data;
+            MyData.OnChanged += Refresh;
             
             titleText.text = data.AchievementDataSO.AchievementName;
             descriptionText.text = data.AchievementDataSO.AchievementDescription;
-            achievementSliderText.text = $"{data.NowAchievementDegree} / {data.AchievementDataSO.TargetAchievementDegree}";
-            slider.value = (float)data.NowAchievementDegree / data.AchievementDataSO.TargetAchievementDegree;
+            coinTitle.text = data.AchievementDataSO.AchieveCoin.ToString();
+            Refresh();
+        }
+        
+        private void OnDestroy()
+        {
+            if (MyData != null)
+            {
+                MyData.OnChanged -= Refresh;
+            }
         }
 
         private void ClickAchievementBtn()
         {
-            if (MyData.GetAward) return;
+            if (MyData.GetAward || !MyData.IsComplete) return;
             
-            //보상받는시스템 만들기
-            MyData.GetAwardTrue();
+            OnClickAchievementBtn?.Invoke(MyData);
         }
         
         private void Refresh()
         {
             achievementSliderText.text = $"{MyData.NowAchievementDegree} / {MyData.AchievementDataSO.TargetAchievementDegree}";
             slider.value = (float)MyData.NowAchievementDegree / MyData.AchievementDataSO.TargetAchievementDegree;
+            panelImage.gameObject.SetActive(MyData.GetAward);
         }
     }
 }
