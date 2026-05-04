@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using _00._Work.Goat._02._Scripts.Events;
+using _00._Work.Goat._02._Scripts.SaveCode;
 using _00._Work.Goat._02._Scripts.Test.Coin;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas;
+using _00._Work.Goat._02._Scripts.UI.UpgradeUI.Save;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeScrollView;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot;
 using Gamelib.EventSystem;
@@ -19,13 +21,22 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
         [Header("UpgradeData")]
         [SerializeField] private List<UpgradeCategoryData> upgradeDataList;
         
+        [Header("SO")]
+        [SerializeField] private SaveFileNameSO  saveFileNameSo;
+            
+        private JsonSaveService _saveService;
         private UpgradeCategorySelector _categorySelector;
         private UpgradeService _upgradeService;
+        private UpgradeSaveService  _upgradeSaveService;
 
         private void Awake()
         {
+            _saveService = new JsonSaveService(saveFileNameSo);
             _categorySelector = new UpgradeCategorySelector(upgradeDataList);
             _upgradeService = new UpgradeService(coinSystemSo);
+            _upgradeSaveService = new UpgradeSaveService(_saveService,  upgradeDataList);
+            
+            _upgradeSaveService.Load();
             
             buttonCanvas.OnClickButton += HandleClickButton;
             content.OnClickUpgrade += HandleClickUpgrade;
@@ -48,6 +59,8 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
             if (_upgradeService.TryUpgrade(upgradeData))
             {
                 RefreshContent();
+                
+                _upgradeSaveService.Save();
                 _categorySelector.CurrentEventChannel?.RaiseEvent(new UpgradeEvent().Init(upgradeData));
             }
         }

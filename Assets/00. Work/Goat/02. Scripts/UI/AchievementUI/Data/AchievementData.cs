@@ -1,4 +1,5 @@
 ﻿using System;
+using _00._Work.Goat._02._Scripts.UI.AchievementUI.Save;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
@@ -7,36 +8,39 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
     public class AchievementData
     {
         [field: SerializeField] public AchievementDataSO AchievementDataSO { get; private set; }
-        [field: SerializeField] public int NowAchievementDegree { get; private set; }
-        [field: SerializeField] public bool IsComplete { get; private set; }
-        [field: SerializeField] public bool GetAward { get; private set; }
+        [field: SerializeField] public AchieveSaveData AchieveSaveData { get; private set; }
         
-        public event Action OnChanged;
+        public event Action<AchievementData> OnChanged;
         public event Action OnComplete;
         public void AddDegree(int value)
         {
-            if (IsComplete) return;
+            if (AchieveSaveData.isComplete) return;
             
-            NowAchievementDegree += value;
+            AchieveSaveData.nowAchievementDegree += value;
 
-            if (NowAchievementDegree >= AchievementDataSO.TargetAchievementDegree)
+            if (AchieveSaveData.nowAchievementDegree >= AchievementDataSO.TargetAchievementDegree)
             {
-                NowAchievementDegree = AchievementDataSO.TargetAchievementDegree;
+                AchieveSaveData.nowAchievementDegree = AchievementDataSO.TargetAchievementDegree;
                 Complete();
             }
             
-            OnChanged?.Invoke();
+            OnChanged?.Invoke(this);
+        }
+
+        public void ChangeAchieveData(AchieveSaveData achieveSaveData)
+        {
+            AchieveSaveData = achieveSaveData;
         }
 
         public void GetAwardTrue()
         {
-            GetAward = true;
-            OnChanged?.Invoke();
+            AchieveSaveData.getAward = true;
+            OnChanged?.Invoke(this);
         }
         
         private void Complete()
         {
-            IsComplete = true;
+            AchieveSaveData.isComplete = true;
             OnComplete?.Invoke();
         }
     }

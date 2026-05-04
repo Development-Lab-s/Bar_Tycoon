@@ -47,7 +47,7 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
         private void SortArray()
         {
             List<AchievementSlot> sortedSlots = _achievementSlotsDataDict.Values
-                .OrderBy(slot => slot.MyData.IsComplete)
+                .OrderBy(slot => slot.MyData.AchieveSaveData.isComplete)
                 .ToList();
 
             for (int i = 0; i < sortedSlots.Count; i++)
@@ -61,7 +61,7 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
             SortArray();
             foreach (AchievementSlot slot in _achievementSlotsDataDict.Values)
             {
-                bool canShow = !slot.MyData.IsComplete || isComplete;
+                bool canShow = !slot.MyData.AchieveSaveData.isComplete || isComplete;
                 slot.gameObject.SetActive(canShow);
             }
         }

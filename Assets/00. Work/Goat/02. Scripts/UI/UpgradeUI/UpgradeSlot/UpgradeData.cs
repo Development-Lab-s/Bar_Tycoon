@@ -13,6 +13,11 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
         {
             CurrentLevel++;
         }
+        
+        public void ChangeLevel(int level)
+        {
+            CurrentLevel = Mathf.Clamp(level, 0, UpgradeDataSo.MaxLevel);
+        }
 
         public UpgradeData(UpgradeDataSO upgradeDataSo, int currentLevel)
         {
