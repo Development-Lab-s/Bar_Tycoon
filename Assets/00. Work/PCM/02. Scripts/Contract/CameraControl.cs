@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Assets._00._Work.PCM._02._Scripts.Contract
 {
-    public class CameraControl : MonoBehaviour, IModule, ICameraControl
+    public class CameraControl : MonoBehaviour, ICameraControl
     {
         [Header("Zoom Settings")]
         [SerializeField] private float zoomSpeed = 2f;
@@ -26,6 +26,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         [SerializeField] private CinemachineCamera _cam;
         [SerializeField] private float mouseScale;
 
+        private ModuleOwner _owner;
         private Vector3 _dragOrigin;
         private MotionHandle _zoomHandle;
         private MotionHandle _moveHandle;
@@ -33,6 +34,10 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         private bool isDragging;
         private Vector2 _lastMousePosition; // 이전 프레임의 마우스 위치 저장용
         public void Initialize(ModuleOwner owner)
+        {
+            _owner = owner; 
+        }
+        public void AfterInit()
         {
             _inputSO.CameraMoveClick += HandleMoveStart;
         }

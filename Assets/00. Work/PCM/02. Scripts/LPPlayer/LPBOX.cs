@@ -1,30 +1,26 @@
+using _00._Work._Resources._02._Scripts.Modules;
+using Assets._00._Work.PCM._02._Scripts._TileChange;
 using Gamelib.SoundSystem;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-public class LPBOX : MonoBehaviour
+public class LPBOX : MonoBehaviour, ILPBOX
 {
     public event Action<int> OnLPClicked;
-    private int myId;
-    private LP lpScript;
+    private int _myId;
+    private LP _lpScript;
     private Button button;
-    private void Update()
-    {
-        if (Keyboard.current.aKey.wasPressedThisFrame)
-        {
-            Stop();
-        }
-    }
+
     public void SetUp(int id)
     {
-        myId=id;
-        lpScript=GetComponentInChildren<LP>();
-        lpScript.sound = (BgmSounds)id;
+        _lpScript = GetComponentInChildren<LP>();
         button = GetComponent<Button>();
-        button.onClick.AddListener(() => OnLPClicked?.Invoke(id));        
+        button.onClick.AddListener(() => OnLPClicked?.Invoke(_myId));
+        _myId = id;
+        if (_lpScript != null) _lpScript.sound = (BgmSounds)id;
     }
-    public void Select() =>lpScript.Active();
-    public void Stop() => lpScript.Stop();
+    public void Select() => _lpScript.Active();
+    public void Stop() => _lpScript.Stop();
 }
