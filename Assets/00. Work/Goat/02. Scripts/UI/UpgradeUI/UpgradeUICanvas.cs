@@ -63,7 +63,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
                 RefreshContent();
                 achievementChannelSo.RaiseEvent(new AchievementEvent().Init(AchievementType.Upgrade, 1));
                 _upgradeSaveService.Save();
-                _categorySelector.CurrentEventChannel?.RaiseEvent(new UpgradeEvent().Init(upgradeData));
+                _categorySelector.CurrentEventChannel?.RaiseEvent(new UpgradeEvent().Init(upgradeData.UpgradeDataSo.TargetStat, upgradeData.UpgradeDataSo.IncreaseValue * upgradeData.CurrentLevel));
             }
         }
         
