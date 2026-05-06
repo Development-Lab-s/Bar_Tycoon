@@ -2,6 +2,7 @@
 using _00._Work.Goat._02._Scripts.Events;
 using _00._Work.Goat._02._Scripts.SaveCode;
 using _00._Work.Goat._02._Scripts.Test.Coin;
+using _00._Work.Goat._02._Scripts.UI.AchievementUI.Data;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.Save;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeScrollView;
@@ -23,6 +24,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
         
         [Header("SO")]
         [SerializeField] private SaveFileNameSO  saveFileNameSo;
+        [SerializeField] private EventChannelSO achievementChannelSo;
             
         private JsonSaveService _saveService;
         private UpgradeCategorySelector _categorySelector;
@@ -59,7 +61,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
             if (_upgradeService.TryUpgrade(upgradeData))
             {
                 RefreshContent();
-                
+                achievementChannelSo.RaiseEvent(new AchievementEvent().Init(AchievementType.Upgrade, 1));
                 _upgradeSaveService.Save();
                 _categorySelector.CurrentEventChannel?.RaiseEvent(new UpgradeEvent().Init(upgradeData));
             }
