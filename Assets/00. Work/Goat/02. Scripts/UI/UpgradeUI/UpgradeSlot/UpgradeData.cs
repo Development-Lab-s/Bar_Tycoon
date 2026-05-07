@@ -7,7 +7,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
     public class UpgradeData
     {
         [field: SerializeField] public UpgradeDataSO UpgradeDataSo { get; private set; }
-        [field: SerializeField]public int CurrentLevel { get; private set; }
+        [field: SerializeField] public int CurrentLevel { get; private set; }
 
         public void UpgradeLevel()
         {

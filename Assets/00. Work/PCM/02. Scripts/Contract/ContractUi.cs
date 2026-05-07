@@ -8,4 +8,8 @@ public class ContractUi : AbstructContractPopUp
     {
         base.Initialize(owner);
     }
+    public override void AfterInit()
+    {
+        base.AfterInit();
+    }
 }

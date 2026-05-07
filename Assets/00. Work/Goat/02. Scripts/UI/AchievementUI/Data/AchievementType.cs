@@ -2,6 +2,14 @@
 {
     public enum AchievementType
     {
-        Test, Test2
+        Test, 
+        Upgrade,
+        FirstMeet,
+        SecondMeet,
+        ThirdMeet,
+        TenLevelUp,
+        TwentyLevelUp,
+        ThirdLevelUp,
+        Gold10000
     }
 }

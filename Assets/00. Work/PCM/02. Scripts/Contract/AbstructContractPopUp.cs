@@ -6,16 +6,21 @@ using UnityEngine;
 
 namespace Assets._00._Work.PCM._02._Scripts.Contract
 {
-    public abstract class AbstructContractPopUp : MonoBehaviour, IModule, IAbstructContractPopUp
+    public abstract class AbstructContractPopUp : MonoBehaviour, IAbstructContractPopUp
     {
         [SerializeField] protected float animDuration = 0.1f;
         [SerializeField] protected float waitDuration = 2.0f; // 자동 종료 시 대기 시간
         [SerializeField] protected Ease easeType = Ease.OutBack;
 
+        private ModuleOwner _owner;
         private Vector3 _originScale;
         private Coroutine _timerCoroutine;
         private MotionHandle _motionHandle;
         public virtual void Initialize(ModuleOwner owner)
+        {
+            _owner = owner; 
+        }
+        public virtual void AfterInit()
         {
             _originScale = transform.localScale;
             transform.localScale = Vector3.zero;

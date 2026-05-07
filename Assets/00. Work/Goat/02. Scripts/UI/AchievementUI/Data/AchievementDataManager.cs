@@ -16,24 +16,12 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
         [field: SerializeField] public List<AchievementData> Achievements { get; private set; }
         [field: SerializeField] public SaveFileNameSO SaveFileName { get; private set; }
         [SerializeField] private EventChannelSO eventChannel;
-
-        public static AchievementDataManager Instance { get; private set; }
         
             private Dictionary<AchievementType, AchievementData> _achievementDatasDict;
         private JsonSaveService  _jsonSaveService;
         
         private void Awake()
         {
-            //싱글톤 만들기
-            if (Instance != null)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            
-            
             //저장관련
             _jsonSaveService = new JsonSaveService(SaveFileName);
             InitSaveData();
@@ -47,11 +35,6 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
         
         private void OnDestroy()
         {
-            if (Instance != this)
-                return;
-            
-            Instance = null;
-            
             if (eventChannel != null)
                 eventChannel.RemoveListener<AchievementEvent>(HandleAchieveEvent);
 

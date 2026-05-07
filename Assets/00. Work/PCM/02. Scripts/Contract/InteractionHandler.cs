@@ -1,17 +1,19 @@
-﻿using _00._Work.PCM._02._Scripts;
+﻿using _00._Work._Resources._02._Scripts.Modules;
+using _00._Work.PCM._02._Scripts;
 using System.Collections;
 using Systems;
 using UnityEngine;
 
 namespace Assets._00._Work.PCM._02._Scripts
 {
-    public class InteractionHandler : MonoBehaviour
+    public class InteractionHandler : MonoBehaviour, IModule
     {
         [SerializeField] private PlayerInputSO _inputSo;
         [SerializeField] private LayerMask whatisPlayer;
-        
-        private void OnEnable()
+        private ModuleOwner _owner;
+        public void Initialize(ModuleOwner owner)
         {
+            _owner = owner;
             _inputSo.IsClick += IsCheckInteract;
         }
         private void OnDisable()

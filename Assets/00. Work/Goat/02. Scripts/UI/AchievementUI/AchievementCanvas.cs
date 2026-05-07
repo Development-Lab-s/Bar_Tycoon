@@ -7,6 +7,8 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
 {
     public class AchievementCanvas : MonoBehaviour
     {
+        [Header("References")]
+        [SerializeField] private AchievementDataManager achievementDataManager;
         [SerializeField] private AchievementSlotContainer achievementSlotContainer;
         [SerializeField] private AchieveTopUI achieveTopUI;
         [SerializeField] private CoinSystemSo coinSystem;
@@ -15,6 +17,11 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
         {
             achieveTopUI.OnIsCompleteBtnClick += achievementSlotContainer.ShowContent;
             achievementSlotContainer.OnClickAchievementBtn += HandleClickAchievementBtn;
+        }
+
+        private void Start()
+        {
+            achievementSlotContainer.InitData(achievementDataManager.Achievements);
         }
 
         private void OnDisable()
