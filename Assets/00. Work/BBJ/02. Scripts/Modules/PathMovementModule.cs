@@ -3,47 +3,61 @@ using Cysharp.Threading.Tasks;
 using System;
 using UnityEngine;
 
-namespace BBJ.Modules
+namespace BBJ.Movement
 {
     public class PathMovementModule : MonoBehaviour, IModule, IPathMovement
     {
-        public event Action MoveComplectedEvent;
+        public event Action OnMoveCompleted;
 
         [SerializeField] private float moveSpeed = 1f;
 
-        /// <summary>
-        /// Vector3 == 부동소수점 비교 대신 사용하는 도달 판정 임계값.
-        /// MoveTowards가 한 프레임에 이동하는 최소 거리보다 충분히 커야 한다.
-        /// </summary>
         private const float ArrivalThreshold = 0.01f;
 
-        private int      _targetIndex;
+        private int       _generation;
+        private int       _targetIndex;
         private Vector3[] _path;
         private ModuleOwner _owner;
 
-        public void Initialize(ModuleOwner owner) => _owner = owner;
+        public bool IsMoving { get; private set; }
 
-        public void OnPathMove(Vector3[] newPath)
+        public void Initialize(ModuleOwner owner) => _owner = owner;
+        // IPathMovement (legacy)
+        public void SetSpeed(float speed) => this.moveSpeed = speed;
+        public void OnPathMove(Vector3[] newPath) => StartMove(newPath);
+
+        // IPathMover
+        public void StartMove(Vector3[] path)
         {
-            _path        = newPath;
+            _path        = path;
             _targetIndex = 0;
-            FollowPath().Forget();
+            _generation++;
+            FollowPath(_generation).Forget();
         }
 
-        private async UniTask FollowPath()
+        public void StopMovement()
         {
+            _generation++;
+            IsMoving = false;
+        }
+
+        private async UniTask FollowPath(int gen)
+        {
+            IsMoving = true;
+
             if (_path == null || _path.Length == 0)
             {
-                MoveComplectedEvent?.Invoke();
+                IsMoving = false;
+                if (_generation == gen) FireCompleted();
                 return;
             }
 
             while (_targetIndex < _path.Length)
             {
-                Vector3 currentWaypoint = _path[_targetIndex];
+                if (_generation != gen) { IsMoving = false; return; }
 
-                // Vector3 == 대신 거리 임계값으로 도달 판정
-                if (Vector3.Distance(_owner.transform.position, currentWaypoint) <= ArrivalThreshold)
+                Vector3 target = _path[_targetIndex];
+
+                if (Vector3.Distance(_owner.transform.position, target) <= ArrivalThreshold)
                 {
                     _targetIndex++;
                     continue;
@@ -51,13 +65,21 @@ namespace BBJ.Modules
 
                 _owner.transform.position = Vector3.MoveTowards(
                     _owner.transform.position,
-                    currentWaypoint,
+                    target,
                     moveSpeed * Time.fixedDeltaTime);
 
                 await UniTask.WaitForFixedUpdate();
             }
 
-            MoveComplectedEvent?.Invoke();
+            if (_generation != gen) { IsMoving = false; return; }
+
+            IsMoving = false;
+            FireCompleted();
+        }
+
+        private void FireCompleted()
+        {
+            OnMoveCompleted?.Invoke();
         }
 
 #if UNITY_EDITOR
@@ -67,8 +89,7 @@ namespace BBJ.Modules
             for (int i = _targetIndex; i < _path.Length; i++)
             {
                 Gizmos.color = Color.black;
-                Gizmos.DrawCube(_path[i], Vector3.one);
-
+                Gizmos.DrawCube(_path[i], Vector3.one / 2f);
                 Gizmos.DrawLine(
                     i == _targetIndex ? _owner.transform.position : _path[i - 1],
                     _path[i]);

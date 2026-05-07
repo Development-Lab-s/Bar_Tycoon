@@ -4,6 +4,7 @@ namespace BBJ.GridSystem.Editor
 
     using UnityEngine;
     using UnityEditor;
+    using UnityEditor.U2D.Sprites;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -574,13 +575,19 @@ namespace BBJ.GridSystem.Editor
                 // Multiple이면 각 서브스프라이트의 alignment를 Custom으로 변경
                 if (importer.spriteImportMode == SpriteImportMode.Multiple)
                 {
-                    var sheetData =  importer.spritesheet;
-                    for (int i = 0; i < sheetData.Length; i++)
+                    var factory = new SpriteDataProviderFactories();
+                    factory.Init();
+                    var dataProvider = factory.GetSpriteEditorDataProviderFromObject(importer);
+                    dataProvider.InitSpriteEditorDataProvider();
+
+                    var rects = dataProvider.GetSpriteRects();
+                    foreach (var rect in rects)
                     {
-                        sheetData[i].alignment = (int)SpriteAlignment.Custom;
-                        sheetData[i].pivot = pivot;
+                        rect.alignment = SpriteAlignment.Custom;
+                        rect.pivot     = pivot;
                     }
-                    importer.spritesheet = sheetData;
+                    dataProvider.SetSpriteRects(rects);
+                    dataProvider.Apply();
                 }
                 else
                 {

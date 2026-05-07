@@ -1,0 +1,80 @@
+using BBJ.Data;
+using BBJ.Schedule;
+using BBJ.Work;
+using Gamelib.EventSystem;
+using Gamelib.ObjectPool.Runtime;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace BBJ.Customer
+{
+    public class CustomerManager : MonoBehaviour
+    {
+        [Header("SO")]
+        [SerializeField] private EventChannelSO _customerChannel;
+
+        [Header("Pool")]
+        [SerializeField] private PoolInitializer _poolInitializer;
+        [SerializeField] private PoolItemSo      _customerPoolItem;
+
+        [Header("Spawn Settings")]
+        [SerializeField] private Transform        _spawnPoint;
+        [SerializeField] private float            _spawnInterval = 8f;
+        [SerializeField] private int              _maxCustomers  = 6;
+
+        [Header("Cycle")]
+        [SerializeField] private WorkSO _cycleSequence;
+
+        [Header("Menu")]
+        [SerializeField] private List<FoodDataSO> _menuItems = new();
+
+        private int _activeCount;
+
+        private void OnEnable()
+        {
+            _customerChannel.AddListener<CustomerLeftEvent>(OnCustomerLeft);
+            _activeCount = 0;
+        }
+
+        private void OnDisable()
+        {
+            _customerChannel.RemoveListener<CustomerLeftEvent>(OnCustomerLeft);
+            _activeCount = 0;
+        }
+
+        private void Start() => StartCoroutine(SpawnLoop());
+
+        private void OnCustomerLeft(CustomerLeftEvent evt)
+        {
+            _activeCount--;
+            _poolInitializer?.Push(evt.Customer);
+        }
+
+        private IEnumerator SpawnLoop()
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(_spawnInterval);
+
+                if (_activeCount >= _maxCustomers) continue;
+                if (_menuItems.Count == 0 || _cycleSequence == null) continue;
+
+                SpawnCustomer();
+            }
+        }
+
+        private void SpawnCustomer()
+        {
+            var customer = _poolInitializer.Pop<CustomerAgent>(_customerPoolItem);
+            if (customer == null) return;
+
+            customer.transform.position = _spawnPoint.position;
+            _activeCount++;
+
+            var food = _menuItems[Random.Range(0, _menuItems.Count)];
+            customer.StartCycle(food);
+            customer.GetModule<SchedulingModule>()?.AssignWork(_cycleSequence, null);
+        }
+    }
+}

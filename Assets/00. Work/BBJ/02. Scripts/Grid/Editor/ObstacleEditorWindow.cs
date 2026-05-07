@@ -72,6 +72,7 @@ namespace BBJ.GridSystem.Editor
         //  [FIX-2] static 제거 → 창 재열기 시 상태 오염 방지
         // ─────────────────────────────────────────────────────────────
         private GridManager _gridManager;
+        private Grid _grid;           // GetComponent 캐시 (매 이벤트 호출 방지)
         private StageLayoutSO _layoutSO;
 
         // ─────────────────────────────────────────────────────────────
@@ -126,6 +127,18 @@ namespace BBJ.GridSystem.Editor
         private Vector2 _mainScroll;
 
         // ─────────────────────────────────────────────────────────────
+        //  GUIStyle 캐시 (OnGUI 매 프레임 new GUIStyle 할당 방지)
+        // ─────────────────────────────────────────────────────────────
+        private GUIStyle _headerStyle;
+        private GUIStyle _modeStatusStyle;
+        private GUIStyle _paletteBoldStyle;
+        private static GUIStyle _secLabelStyle;
+        private static GUIStyle _hoverLabelStyle;
+
+        // DrawDiamond 버텍스 재사용 배열 (2500+ 셀 × 프레임당 new Vector3[4] 방지)
+        private static readonly Vector3[] _diamondVerts = new Vector3[4];
+
+        // ─────────────────────────────────────────────────────────────
         //  색상
         // ─────────────────────────────────────────────────────────────
         private static readonly Color CGrid = new Color(0.38f, 0.48f, 0.58f, 0.28f);
@@ -167,9 +180,11 @@ namespace BBJ.GridSystem.Editor
             if (_gridManager == null)
                 _gridManager = FindFirstObjectByType<GridManager>();
 
-            // [FIX-2] 창 재열기 시 씬 스캔으로 _placed/_occupied 복원
             if (_gridManager != null)
+            {
+                _grid = _gridManager.GetComponent<Grid>();
                 RebuildStateFromScene();
+            }
         }
 
         private void OnDisable()
@@ -216,7 +231,8 @@ namespace BBJ.GridSystem.Editor
         {
             if (_gridManager == null) return;
 
-            Grid g = _gridManager.GetComponent<Grid>();
+            if (_grid == null) _grid = _gridManager.GetComponent<Grid>();
+            Grid g = _grid;
 
             // 씬의 실제 GO 수집 (GridManager 자식 전체)
             var sceneGOs = new List<GameObject>();
@@ -225,6 +241,8 @@ namespace BBJ.GridSystem.Editor
                 var child = _gridManager.transform.GetChild(i);
                 if (child != null) sceneGOs.Add(child.gameObject);
             }
+            // HashSet으로 O(1) 조회 (List.Contains는 O(n) → 루프 내에서 O(n²))
+            var sceneGOSet = new HashSet<GameObject>(sceneGOs);
 
             // 현재 _placed 중 GO가 여전히 살아있는 항목은 instanceID만 갱신
             // GO가 사라진 항목은 제거
@@ -232,7 +250,7 @@ namespace BBJ.GridSystem.Editor
             foreach (var kv in _placed)
             {
                 var go = EditorUtility.EntityIdToObject(kv.Value.goID) as GameObject;
-                if (go == null || !sceneGOs.Contains(go))
+                if (go == null || !sceneGOSet.Contains(go))
                     toRemove.Add(kv.Key);
             }
             foreach (var cell in toRemove)
@@ -243,17 +261,18 @@ namespace BBJ.GridSystem.Editor
             }
 
             // [FIX-3] Undo 복원된 GO: _placed에 없지만 씬에는 있는 GO 탐색
-            // 팔레트의 ObjectData와 이름+위치로 매칭
+            // 프리팹 소스 직접 비교 (이름 매칭은 유사 이름 오매칭으로 BlockedOffsets 오염 위험)
             var placedGOIDs = new HashSet<int>(_placed.Values.Select(v => v.goID));
             foreach (var go in sceneGOs)
             {
                 if (go == null) continue;
                 if (placedGOIDs.Contains(go.GetInstanceID())) continue; // 이미 추적 중
 
-                // 팔레트에서 이름 매칭으로 ObjectData 찾기
-                ObjectData matched = _palette.FirstOrDefault(od =>
-                    od != null && od.Prefab != null &&
-                    go.name.StartsWith(od.Prefab.name));
+                // 프리팹 에셋 소스로 ObjectData 확정 매칭
+                var prefabAsset = PrefabUtility.GetCorrespondingObjectFromOriginalSource(go) as GameObject;
+                ObjectData matched = prefabAsset == null ? null :
+                    _palette.FirstOrDefault(od =>
+                        od != null && od.Prefab != null && od.Prefab == prefabAsset);
 
                 if (matched == null) continue;
 
@@ -332,13 +351,11 @@ namespace BBJ.GridSystem.Editor
             string title = HasUnsavedChanges ? "Obstacle Placer  v5  [미저장]" : "Obstacle Placer  v5";
             Color titleCol = HasUnsavedChanges ? new Color(1.0f, 0.80f, 0.30f) : new Color(0.65f, 0.88f, 1f);
 
-            GUI.Label(new Rect(r.x + 10, r.y + 2, r.width, r.height), title,
-                new GUIStyle(EditorStyles.boldLabel)
-                {
-                    fontSize = 13,
-                    alignment = TextAnchor.MiddleLeft,
-                    normal = { textColor = titleCol }
-                });
+            if (_headerStyle == null)
+                _headerStyle = new GUIStyle(EditorStyles.boldLabel)
+                    { fontSize = 13, alignment = TextAnchor.MiddleLeft };
+            _headerStyle.normal.textColor = titleCol;
+            GUI.Label(new Rect(r.x + 10, r.y + 2, r.width, r.height), title, _headerStyle);
         }
 
         // ── 그리드 설정 ────────────────────────────────────────────────
@@ -350,9 +367,12 @@ namespace BBJ.GridSystem.Editor
             _gridManager = (GridManager)EditorGUILayout.ObjectField(
                 _gridManager, typeof(GridManager), true);
 
-            // GridManager가 새로 연결되면 씬 상태 재구성
+            // GridManager가 새로 연결되면 Grid 캐시 갱신 + 씬 상태 재구성
             if (_gridManager != prevGM && _gridManager != null)
+            {
+                _grid = _gridManager.GetComponent<Grid>();
                 RebuildStateFromScene();
+            }
 
             if (GUILayout.Button("자동 탐색", GUILayout.Width(64)))
             {
@@ -360,7 +380,10 @@ namespace BBJ.GridSystem.Editor
                 if (_gridManager == null)
                     EditorUtility.DisplayDialog("알림", "씬에 GridManager가 없습니다.", "확인");
                 else
+                {
+                    _grid = _gridManager.GetComponent<Grid>();
                     RebuildStateFromScene();
+                }
             }
             EditorGUILayout.EndHorizontal();
 
@@ -370,11 +393,10 @@ namespace BBJ.GridSystem.Editor
                 return;
             }
 
-            var g = _gridManager.GetComponent<Grid>();
             EditorGUILayout.LabelField(
                 $"  그리드 {_gridManager.Size.x}x{_gridManager.Size.y}  |  " +
                 $"Offset ({_gridManager.Offset.x},{_gridManager.Offset.y})  |  " +
-                $"Cell {g.cellSize.x:F3}x{g.cellSize.y:F3}",
+                $"Cell {_grid.cellSize.x:F3}x{_grid.cellSize.y:F3}",
                 EditorStyles.miniLabel);
         }
 
@@ -402,8 +424,10 @@ namespace BBJ.GridSystem.Editor
             Color mc = !_isPlacing ? Color.gray
                      : _isEraseMode ? new Color(1f, 0.55f, 0.55f)
                                     : new Color(0.45f, 0.90f, 1f);
-            GUILayout.Label(msg, new GUIStyle(EditorStyles.miniLabel)
-            { normal = { textColor = mc }, alignment = TextAnchor.MiddleCenter });
+            if (_modeStatusStyle == null)
+                _modeStatusStyle = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleCenter };
+            _modeStatusStyle.normal.textColor = mc;
+            GUILayout.Label(msg, _modeStatusStyle);
         }
 
         // ── 팔레트 ────────────────────────────────────────────────────
@@ -458,7 +482,9 @@ namespace BBJ.GridSystem.Editor
 
                 EditorGUILayout.BeginVertical();
                 GUILayout.Space(6);
-                GUILayout.Label(od.name, new GUIStyle(EditorStyles.boldLabel) { fontSize = 11 });
+                if (_paletteBoldStyle == null)
+                    _paletteBoldStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 11 };
+                GUILayout.Label(od.name, _paletteBoldStyle);
                 GUILayout.Label(
                     $"Blocked:{od.BlockedOffsets?.Length ?? 0}  " +
                     $"Interact:{od.InteractOffsets?.Length ?? 0}  " +
@@ -591,29 +617,34 @@ namespace BBJ.GridSystem.Editor
         // ─────────────────────────────────────────────────────────────
         private void OnSceneGUI(SceneView view)
         {
-            if (!_isPlacing || _gridManager == null) return;
+            if (!_isPlacing || _gridManager == null || _grid == null) return;
 
             HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
 
             Event evt = Event.current;
-            Grid g = _gridManager.GetComponent<Grid>();
 
             Ray ray = HandleUtility.GUIPointToWorldRay(evt.mousePosition);
             Plane plane = new Plane(Vector3.back, Vector3.zero);
             if (!plane.Raycast(ray, out float dist)) return;
 
             Vector3 world = ray.GetPoint(dist);
-            Vector3Int cellInt = g.WorldToCell(world);
+            Vector3Int cellInt = _grid.WorldToCell(world);
             Vector2Int cell = new Vector2Int(
                 cellInt.x - _gridManager.Offset.x,
                 cellInt.y - _gridManager.Offset.y);
 
-            if (_hoveredCell != cell) { _hoveredCell = cell; view.Repaint(); }
+            // Repaint 이벤트 안에서 view.Repaint()를 재호출하면 중첩 렌더가 발생해 크래시
+            // → MouseMove/Layout 등 비-Repaint 이벤트에서만 요청
+            if (_hoveredCell != cell)
+            {
+                _hoveredCell = cell;
+                if (evt.type != EventType.Repaint) view.Repaint();
+            }
 
             if (evt.type == EventType.Repaint)
             {
-                DrawGridOverlay(g);
-                DrawHoverPreview(g, cell);
+                DrawGridOverlay(_grid);
+                DrawHoverPreview(_grid, cell);
             }
 
             // MouseDown 전용 (Drag 오배치 방지)
@@ -622,19 +653,19 @@ namespace BBJ.GridSystem.Editor
                 if (evt.button == 0)
                 {
                     if (_isEraseMode) RemovePlaced(cell);
-                    else PlaceObstacle(cell, g);
+                    else PlaceObstacle(cell);
                     evt.Use();
                     Repaint();
+                    view.Repaint();
                 }
                 else if (evt.button == 1 && !_isEraseMode)
                 {
                     RemovePlaced(cell);
                     evt.Use();
                     Repaint();
+                    view.Repaint();
                 }
             }
-
-            view.Repaint();
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -643,18 +674,41 @@ namespace BBJ.GridSystem.Editor
         private void DrawGridOverlay(Grid g)
         {
             Vector2Int size = _gridManager.Size;
+            Vector3 cellSize = g.cellSize;
+
+            // Frustum culling: 씬 뷰 카메라 뷰포트 밖 셀은 Draw 생략
+            // 대형 그리드(100×100 = 10,000 Draw calls)에서 발생하는 크래시 방지
+            Camera cam = SceneView.currentDrawingSceneView?.camera;
+            float marginX = cellSize.x * 2f;
+            float marginY = cellSize.y * 2f;
+
+            float halfCellY = cellSize.y * 0.5f;
+
             for (int x = 0; x < size.x; x++)
                 for (int y = 0; y < size.y; y++)
                 {
-                    Vector2Int idx = new Vector2Int(x, y);
-                    Vector3 center = CellToWorld(g, x, y);
+                    // CellToWorld는 셀 바닥 꼭짓점 → DrawDiamond 중심은 반 셀 위
+                    Vector3 origin = _gridManager.CellToWorld(new Vector2Int(x, y));
+                    Vector3 center = origin + new Vector3(0f, halfCellY, 0f);
 
+                    if (cam != null)
+                    {
+                        Vector3 vp = cam.WorldToViewportPoint(center);
+                        float vpMarginX = marginX / cam.pixelWidth;
+                        float vpMarginY = marginY / cam.pixelHeight;
+                        if (vp.z < 0 ||
+                            vp.x < -vpMarginX || vp.x > 1f + vpMarginX ||
+                            vp.y < -vpMarginY || vp.y > 1f + vpMarginY)
+                            continue;
+                    }
+
+                    Vector2Int idx = new Vector2Int(x, y);
                     Color fill, border;
                     if (_placed.ContainsKey(idx)) { fill = CPlaced; border = CPlacedB; }
                     else if (_occupied.Contains(idx)) { fill = CBlocked; border = CBlockedB; }
                     else { fill = CGrid; border = CGridB; }
 
-                    DrawDiamond(center, g.cellSize, fill, border);
+                    DrawDiamond(center, cellSize, fill, border);
                 }
         }
 
@@ -664,7 +718,8 @@ namespace BBJ.GridSystem.Editor
         private void DrawHoverPreview(Grid g, Vector2Int cell)
         {
             if (!InGrid(cell)) return;
-            Vector3 center = CellToWorld(g, cell.x, cell.y);
+            float halfCellY = g.cellSize.y * 0.5f;
+            Vector3 center = _gridManager.CellToWorld(cell) + new Vector3(0f, halfCellY, 0f);
 
             DrawDiamond(center, g.cellSize,
                 _isEraseMode ? CErase : CHover,
@@ -678,7 +733,8 @@ namespace BBJ.GridSystem.Editor
                     Vector2Int tc = cell + bo;
                     if (!InGrid(tc)) continue;
                     bool conflict = _occupied.Contains(tc) || _placed.ContainsKey(tc);
-                    DrawDiamond(CellToWorld(g, tc.x, tc.y), g.cellSize,
+                    Vector3 tcCenter = _gridManager.CellToWorld(tc) + new Vector3(0f, halfCellY, 0f);
+                    DrawDiamond(tcCenter, g.cellSize,
                         conflict ? CConflict : CBlocked,
                         conflict ? CConflictB : CBlockedB);
                 }
@@ -688,18 +744,18 @@ namespace BBJ.GridSystem.Editor
                 {
                     Vector2Int tc = cell + io;
                     if (!InGrid(tc)) continue;
-                    DrawDiamond(CellToWorld(g, tc.x, tc.y), g.cellSize, CInteract, CInteractB);
+                    Vector3 tcCenter = _gridManager.CellToWorld(tc) + new Vector3(0f, halfCellY, 0f);
+                    DrawDiamond(tcCenter, g.cellSize, CInteract, CInteractB);
                 }
 
-            Handles.Label(center + Vector3.up * (g.cellSize.y * 0.75f),
-                SelectedOD.name,
-                new GUIStyle { normal = { textColor = Color.white }, fontSize = 9 });
+            _hoverLabelStyle ??= new GUIStyle { normal = { textColor = Color.white }, fontSize = 9 };
+            Handles.Label(center + Vector3.up * (g.cellSize.y * 0.75f), SelectedOD.name, _hoverLabelStyle);
         }
 
         // ─────────────────────────────────────────────────────────────
         //  배치
         // ─────────────────────────────────────────────────────────────
-        private void PlaceObstacle(Vector2Int cell, Grid g)
+        private void PlaceObstacle(Vector2Int cell)
         {
             if (SelectedOD == null || SelectedOD.Prefab == null)
             {
@@ -727,8 +783,7 @@ namespace BBJ.GridSystem.Editor
                 }
             }
 
-            // [FIX-1] GridManager.ApplyObstacle과 동일: CellToWorld, 보정 없음
-            Vector3 worldPos = CellToWorld(g, cell.x, cell.y);
+            Vector3 worldPos = _gridManager.CellToWorld(cell);
             worldPos.z = 0f;
 
             GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(SelectedOD.Prefab);
@@ -845,7 +900,6 @@ namespace BBJ.GridSystem.Editor
                 ClearAll();
             }
 
-            Grid g = _gridManager.GetComponent<Grid>();
             int loaded = 0, skipped = 0;
 
             foreach (var entry in _layoutSO.entries)
@@ -860,8 +914,7 @@ namespace BBJ.GridSystem.Editor
                 if (fp.Any(fc => !InGrid(fc) || _occupied.Contains(fc)))
                 { skipped++; continue; }
 
-                // [FIX-1] CellToWorld, 보정 없음
-                Vector3 worldPos = CellToWorld(g, cell.x, cell.y);
+                Vector3 worldPos = _gridManager.CellToWorld(cell);
                 worldPos.z = 0f;
 
                 GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(
@@ -885,18 +938,6 @@ namespace BBJ.GridSystem.Editor
         }
 
         // ─────────────────────────────────────────────────────────────
-        //  [FIX-1] 좌표 변환: GridManager.ApplyObstacle과 완전히 동일
-        //  CellToWorld만 사용, 0.5f 보정 없음
-        // ─────────────────────────────────────────────────────────────
-        private Vector3 CellToWorld(Grid g, int idxX, int idxY)
-        {
-            Vector3Int cellPoint = new Vector3Int(
-                idxX + _gridManager.Offset.x,
-                idxY + _gridManager.Offset.y, 0);
-            return g.CellToWorld(cellPoint);
-        }
-
-        // ─────────────────────────────────────────────────────────────
         //  헬퍼
         // ─────────────────────────────────────────────────────────────
         private static List<Vector2Int> Footprint(Vector2Int origin, ObjectData od)
@@ -915,13 +956,11 @@ namespace BBJ.GridSystem.Editor
         private static void DrawDiamond(Vector3 c, Vector3 cs, Color fill, Color border)
         {
             float hw = cs.x * 0.5f, hh = cs.y * 0.5f;
-            Handles.DrawSolidRectangleWithOutline(new[]
-            {
-                c + new Vector3(  0,  hh, 0),
-                c + new Vector3( hw,   0, 0),
-                c + new Vector3(  0, -hh, 0),
-                c + new Vector3(-hw,   0, 0),
-            }, fill, border);
+            _diamondVerts[0] = new Vector3(c.x,      c.y + hh, c.z);
+            _diamondVerts[1] = new Vector3(c.x + hw, c.y,      c.z);
+            _diamondVerts[2] = new Vector3(c.x,      c.y - hh, c.z);
+            _diamondVerts[3] = new Vector3(c.x - hw, c.y,      c.z);
+            Handles.DrawSolidRectangleWithOutline(_diamondVerts, fill, border);
         }
 
         private static void Divider()
@@ -932,8 +971,11 @@ namespace BBJ.GridSystem.Editor
         }
 
         private static void SecLabel(string t)
-            => GUILayout.Label(t, new GUIStyle(EditorStyles.miniBoldLabel)
-            { normal = { textColor = new Color(0.65f, 0.88f, 1f) } });
+        {
+            _secLabelStyle ??= new GUIStyle(EditorStyles.miniBoldLabel)
+                { normal = { textColor = new Color(0.65f, 0.88f, 1f) } };
+            GUILayout.Label(t, _secLabelStyle);
+        }
 
         // [FIX-7] ModeBtn 종료 시 backgroundColor 복원
         private void ModeBtn(string label, bool active, Color col, System.Action onClick)

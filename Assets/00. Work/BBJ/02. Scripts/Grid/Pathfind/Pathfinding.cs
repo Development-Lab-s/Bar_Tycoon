@@ -8,13 +8,12 @@ namespace BBJ.GridSystem.Pathfind
 {
     public class Pathfinding : MonoBehaviour
     {
-        // public → private: 인스펙터 할당 누락으로 인한 NPE 방지
         [SerializeField] private PathRequestManager _requestManager;
         private GridManager _gridManager;
 
         private void Awake()
         {
-            _gridManager    = GetComponent<GridManager>();
+            _gridManager = GetComponent<GridManager>();
             _requestManager = GetComponent<PathRequestManager>();
         }
 
@@ -23,13 +22,12 @@ namespace BBJ.GridSystem.Pathfind
 
         private IEnumerator FindPath(Vector3 startPos, Vector3 targetPos)
         {
-            Vector3[] waypoints  = Array.Empty<Vector3>();
-            bool      pathSuccess = false;
+            Vector3[] waypoints = Array.Empty<Vector3>();
+            bool pathSuccess = false;
 
-            Node startNode  = _gridManager.NodeFromWorldPoint(startPos);
+            Node startNode = _gridManager.NodeFromWorldPoint(startPos);
             Node targetNode = _gridManager.NodeFromWorldPoint(targetPos);
 
-            // NodeFromWorldPoint가 null을 반환할 수 있으므로 null 체크 추가
             if (startNode == null || targetNode == null)
             {
                 yield return null;
@@ -39,12 +37,8 @@ namespace BBJ.GridSystem.Pathfind
 
             if (startNode.walkable)
             {
-                // targetNode가 walkable이 아닌 경우 그 위치로 이동 불가.
-                // Workplace InteractOffset이 벽 인접 셀을 가리킬 수 있으므로
-                // 목표 노드 walkable 체크는 제거하고 경로를 최대한 탐색한다.
-                // (startNode만 walkable이면 탐색 시작)
                 var closedSet = new HashSet<Node>();
-                var openSet   = new Heap<Node>(_gridManager.MaxSize);
+                var openSet = new Heap<Node>(_gridManager.MaxSize);
                 openSet.Add(startNode);
 
                 while (openSet.Count > 0)
@@ -66,8 +60,8 @@ namespace BBJ.GridSystem.Pathfind
                         int newCost = node.gCost + GetDistance(node, neighbour);
                         if (newCost < neighbour.gCost || !openSet.Contains(neighbour))
                         {
-                            neighbour.gCost  = newCost;
-                            neighbour.hCost  = GetDistance(neighbour, targetNode);
+                            neighbour.gCost = newCost;
+                            neighbour.hCost = GetDistance(neighbour, targetNode);
                             neighbour.parent = node;
 
                             if (!openSet.Contains(neighbour)) openSet.Add(neighbour);
@@ -89,18 +83,18 @@ namespace BBJ.GridSystem.Pathfind
         {
             var neighbours = new List<Node>();
             for (int x = -1; x <= 1; x++)
-            for (int y = -1; y <= 1; y++)
-            {
-                if (x == 0 && y == 0) continue;
-                if (_gridManager.TryGetCellToNode(node.gridX + x, node.gridY + y, out Node n))
-                    neighbours.Add(n);
-            }
+                for (int y = -1; y <= 1; y++)
+                {
+                    if (x == 0 && y == 0) continue;
+                    if (_gridManager.TryGetCellToNode(node.gridX + x, node.gridY + y, out Node n))
+                        neighbours.Add(n);
+                }
             return neighbours;
         }
 
         private Vector3[] RetracePath(Node startNode, Node endNode)
         {
-            var  path        = new List<Node>();
+            var path = new List<Node>();
             Node currentNode = endNode;
 
             while (currentNode != startNode)
@@ -116,9 +110,11 @@ namespace BBJ.GridSystem.Pathfind
 
         private Vector3[] SimplifyPath(List<Node> path)
         {
-            var     waypoints    = new List<Vector3>();
+            var waypoints = new List<Vector3>();
             Vector2 directionOld = Vector2.zero;
 
+            if (path.Count != 0)
+                waypoints.Add(path[0].worldPosition);
             for (int i = 1; i < path.Count; i++)
             {
                 var directionNew = new Vector2(

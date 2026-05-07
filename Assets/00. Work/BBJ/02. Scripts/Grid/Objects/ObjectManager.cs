@@ -1,5 +1,5 @@
 
-using BBJ.Tycoon;
+using BBJ.WorkplaceSystem;
 using Gamelib.EventSystem;
 using System.Collections;
 using UnityEngine;
@@ -44,10 +44,8 @@ namespace BBJ.GridSystem.Objects
             Vector3 worldPos = _gridManager.CellToWorld(cellIndex);
             var go = Instantiate(data.Prefab, worldPos, Quaternion.identity);
 
-            // 그리드 장애물 등록
             _gridManager.ApplyObstacleAt(data, cellIndex);
 
-            // Workplace 컴포넌트가 있으면 InteractOffsets 초기화
             var workplace = go.GetComponent<Workplace>();
             workplace?.SetupFromObjectData(data, cellIndex, _gridManager);
         }

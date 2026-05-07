@@ -1,4 +1,5 @@
 using BBJ.EventSystem;
+using BBJ.Movement;
 using Gamelib.EventSystem;
 using System;
 using System.Collections.Generic;
@@ -7,9 +8,10 @@ using UnityEngine;
 namespace BBJ.GridSystem.Pathfind
 {
 
-    public class PathRequestManager : MonoBehaviour
+    public class PathRequestManager : MonoBehaviour, IPathRequestManager
     {
         [SerializeField] private EventChannelSO pathRequestChannel;
+        [SerializeField] private RuntimeReference<IPathRequestManager> pathRequestSO;
 
         private readonly Queue<PathRequest> pathRequestQueue = new Queue<PathRequest>();
         private PathRequest currentPathRequest;
@@ -22,13 +24,19 @@ namespace BBJ.GridSystem.Pathfind
         private void Awake()
         {
             pathfinding = GetComponent<Pathfinding>();
-            pathRequestChannel.AddListener<PathRequestEvent>(RequestPathHandler);
         }
-        private void OnDestroy()
+
+        private void OnEnable()
+        {
+            pathRequestChannel.AddListener<PathRequestEvent>(RequestPathHandler);
+            pathRequestSO?.Initialize(this);
+        }
+
+        private void OnDisable()
         {
             pathRequestChannel.RemoveListener<PathRequestEvent>(RequestPathHandler);
         }
-        public void RequestPathHandler(PathRequestEvent pathRequestEvent)
+        private void RequestPathHandler(PathRequestEvent pathRequestEvent)
         {
             var request = pathRequestEvent.PathRequest;
             RequestPath(request.pathStart, request.pathEnd, request.callback);

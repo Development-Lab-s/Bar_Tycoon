@@ -1,117 +1,73 @@
-using _00._Work._Resources._02._Scripts.Modules;
-using BBJ.Agents.FSM;
 using BBJ.Register;
 using BBJ.Schedule;
-using BBJ.Tycoon;
+using BBJ.Staff;
+using BBJ.Work;
 using Cysharp.Threading.Tasks;
+using Gamelib.EventSystem;
 using System;
-using System.Collections;
+using System.Threading;
 using UnityEngine;
+using _00._Work._Resources._02._Scripts.Modules;
 
-namespace BBJ.Modules
+namespace BBJ.Schedule
 {
-    public class SchedulingModule : MonoBehaviour, IModule, ISchedulable
+    public class SchedulingModule : MonoBehaviour, IModule, ISchedulable, IScheduleTriggerSource, IAfterInitModule
     {
         [SerializeField] private ScheduleRegisterSO _scheduleRegister;
-        [SerializeField] private PathRequestSO      _pathRequestSO;
+        [field: SerializeField] public EventChannelSO ScheduleTriggerChannel { get; private set; }
+        [field: SerializeField] public AgentRole Role { get; private set; }
 
-        private ModuleOwner        _owner;
-        private PathMovementModule _movement;
+        private ModuleOwner             _owner;
+        private CancellationTokenSource _cts;
 
-        public Workplace AssignedWorkplace { get; private set; }
-        public bool IsWorking => AssignedWorkplace != null;
+        public bool      IsAvailableForWork => _cts == null;
 
         public event Action OnWorkStarted;
         public event Action OnWorkEnded;
+        //public WorkSO curWorkSO;
 
-        /// <summary>
-        /// WorkerAgent가 구독해 FSM 상태를 전환한다.
-        /// SchedulingModule은 FSM을 직접 참조하지 않는다.
-        /// </summary>
-        public event Action<WorkerState> OnStateChangeRequested;
+        public void Initialize(ModuleOwner owner) => _owner = owner;
 
-        public void Initialize(ModuleOwner owner)
+        private void OnDisable()
         {
-            _owner    = owner;
-            _movement = owner.GetModule<PathMovementModule>();
-            _scheduleRegister?.Register(this);
+            _scheduleRegister?.Unregister(this);
+            CompleteWork();
         }
 
-        private void OnDestroy() => _scheduleRegister?.Unregister(this);
+        public void AfterInit() => _scheduleRegister?.Register(this);
 
-        public void AssignWork(Workplace workplace, WorkSO workSO)
+        public void AssignWork(WorkSO workSO, GameEvent context)
         {
-            AssignedWorkplace = workplace;
-            AssignedWorkplace.Occupy();
-            OnWorkStarted?.Invoke();
-
-            (_owner as MonoBehaviour)?.StartCoroutine(
-                RunWork(workSO.Execute(_owner, workplace)));
+            CompleteWork();
+            _cts = new CancellationTokenSource();
+            RunAsync(workSO, context, _cts).Forget();
         }
 
         public void CompleteWork()
         {
-            AssignedWorkplace?.Release();
-            AssignedWorkplace = null;
-            OnWorkEnded?.Invoke();
-            OnStateChangeRequested?.Invoke(WorkerState.Idle);
+            //curWorkSO = null;
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = null;
         }
 
-        private IEnumerator RunWork(IEnumerator workRoutine)
+        private async UniTaskVoid RunAsync(WorkSO workSO, GameEvent context, CancellationTokenSource cts)
         {
-            while (workRoutine.MoveNext())
+            //curWorkSO = workSO;
+            OnWorkStarted?.Invoke();
+            try
             {
-                var current = workRoutine.Current;
-
-                if (current is MoveStep move)
-                {
-                    OnStateChangeRequested?.Invoke(WorkerState.Move);
-                    yield return ExecuteMove(move.Destination).ToCoroutine();
-                }
-                else if (current is WaitUntilStep waitUntil)
-                {
-                    OnStateChangeRequested?.Invoke(WorkerState.Wait);
-                    yield return new WaitUntil(waitUntil.Condition);
-                }
-                else if (current is WaitStep wait)
-                {
-                    OnStateChangeRequested?.Invoke(WorkerState.Wait);
-                    yield return new WaitForSeconds(wait.Seconds);
-                }
-                else if (current is WorkActionStep work)
-                {
-                    OnStateChangeRequested?.Invoke(WorkerState.Work);
-                    yield return new WaitForSeconds(work.Seconds);
-                }
-                else
-                {
-                    yield return current;
-                }
+                await workSO.ExecuteAsync(_owner, context, cts.Token);
             }
-
-            // WorkSO.Execute()가 완전히 끝난 뒤 완료 처리.
-            // WorkSO는 CompleteWork()를 호출하지 않는다.
-            CompleteWork();
-        }
-
-        private async UniTask ExecuteMove(Vector3 destination)
-        {
-            var arrived = false;
-
-            void OnArrived() => arrived = true;
-            _movement.MoveComplectedEvent += OnArrived;
-
-            _pathRequestSO.RequestPath(
-                _owner.transform.position,
-                destination,
-                (path, success) =>
-                {
-                    if (success && path.Length > 0) _movement.OnPathMove(path);
-                    else arrived = true;
-                });
-
-            await UniTask.WaitUntil(() => arrived);
-            _movement.MoveComplectedEvent -= OnArrived;
+            catch (OperationCanceledException) { }
+            finally
+            {
+                if (_cts == cts) _cts = null;
+                //curWorkSO = null;
+                cts.Dispose();
+                OnWorkEnded?.Invoke();
+                ScheduleTriggerChannel?.RaiseEvent(new ScheduleTriggerEvent());
+            }
         }
     }
 }
