@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using _00._Work.Goat._02._Scripts.Events;
 using _00._Work.Goat._02._Scripts.SaveCode;
 using _00._Work.Goat._02._Scripts.Test.Coin;
@@ -44,10 +45,26 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
             content.OnClickUpgrade += HandleClickUpgrade;
         }
 
+        private void Start()
+        {
+            LoadUpgradeData();
+        }
+
         private void OnDestroy()
         {
             buttonCanvas.OnClickButton -= HandleClickButton;
             content.OnClickUpgrade -= HandleClickUpgrade;
+        }
+
+        private void LoadUpgradeData()
+        {
+            foreach (var data in upgradeDataList)
+            {
+                foreach (var upgradeData in data.UpgradeGroups)
+                {
+                    data.UpgradeChannel.RaiseEvent(new UpgradeEvent().Init(upgradeData.UpgradeDataSo.TargetStat, upgradeData.UpgradeDataSo.IncreaseValue * upgradeData.CurrentLevel));   
+                }
+            }
         }
 
         private void HandleClickButton(ButtonType btnType)
