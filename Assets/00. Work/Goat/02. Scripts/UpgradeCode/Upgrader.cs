@@ -1,5 +1,4 @@
-﻿using System;
-using _00._Work._Resources._02._Scripts.Agents.StatSystem;
+﻿using _00._Work._Resources._02._Scripts.Agents.StatSystem;
 using _00._Work.Goat._02._Scripts.Events;
 using Gamelib.EventSystem;
 using UnityEngine;
@@ -16,6 +15,11 @@ namespace _00._Work.Goat._02._Scripts.UpgradeCode
             _statModule = GetComponent<StatModule>();
 
             upgradeChannel.AddListener<UpgradeEvent>(HandleUpgradeEvent);
+        }
+
+        private void OnDestroy()
+        {
+            upgradeChannel.RemoveListener<UpgradeEvent>(HandleUpgradeEvent);
         }
 
         private void HandleUpgradeEvent(UpgradeEvent obj)
