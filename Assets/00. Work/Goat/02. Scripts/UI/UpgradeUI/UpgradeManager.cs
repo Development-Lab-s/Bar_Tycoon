@@ -43,7 +43,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
             {
                 foreach (var upgradeData in data.UpgradeGroups)
                 {
-                    data.UpgradeChannel.RaiseEvent(new UpgradeEvent().Init(upgradeData.UpgradeDataSo.TargetStat, upgradeData.UpgradeDataSo.IncreaseValue * upgradeData.CurrentLevel));   
+                    data.UpgradeChannel.RaiseEvent(new UpgradeEvent().Init(upgradeData.UpgradeDataSo.TargetStat, upgradeData.GetTotalIncreaseValue()));   
                 }
             }
         }
@@ -57,7 +57,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
 
             achievementChannelSo?.RaiseEvent( new AchievementEvent().Init(AchievementType.Upgrade, 1));
 
-            eventChannel?.RaiseEvent(new UpgradeEvent().Init(upgradeData.UpgradeDataSo.TargetStat, upgradeData.UpgradeDataSo.IncreaseValue * upgradeData.CurrentLevel));
+            eventChannel?.RaiseEvent(new UpgradeEvent().Init(upgradeData.UpgradeDataSo.TargetStat, upgradeData.GetTotalIncreaseValue()));
 
             return true;
         }

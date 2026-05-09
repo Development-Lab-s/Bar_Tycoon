@@ -12,7 +12,7 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
     public class CodexManager : MonoBehaviour
     {
         [Header("All CockTail Type")]
-        [SerializeField] private List<CockTailSlotSo> allCockTailType;
+        [SerializeField] private CockTailSlotSos allCockTailType;
         
         [Header("Sos")]
         [SerializeField] private EventChannelSO codexChaanelSo;
@@ -20,7 +20,7 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
         
         public List<CockTailSlotSo> UnlockedCockTails { get; private set; } = new();
 
-        private readonly CockTailSaveNames _saveData = new();
+        private readonly CockTailSaveIds _saveData = new();
         private JsonSaveService _saver;
 
         public event Action<List<CockTailSlotSo>> OnAddCockTail;
@@ -44,21 +44,21 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
 
         private void LoadCockTailData()
         {
-            CockTailSaveNames cockTailSaveNames = _saver.Load<CockTailSaveNames>();
+            CockTailSaveIds cockTailSaveIds = _saver.Load<CockTailSaveIds>();
 
-            if (cockTailSaveNames == null)
+            if (cockTailSaveIds == null)
             {
                 Debug.LogWarning($"{saveFileNameSo.SavePath} 데이터 없음");
                 return;
             }
-            foreach (string cockTailSo in cockTailSaveNames.cockTailName)
+            foreach (int cockTailSo in cockTailSaveIds.cockTailId)
             {
                 CockTailSlotSo cockTail =
-                    allCockTailType.FirstOrDefault(x => x.CockTailName == cockTailSo);
+                    allCockTailType.cockTailSlotList.FirstOrDefault(x => x.CockTailId == cockTailSo);
 
                 if (cockTail != null)
                 {
-                    _saveData.cockTailName.Add(cockTail.CockTailName);
+                    _saveData.cockTailId.Add(cockTail.CockTailId);
                     UnlockedCockTails.Add(cockTail);
                 }
             }
@@ -67,9 +67,9 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
 
         private void HandleCockTailAdd(CockTailAddEvent obj)
         {
-            string cockTailName = obj.cockTailSlotSo.CockTailName;
+            int cockTailId = obj.cockTailSlotSo.CockTailId;
 
-            if (_saveData.cockTailName.Contains(cockTailName))
+            if (_saveData.cockTailId.Contains(cockTailId))
             {
                 Debug.Log("칵테일 도감 중복 무시");
                 return;
@@ -78,7 +78,7 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
             UnlockedCockTails.Add(obj.cockTailSlotSo);
             OnAddCockTail?.Invoke(UnlockedCockTails);
             
-            _saveData.cockTailName.Add(cockTailName);
+            _saveData.cockTailId.Add(cockTailId);
             _saver.Save(_saveData);
         }
     }
