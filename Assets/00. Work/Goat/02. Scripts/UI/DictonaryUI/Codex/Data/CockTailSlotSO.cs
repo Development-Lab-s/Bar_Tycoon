@@ -6,7 +6,7 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data
     public class CockTailSlotSo : ScriptableObject
     {
         [field: SerializeField] public Sprite CockTailImage { get; private set; }
-        [field: SerializeField] public string CockTailName { get; private set; }
+        [field: SerializeField] public string CockTailName { get; private set; } //I use this like id
         [field: SerializeField] public string CokcTailDescription { get; private set; }
         [field: SerializeField] public int SourNum { get; private set; }
         [field: SerializeField] public int SugarNum { get; private set; }

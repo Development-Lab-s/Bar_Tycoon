@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.CodexDetail;
@@ -20,17 +21,14 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
         {
             cockTailContent.OnClickBtn += HandleOnClickBtn;
             cockTailUI.OnClickExitBtn += HandleOnExitClickBtn;
-        }
-
-        private void Start()
-        {
-            cockTailContent.SetView(codexManager.MyCockTailSlotSos);
+            codexManager.OnAddCockTail += HandleAddCockTail;
         }
 
         private void OnDestroy()
         {
             cockTailContent.OnClickBtn -= HandleOnClickBtn;
             cockTailUI.OnClickExitBtn -= HandleOnExitClickBtn;
+            codexManager.OnAddCockTail -= HandleAddCockTail;
         }
 
         private void HandleOnClickBtn(CockTailSlotSo obj)
@@ -44,6 +42,11 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
         {
             codex.SetActive(true);
             cockTailUI.gameObject.SetActive(false);
+        }
+        
+        private void HandleAddCockTail(List<CockTailSlotSo> cockTailSOs)
+        {
+            cockTailContent.SetView(cockTailSOs);
         }
     }
 }

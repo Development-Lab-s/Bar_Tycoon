@@ -9,7 +9,7 @@ namespace _00._Work.Goat._02._Scripts.Events
         
         public CockTailAddEvent Init(CockTailSlotSo cockTailSlotSo)
         {
-            cockTailSlotSo = cockTailSlotSo;
+            this.cockTailSlotSo = cockTailSlotSo;
             return this;
         }
     }
