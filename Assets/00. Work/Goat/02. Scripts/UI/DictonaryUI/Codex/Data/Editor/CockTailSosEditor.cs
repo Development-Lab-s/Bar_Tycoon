@@ -36,8 +36,10 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data.Editor
             foreach (CockTailSlotSo cockTailSlotSo in cockTailSlotSos.cockTailSlotList)
             {
                 cockTailSlotSo.ChangeId(index);
+                EditorUtility.SetDirty(cockTailSlotSo);
                 index++;
             }
+            AssetDatabase.SaveAssets();
         }
     }
 }
