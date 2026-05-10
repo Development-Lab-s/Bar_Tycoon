@@ -18,13 +18,13 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
 
         public bool TryUpgrade(UpgradeData upgradeData)
         {
-            if (upgradeData.currentLevel >= upgradeData.upgradeDataSo.MaxLevel)
+            if (upgradeData.CurrentLevel >= upgradeData.UpgradeDataSo.MaxLevel)
             {
                 Debug.Log("이미 업그레이드가 다 됐습니다");
                 return false;
             }
 
-            int cost = upgradeData.upgradeDataSo.Costs[upgradeData.currentLevel];
+            int cost = upgradeData.UpgradeDataSo.Costs[upgradeData.CurrentLevel];
 
             if (cost > _coinSystemSo.Coin)
             {
@@ -33,7 +33,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
             }
             
             _coinSystemSo.PlusCoin(-cost);
-            upgradeData.currentLevel++;
+            upgradeData.UpgradeLevel();
             return true;
         }
     }

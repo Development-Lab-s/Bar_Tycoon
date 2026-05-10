@@ -37,7 +37,6 @@ namespace Gamelib.SoundSystem
                 Debug.LogWarning($"사운드를 찾을 수 없습니다. Type={evt.Sound.AudioType}, Index={evt.Sound.Index}");
                 return;
             }
-
             if (clipData.loop && evt.ChannelId != SoundChannelId.None)
             {
                 StopChannel(evt.ChannelId);
@@ -83,13 +82,19 @@ namespace Gamelib.SoundSystem
 
         private void StopChannel(SoundChannelId channelId)
         {
-            if (!_channelPlayers.TryGetValue(channelId, out SoundPlayer player))
-                return;
+            //if (!_channelPlayers.TryGetValue(channelId, out SoundPlayer player))
+            //    return;
 
-            player.OnSoundFinished -= HandleSoundFinish;
-            player.ForceStopSound();
-            poolManager.Push(player);
-            _channelPlayers.Remove(channelId);
+            //player.OnSoundFinished -= HandleSoundFinish;
+            //player.ForceStopSound();
+            //poolManager.Push(player);
+            //_channelPlayers.Remove(channelId);
+            if (_channelPlayers.Remove(channelId, out SoundPlayer player)) 
+            {
+                player.OnSoundFinished -= HandleSoundFinish;
+                player.ForceStopSound();
+                poolManager.Push(player);
+            }
         }
 
         private void HandleSoundFinish(SoundPlayer player)
