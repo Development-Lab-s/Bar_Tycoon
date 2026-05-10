@@ -22,16 +22,10 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
             int tileCount = tilemap.GetUsedTilesCount();
             TileBase[] usedTiles = new TileBase[tileCount];
             tilemap.GetUsedTilesNonAlloc(usedTiles);
-            foreach (TileBase tile in usedTiles)
-            {
-                Debug.Log("인스펙터 목록에 있는 타일 발견: " + tile.name);
-            }
         }
        
         public void TileSetUp(int id)
         {
-            Debug.Log("교체 실행");
-
             int tileCount = tilemap.GetUsedTilesCount();
             TileBase[] usedTiles = new TileBase[tileCount];
             tilemap.GetUsedTilesNonAlloc(usedTiles);

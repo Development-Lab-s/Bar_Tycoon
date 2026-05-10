@@ -14,12 +14,11 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
             base.Initialize(owner);
             _text = GetComponentInChildren<TextMeshPro>();
         }
-        public override void Open(bool isAutoClose = false)
+
+        public override void OnOpen()
         {
             var a = chat.Line[Random.Range(0, chat.Line.Count)];
             _text.text = a;
-            base.Open(isAutoClose);
         }
-
     }
 }
