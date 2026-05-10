@@ -12,15 +12,10 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
         public event Action<AchievementData> OnClickAchievementBtn;
         
         private readonly Dictionary<AchievementData, AchievementSlot> _achievementSlotsDataDict = new();
-        private void Start()
-        {
-            InitData();
-            ShowContent(false);
-        }
 
-        private void InitData()
+        public void InitData(List<AchievementData> achievements)
         {
-            foreach (AchievementData data  in AchievementDataManager.Instance.Achievements)
+            foreach (AchievementData data  in achievements)
             {
                 AchievementSlot slot = Instantiate(achievementSlot, transform);
                 slot.SetData(data);
@@ -28,6 +23,7 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
                 slot.gameObject.SetActive(true);
                 _achievementSlotsDataDict.Add(data, slot);
             }
+            ShowContent(false);
         }
 
         private void OnDestroy()

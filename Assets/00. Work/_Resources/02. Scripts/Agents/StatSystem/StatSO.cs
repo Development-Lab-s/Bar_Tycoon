@@ -50,6 +50,7 @@ namespace Agents.StatSystem
             _modifyValueByKey.Add(key, value);
             
             TryInvokeValueChangeEvent(Value, previous);
+            Debug.Log(Value);
         }
 
         public void RemoveModifier(object key)

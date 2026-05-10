@@ -11,7 +11,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
 
         public void UpgradeLevel()
         {
-            CurrentLevel++;
+            ChangeLevel(CurrentLevel + 1);
         }
         
         public void ChangeLevel(int level)
@@ -21,14 +21,19 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
 
         public UpgradeData(UpgradeDataSO upgradeDataSo, int currentLevel)
         {
-            this.UpgradeDataSo = upgradeDataSo;
-            this.CurrentLevel = currentLevel;
+            UpgradeDataSo = upgradeDataSo;
+            ChangeLevel(currentLevel);
         }
         
         public string GetCost()
         {
             string cost = CurrentLevel >= UpgradeDataSo.MaxLevel ? "MAX" : UpgradeDataSo.Costs[CurrentLevel].ToString();
             return cost;
+        }
+
+        public float GetTotalIncreaseValue()
+        {
+            return UpgradeDataSo.IncreaseValue * CurrentLevel;
         }
     }
 }
