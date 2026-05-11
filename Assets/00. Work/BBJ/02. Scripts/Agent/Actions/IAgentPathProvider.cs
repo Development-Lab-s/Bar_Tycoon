@@ -1,9 +1,9 @@
-using BBJ.GridSystem.Pathfind;
+using UnityEngine;
 
 namespace BBJ.Actions
 {
     public interface IAgentPathProvider
     {
-        RuntimeReference<IPathRequestManager> PathRequest { get; }
+        void SetMoveDestination(Vector3 destination);
     }
 }
