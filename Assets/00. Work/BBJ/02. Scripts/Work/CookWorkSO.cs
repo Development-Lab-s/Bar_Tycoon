@@ -1,64 +1,67 @@
 using BBJ.Actions;
+using BBJ.Modules;
 using BBJ.Order;
 using BBJ.Register;
-using BBJ.Schedule;
-using BBJ.Staff;
 using BBJ.WorkplaceSystem;
+using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using Gamelib.EventSystem;
 using System.Linq;
 using System.Threading;
-using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
 namespace BBJ.Work
 {
-    [CreateAssetMenu(fileName = "CookWork", menuName = "Tycoon/Work/Cook")]
+    [UnityEngine.CreateAssetMenu(fileName = "CookWork", menuName = "Tycoon/Work/Cook")]
     public class CookWorkSO : WorkSO
     {
-        [SerializeField] private OrderQueueSO        _readyQueue;
-        [SerializeField] private WorkplaceTypeSO     _kitchenType;
-        [SerializeField] private WorkSO              _serveWork;
+        [UnityEngine.SerializeField] private WorkplaceTypeSO     _kitchenType;
+        [UnityEngine.SerializeField] private WorkplaceRegisterSO _workplaceRegister;
 
-        [SerializeField] private WorkplaceRegisterSO workplaceRegister;
-        public override async UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
+        public override async UniTask ExecuteAsync(
+            ModuleOwner executor, GameEvent context, CancellationToken ct)
         {
             var agent = executor as IActionDispatcher;
-            var ev    = context as CookEvent;
+            var ev    = context as OrderWorkEvent;
             if (agent == null || ev == null) return;
 
-            var kitchen = workplaceRegister
+            var actor = executor;
+            if (!ev.Ticket.TryReserve(actor)) return;
+
+            var kitchen = _workplaceRegister
                 .GetCandidates(executor.transform.position, _kitchenType)
-                .FirstOrDefault(k => k.TryReserve(executor, null));
+                .FirstOrDefault(k => k.GetModule<OccupancyModule>()?.TryReserve(executor, null) == true);
 
-            if (kitchen == null) return;
+            if (kitchen == null)
+            {
+                ev.OrderManager.NotifyReleased(ev.Ticket, actor);
+                return;
+            }
 
+            var foodContext = executor.GetModule<FoodContextModule>();
             try
             {
-                await agent.MoveAsync(kitchen.GetNearestPoint(executor.transform.position), ct);
+                await agent.MoveAsync(
+                    kitchen.GetNearestPoint(executor.transform.position), ct);
                 ct.ThrowIfCancellationRequested();
 
-                ev.Ticket.ChangeState(OrderState.Cooking);
+                ev.Ticket.TryStartProgress(actor);
+
+                foodContext?.SetFood(ev.Ticket.Food);
                 await agent.DoWorkAsync(kitchen, ct);
                 ct.ThrowIfCancellationRequested();
 
-
-                //var serveStation = workplaceRegister?.GetFirst(serveStationTypeSO);
-                //Vector3 serveStationPos = serveStation.GetNearestPoint(executor.transform.position);
-                //await agent.MoveAsync(serveStationPos, ct);
-                //ct.ThrowIfCancellationRequested();
-
-                ev.Ticket.ChangeState(OrderState.Ready);
-                _readyQueue?.Enqueue(ev.Ticket);
-
-                if (_serveWork != null)
-                    ScheduleManager.Instance.Request(
-                        AgentRole.Server, _serveWork,
-                        new ServeEvent(ev.Ticket, ev.Ticket.Seat));
+                ev.OrderManager.NotifyComplete(ev.Ticket, actor);
+            }
+            catch (System.OperationCanceledException)
+            {
+                ev.OrderManager.NotifyReleased(ev.Ticket, actor);
+                throw;
             }
             finally
             {
-                kitchen.Release();
+                foodContext?.ClearFood();
+                kitchen.GetModule<OccupancyModule>()?.Release();
             }
         }
     }

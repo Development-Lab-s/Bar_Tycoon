@@ -4,3 +4,4 @@ namespace BBJ.Customer
 {
     public class CustomerLeftEvent : GameEvent { public CustomerAgent Customer; }
 }
+

@@ -1,4 +1,5 @@
 using BBJ.WorkplaceSystem;
+using BBJ.WorkplaceSystem.Modules;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace BBJ.Register
         public List<Workplace> GetCandidates(Vector3 from, int maxCount = 3)
         {
             return Registry
-                .Where(w => w.IsAvailable)
+                .Where(w => w.GetModule<OccupancyModule>()?.IsAvailable == true)
                 .OrderBy(w => Vector3.Distance(from, w.transform.position))
                 .Take(maxCount)
                 .ToList();

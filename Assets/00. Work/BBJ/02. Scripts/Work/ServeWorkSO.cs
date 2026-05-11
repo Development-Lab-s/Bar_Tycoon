@@ -1,51 +1,67 @@
 using BBJ.Actions;
 using BBJ.Customer;
 using BBJ.Order;
+using BBJ.Register;
+using BBJ.WorkplaceSystem;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using Gamelib.EventSystem;
 using System.Threading;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
-using UnityEditor.Search;
-using BBJ.Register;
-using BBJ.WorkplaceSystem;
+using System;
 
 namespace BBJ.Work
 {
     [CreateAssetMenu(fileName = "ServeWork", menuName = "Tycoon/Work/Serve")]
     public class ServeWorkSO : WorkSO
     {
-        [SerializeField] private WorkplaceRegisterSO workplaceRegister;
-        [SerializeField] private WorkplaceTypeSO serveStationTypeSO;
+        [SerializeField] private WorkplaceRegisterSO _workplaceRegister;
+        [SerializeField] private WorkplaceTypeSO     _serveStationTypeSO;
 
-        public override async UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
+        public override async UniTask ExecuteAsync(
+            ModuleOwner executor, GameEvent context, CancellationToken ct)
         {
             var agent = executor as IActionDispatcher;
-            var ev    = context as ServeEvent;
-            var seat = ev.Seat;
-            var serveStation = workplaceRegister?.GetFirst(serveStationTypeSO);
-            if (agent == null || ev == null) return;
+            var ev    = context as OrderWorkEvent;
 
-            Vector3 from = executor.transform.position;
+            if (!ev.Ticket.TryReserve(executor)) return;
 
+            var serveStation = _workplaceRegister?.GetFirst(_serveStationTypeSO);
+            if (serveStation == null)
+            {
+                ev.OrderManager.NotifyReleased(ev.Ticket, executor);
+                return;
+            }
+
+            Vector3 from            = executor.transform.position;
             Vector3 serveStationPos = serveStation.GetNearestPoint(from);
-            Vector3 seatPos         = seat.GetNearestPoint(from);
+            Vector3 seatPos         = ev.Ticket.Seat.GetNearestPoint(from);
 
-            await agent.MoveAsync(serveStationPos, ct);
-            ct.ThrowIfCancellationRequested();
+            try
+            {
+                await agent.MoveAsync(serveStationPos, ct);
+                ct.ThrowIfCancellationRequested();
 
-            await agent.MoveAsync(seatPos, ct);
-            ct.ThrowIfCancellationRequested();
+                ev.Ticket.TryStartProgress(executor);
 
-            await agent.DoWorkAsync(ev.Seat, ct);
-            ct.ThrowIfCancellationRequested();
+                await agent.MoveAsync(seatPos, ct);
+                ct.ThrowIfCancellationRequested();
 
-            ev.Ticket.ChangeState(OrderState.Served);
+                await agent.DoWorkAsync(ev.Ticket.Seat, ct);
+                ct.ThrowIfCancellationRequested();
 
-            var seatModule = ev.Seat.GetModule<SeatModule>();
-            var customer   = seatModule?.AssignedAgent as CustomerAgent;
-            customer?.OnFoodServed();
+                ev.OrderManager.NotifyComplete(ev.Ticket, executor);
+
+                SeatModule seatModule = ev.Ticket.Seat.GetModule<SeatModule>();
+                CustomerAgent customer   = seatModule?.AssignedAgent as CustomerAgent;
+                customer?.OnFoodServed();
+            }
+            catch (OperationCanceledException)
+            {
+                ev.OrderManager.NotifyReleased(ev.Ticket, executor);
+                throw;
+            }
         }
     }
 }

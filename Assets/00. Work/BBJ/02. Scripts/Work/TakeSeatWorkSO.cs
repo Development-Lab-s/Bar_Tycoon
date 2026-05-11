@@ -28,12 +28,15 @@ namespace BBJ.Work
 
             var seat = _register
                 .GetCandidates(executor.transform.position, _seatType)
-                .FirstOrDefault(s => !s.IsOccupied && s.TryReserve(executor, null));
+                .FirstOrDefault(s => {
+                    var occ = s.GetModule<OccupancyModule>();
+                    return occ != null && !occ.IsOccupied && occ.TryReserve(executor, null);
+                });
 
             if (seat == null) return;
 
             customer.AssignedSeat = seat;
-            seat.Occupy(executor);
+            seat.GetModule<OccupancyModule>()?.Occupy(executor);
 
             var dest = seat.GetNearestPoint(executor.transform.position);
             var seatModule = seat.GetModule<SeatModule>();
@@ -47,7 +50,7 @@ namespace BBJ.Work
             }
             catch (OperationCanceledException)
             {
-                seat.Release();
+                seat.GetModule<OccupancyModule>()?.Release();
                 customer.AssignedSeat = null;
                 throw;
             }

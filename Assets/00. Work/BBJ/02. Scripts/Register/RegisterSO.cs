@@ -20,6 +20,7 @@ namespace BBJ.Register
             if (_registrySet.Remove(release))
                 Remove(release);
         }
+        public virtual bool Contains(T item) => _registrySet.Contains(item);
         public virtual void Add(T occupancy) { }
         public virtual void Remove(T release) { }
         public virtual void Clear() => _registrySet.Clear();

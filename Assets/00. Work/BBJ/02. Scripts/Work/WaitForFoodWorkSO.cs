@@ -11,14 +11,14 @@ namespace BBJ.Work
     [CreateAssetMenu(fileName = "WaitForFoodWork", menuName = "Tycoon/Work/WaitForFood")]
     public class WaitForFoodWorkSO : WorkSO
     {
-        [SerializeField] private float _timeout = 120f;
+        //[SerializeField] private float _timeout = 120f;
 
         public override async UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
         {
             var customer = executor as CustomerAgent;
             var agent    = executor as IActionDispatcher;
             if (customer == null || agent == null) return;
-            await agent.WaitUntilAsync(() => customer.FoodServed, ct, _timeout);
+            await agent.WaitUntilAsync(() => customer.FoodServed, ct);
         }
     }
 }

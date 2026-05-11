@@ -6,6 +6,7 @@ namespace BBJ.Movement
     {
         public event Action OnMoveCompleted;
         public void OnPathMove(Vector3[] newPath);
+        void OnSpeedChanged(float speed);
         void StopMovement();
     }
 }

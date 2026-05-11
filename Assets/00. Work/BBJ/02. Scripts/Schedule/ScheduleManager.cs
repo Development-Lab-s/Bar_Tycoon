@@ -27,7 +27,6 @@ namespace BBJ.Schedule
         public void Request(AgentRole role, WorkSO work, GameEvent context)
         {
             var agent = _scheduleRegister.FindAvailable(role);
-
             if (agent != null)
             {
                 agent.AssignWork(work, context);
@@ -54,9 +53,9 @@ namespace BBJ.Schedule
 
         private readonly struct PendingRequest
         {
-            public readonly AgentRole  Role;
-            public readonly WorkSO     Work;
-            public readonly GameEvent  Context;
+            public readonly AgentRole Role;
+            public readonly WorkSO    Work;
+            public readonly GameEvent Context;
 
             public PendingRequest(AgentRole role, WorkSO work, GameEvent context)
             {

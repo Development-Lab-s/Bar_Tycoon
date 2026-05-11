@@ -13,19 +13,21 @@ namespace BBJ.Movement
 
         private const float ArrivalThreshold = 0.01f;
 
-        private int       _generation;
-        private int       _targetIndex;
-        private Vector3[] _path;
+        private int         _generation;
+        private int         _targetIndex;
+        private Vector3[]   _path;
+
         private ModuleOwner _owner;
 
         public bool IsMoving { get; private set; }
 
-        public void Initialize(ModuleOwner owner) => _owner = owner;
-        // IPathMovement (legacy)
-        public void SetSpeed(float speed) => this.moveSpeed = speed;
-        public void OnPathMove(Vector3[] newPath) => StartMove(newPath);
+        public void Initialize(ModuleOwner owner)
+        {
+            _owner = owner;
+        }
 
-        // IPathMover
+        public void OnSpeedChanged(float speed) => this.moveSpeed = speed;
+        public void OnPathMove(Vector3[] newPath) => StartMove(newPath);
         public void StartMove(Vector3[] path)
         {
             _path        = path;

@@ -30,7 +30,7 @@ namespace BBJ.Work
             if (seat != null)
             {
                 seat.GetModule<SeatModule>()?.ClearCustomer();
-                seat.Release();
+                seat.GetModule<OccupancyModule>()?.Release();
                 customer.AssignedSeat = null;
 
                 var exits = _register?.GetAll(_exitType);

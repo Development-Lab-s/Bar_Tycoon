@@ -1,8 +1,6 @@
 using BBJ.Actions;
 using BBJ.Customer;
 using BBJ.Register;
-using BBJ.Schedule;
-using BBJ.Staff;
 using BBJ.WorkplaceSystem;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
@@ -18,8 +16,7 @@ namespace BBJ.Work
     {
         [SerializeField] private WorkplaceRegisterSO _register;
         [SerializeField] private WorkplaceTypeSO     _counterType;
-        [SerializeField] private WorkSO              _cashierWork;
-        [SerializeField] private float               _patienceLimit = 60f;
+        //[SerializeField] private float                _patienceLimit = 60f;
 
         public override async UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
         {
@@ -27,10 +24,7 @@ namespace BBJ.Work
             var agent    = executor as IActionDispatcher;
             if (customer == null || agent == null) return;
 
-            var counters = _register?.GetAll(_counterType);
-            if (counters == null || counters.Count == 0) return;
-
-            var counter = counters[0];
+            var counter = _register?.GetFirst(_counterType);
             await agent.MoveAsync(counter.GetNearestPoint(executor.transform.position), ct);
             ct.ThrowIfCancellationRequested();
 
@@ -44,10 +38,7 @@ namespace BBJ.Work
                 () => { customer.OnPaymentDone(); paid = true; });
             payQueue.Enqueue(slot);
 
-            if (_cashierWork != null)
-                ScheduleManager.Instance.Request(AgentRole.Cashier, _cashierWork, new CashierEvent(counter));
-
-            await agent.WaitUntilAsync(() => paid, ct, _patienceLimit);
+            await agent.WaitUntilAsync(() => paid, ct);
         }
     }
 }

@@ -10,22 +10,16 @@ namespace BBJ.Work
         public TakeOrderEvent(Workplace seat) => Seat = seat;
     }
 
-    public class CookEvent : GameEvent
+    public class OrderWorkEvent : GameEvent
     {
-        public OrderTicket Ticket { get; }
-        public CookEvent(OrderTicket ticket) => Ticket = ticket;
+        public OrderTicket  Ticket       { get; }
+        public OrderManager OrderManager { get; }
+
+        public OrderWorkEvent(OrderTicket ticket, OrderManager orderManager)
+        {
+            Ticket       = ticket;
+            OrderManager = orderManager;
+        }
     }
 
-    public class ServeEvent : GameEvent
-    {
-        public OrderTicket Ticket { get; }
-        public Workplace   Seat   { get; }
-        public ServeEvent(OrderTicket ticket, Workplace seat) { Ticket = ticket; Seat = seat; }
-    }
-
-    public class CashierEvent : GameEvent
-    {
-        public Workplace Counter { get; }
-        public CashierEvent(Workplace counter) => Counter = counter;
-    }
 }

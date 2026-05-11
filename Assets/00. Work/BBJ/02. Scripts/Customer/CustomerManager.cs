@@ -43,7 +43,13 @@ namespace BBJ.Customer
             _activeCount = 0;
         }
 
-        private void Start() => StartCoroutine(SpawnLoop());
+        private void Start()
+        {
+            // SO의 런타임 딕셔너리가 플레이모드 진입 중 리셋될 수 있어 Start에서 재보장
+            if (_poolInitializer != null)
+                _poolInitializer.PoolManager.InitializePool(_poolInitializer.transform);
+            StartCoroutine(SpawnLoop());
+        }
 
         private void OnCustomerLeft(CustomerLeftEvent evt)
         {
@@ -60,7 +66,8 @@ namespace BBJ.Customer
                 if (_activeCount >= _maxCustomers) continue;
                 if (_menuItems.Count == 0 || _cycleSequence == null) continue;
 
-                SpawnCustomer();
+                try { SpawnCustomer(); }
+                catch (System.Exception e) { Debug.LogWarning("[CustomerManager] SpawnCustomer failed: " + e.Message); }
             }
         }
 
