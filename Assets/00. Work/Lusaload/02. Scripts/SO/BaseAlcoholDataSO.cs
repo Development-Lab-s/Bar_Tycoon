@@ -7,5 +7,6 @@ namespace _00._Work.Lusaload._02._Scripts.SO
     {
         public string alcoholName;
         public Sprite alcoholImage;
+        public IngredientCategory category;
     }
 }

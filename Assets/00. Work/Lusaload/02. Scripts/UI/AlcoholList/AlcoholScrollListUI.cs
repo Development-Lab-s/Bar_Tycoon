@@ -1,7 +1,7 @@
 ﻿using _00._Work.Lusaload._02._Scripts.SO;
 using UnityEngine;
 
-namespace _00._Work.Lusaload._02._Scripts.UI
+namespace _00._Work.Lusaload._02._Scripts.UI.AlcoholList
 {
     public class AlcoholScrollListUI : MonoBehaviour
     {
@@ -12,7 +12,7 @@ namespace _00._Work.Lusaload._02._Scripts.UI
 
         private void Awake()
         {
-            Debug.Assert(alcoholListSO != null, "Alcohol List 데이터가 존재하지 않습니다.");
+            Debug.Assert(alcoholListSO != null, "alcoholListSO가 비어있습니다.");
         }
 
         private void Start()
@@ -22,6 +22,8 @@ namespace _00._Work.Lusaload._02._Scripts.UI
 
         private void CreateButton()
         {
+            ClearChildren();
+            
             foreach (BaseAlcoholDataSO alcoholData in alcoholListSO.alcoholList)
             {
                 if(alcoholData == null) continue;
@@ -29,11 +31,12 @@ namespace _00._Work.Lusaload._02._Scripts.UI
                 BaseAlcoholButtonUI buttonUI = Instantiate(buttonPrefab, contentParent);
                 buttonUI.SetData(alcoholData);
             }
+            
         }
 
-        public void ClearChildren()
+        private void ClearChildren()
         {
-            for (int i = contentParent.childCount - 1; i >= 0; i--)
+            for (int i = 0; i < contentParent.childCount; i++)
             {
                 Destroy(contentParent.GetChild(i).gameObject);
             }
