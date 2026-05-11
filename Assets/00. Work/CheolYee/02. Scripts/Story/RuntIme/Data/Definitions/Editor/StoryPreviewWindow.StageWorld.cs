@@ -22,11 +22,27 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void InitWorldView(float wrapW, float wrapH)
         {
             if (_stageWorld == null || wrapW <= 0 || wrapH <= 0) return;
+            if (_isTransitionPreviewing) return;
 
+            FitCameraFrameToWrapper(wrapW, wrapH, IsRuntimePreviewMode ? RuntimeFitFill : AuthoringFitFill);
+        }
+
+        private void FitRuntimePreviewToWrapper()
+        {
+            float ww = _stageWrapper?.resolvedStyle.width ?? 0f;
+            float wh = _stageWrapper?.resolvedStyle.height ?? 0f;
+            if (ww <= 0f || wh <= 0f)
+                return;
+
+            FitCameraFrameToWrapper(ww, wh, RuntimeFitFill);
+        }
+
+        private void FitCameraFrameToWrapper(float wrapW, float wrapH, float fill)
+        {
             float camH = DefaultUnitPixels / GetRenderAspect();
 
-            // 카메라 프레임이 래퍼 88% 이내에 들어오는 최대 zoom
-            float fitZoom  = Mathf.Min((wrapW * 0.88f) / DefaultUnitPixels, (wrapH * 0.88f) / camH);
+            // 카메라 프레임이 래퍼 안에 항상 들어오는 최대 zoom.
+            float fitZoom  = Mathf.Min((wrapW * fill) / DefaultUnitPixels, (wrapH * fill) / camH);
             fitZoom = Mathf.Min(fitZoom, 1f);
             _stageZoom     = Mathf.Clamp(fitZoom, MinZoom, MaxZoom);
 
@@ -52,10 +68,21 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             float camH = DefaultUnitPixels / GetRenderAspect();
 
+            if (_stageWorld != null)
+            {
+                _stageWorld.style.width = DefaultUnitPixels;
+                _stageWorld.style.height = camH;
+            }
+
             if (_cameraFrameGuide != null)
             {
                 _cameraFrameGuide.style.width  = DefaultUnitPixels;
                 _cameraFrameGuide.style.height = camH;
+            }
+            if (_focusPreviewFrameGuide != null)
+            {
+                _focusPreviewFrameGuide.style.width = DefaultUnitPixels;
+                _focusPreviewFrameGuide.style.height = camH;
             }
             if (_backgroundLayer != null)
             {
@@ -65,7 +92,53 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _backgroundLayer.style.height = camH;
             }
 
+            ApplyCameraFrameModeStyles();
+            RefreshFocusPreviewGuide();
             RefreshBackgroundLayer();
+        }
+
+        private void ApplyCameraFrameModeStyles()
+        {
+            bool isRuntime = IsRuntimePreviewMode;
+
+            if (_stageWrapper != null)
+                _stageWrapper.style.backgroundColor = new StyleColor(isRuntime ? Color.black : new Color(0.04f, 0.04f, 0.05f));
+
+            if (_stageWorld != null)
+                _stageWorld.style.overflow = isRuntime ? Overflow.Hidden : Overflow.Visible;
+
+            if (_cameraFrameGuide != null)
+            {
+                _cameraFrameGuide.style.overflow = isRuntime ? Overflow.Hidden : Overflow.Visible;
+                float borderWidth = isRuntime ? 0f : 2f;
+                _cameraFrameGuide.style.borderTopWidth = borderWidth;
+                _cameraFrameGuide.style.borderRightWidth = borderWidth;
+                _cameraFrameGuide.style.borderBottomWidth = borderWidth;
+                _cameraFrameGuide.style.borderLeftWidth = borderWidth;
+            }
+
+            if (_focusPreviewFrameGuide != null)
+            {
+                _focusPreviewFrameGuide.style.display = !isRuntime && !string.IsNullOrWhiteSpace(ResolveCurrentPreviewCameraFocusTarget())
+                    ? DisplayStyle.Flex
+                    : DisplayStyle.None;
+            }
+        }
+
+        private void RefreshFocusPreviewGuide()
+        {
+            if (_focusPreviewFrameGuide == null)
+                return;
+
+            Vector2 focusOffset = ResolvePreviewCameraFocusOffset();
+            float camH = DefaultUnitPixels / GetRenderAspect();
+            _focusPreviewFrameGuide.style.left = focusOffset.x * DefaultUnitPixels;
+            _focusPreviewFrameGuide.style.top = 0f;
+            _focusPreviewFrameGuide.style.width = DefaultUnitPixels;
+            _focusPreviewFrameGuide.style.height = camH;
+            _focusPreviewFrameGuide.style.display = IsStageAuthoringMode && !string.IsNullOrWhiteSpace(ResolveCurrentPreviewCameraFocusTarget())
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
         }
 
         private float GetRenderAspect()

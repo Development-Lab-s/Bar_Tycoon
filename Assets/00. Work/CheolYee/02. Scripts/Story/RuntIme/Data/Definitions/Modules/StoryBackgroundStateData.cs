@@ -27,6 +27,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
 
         public int sortOrder = -100;
 
+        [Tooltip("Transition used when the background changes into this line state.")]
+        public StoryEnterMotionType transitionMotion = StoryEnterMotionType.FadeIn;
+
+        [Range(0f, 3f)]
+        public float transitionDuration = 0.35f;
+
         public StoryEnterMotionType enterMotion = StoryEnterMotionType.FadeIn;
 
         [Range(0f, 3f)]

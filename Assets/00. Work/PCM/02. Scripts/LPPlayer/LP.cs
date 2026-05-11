@@ -3,42 +3,38 @@ using Gamelib.EventSystem;
 using Gamelib.SoundSystem;
 using LitMotion;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Assets._00._Work.PCM._02._Scripts._TileChange
 {
     public class LP : MonoBehaviour, ILP
     {
-        [SerializeField] private EventChannelSO EventChannel;
-        [SerializeField] private Ease easeType;
-        private RectTransform rect;
-        public BgmSounds sound { get; set; }
+        [SerializeField] protected EventChannelSO EventChannel;
+        [SerializeField] protected Ease easeType;
+        [SerializeField] protected SoundListSo SoundList;
+        protected RectTransform rect;
 
-        private MotionHandle moveMotion;
-        private MotionHandle rotateMotion;
-        private void Awake()
+        protected MotionHandle moveMotion;
+        protected MotionHandle rotateMotion;
+ 
+        public virtual void Awake()
         {
             rect = GetComponent<RectTransform>();
-            rect.anchoredPosition = Vector2.zero;
+            ApplyPosition(); 
         }
-        public void Active()
+        public virtual void ApplyPosition()
+        {
+            rect.anchoredPosition = new Vector2(200, 0);
+        }
+        public virtual void Active()
         {
             // 기존에 실행 중인 동작이 있다면 안전하게 취소
             StopExistingMotions();
-
-            rect.anchoredPosition = Vector2.zero;
-            rect.localRotation = Quaternion.identity;
+            //rect.localRotation = Quaternion.identity;
 
             // 1. 이동 애니메이션
-            moveMotion = LMotion.Create(0f, rect.rect.size.x * 0.75f, 0.5f)
-                .WithEase(easeType).WithOnComplete
-                (() =>
-                {
-                    EventChannel.RaiseEvent(new PlaySoundEvent(sound, Vector3.zero, SoundChannelId.Bgm));
-                })
-                .Bind(x =>
-                {
-                    rect.anchoredPosition = new Vector2(x, rect.anchoredPosition.y);
-                });
+            
+            
             rotateMotion = LMotion.Create(0f, -360f, 2f)
                 .WithLoops(-1, LoopType.Restart)
                 .Bind(angle =>
@@ -46,11 +42,18 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
                     rect.localRotation = Quaternion.Euler(0, 0, angle);
                 });
         }
-
-        public void Stop()
+        public virtual void PlaySound(BgmSounds id) 
+        {
+            EventChannel.RaiseEvent(new StopSoundEvent(SoundChannelId.Bgm));
+            EventChannel.RaiseEvent(new PlaySoundEvent(id, Vector3.zero, SoundChannelId.Bgm));
+        }
+        public virtual string NameChosing(int id)
+        {
+           return SoundList.sounds[id].name;
+        }
+        public virtual void Stop()
         {
             StopExistingMotions();
-            EventChannel.RaiseEvent(new StopSoundEvent(SoundChannelId.Bgm));
 
             float currentZ = rect.localRotation.eulerAngles.z;
             if (currentZ > 180f) currentZ -= 360f;
@@ -69,7 +72,7 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
             });
         }
 
-        private void StopExistingMotions()
+        public virtual void StopExistingMotions()
         {
             if (moveMotion.IsActive()) moveMotion.Cancel();
             if (rotateMotion.IsActive()) rotateMotion.Cancel();

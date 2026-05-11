@@ -1,4 +1,5 @@
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -23,7 +24,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private static VisualElement CreateBackgroundElement(StoryBackgroundStateData state)
         {
-            var sprite = state.background != null ? state.background.PreviewSprite : null;
+            var sprite = StoryStageVisualSizing.ResolveBackgroundSprite(state);
             if (sprite != null)
             {
                 return new VisualElement
@@ -84,19 +85,33 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             float camW = DefaultUnitPixels;
             float camH = DefaultUnitPixels / GetRenderAspect();
-            Vector2 scale = ResolveNonZeroScale(state.EffectiveScale);
-            Vector2 offset = state.EffectiveOffset;
-            Vector2 pivot = state.EffectivePivot;
+            StoryBackgroundStateData sample = state.ShallowClone();
+            sample.normalizedOffset += ResolvePreviewBackgroundParallaxOffset(state);
+            Rect rect = StoryStageVisualSizing.CalculateBackgroundPreviewRect(
+                sample,
+                StoryStageVisualSizing.ResolveBackgroundSprite(sample),
+                new Vector2(camW, camH),
+                ResolvePreviewCameraWorldWidth());
 
-            float width = camW * Mathf.Abs(scale.x);
-            float height = camH * Mathf.Abs(scale.y);
-            float anchorX = camW * 0.5f + offset.x * camW;
-            float anchorY = camH * 0.5f - offset.y * camH;
+            el.style.width = rect.width;
+            el.style.height = rect.height;
+            el.style.left = rect.x;
+            el.style.top = rect.y;
+        }
 
-            el.style.width = width;
-            el.style.height = height;
-            el.style.left = anchorX - width * Mathf.Clamp01(pivot.x);
-            el.style.top = anchorY - height * Mathf.Clamp01(pivot.y);
+        private Vector2 ResolvePreviewBackgroundParallaxOffset(StoryBackgroundStateData state)
+        {
+            if (!ShouldApplyCameraFocusToRenderedPreview())
+                return Vector2.zero;
+
+            if (state?.background == null)
+                return Vector2.zero;
+
+            Vector2 cameraOffset = ResolvePreviewCameraFocusOffset();
+            if (cameraOffset == Vector2.zero)
+                return Vector2.zero;
+
+            return -cameraOffset * state.background.ParallaxFactor;
         }
 
         private static Vector2 ResolveNonZeroScale(Vector2 scale) =>

@@ -26,7 +26,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
     /// 실제 런타임은 CharacterEnterModuleExecutor 가 처리한다.
     /// 프리뷰 패널에서도 이 데이터를 직접 표시한다.
     /// </summary>
-    [StoryModuleMetadata("Character Enter", category: "Character", accentColorHex: "#E67E22", sortPriority: 5)]
+    [StoryModuleMetadata("Character Enter", category: "Character", accentColorHex: "#E67E22", sortPriority: 5, isDeprecated: true)]
     [CreateAssetMenu(fileName = "CharacterEnterModule", menuName = "Story/Modules/Character Enter")]
     public sealed class StoryCharacterEnterModuleSO : StoryModuleSO
     {

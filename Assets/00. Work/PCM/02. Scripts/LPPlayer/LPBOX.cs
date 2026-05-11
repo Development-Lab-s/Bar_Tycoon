@@ -1,26 +1,46 @@
-using _00._Work._Resources._02._Scripts.Modules;
-using Assets._00._Work.PCM._02._Scripts._TileChange;
+using Assets._00._Work.PCM._02._Scripts.LPPlayer;
 using Gamelib.SoundSystem;
 using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-public class LPBOX : MonoBehaviour, ILPBOX
+public class LPBOX : MonoBehaviour
 {
     public event Action<int> OnLPClicked;
     private int _myId;
-    private LP _lpScript;
-    private Button button;
-
+    private SideLp _lpScript;
+    private Button _button;
+    private bool _isOpen = false;
     public void SetUp(int id)
     {
-        _lpScript = GetComponentInChildren<LP>();
-        button = GetComponent<Button>();
-        button.onClick.AddListener(() => OnLPClicked?.Invoke(_myId));
         _myId = id;
-        if (_lpScript != null) _lpScript.sound = (BgmSounds)id;
+        _lpScript = GetComponentInChildren<SideLp>();
+        _button = GetComponent<Button>();
+
+        _button.onClick.RemoveAllListeners();
+        _button.onClick.AddListener(() => OnLPClicked?.Invoke(_myId));
+
+        // LP 스크립트에 사운드 ID 미리 전달
+        //if (_lpScript != null) _lpScript.sound = (BgmSounds)id;
     }
-    public void Select() => _lpScript.Active();
-    public void Stop() => _lpScript.Stop();
+    public void Select()
+    {
+        if (_isOpen) return;
+        if (_lpScript != null)
+        {
+            _isOpen = true;
+            _lpScript.Active();
+            _lpScript.PlaySound((BgmSounds)_myId);
+        }
+    }
+    public string ChangeName()
+    {
+        return _lpScript.NameChosing(_myId);
+    }
+
+    public void StopLP()
+    {
+        _lpScript.Stop();
+        _isOpen = false;
+    }
 }

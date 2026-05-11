@@ -3,7 +3,6 @@ using Gamelib.SoundSystem;
 
 public interface ILP
 {
-    BgmSounds sound { get; set; }
     void Active();
     void Stop();
 }

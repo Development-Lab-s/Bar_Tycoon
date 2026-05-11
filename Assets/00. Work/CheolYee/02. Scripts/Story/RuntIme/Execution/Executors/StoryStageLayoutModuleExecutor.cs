@@ -23,6 +23,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
         [Tooltip("IStoryStageDirector 구현체 (BasicStoryCharacterStageDirector 등)")]
         [SerializeField] private MonoBehaviour stageDirectorSource;
 
+        [SerializeField] private bool debugExecution;
+
         private IStoryStageDirector _stageDirector;
 
         private void Awake()
@@ -30,7 +32,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
             _stageDirector = stageDirectorSource as IStoryStageDirector;
             if (_stageDirector == null)
                 Debug.LogWarning($"[{nameof(StoryStageLayoutModuleExecutor)}] " +
-                                 "stageDirectorSource 가 IStoryStageDirector 를 구현하지 않습니다.", this);
+                                 $"stageDirectorSource({(stageDirectorSource != null ? stageDirectorSource.GetType().Name : "null")}) " +
+                                 "가 IStoryStageDirector 를 구현하지 않거나 연결되지 않았습니다.", this);
+            else if (debugExecution)
+                Debug.Log($"[StageLayoutExecutor] Awake: stageDirector={_stageDirector.GetType().Name}", this);
         }
 
         public bool CanExecute(StoryModuleSO module) => module is StoryStageLayoutModuleSO;
@@ -38,6 +43,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
         public UniTask ExecuteAsync(StoryModuleSO module, StorySession session, CancellationToken ct)
         {
             var layout = (StoryStageLayoutModuleSO)module;
+
+            if (debugExecution)
+                Debug.Log($"[StageLayoutExecutor] ExecuteAsync: layout='{layout.name}'  focusTarget='{layout.CameraFocusTarget}'  directorNull={_stageDirector == null}", this);
 
             if (_stageDirector == null)
             {
@@ -60,7 +68,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
                 return UniTask.CompletedTask;
             }
 
-            return _stageDirector.ApplyStageStateAsync(layout.Actors, ct);
+            return _stageDirector.ApplyStageLayoutAsync(layout, ct);
         }
     }
 }

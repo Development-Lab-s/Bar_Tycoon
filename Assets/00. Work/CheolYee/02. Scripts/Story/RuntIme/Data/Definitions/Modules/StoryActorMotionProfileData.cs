@@ -7,7 +7,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
     {
         Instant,
         Linear,
+        EaseIn,
+        EaseOut,
         EaseInOut,
+        SmoothStep,
+        SmootherStep,
     }
 
     [Serializable]

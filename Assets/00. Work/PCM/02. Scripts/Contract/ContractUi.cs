@@ -12,4 +12,9 @@ public class ContractUi : AbstructContractPopUp
     {
         base.AfterInit();
     }
+
+    public override void OnOpen()
+    {
+       
+    }
 }

@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using System.Threading;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.CameraSystems;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.Util;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using Cysharp.Threading.Tasks;
@@ -9,194 +12,218 @@ using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 {
+    /// <summary>
+    /// Runtime stage coordinator.
+    ///
+    /// This class intentionally does not create actors/backgrounds, sample transition data,
+    /// or touch Cinemachine directly. It coordinates small runtime components.
+    /// </summary>
     public sealed class BasicStoryCharacterStageDirector : MonoBehaviour, ICharacterStageDirector, IStoryStageDirector
     {
-        [Header("Roots")]
-        [SerializeField] private Transform actorRoot;
-        [SerializeField] private Transform leftAnchor;
-        [SerializeField] private Transform centerAnchor;
-        [SerializeField] private Transform rightAnchor;
+        private const float ImmediateTransitionThreshold = 0.05f;
 
-        [Header("Default Spawn")]
-        [SerializeField] private StageAnchorType defaultSpawnAnchor = StageAnchorType.Center;
+        [Header("Runtime Components")]
+        [SerializeField] private StoryActorStageRuntime actorRuntime;
+        [SerializeField] private StoryBackgroundStageRuntime backgroundRuntime;
+        [SerializeField] private StoryStageCameraRuntime cameraRuntime;
 
-        [Header("Focus")]
-        [SerializeField] private Color focusColor = Color.white;
-        [SerializeField] private Color dimColor = new Color(0.55f, 0.55f, 0.55f, 1f);
+        private readonly StoryStageTransitionRuntime _transitionRuntime = new();
 
-        private readonly Dictionary<string, ActorEntry> _actors = new();
-
-        public UniTask EnsureSpeakerVisibleAsync(StoryLineSO line, System.Threading.CancellationToken ct)
+        public UniTask EnsureSpeakerVisibleAsync(StoryLineSO line, CancellationToken ct)
         {
-            if (line == null || line.Speaker == null)
-                return UniTask.CompletedTask;
-
-            string characterId = line.Speaker.CharacterId;
-            if (string.IsNullOrWhiteSpace(characterId))
-                return UniTask.CompletedTask;
-
-            if (_actors.ContainsKey(characterId))
-                return UniTask.CompletedTask;
-
-            GameObject prefab = line.Speaker.DefaultActorPrefab;
-            if (prefab == null)
-            {
-                Debug.LogWarning($"Character '{line.Speaker.name}' has no default actor prefab.");
-                return UniTask.CompletedTask;
-            }
-
-            Transform parent = actorRoot != null ? actorRoot : transform;
-            Transform anchor = GetAnchor(defaultSpawnAnchor);
-
-            GameObject instance = Instantiate(prefab, parent);
-
-            if (anchor != null)
-            {
-                instance.transform.position = anchor.position;
-                instance.transform.rotation = anchor.rotation;
-            }
-
-            ActorEntry entry = new ActorEntry(instance, line.Speaker);
-            entry.ApplyTint(dimColor);
-
-            _actors[characterId] = entry;
-            return UniTask.CompletedTask;
+            return ResolveActorRuntime().EnsureSpeakerVisibleAsync(
+                line,
+                ResolveStageReferenceMetrics(),
+                ct);
         }
 
         public void ApplySpeakerFocus(StoryLineSO line)
         {
-            string focusedId = line != null && line.Speaker != null
-                ? line.Speaker.CharacterId
-                : string.Empty;
-
-            foreach (KeyValuePair<string, ActorEntry> pair in _actors)
-            {
-                bool isFocused = !string.IsNullOrWhiteSpace(focusedId) && pair.Key == focusedId;
-
-                pair.Value.ApplyTint(isFocused ? focusColor : dimColor);
-
-                if (pair.Value.Instance != null)
-                {
-                    if (isFocused)
-                        pair.Value.Instance.transform.SetAsLastSibling();
-                }
-            }
+            ResolveActorRuntime().ApplySpeakerFocus(line);
         }
 
         public void ClearAll()
         {
-            foreach (KeyValuePair<string, ActorEntry> pair in _actors)
-            {
-                if (pair.Value.Instance != null)
-                    Destroy(pair.Value.Instance);
-            }
-
-            _actors.Clear();
+            ResolveActorRuntime().ClearAll();
+            ResolveBackgroundRuntime().ClearAll();
         }
 
         // ── IStoryStageDirector ───────────────────────────────────────────────
 
+        public async UniTask ApplyStageLayoutAsync(StoryStageLayoutModuleSO layout, CancellationToken ct)
+        {
+            if (layout == null)
+            {
+                await ApplyStageStateAsync(null, ct);
+                return;
+            }
+
+            Dictionary<string, StoryActorStateData> targetMap = _transitionRuntime.BuildTargetMap(layout.Actors);
+            Dictionary<string, StoryActorTrackData> trackMap = _transitionRuntime.BuildTrackMap(layout.ActorTracks);
+            Dictionary<string, StoryActorStateData> fromMap = ResolveActorRuntime().BuildCurrentActorStateMap();
+            StoryBackgroundStateData fromBackground = ResolveBackgroundRuntime().BuildCurrentStateClone();
+            bool useCameraTrack = _transitionRuntime.HasAuthoredCameraTrack(layout.CameraTrack);
+
+            float duration = _transitionRuntime.CalculateDuration(
+                fromMap,
+                targetMap,
+                trackMap,
+                fromBackground,
+                layout.Background,
+                layout.BackgroundTrack,
+                layout.CameraTrack,
+                useCameraTrack);
+
+            if (duration <= ImmediateTransitionThreshold)
+            {
+                ApplyStageSamples(
+                    fromMap,
+                    targetMap,
+                    trackMap,
+                    fromBackground,
+                    layout,
+                    useCameraTrack,
+                    previousCameraTime: 0f,
+                    currentTime: duration,
+                    applyCamera: true);
+
+                return;
+            }
+
+            await PlayStageTransitionAsync(
+                layout,
+                fromMap,
+                targetMap,
+                trackMap,
+                fromBackground,
+                useCameraTrack,
+                duration,
+                ct);
+        }
+
         public UniTask ApplyStageStateAsync(IReadOnlyList<StoryActorStateData> targetActors, CancellationToken ct)
         {
-            // 타겟 세트 구성
-            var targetMap = new Dictionary<string, StoryActorStateData>();
-            foreach (var data in targetActors)
-            {
-                if (data == null) continue;
-                string id = data.ResolvedActorKey;
-                if (!string.IsNullOrWhiteSpace(id))
-                    targetMap[id] = data;
-            }
-
-            // 타겟에 없는 액터 퇴장
-            var toExit = new List<string>();
-            foreach (var id in _actors.Keys)
-                if (!targetMap.ContainsKey(id)) toExit.Add(id);
-            foreach (var id in toExit)
-            {
-                if (_actors.TryGetValue(id, out var e) && e.Instance != null)
-                    Destroy(e.Instance);
-                _actors.Remove(id);
-            }
-
-            // 타겟 액터 등장 / 이동 / 포커스 적용
-            Transform parent = actorRoot != null ? actorRoot : transform;
-            foreach (var kvp in targetMap)
-            {
-                var data = kvp.Value;
-                var charId = kvp.Key;
-
-                if (!_actors.ContainsKey(charId))
-                {
-                    // 신규 등장
-                    var prefab = data.actor != null ? data.actor.DefaultActorPrefab : null;
-                    if (prefab == null) continue;
-                    var instance = Instantiate(prefab, parent);
-                    var entry = new ActorEntry(instance, data.actor);
-                    _actors[charId] = entry;
-                }
-
-                var actorEntry = _actors[charId];
-                if (actorEntry.Instance != null)
-                {
-                    actorEntry.Instance.transform.position = NormPosToWorld(data);
-                    Vector2 effectiveScale = data.EffectiveScale;
-                    actorEntry.Instance.transform.localScale = new Vector3(
-                        actorEntry.BaseScale.x * effectiveScale.x,
-                        actorEntry.BaseScale.y * effectiveScale.y,
-                        actorEntry.BaseScale.z);
-                    actorEntry.Instance.SetActive(data.visible);
-                    actorEntry.ApplyTint(data.focused ? focusColor : dimColor);
-                }
-            }
-
+            ApplyActorSamples(_transitionRuntime.BuildTargetMap(targetActors));
             return UniTask.CompletedTask;
         }
 
-        private Vector3 NormPosToWorld(StoryActorStateData data)
+        private async UniTask PlayStageTransitionAsync(
+            StoryStageLayoutModuleSO layout,
+            Dictionary<string, StoryActorStateData> fromMap,
+            Dictionary<string, StoryActorStateData> targetMap,
+            Dictionary<string, StoryActorTrackData> trackMap,
+            StoryBackgroundStateData fromBackground,
+            bool useCameraTrack,
+            float duration,
+            CancellationToken ct)
         {
-            Vector3 left  = leftAnchor  != null ? leftAnchor.position  : new Vector3(-3f, 0f, 0f);
-            Vector3 right = rightAnchor != null ? rightAnchor.position : new Vector3( 3f, 0f, 0f);
-            Vector2 normPos = data.normalizedPosition + data.EffectiveOffset;
-            return Vector3.Lerp(left, right, normPos.x);
-        }
+            float previousCameraTime = 0f;
 
-        // ─────────────────────────────────────────────────────────────────────
+            ApplyStageSamples(
+                fromMap,
+                targetMap,
+                trackMap,
+                fromBackground,
+                layout,
+                useCameraTrack,
+                previousCameraTime: 0f,
+                currentTime: 0f,
+                applyCamera: true);
 
-        private Transform GetAnchor(StageAnchorType anchorType)
-        {
-            return anchorType switch
+            float elapsed = 0f;
+            while (elapsed < duration)
             {
-                StageAnchorType.Left => leftAnchor,
-                StageAnchorType.Center => centerAnchor,
-                StageAnchorType.Right => rightAnchor,
-                _ => centerAnchor,
-            };
-        }
+                ct.ThrowIfCancellationRequested();
 
-        private sealed class ActorEntry
-        {
-            public GameObject Instance { get; }
-            public Vector3 BaseScale { get; }
-            private readonly SpriteRenderer[] _spriteRenderers;
+                ApplyStageSamples(
+                    fromMap,
+                    targetMap,
+                    trackMap,
+                    fromBackground,
+                    layout,
+                    useCameraTrack,
+                    previousCameraTime,
+                    elapsed,
+                    applyCamera: useCameraTrack);
 
-            public ActorEntry(GameObject instance, CharacterDefinitionSO character)
-            {
-                Instance = instance;
-                BaseScale = instance != null ? instance.transform.localScale : Vector3.one;
-                _spriteRenderers = instance != null
-                    ? instance.GetComponentsInChildren<SpriteRenderer>(true)
-                    : new SpriteRenderer[0];
+                if (useCameraTrack)
+                    previousCameraTime = elapsed;
+
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                elapsed += Time.deltaTime;
             }
 
-            public void ApplyTint(Color color)
-            {
-                for (int i = 0; i < _spriteRenderers.Length; i++)
-                {
-                    if (_spriteRenderers[i] != null)
-                        _spriteRenderers[i].color = color;
-                }
-            }
+            ApplyStageSamples(
+                fromMap,
+                targetMap,
+                trackMap,
+                fromBackground,
+                layout,
+                useCameraTrack,
+                previousCameraTime,
+                duration,
+                applyCamera: true);
+        }
+
+        private void ApplyStageSamples(
+            Dictionary<string, StoryActorStateData> fromMap,
+            Dictionary<string, StoryActorStateData> targetMap,
+            Dictionary<string, StoryActorTrackData> trackMap,
+            StoryBackgroundStateData fromBackground,
+            StoryStageLayoutModuleSO layout,
+            bool useCameraTrack,
+            float previousCameraTime,
+            float currentTime,
+            bool applyCamera)
+        {
+            ApplyActorSamples(_transitionRuntime.SampleActors(fromMap, targetMap, trackMap, currentTime));
+            ApplyBackgroundState(_transitionRuntime.SampleBackground(
+                fromBackground,
+                layout.Background,
+                layout.BackgroundTrack,
+                currentTime));
+            if (applyCamera)
+                ApplyCamera(layout, useCameraTrack, previousCameraTime, currentTime);
+        }
+
+        private void ApplyActorSamples(Dictionary<string, StoryActorStateData> targetMap)
+        {
+            ResolveActorRuntime().ApplySamples(targetMap, ResolveStageReferenceMetrics());
+        }
+
+        private void ApplyBackgroundState(StoryBackgroundStateData state)
+        {
+            ResolveBackgroundRuntime().ApplyState(state);
+        }
+
+        private StoryStageCameraMetrics ResolveStageReferenceMetrics()
+        {
+            return ResolveCameraRuntime().ResolveStageReferenceMetrics();
+        }
+
+        private void ApplyCamera(StoryStageLayoutModuleSO layout, bool useCameraTrack, float previousTime, float currentTime)
+        {
+            ResolveCameraRuntime().ApplyCamera(
+                layout,
+                useCameraTrack,
+                previousTime,
+                currentTime,
+                _transitionRuntime);
+        }
+
+        private StoryActorStageRuntime ResolveActorRuntime()
+        {
+            return StoryRuntimeComponentResolver.GetOnSelfOrAdd(this, ref actorRuntime);
+        }
+
+        private StoryBackgroundStageRuntime ResolveBackgroundRuntime()
+        {
+            return StoryRuntimeComponentResolver.GetOnSelfOrAdd(this, ref backgroundRuntime);
+        }
+
+        private StoryStageCameraRuntime ResolveCameraRuntime()
+        {
+            return StoryRuntimeComponentResolver.GetOnSelfOrAdd(this, ref cameraRuntime);
         }
     }
 }

@@ -1,6 +1,7 @@
 using _00._Work._Resources._02._Scripts.Modules;
 using LitMotion;
 using LitMotion.Extensions;
+using Spine.Unity;
 using System.Collections;
 using UnityEngine;
 
@@ -16,6 +17,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         private Vector3 _originScale;
         private Coroutine _timerCoroutine;
         private MotionHandle _motionHandle;
+        private bool isOpen = false;
         public virtual void Initialize(ModuleOwner owner)
         {
             _owner = owner; 
@@ -26,20 +28,32 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
             transform.localScale = Vector3.zero;
             gameObject.SetActive(false);
         }
-        public virtual void Open(bool isAutoClose = false)
+        public void Open(bool isAutoClose = false)
         {
+            if (isOpen) return;
+            isOpen = true;
             if (_motionHandle.IsActive()) _motionHandle.Cancel();
             if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
 
-            gameObject.SetActive(true);
-            AnimateScale(true, isAutoClose); //true면 몇 초 뒤 닫힘
+            // 이미 켜져 있다면 다시 켜지 않음 (Re-enable 방지)
+            if (!gameObject.activeSelf)
+            {
+                OnOpen();
+                gameObject.SetActive(true);
+                    
+            }
+
+            AnimateScale(true, isAutoClose);
+            
         }
+        public abstract void OnOpen();
 
         // 외부에서 버튼 등으로 직접 닫고 싶을 때 호출
         public virtual void Close()
         {
             if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
             AnimateScale(false);
+            isOpen = false;
         }
 
         private void AnimateScale(bool isAppearing, bool isAutoClose = false)
