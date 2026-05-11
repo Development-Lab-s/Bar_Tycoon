@@ -12,9 +12,9 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI.CodexDetail
         [SerializeField] private Image cockTailImage;
         [SerializeField] private TextMeshProUGUI cockTailName;
         [SerializeField] private TextMeshProUGUI cokcTailDescription;
-        [SerializeField] private TextMeshProUGUI sourText;
-        [SerializeField] private TextMeshProUGUI sugarText;
-        [SerializeField] private TextMeshProUGUI bitterText;
+        [SerializeField] private Slider sourSlider;
+        [SerializeField] private Slider sugarSlider;
+        [SerializeField] private Slider bitterSlider;
 
         public event Action OnClickExitBtn;
 
@@ -24,18 +24,14 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI.CodexDetail
             cockTailName.text = slotSo.CockTailName;
             cokcTailDescription.text = slotSo.CokcTailDescription;
             
-            SetScore(slotSo.SourNum, sourText);
-            SetScore(slotSo.SugarNum, sugarText);
-            SetScore(slotSo.BitterNum, bitterText);
+            SetScore(slotSo.SourNum, sourSlider);
+            SetScore(slotSo.SugarNum, sugarSlider);
+            SetScore(slotSo.BitterNum, bitterSlider);
         }
 
-        private void SetScore(int num, TextMeshProUGUI text)
+        private void SetScore(int num, Slider slider)
         {
-            text.text = "";
-            for (int i = 0; i < num; i++)
-            {
-                text.text += "●";
-            }
+            slider.value = num;
         }
         
         public void ClickExitBtn()

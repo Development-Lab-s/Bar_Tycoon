@@ -23,13 +23,28 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
             cockTailUI.OnClickExitBtn += HandleOnExitClickBtn;
             codexManager.OnAddCockTail += HandleAddCockTail;
         }
-
+        
         private void OnDestroy()
         {
             cockTailContent.OnClickBtn -= HandleOnClickBtn;
             cockTailUI.OnClickExitBtn -= HandleOnExitClickBtn;
             codexManager.OnAddCockTail -= HandleAddCockTail;
         }
+        
+        [ContextMenu("Show UI")]
+        public void OpenCodex() // 도감 활성화 할때 이거 쓰셈
+        {
+            codex.SetActive(true);
+            cockTailUI.gameObject.SetActive(false);
+
+            cockTailContent.SetView(codexManager.UnlockedCockTails);
+        }
+        
+        private void HandleEnable()
+        {
+            cockTailContent.SetView(codexManager.UnlockedCockTails);
+        }
+
 
         private void HandleOnClickBtn(CockTailSlotSo obj)
         {
@@ -47,6 +62,11 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
         private void HandleAddCockTail(List<CockTailSlotSo> cockTailSOs)
         {
             cockTailContent.SetView(cockTailSOs);
+        }
+
+        public void ExitBtnClick()
+        {
+            codex.SetActive(false);
         }
     }
 }
