@@ -8,9 +8,10 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
     public class UpgradeUICanvas : MonoBehaviour
     {
         [Header("Reference")]
-        [SerializeField] private ButtonCanvas buttonCanvas;
+        [SerializeField] private ButtonCanvasChanger buttonCanvasChanger;
         [SerializeField] private UpgradeUIContent content;
         [SerializeField] private UpgradeManager upgradeManager;
+        [SerializeField] private GameObject upgradeObject;
         
         private UpgradeCategorySelector _categorySelector;
 
@@ -18,13 +19,13 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
         {
             _categorySelector = new UpgradeCategorySelector(upgradeManager.UpgradeDataList);
             
-            buttonCanvas.OnClickButton += HandleClickButton;
+            buttonCanvasChanger.OnClickButton += HandleClickButton;
             content.OnClickUpgrade += HandleClickUpgrade;
         }
 
         private void OnDestroy()
         {
-            buttonCanvas.OnClickButton -= HandleClickButton;
+            buttonCanvasChanger.OnClickButton -= HandleClickButton;
             content.OnClickUpgrade -= HandleClickUpgrade;
         }
 
@@ -47,6 +48,17 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
             content.ResetSlots();
             if (_categorySelector.CurrentDataList != null)
                 content.ShowUpgradeList(_categorySelector.CurrentDataList);
+        }
+
+        [ContextMenu("Show UI")]
+        public void ShowUI()
+        {
+            upgradeObject.SetActive(true);
+        }
+
+        public void ClickExitBtn()
+        {
+            upgradeObject.SetActive(false);
         }
     }
 }

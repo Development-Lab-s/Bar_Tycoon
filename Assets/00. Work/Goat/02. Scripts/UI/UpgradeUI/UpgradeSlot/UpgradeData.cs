@@ -24,6 +24,16 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
             UpgradeDataSo = upgradeDataSo;
             ChangeLevel(currentLevel);
         }
+
+        public string GetLevel(int nextLevel)
+        {
+            string level = CurrentLevel + nextLevel >= UpgradeDataSo.MaxLevel ? "MAX" : (CurrentLevel+ nextLevel).ToString();
+            if (CurrentLevel+ nextLevel > UpgradeDataSo.MaxLevel)
+            {
+                level = $"현재 레벨: {CurrentLevel}";
+            }
+            return level;
+        }
         
         public string GetCost()
         {
@@ -33,7 +43,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
 
         public float GetTotalIncreaseValue()
         {
-            return UpgradeDataSo.IncreaseValue * CurrentLevel;
+            return UpgradeDataSo.IncreaseValue * (CurrentLevel+1);
         }
     }
 }

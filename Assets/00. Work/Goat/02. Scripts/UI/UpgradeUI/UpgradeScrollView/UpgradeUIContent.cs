@@ -41,10 +41,8 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeScrollView
                 UpgradeSlotUI slot = _slotList[i];
                 UpgradeData data = dataList[i];
                 
-                string cost = data.GetCost();
-                
                 slot.gameObject.SetActive(true);
-                slot.SetView(data, cost);
+                slot.SetView(data);
                 slot.OnClickUpgrade -= HandleClickUpgrade;
                 slot.OnClickUpgrade += HandleClickUpgrade;
             }
