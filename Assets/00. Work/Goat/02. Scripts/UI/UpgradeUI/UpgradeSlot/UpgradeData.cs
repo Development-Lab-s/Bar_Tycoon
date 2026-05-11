@@ -43,7 +43,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
 
         public float GetTotalIncreaseValue()
         {
-            return UpgradeDataSo.IncreaseValue * CurrentLevel;
+            return UpgradeDataSo.IncreaseValue * (CurrentLevel+1);
         }
     }
 }
