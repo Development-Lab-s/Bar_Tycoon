@@ -1,19 +1,19 @@
 ﻿using _00._Work._Resources._02._Scripts.Agents.StatSystem;
+using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work.Goat._02._Scripts.Events;
+using Agents.StatSystem;
 using Gamelib.EventSystem;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UpgradeCode
 {
-    [RequireComponent(typeof(StatModule))]
-    public class Upgrader : MonoBehaviour
+    public class Upgrader : MonoBehaviour, IModule
     {
         [SerializeField] private EventChannelSO upgradeChannel;
-        [SerializeField] private StatModule _statModule;
-        private void Awake()
+        private IStatModule _statModule;
+        public void Initialize(ModuleOwner owner)
         {
-            _statModule = GetComponent<StatModule>();
-
+            _statModule = owner.GetModule<IStatModule>();
             upgradeChannel.AddListener<UpgradeEvent>(HandleUpgradeEvent);
         }
 
