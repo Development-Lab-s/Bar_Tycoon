@@ -1,5 +1,6 @@
 using System;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
@@ -35,13 +36,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         [Tooltip("Whether this actor is focused. Unfocused actors can be dimmed by preview/runtime.")]
         public bool focused = true;
 
+        [NonSerialized]
+        public float focusVisualAlpha = -1f;
+
         [Tooltip("Stage sorting priority. Larger values are rendered in front.")]
         public int sortOrder = 0;
 
         [Tooltip("Pose key for sprite/animation lookup.")]
         public string poseKey = "";
 
-        [Tooltip("Expression key for sprite/animation lookup.")]
+        [Tooltip("Expression enum for full-body sprite lookup.")]
+        public StoryExpressionType expression = StoryExpressionType.Neutral;
+
+        [HideInInspector]
         public string expressionKey = "";
 
         [Tooltip("Optional motion profile key for shared presets in later authoring steps.")]
@@ -90,6 +97,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
 
         public Vector2 EffectivePivot =>
             actor != null ? actor.DefaultStagePivot : new Vector2(0.5f, 0f);
+
+        public StoryExpressionType ResolvedExpression =>
+            actor != null
+            && expression == StoryExpressionType.Neutral
+            && string.IsNullOrWhiteSpace(expressionKey)
+                ? actor.DefaultExpression
+                : expression;
+
+        public float EffectiveFocusAlpha =>
+            focusVisualAlpha >= 0f ? Mathf.Clamp01(focusVisualAlpha) : focused ? 1f : 0.65f;
 
         public void SyncActorKey()
         {

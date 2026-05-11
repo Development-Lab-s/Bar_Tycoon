@@ -8,6 +8,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
 {
     public class ButtonCanvas : MonoBehaviour
     {
+        [field: SerializeField] public ButtonType MyButtonType { get; private set; }
         public event Action<ButtonType> OnClickButton;
 
         private Dictionary<ButtonType, ButtonInformation> _buttonInformations;

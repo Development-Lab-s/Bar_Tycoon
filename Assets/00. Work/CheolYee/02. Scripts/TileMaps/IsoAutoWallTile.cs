@@ -1,5 +1,6 @@
 using Alchemy.Inspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 
 namespace _00._Work.CheolYee._02._Scripts.TileMaps
@@ -35,12 +36,16 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps
         [HelpBox("혼자 떨어진 벽 1칸일 때 어느 방향으로 볼지")]
         [SerializeField] private WallSide isolatedWallSide = WallSide.Left;
 
+        [Header("Transform")]
+        [SerializeField] private Vector2 defaultPlacementPivotPixels = Vector2.zero;
+        [SerializeField] private bool useMirrorPivotCompensation = true;
+        [FormerlySerializedAs("mirrorPivotCompensationPixels")]
+        [SerializeField] private Vector2 mirroredPlacementPivotPixels = new(256f, 128f);
+
         [Header("Physics")]
         [SerializeField] private Tile.ColliderType colliderType = Tile.ColliderType.None;
         
         private static readonly Matrix4x4 NormalMatrix = Matrix4x4.identity;
-        private static readonly Matrix4x4 FlipXMatrix =
-            Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(-1f, 1f, 1f));
 
         public override void RefreshTile(Vector3Int position, ITilemap tilemap)
         {
@@ -68,12 +73,68 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps
 
             WallSide resolvedSide = ResolveWallSide(hasXNeighbor, hasYNeighbor);
 
-            bool mirrorX = resolvedSide == WallSide.Right;
-
-            tileData.transform = mirrorX ? FlipXMatrix : NormalMatrix;
+            tileData.transform = BuildTransform(resolvedSide == WallSide.Right);
             tileData.color = useTint
                 ? (resolvedSide == WallSide.Left ? leftWallColor : rightWallColor)
                 : Color.white;
+        }
+
+        private Matrix4x4 BuildTransform(bool mirrorX)
+        {
+            if (sprite == null)
+                return mirrorX ? BuildMirrorMatrix(Vector2.zero) : NormalMatrix;
+
+            if (!mirrorX)
+                return BuildPlacementMatrix(GetDefaultPlacementWorld(sprite));
+
+            if (!useMirrorPivotCompensation)
+                return BuildMirrorMatrix(Vector2.zero);
+
+            return BuildMirrorMatrix(GetMirroredPlacementWorld(sprite));
+        }
+
+        private static Matrix4x4 BuildPlacementMatrix(Vector2 translationWorld)
+        {
+            return Matrix4x4.TRS(
+                new Vector3(translationWorld.x, translationWorld.y, 0f),
+                Quaternion.identity,
+                Vector3.one);
+        }
+
+        private static Matrix4x4 BuildMirrorMatrix(Vector2 compensationWorld)
+        {
+            return Matrix4x4.TRS(
+                new Vector3(compensationWorld.x, compensationWorld.y, 0f),
+                Quaternion.identity,
+                new Vector3(-1f, 1f, 1f));
+        }
+
+        private Vector2 GetDefaultPlacementWorld(Sprite targetSprite)
+        {
+            float pixelsPerUnit = GetSpritePixelsPerUnitSafe(targetSprite);
+            Vector2 actualPivotPixels = targetSprite.pivot;
+
+            float x = (actualPivotPixels.x - defaultPlacementPivotPixels.x) / pixelsPerUnit;
+            float y = (actualPivotPixels.y - defaultPlacementPivotPixels.y) / pixelsPerUnit;
+            return new Vector2(x, y);
+        }
+
+        private Vector2 GetMirroredPlacementWorld(Sprite targetSprite)
+        {
+            float pixelsPerUnit = GetSpritePixelsPerUnitSafe(targetSprite);
+            Vector2 actualPivotPixels = targetSprite.pivot;
+            Vector2 desiredPivotPixels = mirroredPlacementPivotPixels;
+
+            float x = (desiredPivotPixels.x - actualPivotPixels.x) / pixelsPerUnit;
+            float y = (actualPivotPixels.y - desiredPivotPixels.y) / pixelsPerUnit;
+            return new Vector2(x, y);
+        }
+
+        private static float GetSpritePixelsPerUnitSafe(Sprite targetSprite)
+        {
+            return targetSprite != null && targetSprite.pixelsPerUnit > 0f
+                ? targetSprite.pixelsPerUnit
+                : 100f;
         }
 
         private WallSide ResolveWallSide(bool hasXNeighbor, bool hasYNeighbor)

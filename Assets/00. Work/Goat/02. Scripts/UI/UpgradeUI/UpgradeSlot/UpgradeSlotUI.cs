@@ -12,6 +12,10 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
         [SerializeField] private TextMeshProUGUI descriptionText;
         [SerializeField] private TextMeshProUGUI costText;
         [SerializeField] private Button upgradeButton;
+        [SerializeField] private TextMeshProUGUI nowLevel;
+        [SerializeField] private TextMeshProUGUI nextLevel;
+        [SerializeField] private TextMeshProUGUI nowStat;
+        [SerializeField] private TextMeshProUGUI nextStat;
         
         private UpgradeData _data;
         public event Action<UpgradeData> OnClickUpgrade;
@@ -37,13 +41,17 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
             OnClickUpgrade?.Invoke(_data);
         }
         
-        public void SetView(UpgradeData data, string cost)
+        public void SetView(UpgradeData data)
         {
             _data = data;
-            UpgradeDataSO dataSo = _data.upgradeDataSo;
+            UpgradeDataSO dataSo = _data.UpgradeDataSo;
             titleText.text = dataSo.Title;
             descriptionText.text = dataSo.Description;
-            costText.text = cost;
+            costText.text = data.GetCost();
+            nowLevel.text = data.GetLevel(0);
+            nextLevel.text = data.GetLevel(1);
+            nowStat.text = (data.UpgradeDataSo.TargetStat.Value+ data.GetTotalIncreaseValue() - data.UpgradeDataSo.IncreaseValue).ToString();
+            nextStat.text = (data.UpgradeDataSo.TargetStat.Value + data.GetTotalIncreaseValue()).ToString();
         }
     }
 }

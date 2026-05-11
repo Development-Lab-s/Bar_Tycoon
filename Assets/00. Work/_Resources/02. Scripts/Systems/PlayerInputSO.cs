@@ -11,12 +11,26 @@ namespace Systems
     {
         [SerializeField]private LayerMask whatisPlayer;
         public Vector2 InputDirection { get; private set; }
-        public event Action isClick;
+        public event Action IsClick;
+        public event Action CameraMoveClick;
         private Controls _controls;
 
         public Vector2 MousePosition { get; set; }
-        public Vector3 Worldposition { get; set; }
-        
+        public Vector2 MouseWheel { get; set; }
+
+        public bool isMouseDown { get; set; }
+
+        private Camera mainCam;
+        public Camera MainCam
+        {
+            get
+            {
+                if (mainCam == null)
+                    mainCam = Camera.main;
+                return mainCam;
+            }
+        }
+
         public void OnPointer(InputAction.CallbackContext context)
         {
             MousePosition = context.ReadValue<Vector2>();
@@ -25,7 +39,7 @@ namespace Systems
         {
             if (context.performed)
             {
-                isClick?.Invoke();
+                IsClick?.Invoke();
             }
         }
         private void OnEnable()
@@ -51,6 +65,22 @@ namespace Systems
                 OnDisable();
         }
 
+        public void OnScrollWheel(InputAction.CallbackContext context)
+        {
+           MouseWheel = context.ReadValue<Vector2>();
+        }
 
+        public void OnIntractClick(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+            {
+                CameraMoveClick?.Invoke();
+                isMouseDown = true;
+            }
+            if (context.canceled)
+            {
+                isMouseDown = false;
+            }
+        }
     }
 }
