@@ -5,4 +5,8 @@ public interface ILP
 {
     void Active();
     void Stop();
+    void ApplyPosition();
+    void PlaySound(BgmSounds id);
+    string NameChosing(int id);
+    void StopExistingMotions();
 }

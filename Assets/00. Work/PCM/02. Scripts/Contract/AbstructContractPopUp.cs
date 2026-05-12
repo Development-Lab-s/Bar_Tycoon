@@ -3,11 +3,12 @@ using LitMotion;
 using LitMotion.Extensions;
 using Spine.Unity;
 using System.Collections;
+using System.Net.NetworkInformation;
 using UnityEngine;
 
 namespace Assets._00._Work.PCM._02._Scripts.Contract
 {
-    public abstract class AbstructContractPopUp : MonoBehaviour, IAbstructContractPopUp
+    public abstract class AbstructContractPopUp : MonoBehaviour, IAbstructContractPopUp , IModule, IAfterInitModule
     {
         [SerializeField] protected float animDuration = 0.1f;
         [SerializeField] protected float waitDuration = 2.0f; // 자동 종료 시 대기 시간

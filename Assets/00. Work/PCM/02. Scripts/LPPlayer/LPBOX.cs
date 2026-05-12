@@ -16,7 +16,6 @@ public class LPBOX : MonoBehaviour
         _myId = id;
         _lpScript = GetComponentInChildren<SideLp>();
         _button = GetComponent<Button>();
-
         _button.onClick.RemoveAllListeners();
         _button.onClick.AddListener(() => OnLPClicked?.Invoke(_myId));
 
@@ -42,5 +41,10 @@ public class LPBOX : MonoBehaviour
     {
         _lpScript.Stop();
         _isOpen = false;
+    }
+
+    public void Show()
+    {
+        _lpScript.Active();
     }
 }
