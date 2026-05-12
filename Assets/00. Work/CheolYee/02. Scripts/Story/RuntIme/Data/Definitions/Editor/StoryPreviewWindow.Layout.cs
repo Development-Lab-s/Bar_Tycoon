@@ -29,8 +29,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 previewMode = (PreviewMode)e.newValue;
                 ApplyPreviewModeVisibility();
+                RebuildActorLayer();
+                RefreshActorInspector();
             });
             bar.Add(_previewModeField);
+
+            _dialogueDisplayField = new EnumField("Dialogue", dialogueDisplayMode) { style = { width = 165, marginRight = 8 } };
+            _dialogueDisplayField.RegisterValueChangedCallback(e =>
+            {
+                dialogueDisplayMode = (DialogueDisplayMode)e.newValue;
+                RefreshDialogue();
+                RefreshChoices();
+                ApplyPreviewModeVisibility();
+            });
+            bar.Add(_dialogueDisplayField);
 
             _workspaceModeBtn = MakeBtn("Workspace", new Color(0.24f, 0.24f, 0.28f), TogglePreviewWorkspaceMode);
             _collapseInspectorBtn = MakeBtn("Inspector -", new Color(0.22f, 0.22f, 0.26f), TogglePreviewInspectorCollapsed);
@@ -39,6 +51,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _playBtn           = MakeBtn("▶ Play",      new Color(0.18f, 0.50f, 0.18f), OnPlay);
             _fromHereBtn       = MakeBtn("▶ From Here", new Color(0.18f, 0.35f, 0.55f), OnFromHere);
             _sampleLineBtn     = MakeBtn("Sample Line", new Color(0.35f, 0.35f, 0.18f), OnSampleLine);
+            _prevLineBtn       = MakeBtn("Prev Line",   new Color(0.24f, 0.28f, 0.34f), OnPreviousLine);
+            _nextLineAuthoringBtn = MakeBtn("Next Line", new Color(0.24f, 0.28f, 0.34f), OnNextLine);
             _stopBtn           = MakeBtn("■ Stop",      new Color(0.50f, 0.18f, 0.18f), OnStop);
             _nextBtn           = MakeBtn("▷ Next",      new Color(0.30f, 0.30f, 0.30f), OnNext);
             _refreshGameViewBtn = MakeBtn("↻ Game View", new Color(0.25f, 0.25f, 0.32f), RefreshRenderAreaFromGameView);
@@ -47,6 +61,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             bar.Add(_collapseInspectorBtn);
             bar.Add(_collapseRuntimeUiBtn);
             bar.Add(_playBtn); bar.Add(_fromHereBtn); bar.Add(_sampleLineBtn);
+            bar.Add(_prevLineBtn); bar.Add(_nextLineAuthoringBtn);
             bar.Add(_stopBtn); bar.Add(_nextBtn);     bar.Add(_refreshGameViewBtn);
 
             _statusLabel = new Label("정지") { style = { marginLeft = 10, fontSize = 10, color = new StyleColor(new Color(0.55f, 0.55f, 0.55f)) } };
@@ -98,6 +113,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "InspectorWidth", InspectorWidth),
                 MinInspectorWidth,
                 MaxInspectorWidth);
+            _timelineHeight = Mathf.Clamp(
+                UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "TimelineHeight", DefaultTimelineHeight),
+                MinTimelineHeight,
+                MaxTimelineHeight);
+            _timelinePixelsPerSecond = Mathf.Clamp(
+                UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "TimelinePixelsPerSecond", DefaultTimelinePixelsPerSecond),
+                MinTimelinePixelsPerSecond,
+                MaxTimelinePixelsPerSecond);
+            _timelinePlaybackSpeed = Mathf.Max(0.1f, UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "TimelinePlaybackSpeed", 1f));
         }
 
         private void SavePreviewLayoutPrefs()
@@ -105,26 +129,36 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             UnityEditor.EditorPrefs.SetBool(PrefsKeyPrefix + "InspectorCollapsed", _previewInspectorCollapsed);
             UnityEditor.EditorPrefs.SetBool(PrefsKeyPrefix + "RuntimeUiCollapsed", _previewRuntimeUiCollapsed);
             UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "InspectorWidth", _previewInspectorExpandedWidth);
+            UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "TimelineHeight", _timelineHeight);
+            UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "TimelinePixelsPerSecond", _timelinePixelsPerSecond);
+            UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "TimelinePlaybackSpeed", _timelinePlaybackSpeed);
         }
 
         private void ApplyPreviewLayoutVisibility()
         {
+            ApplyInspectorPanelVisibility();
+            RefreshPreviewLayoutButtons();
+            ApplyPreviewModeVisibility();
+        }
+
+        private void ApplyInspectorPanelVisibility()
+        {
+            bool showInspector = IsStageAuthoringMode && !_previewInspectorCollapsed;
+
             if (_inspectorPanel != null)
             {
-                if (_previewInspectorCollapsed)
-                {
-                    _inspectorPanel.style.display = DisplayStyle.None;
-                }
-                else
+                if (showInspector)
                 {
                     _inspectorPanel.style.display = DisplayStyle.Flex;
                     _inspectorPanel.style.width = Mathf.Clamp(_previewInspectorExpandedWidth, MinInspectorWidth, MaxInspectorWidth);
                 }
+                else
+                {
+                    _inspectorPanel.style.display = DisplayStyle.None;
+                }
             }
 
-            SetElementVisible(_inspectorSplitter, !_previewInspectorCollapsed);
-            RefreshPreviewLayoutButtons();
-            ApplyPreviewModeVisibility();
+            SetElementVisible(_inspectorSplitter, showInspector);
         }
 
         private void RefreshPreviewLayoutButtons()
@@ -164,6 +198,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             RegisterPanZoomCallbacks();
             left.Add(_stageWrapper);
 
+            left.Add(BuildTimelineResizeHandle());
+            left.Add(BuildTimelinePanel());
+
             // RuntimePreview 전용 하단 대화 패널
             _dialoguePanel = new VisualElement
             {
@@ -195,8 +232,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _stageWorld = new VisualElement
             {
                 name = "StageWorld",
-                style = { position = Position.Absolute, left = 0, top = 0, overflow = Overflow.Visible }
+                style =
+                {
+                    position = Position.Absolute,
+                    left = 0,
+                    top = 0,
+                    width = DefaultUnitPixels,
+                    height = DefaultUnitPixels,
+                    overflow = Overflow.Visible
+                }
             };
+            _stageWorld.style.transformOrigin = new TransformOrigin(
+                new Length(0, LengthUnit.Pixel),
+                new Length(0, LengthUnit.Pixel),
+                0);
 
             _authoringGridLayer = BuildAuthoringGridLayer();
 
@@ -225,16 +274,34 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 {
                     position = Position.Absolute, left = 0, top = 0,
                     width = DefaultUnitPixels, height = DefaultUnitPixels,
-                    borderTopWidth = 1, borderRightWidth = 1, borderBottomWidth = 1, borderLeftWidth = 1,
-                    borderTopColor    = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
-                    borderRightColor  = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
-                    borderBottomColor = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
-                    borderLeftColor   = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.65f)),
+                    borderTopWidth = 2f, borderRightWidth = 2f, borderBottomWidth = 2f, borderLeftWidth = 2f,
+                    borderTopColor    = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
+                    borderRightColor  = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
+                    borderBottomColor = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
+                    borderLeftColor   = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
                     overflow = Overflow.Visible
                 }
             };
             _cameraGizmoLayer = BuildCameraGizmoLayer();
             _cameraFrameGuide.Add(_cameraGizmoLayer);
+
+            _focusPreviewFrameGuide = new VisualElement
+            {
+                name = "FocusPreviewFrameGuide",
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute, left = 0, top = 0,
+                    width = DefaultUnitPixels, height = DefaultUnitPixels,
+                    borderTopWidth = 2f, borderRightWidth = 2f, borderBottomWidth = 2f, borderLeftWidth = 2f,
+                    borderTopColor    = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
+                    borderRightColor  = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
+                    borderBottomColor = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
+                    borderLeftColor   = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
+                    overflow = Overflow.Visible
+                }
+            };
+            _focusPreviewFrameGuide.Add(BuildFocusPreviewGizmoLayer());
 
             // 대화 오버레이 (카메라 프레임 내부 하단)
             _renderDialoguePanel = new VisualElement
@@ -286,6 +353,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _stageWorld.Add(_authoringGridLayer);
             _stageWorld.Add(_backgroundLayer);
             _stageWorld.Add(_actorLayer);
+            _stageWorld.Add(_focusPreviewFrameGuide);
             _stageWorld.Add(_cameraFrameGuide);
         }
 
@@ -355,7 +423,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 style = { position = Position.Absolute, left = 0, top = 0, right = 0, bottom = 0 }
             };
 
-            layer.Add(new Label("CAMERA FRAME")
+            layer.Add(new Label("REFERENCE FRAME")
             {
                 pickingMode = PickingMode.Ignore,
                 style =
@@ -394,6 +462,32 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     top = new StyleLength(new Length(50, LengthUnit.Percent)),
                     height = 1,
                     backgroundColor = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.2f))
+                }
+            });
+
+            return layer;
+        }
+
+        private static VisualElement BuildFocusPreviewGizmoLayer()
+        {
+            var layer = new VisualElement
+            {
+                name = "FocusPreviewOverlay",
+                pickingMode = PickingMode.Ignore,
+                style = { position = Position.Absolute, left = 0, top = 0, right = 0, bottom = 0 }
+            };
+
+            layer.Add(new Label("FOCUS PREVIEW")
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    left = 8,
+                    top = 18,
+                    fontSize = 9,
+                    color = new StyleColor(new Color(1f, 0.78f, 0.38f, 0.92f)),
+                    unityFontStyleAndWeight = FontStyle.Bold
                 }
             });
 

@@ -13,6 +13,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces
     public interface IStoryStageDirector
     {
         /// <summary>
+        /// Full stage layout entry point. Implementations can use background and actor
+        /// tracks when they support them. Kept alongside ApplyStageStateAsync for
+        /// older callers and simpler directors.
+        /// </summary>
+        UniTask ApplyStageLayoutAsync(StoryStageLayoutModuleSO layout, CancellationToken ct);
+
+        /// <summary>
         /// target 상태를 적용한다. 디렉터가 현재 상태와 비교해 enter / move / exit 를 수행한다.
         /// </summary>
         UniTask ApplyStageStateAsync(IReadOnlyList<StoryActorStateData> targetActors, CancellationToken ct);

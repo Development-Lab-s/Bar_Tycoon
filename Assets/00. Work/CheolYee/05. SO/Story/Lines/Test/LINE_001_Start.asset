@@ -28,30 +28,9 @@ MonoBehaviour:
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
   modules:
-  - {fileID: 1403048445548188280}
   - {fileID: 6427056707420760788}
-  editorNodePosition: {x: 1038.4286, y: 1666.2219}
+  editorNodePosition: {x: 1026.9244, y: 1682.6133}
   editorNodeSize: {x: 426.97174, y: 176.21661}
---- !u!114 &1403048445548188280
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 368a8bfd0713e824bb02ad5a0e99b98c, type: 3}
-  m_Name: Character Enter
-  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules.StoryCharacterEnterModuleSO
-  timing: 0
-  isBlocking: 0
-  canSkip: 1
-  affectsAutoAdvance: 0
-  character: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
-  slot: 2
-  motion: 1
-  duration: 0.4
 --- !u!114 &6427056707420760788
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -74,11 +53,13 @@ MonoBehaviour:
     variantKey: 
     visible: 1
     normalizedOffset: {x: 0, y: 0}
-    scale: {x: 1, y: 1}
+    scale: {x: 1.2, y: 1}
     pivot: {x: 0.5, y: 0.5}
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
     sortOrder: -100
+    transitionMotion: 1
+    transitionDuration: 0.36944443
     enterMotion: 1
     enterDuration: 0.35
     exitMotion: 1
@@ -86,37 +67,264 @@ MonoBehaviour:
   actors:
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
-    actorInstanceKey: 
-    normalizedPosition: {x: 0.8528984, y: 0.0016303639}
+    actorInstanceKey: cian
+    normalizedPosition: {x: -0.38, y: 0}
     scale: {x: 1, y: 1}
-    scaleX: 5
+    scaleX: 1
     visible: 1
     focused: 1
-    sortOrder: 0
+    sortOrder: 38
     poseKey: 
+    expression: 0
     expressionKey: 
     motionProfileKey: 
-    enterMotion: 2
+    enterMotion: 1
     enterDuration: 0.2
-    moveMotion: 0
-    moveDuration: 100
+    moveMotion: 1
+    moveDuration: 1
     exitMotion: 0
     exitDuration: 0
   - actor: {fileID: 11400000, guid: c8843c3fa860e8d4f8ace47ffb255fbe, type: 2}
     actorKey: Rin
-    actorInstanceKey: 
-    normalizedPosition: {x: 0.18, y: 0.0030779608}
+    actorInstanceKey: Rin
+    normalizedPosition: {x: 0.11, y: 0.0030779608}
     scale: {x: 1, y: 1}
     scaleX: 4.8
-    visible: 1
+    visible: 0
     focused: 0
     sortOrder: 0
     poseKey: 
+    expression: 0
     expressionKey: 
     motionProfileKey: 
-    enterMotion: 2
-    enterDuration: 0.2
+    enterMotion: 1
+    enterDuration: 1
     moveMotion: 0
-    moveDuration: 100
-    exitMotion: 0
-    exitDuration: 0
+    moveDuration: 1
+    exitMotion: 1
+    exitDuration: 1
+  - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
+    actorKey: cian
+    actorInstanceKey: cian_01
+    normalizedPosition: {x: 0.5, y: 0}
+    scale: {x: 1, y: 1}
+    scaleX: 1
+    visible: 0
+    focused: 1
+    sortOrder: 2
+    poseKey: 
+    expression: 0
+    expressionKey: 
+    motionProfileKey: 
+    enterMotion: 1
+    enterDuration: 0.35
+    moveMotion: 1
+    moveDuration: 0.2
+    exitMotion: 1
+    exitDuration: 0.25
+  cameraFocusTarget: 
+  cameraTrack:
+    defaultState:
+      targetActorInstanceKey: 
+      followMode: 0
+      moveMode: 0
+      normalizedOffset: {x: 0, y: 0}
+      zoomMultiplier: 1
+      snapshotNormalizedPosition: {x: 0.5, y: 0.5}
+    keyframes:
+    - property: 7
+      normalizedTime: 0
+      timeSeconds: 0
+      normalizedPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 4
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 1
+      cameraOffset: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0.11, y: -0.1}
+      cameraMoveMode: 0
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 7
+      normalizedTime: 1
+      timeSeconds: 1.5555556
+      normalizedPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 4
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: cian
+      cameraFollowMode: 0
+      cameraOffset: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: -0.38, y: -0.1}
+      cameraMoveMode: 0
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+  backgroundTrack:
+    keyframes: []
+  actorTracks:
+  - actorInstanceKey: cian
+    keyframes:
+    - property: 0
+      normalizedTime: 0
+      timeSeconds: 0
+      normalizedPosition: {x: -0.38, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraOffset: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0.5, y: 0.5}
+      cameraMoveMode: 0
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 0
+      normalizedTime: 0.79146916
+      timeSeconds: 0.92777777
+      normalizedPosition: {x: 0.11, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 1
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraOffset: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0.5, y: 0.5}
+      cameraMoveMode: 0
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 3
+      normalizedTime: 0
+      timeSeconds: 0
+      normalizedPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 1
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraOffset: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0.5, y: 0.5}
+      cameraMoveMode: 0
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 3
+      normalizedTime: 0.6927083
+      timeSeconds: 0.6927083
+      normalizedPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 1
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraOffset: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0.5, y: 0.5}
+      cameraMoveMode: 0
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+  - actorInstanceKey: Rin
+    keyframes:
+    - property: 0
+      normalizedTime: 0
+      timeSeconds: 0
+      normalizedPosition: {x: -0.37, y: 0.0030779608}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 2
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraOffset: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0.5, y: 0.5}
+      cameraMoveMode: 0
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 0
+      normalizedTime: 0.7638889
+      timeSeconds: 0.7638889
+      normalizedPosition: {x: 0.32, y: 0.0030779608}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraOffset: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0.5, y: 0.5}
+      cameraMoveMode: 0
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 0
+      normalizedTime: 1
+      timeSeconds: 1.2583333
+      normalizedPosition: {x: 0.2, y: 0.0030779608}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 0
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraOffset: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0.5, y: 0.5}
+      cameraMoveMode: 0
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
