@@ -6,7 +6,6 @@ using BBJ.WorkplaceSystem;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using Gamelib.EventSystem;
-using System;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
@@ -27,50 +26,45 @@ namespace BBJ.Work
             if (!ev.Ticket.TryReserve(executor)) return WorkResult.Cancelled;
 
             var serveStation = _workplaceRegister?.GetFirst(_serveStationTypeSO);
-            if (serveStation == null)
-            {
-                ev.OrderManager.NotifyReleased(ev.Ticket, executor);
-                return WorkResult.Cancelled;
-            }
+            if (serveStation == null) return WorkResult.Cancelled;
 
             Vector3 from = executor.transform.position;
 
             try
             {
-                Vector3 serveStationPos = serveStation.GetNearestPoint(from);
-                await agent.MoveAsync(serveStationPos, ctx.Token);
+                await agent.MoveAsync(serveStation.GetNearestPoint(from), ctx.Token);
                 ctx.Token.ThrowIfCancellationRequested();
-
                 ev.Ticket.TryStartProgress(executor);
-                Vector3 seatPos = ev.Ticket.Seat.GetNearestPoint(from);
 
-                await agent.MoveAsync(seatPos, ctx.Token);
+                await agent.MoveAsync(ev.Ticket.Seat.GetNearestPoint(from), ctx.Token);
                 ctx.Token.ThrowIfCancellationRequested();
-
                 await agent.DoWorkAsync(ev.Ticket.Seat, ctx.Token);
                 ctx.Token.ThrowIfCancellationRequested();
 
-                NotifySuccess(ev, executor);
                 return WorkResult.Completed;
-            }
-            catch (OperationCanceledException) when (ctx.WasExternallyCompleted)
-            {
-                NotifySuccess(ev, executor);
-                return WorkResult.ExternallyCompleted;
             }
             catch (OperationCanceledException)
             {
-                ev.OrderManager.NotifyReleased(ev.Ticket, executor);
-                return WorkResult.Cancelled;
+                return ctx.WasExternallyCompleted
+                    ? WorkResult.ExternallyCompleted
+                    : WorkResult.Cancelled;
             }
         }
 
-        private void NotifySuccess(OrderWorkEvent ev, ModuleOwner executor)
+        public override void OnResult(WorkResult result, ModuleOwner executor, GameEvent context)
         {
-            ev.OrderManager.NotifyComplete(ev.Ticket, executor);
-            var seatModule = ev.Ticket.Seat.GetModule<SeatModule>();
-            var customer   = seatModule?.AssignedAgent as CustomerAgent;
-            customer?.OnFoodServed();
+            var ev       = context as OrderWorkEvent;
+            var customer = ev.Ticket.Seat.GetModule<SeatModule>()?.AssignedAgent as CustomerAgent;
+
+            if (result != WorkResult.Cancelled)
+            {
+                ev.OrderManager.NotifyComplete(ev.Ticket, executor);
+                customer?.OnFoodServed();
+            }
+            else
+            {
+                ev.OrderManager.NotifyReleased(ev.Ticket, executor);
+            }
         }
     }
 }
