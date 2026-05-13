@@ -1,4 +1,5 @@
 using _00._Work._Resources._02._Scripts.Modules;
+using Gamelib.EventSystem;
 using Gamelib.SoundSystem;
 using System;
 using System.Collections.Generic;
@@ -9,9 +10,11 @@ using UnityEngine;
 
 namespace Assets._00._Work.PCM._02._Scripts._TileChange
 {
-    public class LpController : MonoBehaviour
+    public class LpController : MonoBehaviour , IModule
     {
+        [SerializeField] private EventChannelSO _LPchannel;
         [SerializeField] private TextMeshProUGUI text;
+        private ModuleOwner _owner;
         private int _id = 0;
         public int Id
         { 
@@ -27,20 +30,18 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
                 NameChange(_id);
             }
         }
-        private void OnDisable()
+        private ILP lp;
+        public void Initialize(ModuleOwner owner)
         {
-            Debug.Log($"[LpController] Disable 발생! 호출 스택: {Environment.StackTrace}");
-        }
-        private LP lp;
-        private void Awake()
-        {
-            lp = GetComponentInChildren<LP>();
-            lp.Active();
-            SoundChange(0);
+            _owner = owner;
+            lp = GetComponentInChildren<ILP>();
             NameChange(0);
+            lp.Active();
+            SoundChange(Id);
         }
         private void SoundChange(int id)
         {
+            _LPchannel.RaiseEvent(new LpConncetEvent(id));
             lp.PlaySound((BgmSounds)id);
         }
         private void NameChange(int id)
@@ -49,6 +50,5 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
         }
         public void idPlus() => Id++;
         public void idMinus() => Id--;
-   
     }
 }

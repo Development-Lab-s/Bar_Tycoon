@@ -1,4 +1,5 @@
-﻿using Assets._00._Work.PCM._02._Scripts._TileChange;
+﻿using _00._Work._Resources._02._Scripts.Modules;
+using Assets._00._Work.PCM._02._Scripts._TileChange;
 using LitMotion;
 using System.Collections;
 using UnityEngine;
@@ -10,7 +11,7 @@ namespace Assets._00._Work.PCM._02._Scripts.LPPlayer
         public override void Awake()
         {
             rect = GetComponent<RectTransform>();
-            base.Awake();
+            ApplyPosition();
         }
         public override void ApplyPosition()
         {
@@ -26,8 +27,7 @@ namespace Assets._00._Work.PCM._02._Scripts.LPPlayer
                 .Bind(x =>
                 {
                     rect.anchoredPosition = new Vector2(x, rect.anchoredPosition.y);
-                });
-            
+                });            
         }
 
         public override void Stop()

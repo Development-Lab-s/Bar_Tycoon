@@ -9,18 +9,16 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
 {
     public class LP : MonoBehaviour, ILP
     {
-        [SerializeField] protected EventChannelSO EventChannel;
+        [SerializeField] protected EventChannelSO SoundEventChannel;
         [SerializeField] protected Ease easeType;
         [SerializeField] protected SoundListSo SoundList;
         protected RectTransform rect;
-
         protected MotionHandle moveMotion;
         protected MotionHandle rotateMotion;
- 
         public virtual void Awake()
         {
             rect = GetComponent<RectTransform>();
-            ApplyPosition(); 
+            ApplyPosition();
         }
         public virtual void ApplyPosition()
         {
@@ -44,8 +42,8 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
         }
         public virtual void PlaySound(BgmSounds id) 
         {
-            EventChannel.RaiseEvent(new StopSoundEvent(SoundChannelId.Bgm));
-            EventChannel.RaiseEvent(new PlaySoundEvent(id, Vector3.zero, SoundChannelId.Bgm));
+            SoundEventChannel.RaiseEvent(new StopSoundEvent(SoundChannelId.Bgm));
+            SoundEventChannel.RaiseEvent(new PlaySoundEvent(id, Vector3.zero, SoundChannelId.Bgm));
         }
         public virtual string NameChosing(int id)
         {

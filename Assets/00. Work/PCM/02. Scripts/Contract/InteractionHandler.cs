@@ -30,7 +30,7 @@ namespace Assets._00._Work.PCM._02._Scripts
 
             if (hit.collider == null) return;
 
-            if (hit.collider.TryGetComponent<AbstructContractObject>(out var target))
+            if (hit.collider.TryGetComponent<IContractObject>(out var target))
             {
                 target.ExcuteClick();
             }

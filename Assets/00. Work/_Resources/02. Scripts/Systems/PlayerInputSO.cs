@@ -13,6 +13,7 @@ namespace Systems
         public Vector2 InputDirection { get; private set; }
         public event Action IsClick;
         public event Action CameraMoveClick;
+        public event Action DownPopupClick;
         private Controls _controls;
 
         public Vector2 MousePosition { get; set; }
@@ -80,6 +81,14 @@ namespace Systems
             if (context.canceled)
             {
                 isMouseDown = false;
+            }
+        }
+
+        public void OnEsc(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+            {
+                DownPopupClick?.Invoke();
             }
         }
     }
