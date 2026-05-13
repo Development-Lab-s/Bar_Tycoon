@@ -14,6 +14,7 @@ namespace Systems
         public event Action IsClick;
         public event Action CameraMoveClick;
         public event Action DownPopupClick;
+        public event Action SettingPopupClick;
         private Controls _controls;
 
         public Vector2 MousePosition { get; set; }
@@ -89,6 +90,14 @@ namespace Systems
             if (context.performed)
             {
                 DownPopupClick?.Invoke();
+            }
+        }
+
+        public void OnSettingEsc(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+            {
+                SettingPopupClick?.Invoke();
             }
         }
     }

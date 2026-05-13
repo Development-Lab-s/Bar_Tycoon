@@ -23,7 +23,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         private Vector3 _originScale;
         private Coroutine _timerCoroutine;
         private MotionHandle _motionHandle;
-        private UiOwner _uiOwner;
+        //private UiOwner _uiOwner;
         public bool isOpen { get; set; }
 
         public virtual void Initialize(ModuleOwner owner)
@@ -32,7 +32,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         }
         public virtual void AfterInit()
         {
-            _uiOwner = _owner.GetModule<UiOwner>();
+            //_uiOwner = _owner.GetModule<UiOwner>();
             _originScale = transform.localScale;
             transform.localScale = Vector3.zero;
             gameObject.SetActive(false);
@@ -43,7 +43,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
             if (isOpen || IsAnimating) return;
 
             isOpen = true;
-            _uiOwner.StackAdd(this);
+            //_uiOwner.StackAdd(this);
 
             if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
             if (_motionHandle.IsActive()) _motionHandle.Cancel();
@@ -56,7 +56,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
 
             AnimateScale(true, isAutoClose);
         }
-        public abstract void OnOpen();
+        public abstract void OnOpen(); //추상 받고 열때 코드 추가 하고 싶으면 여기다가 추가하셈
 
         public virtual void Close()
         {

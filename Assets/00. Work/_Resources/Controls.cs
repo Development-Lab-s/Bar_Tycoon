@@ -136,6 +136,15 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SettingEsc"",
+                    ""type"": ""Button"",
+                    ""id"": ""2b61301c-1b24-4670-b468-1c3f85147219"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -191,6 +200,17 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Esc"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""96b0d6ad-21d5-4fe3-b8fc-f9f065b7f78c"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SettingEsc"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -783,6 +803,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         m_Player_ScrollWheel = m_Player.FindAction("ScrollWheel", throwIfNotFound: true);
         m_Player_IntractClick = m_Player.FindAction("IntractClick", throwIfNotFound: true);
         m_Player_Esc = m_Player.FindAction("Esc", throwIfNotFound: true);
+        m_Player_SettingEsc = m_Player.FindAction("SettingEsc", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -881,6 +902,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ScrollWheel;
     private readonly InputAction m_Player_IntractClick;
     private readonly InputAction m_Player_Esc;
+    private readonly InputAction m_Player_SettingEsc;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -912,6 +934,10 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Esc".
         /// </summary>
         public InputAction @Esc => m_Wrapper.m_Player_Esc;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/SettingEsc".
+        /// </summary>
+        public InputAction @SettingEsc => m_Wrapper.m_Player_SettingEsc;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -953,6 +979,9 @@ public partial class @Controls: IInputActionCollection2, IDisposable
             @Esc.started += instance.OnEsc;
             @Esc.performed += instance.OnEsc;
             @Esc.canceled += instance.OnEsc;
+            @SettingEsc.started += instance.OnSettingEsc;
+            @SettingEsc.performed += instance.OnSettingEsc;
+            @SettingEsc.canceled += instance.OnSettingEsc;
         }
 
         /// <summary>
@@ -979,6 +1008,9 @@ public partial class @Controls: IInputActionCollection2, IDisposable
             @Esc.started -= instance.OnEsc;
             @Esc.performed -= instance.OnEsc;
             @Esc.canceled -= instance.OnEsc;
+            @SettingEsc.started -= instance.OnSettingEsc;
+            @SettingEsc.performed -= instance.OnSettingEsc;
+            @SettingEsc.canceled -= instance.OnSettingEsc;
         }
 
         /// <summary>
@@ -1314,6 +1346,13 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnEsc(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SettingEsc" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSettingEsc(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.
