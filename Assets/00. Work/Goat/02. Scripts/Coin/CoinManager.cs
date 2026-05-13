@@ -13,15 +13,16 @@ namespace _00._Work.Goat._02._Scripts.Coin
         [SerializeField] private SaveFileNameSO saveFileNameSO;
         
         private CoinData _coinData;
-        private JsonSaveService _jsonSaveService;
+        public int CurrentCoin => _coinData.coin;
         
         public event Action<int> OnChangeCoin;
+        
+        private JsonSaveService _jsonSaveService;
 
         private void Awake()
         {
             _jsonSaveService = new JsonSaveService(saveFileNameSO);
             LoadCoin();
-            
             coinChannelSO.AddListener<CoinEvent>(HandleCoinEvent);
         }
 
@@ -45,7 +46,35 @@ namespace _00._Work.Goat._02._Scripts.Coin
 
         private void HandleCoinEvent(CoinEvent coin)
         {
-            _coinData.coin += coin.amount;
+            AddCoin(coin.amount);
+        }
+        
+        public void AddCoin(int amount)
+        {
+            _coinData.coin += amount;
+
+            if (_coinData.coin < 0)
+                _coinData.coin = 0;
+
+            SaveAndNotify();
+        }
+        
+        public bool TryUseCoin(int amount)
+        {
+            if (_coinData.coin < amount)
+            {
+                Debug.Log("돈이 부족합니다");
+                return false;
+            }
+
+            _coinData.coin -= amount;
+            SaveAndNotify();
+
+            return true;
+        }
+
+        private void SaveAndNotify()
+        {
             OnChangeCoin?.Invoke(_coinData.coin);
             _jsonSaveService.Save(_coinData);
         }
