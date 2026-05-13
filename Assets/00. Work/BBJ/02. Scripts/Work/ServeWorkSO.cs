@@ -6,10 +6,9 @@ using BBJ.WorkplaceSystem;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using Gamelib.EventSystem;
-using System.Threading;
+using System;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
-using System;
 
 namespace BBJ.Work
 {
@@ -19,49 +18,59 @@ namespace BBJ.Work
         [SerializeField] private WorkplaceRegisterSO _workplaceRegister;
         [SerializeField] private WorkplaceTypeSO     _serveStationTypeSO;
 
-        public override async UniTask ExecuteAsync(
-            ModuleOwner executor, GameEvent context, CancellationToken ct)
+        public override async UniTask<WorkResult> ExecuteAsync(
+            ModuleOwner executor, GameEvent context, WorkExecutionContext ctx)
         {
             var agent = executor as IActionDispatcher;
             var ev    = context as OrderWorkEvent;
 
-            if (!ev.Ticket.TryReserve(executor)) return;
+            if (!ev.Ticket.TryReserve(executor)) return WorkResult.Cancelled;
 
             var serveStation = _workplaceRegister?.GetFirst(_serveStationTypeSO);
             if (serveStation == null)
             {
                 ev.OrderManager.NotifyReleased(ev.Ticket, executor);
-                return;
+                return WorkResult.Cancelled;
             }
 
-            Vector3 from            = executor.transform.position;
-            Vector3 serveStationPos = serveStation.GetNearestPoint(from);
-            Vector3 seatPos         = ev.Ticket.Seat.GetNearestPoint(from);
+            Vector3 from = executor.transform.position;
 
             try
             {
-                await agent.MoveAsync(serveStationPos, ct);
-                ct.ThrowIfCancellationRequested();
+                Vector3 serveStationPos = serveStation.GetNearestPoint(from);
+                await agent.MoveAsync(serveStationPos, ctx.Token);
+                ctx.Token.ThrowIfCancellationRequested();
 
                 ev.Ticket.TryStartProgress(executor);
+                Vector3 seatPos = ev.Ticket.Seat.GetNearestPoint(from);
 
-                await agent.MoveAsync(seatPos, ct);
-                ct.ThrowIfCancellationRequested();
+                await agent.MoveAsync(seatPos, ctx.Token);
+                ctx.Token.ThrowIfCancellationRequested();
 
-                await agent.DoWorkAsync(ev.Ticket.Seat, ct);
-                ct.ThrowIfCancellationRequested();
+                await agent.DoWorkAsync(ev.Ticket.Seat, ctx.Token);
+                ctx.Token.ThrowIfCancellationRequested();
 
-                ev.OrderManager.NotifyComplete(ev.Ticket, executor);
-
-                SeatModule seatModule = ev.Ticket.Seat.GetModule<SeatModule>();
-                CustomerAgent customer   = seatModule?.AssignedAgent as CustomerAgent;
-                customer?.OnFoodServed();
+                NotifySuccess(ev, executor);
+                return WorkResult.Completed;
+            }
+            catch (OperationCanceledException) when (ctx.WasExternallyCompleted)
+            {
+                NotifySuccess(ev, executor);
+                return WorkResult.ExternallyCompleted;
             }
             catch (OperationCanceledException)
             {
                 ev.OrderManager.NotifyReleased(ev.Ticket, executor);
-                throw;
+                return WorkResult.Cancelled;
             }
+        }
+
+        private void NotifySuccess(OrderWorkEvent ev, ModuleOwner executor)
+        {
+            ev.OrderManager.NotifyComplete(ev.Ticket, executor);
+            var seatModule = ev.Ticket.Seat.GetModule<SeatModule>();
+            var customer   = seatModule?.AssignedAgent as CustomerAgent;
+            customer?.OnFoodServed();
         }
     }
 }

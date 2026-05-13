@@ -4,7 +4,6 @@ using BBJ.Order;
 using BBJ.Schedule;
 using Cysharp.Threading.Tasks;
 using Gamelib.EventSystem;
-using System.Threading;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
@@ -16,19 +15,29 @@ namespace BBJ.Work
         [SerializeField] private WorkDispatchTableSO _dispatchTable;
         [SerializeField] private float               _patienceLimit = 60f;
 
-        public override async UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
+        public override async UniTask<WorkResult> ExecuteAsync(
+            ModuleOwner executor, GameEvent context, WorkExecutionContext ctx)
         {
             var customer = executor as CustomerAgent;
             var agent    = executor as IActionDispatcher;
             var seat     = customer?.AssignedSeat;
-            if (customer == null || agent == null || seat == null) return;
+            if (customer == null || agent == null || seat == null) return WorkResult.Cancelled;
 
-            customer.SetAwaitingOrder(true);
-
-            _dispatchTable?.Dispatch(OrderWorkPhase.ReadyForServer, new TakeOrderEvent(seat), ScheduleManager.Instance);
-
-            await agent.WaitUntilAsync(() => customer.OrderPlaced, ct, _patienceLimit);
-            customer.SetAwaitingOrder(false);
+            try
+            {
+                customer.SetAwaitingOrder(true);
+                _dispatchTable?.Dispatch(OrderWorkPhase.ReadyForServer, new TakeOrderEvent(seat), ScheduleManager.Instance);
+                await agent.WaitUntilAsync(() => customer.OrderPlaced, ctx.Token, _patienceLimit);
+                customer.SetAwaitingOrder(false);
+                return WorkResult.Completed;
+            }
+            catch (OperationCanceledException)
+            {
+                customer.SetAwaitingOrder(false);
+                return ctx.WasExternallyCompleted
+                    ? WorkResult.ExternallyCompleted
+                    : WorkResult.Cancelled;
+            }
         }
     }
 }

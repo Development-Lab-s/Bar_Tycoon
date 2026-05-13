@@ -2,7 +2,6 @@ using BBJ.Actions;
 using Cysharp.Threading.Tasks;
 using Gamelib.EventSystem;
 using System;
-using System.Threading;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
@@ -13,12 +12,24 @@ namespace BBJ.Work
     {
         [SerializeField] private float _eatDuration = 8f;
 
-        public override UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
+        public override async UniTask<WorkResult> ExecuteAsync(
+            ModuleOwner executor, GameEvent context, WorkExecutionContext ctx)
         {
             var agent = executor as IActionDispatcher;
-            if (agent != null)
-                return agent.WaitAsync(_eatDuration, ct);
-            return UniTask.Delay(TimeSpan.FromSeconds(_eatDuration), cancellationToken: ct);
+            try
+            {
+                if (agent != null)
+                    await agent.WaitAsync(_eatDuration, ctx.Token);
+                else
+                    await UniTask.Delay(TimeSpan.FromSeconds(_eatDuration), cancellationToken: ctx.Token);
+                return WorkResult.Completed;
+            }
+            catch (OperationCanceledException)
+            {
+                return ctx.WasExternallyCompleted
+                    ? WorkResult.ExternallyCompleted
+                    : WorkResult.Cancelled;
+            }
         }
     }
 }

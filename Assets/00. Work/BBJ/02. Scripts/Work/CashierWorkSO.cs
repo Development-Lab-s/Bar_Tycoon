@@ -1,13 +1,13 @@
 using BBJ.Actions;
 using BBJ.Order;
 using BBJ.Register;
+using BBJ.WorkplaceSystem;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using Gamelib.EventSystem;
-using System.Threading;
+using System;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
-using BBJ.WorkplaceSystem;
 
 namespace BBJ.Work
 {
@@ -17,55 +17,52 @@ namespace BBJ.Work
         [SerializeField] private WorkplaceTypeSO     _counterType;
         [SerializeField] private WorkplaceRegisterSO _workplaceRegister;
 
-        public override async UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
+        public override async UniTask<WorkResult> ExecuteAsync(
+            ModuleOwner executor, GameEvent context, WorkExecutionContext ctx)
         {
             var agent = executor as IActionDispatcher;
             var ev    = context as OrderWorkEvent;
-            if (agent == null || ev == null) return;
+            if (agent == null || ev == null) return WorkResult.Cancelled;
 
-            if (!ev.Ticket.TryReserve(executor)) return;
+            if (!ev.Ticket.TryReserve(executor)) return WorkResult.Cancelled;
 
             var counter = _workplaceRegister?.GetFirst(_counterType);
-            if (counter == null)
-            {
-                ev.OrderManager.NotifyReleased(ev.Ticket, executor);
-                return;
-            }
+            if (counter == null) { ev.OrderManager.NotifyReleased(ev.Ticket, executor); return WorkResult.Cancelled; }
 
             var queue = counter.GetModule<WorkplaceQueueModule>();
-            if (queue == null)
-            {
-                ev.OrderManager.NotifyReleased(ev.Ticket, executor);
-                return;
-            }
+            if (queue == null)  { ev.OrderManager.NotifyReleased(ev.Ticket, executor); return WorkResult.Cancelled; }
 
+            OccupationSlot? slot = null;
             try
             {
-                await agent.MoveAsync(counter.GetNearestPoint(executor.transform.position), ct);
-                ct.ThrowIfCancellationRequested();
+                await agent.MoveAsync(counter.GetNearestPoint(executor.transform.position), ctx.Token);
+                ctx.Token.ThrowIfCancellationRequested();
 
                 ev.Ticket.TryStartProgress(executor);
 
-                await agent.WaitUntilAsync(() => queue.HasWaiting, ct);
-                ct.ThrowIfCancellationRequested();
+                await agent.WaitUntilAsync(() => queue.HasWaiting, ctx.Token);
+                ctx.Token.ThrowIfCancellationRequested();
 
-                var slot = queue.Dequeue();
-                if (slot == null)
-                {
-                    ev.OrderManager.NotifyReleased(ev.Ticket, executor);
-                    return;
-                }
+                slot = queue.Dequeue();
+                if (slot == null) { ev.OrderManager.NotifyReleased(ev.Ticket, executor); return WorkResult.Cancelled; }
 
-                await agent.DoWorkAsync(counter, ct);
-                ct.ThrowIfCancellationRequested();
+                await agent.DoWorkAsync(counter, ctx.Token);
+                ctx.Token.ThrowIfCancellationRequested();
 
                 slot.Value.NotifyProcessed();
                 ev.OrderManager.NotifyComplete(ev.Ticket, executor);
+                return WorkResult.Completed;
             }
-            catch (System.OperationCanceledException)
+            catch (OperationCanceledException) when (ctx.WasExternallyCompleted)
+            {
+                slot?.NotifyProcessed();
+                ev.OrderManager.NotifyComplete(ev.Ticket, executor);
+                return WorkResult.ExternallyCompleted;
+            }
+            catch (OperationCanceledException)
             {
                 ev.OrderManager.NotifyReleased(ev.Ticket, executor);
-                throw;
+                return WorkResult.Cancelled;
             }
         }
     }
