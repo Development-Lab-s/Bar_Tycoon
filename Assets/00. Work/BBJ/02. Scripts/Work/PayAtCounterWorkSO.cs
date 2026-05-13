@@ -25,8 +25,9 @@ namespace BBJ.Work
 
             try
             {
-                customer.AssignedSeat.GetModule<SeatModule>().UnSeat();
+                customer.AssignedSeat?.GetModule<SeatModule>()?.UnSeat();
                 var counter = _register?.GetFirst(_counterType);
+                if (counter == null) return WorkResult.Cancelled;
                 await agent.MoveAsync(counter.GetNearestPoint(executor.transform.position), ctx.Token);
                 ctx.Token.ThrowIfCancellationRequested();
 
