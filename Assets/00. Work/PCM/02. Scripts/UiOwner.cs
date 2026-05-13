@@ -8,7 +8,7 @@ using UnityEngine;
 public class UiOwner : MonoBehaviour , IModule
 {
     [SerializeField] private PlayerInputSO _inputSO;
-    private Stack<IAbstructContractPopUp> contractUis;
+    private Stack<IAbstructContractPopUp> contractUis = new();
     private ModuleOwner _owner;
     public void Initialize(ModuleOwner owner)
     {
@@ -21,11 +21,15 @@ public class UiOwner : MonoBehaviour , IModule
         {
             contractUis.Push(contractUi);
         }
-        else { }
     }
     private void HandleUi()
     {
-        var topUi = contractUis.Pop();
+        if (contractUis.Count <= 0) return;
+
+        var topUi = contractUis.Peek();
+        if (topUi.IsAnimating) return;
+
+        contractUis.Pop();
         topUi.Close();
     }
 }
