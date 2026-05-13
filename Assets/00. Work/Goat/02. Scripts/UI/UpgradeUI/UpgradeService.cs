@@ -1,19 +1,16 @@
-﻿using System;
-using _00._Work.Goat._02._Scripts.Events;
-using _00._Work.Goat._02._Scripts.Test.Coin;
+﻿using _00._Work.Goat._02._Scripts.Coin;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot;
-using Gamelib.EventSystem;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
 {
     public class UpgradeService
     {
-        private readonly CoinSystemSo _coinSystemSo;
+        private readonly CoinManager _coinManager;
      
-        public UpgradeService(CoinSystemSo coinSystemSo)
+        public UpgradeService(CoinManager coinManager)
         {
-            _coinSystemSo = coinSystemSo;
+            _coinManager = coinManager;
         }
 
         public bool TryUpgrade(UpgradeData upgradeData)
@@ -26,13 +23,12 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
 
             int cost = upgradeData.UpgradeDataSo.Costs[upgradeData.CurrentLevel];
 
-            if (cost > _coinSystemSo.Coin)
+            if (!_coinManager.TryUseCoin(cost))
             {
                 Debug.Log("돈이 부족합니다");
                 return false;
             }
             
-            _coinSystemSo.PlusCoin(-cost);
             upgradeData.UpgradeLevel();
             return true;
         }

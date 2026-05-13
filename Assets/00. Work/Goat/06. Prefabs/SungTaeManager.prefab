@@ -33,7 +33,39 @@ Transform:
   - {fileID: 3818177596411352057}
   - {fileID: 600583410326470249}
   - {fileID: 4711839443589861622}
+  - {fileID: 5599255647050406224}
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3465183139265348881
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5599255647050406224}
+  m_Layer: 0
+  m_Name: ExpManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5599255647050406224
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3465183139265348881}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6531594731835973521}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &4698842261368384264
 PrefabInstance:
@@ -47,6 +79,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: UpgradeManager
       objectReference: {fileID: 0}
+    - target: {fileID: 4570619033061917502, guid: 520d35dc8736c0540940310d04159d62, type: 3}
+      propertyPath: coinManager
+      value: 
+      objectReference: {fileID: 6733271728375425468}
     - target: {fileID: 5287251568506492257, guid: 520d35dc8736c0540940310d04159d62, type: 3}
       propertyPath: m_LocalPosition.x
       value: -45.54599
@@ -269,6 +305,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4228371311857282278, guid: 2e74c90f599a45a41be28a8e27c7d302, type: 3}
+      propertyPath: coinChannelSO
+      value: 
+      objectReference: {fileID: 11400000, guid: 9bccddf2f9790b349888f52b45136f00, type: 2}
     - target: {fileID: 6880119279643697138, guid: 2e74c90f599a45a41be28a8e27c7d302, type: 3}
       propertyPath: m_Name
       value: CoinManager
@@ -283,3 +323,14 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2791249605471425964, guid: 2e74c90f599a45a41be28a8e27c7d302, type: 3}
   m_PrefabInstance: {fileID: 7484793156732175706}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6733271728375425468 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4228371311857282278, guid: 2e74c90f599a45a41be28a8e27c7d302, type: 3}
+  m_PrefabInstance: {fileID: 7484793156732175706}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a60ab28d5c1e446d94ae492b2af885f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.Goat._02._Scripts.Coin.CoinManager

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using _00._Work.Goat._02._Scripts.Coin;
 using _00._Work.Goat._02._Scripts.Events;
 using _00._Work.Goat._02._Scripts.SaveCode;
-using _00._Work.Goat._02._Scripts.Test.Coin;
 using _00._Work.Goat._02._Scripts.UI.AchievementUI.Data;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.Save;
 using _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot;
@@ -18,7 +18,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
         [Header("SO")]
         [SerializeField] private SaveFileNameSO  saveFileNameSo;
         [SerializeField] private EventChannelSO achievementChannelSo;
-        [SerializeField] private CoinSystemSo coinSystemSo;
+        [SerializeField] private CoinManager coinManager;
         
         private UpgradeSaveService  _upgradeSaveService;
         private UpgradeService _upgradeService;
@@ -26,7 +26,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
         private void Awake()
         {
             JsonSaveService saveService = new JsonSaveService(saveFileNameSo);
-            _upgradeService = new UpgradeService(coinSystemSo);
+            _upgradeService = new UpgradeService(coinManager);
             _upgradeSaveService = new UpgradeSaveService(saveService,  UpgradeDataList);
             
             _upgradeSaveService.Load();
