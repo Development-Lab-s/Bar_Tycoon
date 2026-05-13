@@ -5,7 +5,6 @@ using BBJ.Work;
 using Cysharp.Threading.Tasks;
 using Gamelib.EventSystem;
 using System;
-using System.Threading;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
@@ -17,55 +16,62 @@ namespace BBJ.Schedule
         [field: SerializeField] public EventChannelSO ScheduleTriggerChannel { get; private set; }
         [field: SerializeField] public AgentRole Role { get; private set; }
 
-        private ModuleOwner             _owner;
-        private CancellationTokenSource _cts;
+        private ModuleOwner          _owner;
+        private WorkExecutionContext _execCtx;
 
-        public bool      IsAvailableForWork => _cts == null;
+        public bool IsAvailableForWork => _execCtx == null;
 
         public event Action OnWorkStarted;
-        public event Action OnWorkEnded;
-        //public WorkSO curWorkSO;
+        public event Action<bool> OnWorkEnded;
 
         public void Initialize(ModuleOwner owner) => _owner = owner;
 
         private void OnDisable()
         {
             _scheduleRegister?.Unregister(this);
-            CompleteWork();
+            CancelWork();
         }
 
         public void AfterInit() => _scheduleRegister?.Register(this);
 
         public void AssignWork(WorkSO workSO, GameEvent context)
         {
-            CompleteWork();
-            _cts = new CancellationTokenSource();
-            RunAsync(workSO, context, _cts).Forget();
+            CancelWork();
+            _execCtx = new WorkExecutionContext();
+            RunAsync(workSO, context, _execCtx).Forget();
         }
 
-        public void CompleteWork()
+        public void ResolveWork()
         {
-            //curWorkSO = null;
-            _cts?.Cancel();
-            _cts?.Dispose();
-            _cts = null;
+            _execCtx?.ForceComplete();
         }
 
-        private async UniTaskVoid RunAsync(WorkSO workSO, GameEvent context, CancellationTokenSource cts)
+        public void CancelWork()
         {
-            //curWorkSO = workSO;
+            _execCtx?.HardCancel();
+            _execCtx = null;
+        }
+
+        private async UniTaskVoid RunAsync(WorkSO workSO, GameEvent context, WorkExecutionContext ctx)
+        {
             OnWorkStarted?.Invoke();
+            WorkResult result = WorkResult.Cancelled;
             try
             {
-                await workSO.ExecuteAsync(_owner, context, cts.Token);
+                result = await workSO.ExecuteAsync(_owner, context, ctx);
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+                result = ctx.WasExternallyCompleted
+                    ? WorkResult.ExternallyCompleted
+                    : WorkResult.Cancelled;
+            }
             finally
             {
-                if (_cts == cts) _cts = null;
-                //curWorkSO = null;
-                cts.Dispose();
-                OnWorkEnded?.Invoke();
+                if (_execCtx == ctx) _execCtx = null;
+                ctx.Dispose();
+                workSO.OnResult(result, _owner, context);
+                OnWorkEnded?.Invoke(result != WorkResult.Cancelled);
                 ScheduleTriggerChannel?.RaiseEvent(new ScheduleTriggerEvent());
             }
         }
