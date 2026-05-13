@@ -23,18 +23,17 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         private Vector3 _originScale;
         private Coroutine _timerCoroutine;
         private MotionHandle _motionHandle;
-        //private UiOwner _uiOwner;
+
         public bool isOpen { get; set; }
 
         public virtual void Initialize(ModuleOwner owner)
         {
             _owner = owner; 
+            _originScale = transform.localScale;
+            transform.localScale = Vector3.zero;
         }
         public virtual void AfterInit()
         {
-            //_uiOwner = _owner.GetModule<UiOwner>();
-            _originScale = transform.localScale;
-            transform.localScale = Vector3.zero;
             gameObject.SetActive(false);
         }
         public void Open(bool isAutoClose = false)
@@ -43,7 +42,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
             if (isOpen || IsAnimating) return;
 
             isOpen = true;
-            //_uiOwner.StackAdd(this);
+            
 
             if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
             if (_motionHandle.IsActive()) _motionHandle.Cancel();

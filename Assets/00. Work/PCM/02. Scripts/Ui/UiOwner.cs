@@ -28,7 +28,7 @@ public class UiOwner : MonoBehaviour , IModule
     }
     private void HandleUi()
     {
-        if(contractUis.Count != 0)
+        if(SettingUis.Count > 0)
         {
             var settingUi = SettingUis.Peek();
             if(settingUi.IsAnimating)return;

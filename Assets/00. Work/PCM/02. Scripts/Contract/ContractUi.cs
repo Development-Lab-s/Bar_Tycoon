@@ -4,9 +4,11 @@ using UnityEngine;
 
 public class ContractUi : AbstructContractPopUp
 {
+    private UiOwner _uiOwner;
     public override void Initialize(ModuleOwner owner)
     {
         base.Initialize(owner);
+        _uiOwner = owner.GetModule<UiOwner>();
     }
     public override void AfterInit()
     {
@@ -15,6 +17,6 @@ public class ContractUi : AbstructContractPopUp
 
     public override void OnOpen()
     {
-       
+        _uiOwner.StackAdd(this);
     }
 }
