@@ -4,7 +4,7 @@ using UnityEngine;
 public enum MenuType
 {
     Character,
-    Remodeling,
+    LeaderBoard,
     Story,
     Collection,
     Achievement,

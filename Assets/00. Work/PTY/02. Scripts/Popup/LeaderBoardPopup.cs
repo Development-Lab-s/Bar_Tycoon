@@ -1,4 +1,4 @@
-﻿public class RemodelingPopup : BasePopup
+﻿public class LeaderBoardPopup : BasePopup
 {
     public override void OnClickClose()
     {
