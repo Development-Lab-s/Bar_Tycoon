@@ -53,7 +53,106 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps
 
         public override void GetTileData(Vector3Int position, ITilemap tilemap, ref TileData tileData)
         {
-            // 구현 예정 (Task 2)
+            tileData.sprite = sprite;
+            tileData.gameObject = null;
+            tileData.colliderType = colliderType;
+            tileData.flags = TileFlags.LockTransform | TileFlags.LockColor;
+
+            bool hasXNeighbor = HasSameTile(tilemap, position + Vector3Int.left)
+                             || HasSameTile(tilemap, position + Vector3Int.right);
+            bool hasYNeighbor = HasSameTile(tilemap, position + Vector3Int.up)
+                             || HasSameTile(tilemap, position + Vector3Int.down);
+
+            WallSide resolvedSide = ResolveWallSide(hasXNeighbor, hasYNeighbor);
+            bool mirrorX = resolvedSide == WallSide.Right;
+
+            tileData.transform = BuildTransform(mirrorX, position);
+            tileData.color = useTint
+                ? (resolvedSide == WallSide.Left ? leftWallColor : rightWallColor)
+                : Color.white;
         }
+
+        private WallSide ResolveWallSide(bool hasXNeighbor, bool hasYNeighbor)
+        {
+            if (hasXNeighbor && !hasYNeighbor) return xAxisWallSide;
+            if (!hasXNeighbor && hasYNeighbor) return Opposite(xAxisWallSide);
+            if (hasXNeighbor && hasYNeighbor)
+                return axisPriority == AxisPriority.XFirst ? xAxisWallSide : Opposite(xAxisWallSide);
+            return isolatedWallSide;
+        }
+
+        private WallSide Opposite(WallSide side) =>
+            side == WallSide.Left ? WallSide.Right : WallSide.Left;
+
+        private bool HasSameTile(ITilemap tilemap, Vector3Int pos) =>
+            tilemap.GetTile(pos) == this;
+
+        private Matrix4x4 BuildTransform(bool mirrorX, Vector3Int position)
+        {
+            Vector2 offsetPixels = mirrorX ? rightWallOffsetPixels : leftWallOffsetPixels;
+            Vector2 extraOffset = ComputeOffsetWorld(position, offsetPixels);
+
+            if (sprite == null)
+                return mirrorX
+                    ? BuildMirrorMatrix(extraOffset)
+                    : BuildPlacementMatrix(extraOffset);
+
+            if (!mirrorX)
+                return BuildPlacementMatrix(GetDefaultPlacementWorld(sprite) + extraOffset);
+
+            return useMirrorPivotCompensation
+                ? BuildMirrorMatrix(GetMirroredPlacementWorld(sprite) + extraOffset)
+                : BuildMirrorMatrix(extraOffset);
+        }
+
+        private Vector2 ComputeOffsetWorld(Vector3Int position, Vector2 offsetPixels)
+        {
+            Vector3Int delta = position - centerTilePosition;
+            if (delta.x == 0 && delta.y == 0) return Vector2.zero;
+
+            float ppu = pixelsPerUnit > 0f ? pixelsPerUnit : 512f;
+
+            float halfX = gridCellSize.x * 0.5f;
+            float halfY = gridCellSize.y * 0.5f;
+            float naturalStep = Mathf.Sqrt(halfX * halfX + halfY * halfY);
+            float minPx = -naturalStep * ppu;
+
+            float ox = Mathf.Max(offsetPixels.x, minPx) / ppu;
+            float oy = Mathf.Max(offsetPixels.y, minPx) / ppu;
+
+            float angle = isoAngleDegrees * Mathf.Deg2Rad;
+            float cosA = Mathf.Cos(angle);
+            float sinA = Mathf.Sin(angle);
+
+            float worldX = delta.x * ox * cosA  + delta.y * oy * (-cosA);
+            float worldY = delta.x * ox * (-sinA) + delta.y * oy * (-sinA);
+
+            return new Vector2(worldX, worldY);
+        }
+
+        private static Matrix4x4 BuildPlacementMatrix(Vector2 t) =>
+            Matrix4x4.TRS(new Vector3(t.x, t.y, 0f), Quaternion.identity, Vector3.one);
+
+        private static Matrix4x4 BuildMirrorMatrix(Vector2 t) =>
+            Matrix4x4.TRS(new Vector3(t.x, t.y, 0f), Quaternion.identity, new Vector3(-1f, 1f, 1f));
+
+        private Vector2 GetDefaultPlacementWorld(Sprite s)
+        {
+            float ppu = GetSpritePPU(s);
+            return new Vector2(
+                (s.pivot.x - defaultPlacementPivotPixels.x) / ppu,
+                (s.pivot.y - defaultPlacementPivotPixels.y) / ppu);
+        }
+
+        private Vector2 GetMirroredPlacementWorld(Sprite s)
+        {
+            float ppu = GetSpritePPU(s);
+            return new Vector2(
+                (mirroredPlacementPivotPixels.x - s.pivot.x) / ppu,
+                (s.pivot.y - mirroredPlacementPivotPixels.y) / ppu);
+        }
+
+        private static float GetSpritePPU(Sprite s) =>
+            s != null && s.pixelsPerUnit > 0f ? s.pixelsPerUnit : 100f;
     }
 }
