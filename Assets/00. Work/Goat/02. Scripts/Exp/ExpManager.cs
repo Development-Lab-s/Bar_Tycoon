@@ -20,8 +20,12 @@ namespace _00._Work.Goat._02._Scripts.Exp
         public Action<int> OnLevelChanged;
         public Action<int, int> OnExpChanged;
 
+        private JsonSaveService _jsonSaveService;
         private void Awake()
         {
+            _jsonSaveService = new JsonSaveService(saveFileNameSO);
+            LoadExp();
+            
             expChannelSO.AddListener<ExpEvent>(HandleExpAdd);
         }
 
@@ -35,6 +39,14 @@ namespace _00._Work.Goat._02._Scripts.Exp
         {
             expChannelSO.RemoveListener<ExpEvent>(HandleExpAdd);
         }
+        
+        private void LoadExp()
+        {
+            expData = _jsonSaveService.Load<ExpData>();
+
+            if (expData == null)
+                expData = new ExpData();
+        }
 
         private void HandleExpAdd(ExpEvent exp)
         {
@@ -46,7 +58,18 @@ namespace _00._Work.Goat._02._Scripts.Exp
                 expData.currentLevel += 1;
                 OnLevelChanged?.Invoke(CurrentLevel);
             }
-            OnExpChanged?.Invoke(CurrentExp, maxExp);
+            OnExpChanged?.Invoke(CurrentExp,  expTableSo.GetRequiredExp(CurrentLevel));
+            _jsonSaveService.Save(expData);
+        }
+        
+        private bool CanLevelUp()
+        {
+            int requiredExp = expTableSo.GetRequiredExp(CurrentLevel);
+
+            if (requiredExp <= 0)
+                return false;
+
+            return expData.currentExp >= requiredExp;
         }
     }
 }

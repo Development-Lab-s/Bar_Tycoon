@@ -10,6 +10,7 @@ namespace _00._Work.Goat._02._Scripts.Coin
         private void Awake()
         {
             coinManager.OnChangeCoin += HandleChangeCoin;
+            HandleChangeCoin(coinManager.CurrentCoin);
         }
 
         private void OnDestroy()
