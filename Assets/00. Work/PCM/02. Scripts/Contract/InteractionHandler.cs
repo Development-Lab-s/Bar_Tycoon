@@ -3,6 +3,7 @@ using _00._Work.PCM._02._Scripts;
 using System.Collections;
 using Systems;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Assets._00._Work.PCM._02._Scripts
 {
@@ -24,13 +25,18 @@ namespace Assets._00._Work.PCM._02._Scripts
         {
             if (_inputSo.MainCam == null) return;
 
+            //if (EventSystem.current.IsPointerOverGameObject())
+            //{
+            //    return;
+            //}
+
             Ray ray = _inputSo.MainCam.ScreenPointToRay(_inputSo.MousePosition);
 
             RaycastHit2D hit = Physics2D.Raycast(ray.origin, Vector2.zero, 0f, whatisPlayer);
 
             if (hit.collider == null) return;
 
-            if (hit.collider.TryGetComponent<AbstructContractObject>(out var target))
+            if (hit.collider.TryGetComponent<IContractObject>(out var target))
             {
                 target.ExcuteClick();
             }

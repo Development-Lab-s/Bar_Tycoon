@@ -1,6 +1,6 @@
-﻿using System;
-using _00._Work.Goat._02._Scripts.Test.Coin;
+﻿using _00._Work.Goat._02._Scripts.Events;
 using _00._Work.Goat._02._Scripts.UI.AchievementUI.Data;
+using Gamelib.EventSystem;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
@@ -12,7 +12,8 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
         [SerializeField] private AchievementSlotContainer achievementSlotContainer;
         [SerializeField] private GameObject achievementObject;
         [SerializeField] private AchieveTopUI achieveTopUI;
-        [SerializeField] private CoinSystemSo coinSystem;
+
+        [SerializeField] private EventChannelSO coinChannelSo;
 
         private void OnEnable()
         {
@@ -33,7 +34,7 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
         
         private void HandleClickAchievementBtn(AchievementData data)
         {
-            coinSystem.PlusCoin(data.AchievementDataSO.AchieveCoin);
+            coinChannelSo.RaiseEvent(new CoinEvent().Init(data.AchievementDataSO.AchieveCoin));
             data.GetAwardTrue();
         }
 
