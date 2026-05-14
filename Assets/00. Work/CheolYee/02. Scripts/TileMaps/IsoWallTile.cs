@@ -42,8 +42,6 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps
         [Tooltip("Right Wall 타일의 오프셋 (픽셀/그리드 단위). X = 그리드 X축 간격, Y = 그리드 Y축 간격")]
         [SerializeField] private Vector2 rightWallOffsetPixels = Vector2.zero;
 
-        private static readonly Matrix4x4 NormalMatrix = Matrix4x4.identity;
-
         public override void RefreshTile(Vector3Int position, ITilemap tilemap)
         {
             tilemap.RefreshTile(position);
