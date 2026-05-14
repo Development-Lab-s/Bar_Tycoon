@@ -112,6 +112,10 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps
 
             float ppu = pixelsPerUnit > 0f ? pixelsPerUnit : 512f;
 
+            // naturalStep = sqrt((cellX/2)² + (cellY/2)²)
+            // For standard iso (angle = atan(cellY/cellX)), this equals cellX/2 / cos(angle),
+            // which is the exact per-axis world distance per grid step. Using it as the clamp
+            // floor ensures tiles converge to center but never cross it.
             float halfX = gridCellSize.x * 0.5f;
             float halfY = gridCellSize.y * 0.5f;
             float naturalStep = Mathf.Sqrt(halfX * halfX + halfY * halfY);
@@ -153,6 +157,6 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps
         }
 
         private static float GetSpritePPU(Sprite s) =>
-            s != null && s.pixelsPerUnit > 0f ? s.pixelsPerUnit : 100f;
+            s != null && s.pixelsPerUnit > 0f ? s.pixelsPerUnit : 512f;
     }
 }

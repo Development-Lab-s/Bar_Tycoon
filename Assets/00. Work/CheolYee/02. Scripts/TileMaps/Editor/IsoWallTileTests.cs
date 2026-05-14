@@ -90,6 +90,33 @@ public class IsoWallTileTests
     }
 
     [Test]
+    public void TileAtDeltaY1_WithRightOffsetY512_HasExpectedWorldOffset()
+    {
+        // Y-only neighbor → resolves to Right wall (Opposite of Left)
+        // rightOffsetY=512px, delta=(0,1)
+        // oy = 1.0, ox = 0
+        // worldX = delta.y * oy * (-cosA) = 1 * 1.0 * (-cos(26.565°)) ≈ -0.894
+        // worldY = delta.y * oy * (-sinA) = 1 * 1.0 * (-sin(26.565°)) ≈ -0.447
+        Tilemap tilemap = CreateTilemap();
+        IsoWallTile tile = CreateTile(WallSide.Left); // xAxisWallSide=Left → Y-neighbor → Right wall
+        SetField(tile, "centerTilePosition", Vector3Int.zero);
+        SetField(tile, "leftWallOffsetPixels", Vector2.zero);
+        SetField(tile, "rightWallOffsetPixels", new Vector2(0f, 512f)); // Y offset on Right wall
+
+        tilemap.SetTile(new Vector3Int(0, 1, 0), tile);
+        tilemap.SetTile(new Vector3Int(0, 2, 0), tile);
+        tilemap.RefreshAllTiles();
+
+        Matrix4x4 m = tilemap.GetTransformMatrix(new Vector3Int(0, 1, 0));
+        // Right wall → mirror → m00 = -1
+        Assert.That(m.m00, Is.EqualTo(-1f).Within(0.001f));
+        // worldX = 1 * (512/512) * (-cos(26.565°)) = -cos(26.565°)
+        Assert.That(m.m03, Is.EqualTo(-Mathf.Cos(26.565f * Mathf.Deg2Rad)).Within(0.005f));
+        // worldY = 1 * (512/512) * (-sin(26.565°)) = -sin(26.565°)
+        Assert.That(m.m13, Is.EqualTo(-Mathf.Sin(26.565f * Mathf.Deg2Rad)).Within(0.005f));
+    }
+
+    [Test]
     public void NegativeOffset_ClampedAtCenter_DoesNotCrossCenter()
     {
         float naturalStep = Mathf.Sqrt(0.5f * 0.5f + 0.25f * 0.25f);
