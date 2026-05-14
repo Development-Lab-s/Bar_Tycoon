@@ -101,7 +101,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8878427590658111351}
   - component: {fileID: 1105060361522575257}
-  - component: {fileID: 2091621798117940089}
+  - component: {fileID: 4327823377658395829}
   m_Layer: 19
   m_Name: PlayerEvent
   m_TagString: Untagged
@@ -152,7 +152,24 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!61 &2091621798117940089
+  <charLike>k__BackingField: {fileID: 11400000, guid: 4f2108c16c5862742b43c53b3bd65d75, type: 2}
+  <ChatOpen>k__BackingField:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 6792289985286197206}
+        m_TargetAssemblyTypeName: Assets._00._Work.PCM._02._Scripts.Contract.ContractChat,
+          Assembly-CSharp
+        m_MethodName: Open
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+--- !u!61 &4327823377658395829
 BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -186,17 +203,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.8054826}
+  m_Offset: {x: 0, y: 0.78873706}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.7, y: 0.9}
-    newSize: {x: 0.7, y: 0.9}
-    adaptiveTilingThreshold: 0.5
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 2.6109648}
+  m_Size: {x: 1, y: 2.5774736}
   m_EdgeRadius: 0
 --- !u!1 &6343629743945905020
 GameObject:
@@ -289,7 +306,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 724232234802486213, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7567503195946539938, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
       propertyPath: chat
@@ -301,7 +318,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9011935271969263545, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.4
+      value: 0.7
       objectReference: {fileID: 0}
     - target: {fileID: 9011935271969263545, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
       propertyPath: m_LocalPosition.z
