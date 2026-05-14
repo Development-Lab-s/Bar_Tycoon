@@ -8,6 +8,8 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps.Editor
     [CustomEditor(typeof(IsoWallTile))]
     public class IsoWallTileEditor : UnityEditor.Editor
     {
+        private const string k_CenterTileProp = "centerTilePosition";
+
         private bool _isPicking;
         private Tilemap _referenceTilemap;
 
@@ -52,14 +54,19 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps.Editor
             Vector3 worldPos = ray.origin + ray.direction * t;
             Vector3Int cellPos = _referenceTilemap.WorldToCell(worldPos);
 
-            SerializedObject so = new(target);
-            so.FindProperty("centerTilePosition").vector3IntValue = cellPos;
-            so.ApplyModifiedProperties();
+            serializedObject.Update();
+            serializedObject.FindProperty(k_CenterTileProp).vector3IntValue = cellPos;
+            serializedObject.ApplyModifiedProperties();
 
             _isPicking = false;
             e.Use();
 
-            _referenceTilemap.RefreshAllTiles();
+            _referenceTilemap.RefreshTile(cellPos);
+        }
+
+        private void OnDisable()
+        {
+            _isPicking = false;
         }
     }
 }
