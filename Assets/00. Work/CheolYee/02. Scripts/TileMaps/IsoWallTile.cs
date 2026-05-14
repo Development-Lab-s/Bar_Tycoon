@@ -37,9 +37,9 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps
         [SerializeField] private Vector2 gridCellSize = new(1f, 0.5f);
         [Tooltip("스프라이트 PPU (기본 512)")]
         [SerializeField] private float pixelsPerUnit = 512f;
-        [Tooltip("Left Wall 타일의 오프셋 (픽셀/그리드 단위). X = 그리드 X축 간격, Y = 그리드 Y축 간격")]
+        [Tooltip("Left Wall 타일 간격 (픽셀/그리드 단위). X = 그리드 X축(우하향), Y = 그리드 Y축(좌하향)")]
         [SerializeField] private Vector2 leftWallOffsetPixels = Vector2.zero;
-        [Tooltip("Right Wall 타일의 오프셋 (픽셀/그리드 단위). X = 그리드 X축 간격, Y = 그리드 Y축 간격")]
+        [Tooltip("Right Wall 타일 간격 (픽셀/그리드 단위). X = 그리드 X축(우하향), Y = 그리드 Y축(좌하향)")]
         [SerializeField] private Vector2 rightWallOffsetPixels = Vector2.zero;
 
         public override void RefreshTile(Vector3Int position, ITilemap tilemap)
@@ -110,7 +110,7 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps
             Vector3Int delta = position - centerTilePosition;
             if (delta.x == 0 && delta.y == 0) return Vector2.zero;
 
-            float ppu = pixelsPerUnit > 0f ? pixelsPerUnit : 512f;
+            float ppu = GetSpritePPU(sprite);
 
             // naturalStep = sqrt((cellX/2)² + (cellY/2)²)
             // For standard iso (angle = atan(cellY/cellX)), this equals cellX/2 / cos(angle),
@@ -128,6 +128,9 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps
             float cosA = Mathf.Cos(angle);
             float sinA = Mathf.Sin(angle);
 
+            // Grid X direction in world: (cosA, -sinA)  (right-down in iso view)
+            // Grid Y direction in world: (-cosA, -sinA) (left-down in iso view, same screen-Y sign as X)
+            // Both grid axes descend in world Y — this is correct for Unity Isometric Z-as-Y
             float worldX = delta.x * ox * cosA  + delta.y * oy * (-cosA);
             float worldY = delta.x * ox * (-sinA) + delta.y * oy * (-sinA);
 
@@ -156,7 +159,9 @@ namespace _00._Work.CheolYee._02._Scripts.TileMaps
                 (s.pivot.y - mirroredPlacementPivotPixels.y) / ppu);
         }
 
-        private static float GetSpritePPU(Sprite s) =>
-            s != null && s.pixelsPerUnit > 0f ? s.pixelsPerUnit : 512f;
+        private float GetSpritePPU(Sprite s) =>
+            s != null && s.pixelsPerUnit > 0f ? s.pixelsPerUnit
+            : pixelsPerUnit > 0f ? pixelsPerUnit
+            : 512f;
     }
 }

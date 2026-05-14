@@ -194,6 +194,26 @@ public class IsoWallTileTests
         Assert.That(m.m03, Is.EqualTo(0.5f * Mathf.Cos(26.565f * Mathf.Deg2Rad)).Within(0.005f));
     }
 
+    [Test]
+    public void CornerTile_YFirst_UsesOppositeOfXAxis()
+    {
+        // X-neighbor AND Y-neighbor, axisPriority=YFirst, xAxisWallSide=Left
+        // → ResolveWallSide(true, true) with YFirst → Opposite(Left) = Right → mirror
+        Tilemap tilemap = CreateTilemap();
+        IsoWallTile tile = CreateTile(WallSide.Left);
+        SetField(tile, "axisPriority", AxisPriority.YFirst);
+        SetField(tile, "leftWallOffsetPixels", Vector2.zero);
+        SetField(tile, "rightWallOffsetPixels", Vector2.zero);
+
+        tilemap.SetTile(Vector3Int.zero, tile);
+        tilemap.SetTile(Vector3Int.right, tile);  // X-neighbor
+        tilemap.SetTile(Vector3Int.up, tile);     // Y-neighbor
+        tilemap.RefreshAllTiles();
+
+        Matrix4x4 m = tilemap.GetTransformMatrix(Vector3Int.zero);
+        Assert.That(m.m00, Is.EqualTo(-1f).Within(0.001f)); // Right wall → mirror
+    }
+
     // ─── Helpers ────────────────────────────────────────────────────────────
 
     private Tilemap CreateTilemap()
