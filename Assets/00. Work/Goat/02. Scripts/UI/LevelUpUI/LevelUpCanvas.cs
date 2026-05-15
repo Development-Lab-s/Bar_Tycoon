@@ -1,5 +1,6 @@
 ﻿using System;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data;
+using TMPro;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
@@ -13,6 +14,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         [SerializeField] private LevelUpRewardManager levelUpRewardManager;
         [SerializeField] private LevelUpContainer levelUpContainer;
         [SerializeField] private GameObject levelUpObject;
+        [SerializeField] private TextMeshProUGUI levelText;
 
         private void Awake()
         {
@@ -24,9 +26,10 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
             levelUpRewardManager.OnCockTailAdd -= HandleCockTailAdd;
         }
 
-        private void HandleCockTailAdd(CockTailSlotSo cockTailSo)
+        private void HandleCockTailAdd(int level,CockTailSlotSo cockTailSo)
         {
             ShowUI();
+            levelText.text = level.ToString();
             levelUpContainer.SpawnSlot(cockTailSo);
         }
 

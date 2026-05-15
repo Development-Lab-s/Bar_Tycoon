@@ -16,10 +16,9 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         [SerializeField] private ExpManager expManager;
         
         [Header("EventChannel")]
-        [SerializeField] private EventChannelSO cockTailAddEventChannel;
+        [SerializeField] private EventChannelSO codexAddEventChannel;
 
-        public event Action<CockTailSlotSo> OnCockTailAdd;
-
+        public event Action<int, CockTailSlotSo> OnCockTailAdd;
         private void Awake()
         {
             expManager.OnLevelChanged += HandleLevelChange;
@@ -30,12 +29,32 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
             expManager.OnLevelChanged -= HandleLevelChange;
         }
 
-        private void HandleLevelChange(int level)
+        private void HandleLevelChange(int level, int levelChangeCount)
         {
-            foreach (CockTailSlotSo reward in levelUpRewardSOs.levelUpRewardSOs[level-2].cockTails)
+            int rewardIndex = level - 2;
+            int startIndex = rewardIndex - (levelChangeCount - 1);
+            
+            for (int i = startIndex; i <= rewardIndex; i++)
             {
-                cockTailAddEventChannel.RaiseEvent(new CockTailAddEvent().Init(reward));
-                OnCockTailAdd?.Invoke(reward);
+                
+                if (i < 0 || i >= levelUpRewardSOs.levelUpRewardSOs.Length)
+                {
+                    Debug.Log($"{i}번 인덱스 레벨보상 없음");
+                    continue;
+                }
+                
+                var rewardGroup = levelUpRewardSOs.levelUpRewardSOs[i];
+                if (rewardGroup == null)
+                {
+                    Debug.Log($"{i}번 인덱스 레벨보상 없음");
+                    continue;
+                }
+                
+                foreach (CockTailSlotSo reward in rewardGroup.cockTails)
+                {
+                    codexAddEventChannel.RaiseEvent(new CockTailAddEvent().Init(reward));
+                    OnCockTailAdd?.Invoke(level, reward);
+                }   
             }
             
             //여긴 기능 해금
