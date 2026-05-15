@@ -25,10 +25,10 @@ namespace Assets._00._Work.PCM._02._Scripts
         {
             if (_inputSo.MainCam == null) return;
 
-            if (EventSystem.current.IsPointerOverGameObject())
-            {
-                return;
-            }
+            //if (EventSystem.current.IsPointerOverGameObject())
+            //{
+            //    return;
+            //}
 
             Ray ray = _inputSo.MainCam.ScreenPointToRay(_inputSo.MousePosition);
 
