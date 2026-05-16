@@ -9,9 +9,8 @@ using UnityEngine.UI;
 
 public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
+    [SerializeField]private CharItemSO _itemSO; //Char은 매력이라는 뜻 ㅇㅇ
     private Image _image;
-
-    // 드래그 중에 마우스를 따라다닐 임시 복사본 오브젝트
     private GameObject dragInstance;
     private RectTransform dragRectTransform;
     private Canvas mainCanvas;
@@ -24,7 +23,11 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (_image.sprite == null) return;
+        if (_image.sprite == null)
+        {
+            return;
+        }
+        ;
 
         dragInstance = new GameObject("DragIcon_Clone");
         dragInstance.transform.SetParent(mainCanvas.transform, false);
@@ -34,7 +37,6 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
         dragImg.sprite = _image.sprite;
         dragImg.rectTransform.sizeDelta = _image.rectTransform.sizeDelta;
 
-        // 4. 가짜 이미지는 레이캐스트를 꺼서, 마우스를 놓았을 때 플레이어 레이가 막히지 않게 함
         dragImg.raycastTarget = false;
 
         dragRectTransform = dragInstance.GetComponent<RectTransform>();
@@ -53,7 +55,6 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (dragInstance == null) Debug.Log("샤갈") ;
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(eventData.position);
         Debug.Log(mousePos);
         RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
