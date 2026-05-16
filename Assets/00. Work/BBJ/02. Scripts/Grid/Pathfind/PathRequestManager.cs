@@ -11,7 +11,6 @@ namespace BBJ.GridSystem.Pathfind
     public class PathRequestManager : MonoBehaviour, IPathRequestManager
     {
         [SerializeField] private EventChannelSO pathRequestChannel;
-        [SerializeField] private RuntimeReference<IPathRequestManager> pathRequestSO;
 
         private readonly Queue<PathRequest> pathRequestQueue = new Queue<PathRequest>();
         private PathRequest currentPathRequest;
@@ -29,7 +28,6 @@ namespace BBJ.GridSystem.Pathfind
         private void OnEnable()
         {
             pathRequestChannel.AddListener<PathRequestEvent>(RequestPathHandler);
-            pathRequestSO?.Initialize(this);
         }
 
         private void OnDisable()

@@ -16,12 +16,13 @@ namespace BBJ.Customer
 
         [Header("Pool")]
         [SerializeField] private PoolInitializer _poolInitializer;
-        [SerializeField] private PoolItemSo      _customerPoolItem;
+        [SerializeField] private PoolItemSo _customerPoolItem;
 
         [Header("Spawn Settings")]
-        [SerializeField] private Transform        _spawnPoint;
-        [SerializeField] private float            _spawnInterval = 8f;
-        [SerializeField] private int              _maxCustomers  = 6;
+        [SerializeField] private Transform _spawnPoint;
+        // 묶어서 SO로 관리할 예정
+        [SerializeField] private float _spawnInterval = 8f;
+        [SerializeField] private int _maxCustomers = 6;
 
         [Header("Cycle")]
         [SerializeField] private WorkSO _cycleSequence;
@@ -30,31 +31,29 @@ namespace BBJ.Customer
         [SerializeField] private List<FoodDataSO> _menuItems = new();
 
         private int _activeCount;
-
-        private void OnEnable()
+        private void Awake()
         {
-            _customerChannel.AddListener<CustomerLeftEvent>(OnCustomerLeft);
+            UtilDebugger.AssertAllAssigned(this);
+
             _activeCount = 0;
+            _customerChannel.AddListener<CustomerLeftEvent>(HandleCustomerLeft);
+            _poolInitializer.PoolManager.InitializePool(_poolInitializer.transform);
         }
-
-        private void OnDisable()
+        private void OnDestroy()
         {
-            _customerChannel.RemoveListener<CustomerLeftEvent>(OnCustomerLeft);
-            _activeCount = 0;
+            _customerChannel.RemoveListener<CustomerLeftEvent>(HandleCustomerLeft);
         }
 
         private void Start()
         {
             // SO의 런타임 딕셔너리가 플레이모드 진입 중 리셋될 수 있어 Start에서 재보장
-            if (_poolInitializer != null)
-                _poolInitializer.PoolManager.InitializePool(_poolInitializer.transform);
             StartCoroutine(SpawnLoop());
         }
 
-        private void OnCustomerLeft(CustomerLeftEvent evt)
+        private void HandleCustomerLeft(CustomerLeftEvent evt)
         {
             _activeCount--;
-            _poolInitializer?.Push(evt.Customer);
+            _poolInitializer.Push(evt.Customer);
         }
 
         private IEnumerator SpawnLoop()
@@ -73,13 +72,13 @@ namespace BBJ.Customer
 
         private void SpawnCustomer()
         {
-            var customer = _poolInitializer.Pop<CustomerAgent>(_customerPoolItem);
+            CustomerAgent customer = _poolInitializer.Pop<CustomerAgent>(_customerPoolItem);
             if (customer == null) return;
 
             customer.transform.position = _spawnPoint.position;
             _activeCount++;
 
-            var food = _menuItems[Random.Range(0, _menuItems.Count)];
+            FoodDataSO food = _menuItems[Random.Range(0, _menuItems.Count)];
             customer.StartCycle(food);
             customer.GetModule<SchedulingModule>()?.AssignWork(_cycleSequence, null);
         }

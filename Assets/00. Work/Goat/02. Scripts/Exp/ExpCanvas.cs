@@ -7,7 +7,11 @@ namespace _00._Work.Goat._02._Scripts.Exp
     {
         [SerializeField] private ExpManager expManager;
         [SerializeField] private ExpTextUI expTextUI;
+        [SerializeField] private ExpTextBounceUI levelTextBounce;
         [SerializeField] private ExpSlider expSlider;
+        
+        private int _displayLevel;
+        
         private void Awake()
         {
             expManager.OnLevelChanged += HandleLevelChange;
@@ -16,8 +20,10 @@ namespace _00._Work.Goat._02._Scripts.Exp
 
         private void Start()
         {
-            HandleLevelChange(expManager.CurrentLevel, 0); // _에는 아무 숫자나 넣은거임
-            HandleExpChange(expManager.CurrentExp, expManager.ExpTableSo.GetRequiredExp(expManager.CurrentLevel));
+            _displayLevel = expManager.CurrentLevel;
+            
+            expTextUI.LevelChange(_displayLevel);
+            expSlider.SetFill(expManager.CurrentExp, expManager.ExpTableSo.GetRequiredExp(expManager.CurrentLevel));
         }
 
         private void OnDestroy()
@@ -26,14 +32,23 @@ namespace _00._Work.Goat._02._Scripts.Exp
             expManager.OnExpChanged -= HandleExpChange;
         }
         
-        private void HandleExpChange(int currentExp, int maxExp)
+        private void HandleExpChange(int levelUpCount,int currentExp, int maxExp)
         {
-            expSlider.SetFill(currentExp, maxExp);
+            expSlider.SetSmoothFill(levelUpCount,currentExp, maxExp, IncreaseLevelTextOneStep);
         }
 
-        private void HandleLevelChange(int level, int _)
+        private void HandleLevelChange(int afterLevel, int beforeLevel)
         {
-            expTextUI.LevelChange(level);
+            _displayLevel = beforeLevel;
+
+            expTextUI.LevelChange(_displayLevel);
+        }
+        
+        private void IncreaseLevelTextOneStep()
+        {
+            _displayLevel++;
+            expTextUI.LevelChange(_displayLevel);
+            levelTextBounce.PlayBounce();
         }
     }
 }

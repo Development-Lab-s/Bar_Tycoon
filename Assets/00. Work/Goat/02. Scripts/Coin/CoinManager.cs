@@ -49,7 +49,7 @@ namespace _00._Work.Goat._02._Scripts.Coin
             AddCoin(coin.amount);
         }
         
-        public void AddCoin(int amount)
+        private void AddCoin(int amount)
         {
             _coinData.coin += amount;
 

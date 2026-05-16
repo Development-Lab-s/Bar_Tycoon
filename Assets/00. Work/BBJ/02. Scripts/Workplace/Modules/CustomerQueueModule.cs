@@ -9,7 +9,7 @@ namespace BBJ.WorkplaceSystem.Modules
 {
     public class CustomerQueueModule : MonoBehaviour, IModule
     {
-        [SerializeField] private EventChannelSO _scheduleTriggerChannel;
+        [SerializeField] private EventChannelSO _scheduleChannel;
 
         private readonly Queue<CustomerAgent> _payingCustomers = new();
 
@@ -22,7 +22,7 @@ namespace BBJ.WorkplaceSystem.Modules
         public void EnqueuePaying(CustomerAgent customer)
         {
             _payingCustomers.Enqueue(customer);
-            _scheduleTriggerChannel?.RaiseEvent(new ScheduleTriggerEvent());
+            _scheduleChannel?.RaiseEvent(new ScheduleTriggerEvent());
         }
 
         public CustomerAgent DequeuePaying()

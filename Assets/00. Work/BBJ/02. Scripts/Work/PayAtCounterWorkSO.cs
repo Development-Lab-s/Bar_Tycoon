@@ -1,11 +1,10 @@
 using BBJ.Actions;
 using BBJ.Customer;
-using BBJ.Register;
+using BBJ.Modules;
+using BBJ.Order;
 using BBJ.WorkplaceSystem;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
-using System.Threading;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
@@ -14,31 +13,31 @@ namespace BBJ.Work
     [CreateAssetMenu(fileName = "PayAtCounterWork", menuName = "Tycoon/Work/PayAtCounter")]
     public class PayAtCounterWorkSO : WorkSO
     {
-        [SerializeField] private WorkplaceRegisterSO _register;
-        [SerializeField] private WorkplaceTypeSO     _counterType;
-        //[SerializeField] private float                _patienceLimit = 60f;
-
-        public override async UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
+        protected override async UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
         {
             var customer = executor as CustomerAgent;
-            var agent    = executor as IActionDispatcher;
-            if (customer == null || agent == null) return;
+            var actions  = executor.GetModule<AgentActionModule>();
+            if (customer == null || actions == null) return WorkResult.Cancelled;
 
-            var counter = _register?.GetFirst(_counterType);
-            await agent.MoveAsync(counter.GetNearestPoint(executor.transform.position), ct);
-            ct.ThrowIfCancellationRequested();
+            customer.AssignedSeat?.GetModule<SeatModule>()?.UnSeat();
+            var counter = _ctx.WorkplaceRegister?.GetFirst(_ctx.CounterType);
+            if (counter == null) return WorkResult.Cancelled;
+
+            await actions.Execute<MoveAction>(a => a.ExecuteAsync(counter.GetNearestPoint(executor.transform.position), ctx.Token));
 
             var payQueue = counter.GetModule<WorkplaceQueueModule>();
-            if (payQueue == null) return;
+            if (payQueue == null) return WorkResult.Cancelled;
 
             bool paid = false;
             var slot = new OccupationSlot(
                 executor.transform,
-                pos => agent.MoveAsync(pos, ct).Forget(),
+                pos => actions.Execute<MoveAction>(a => a.ExecuteAsync(pos, ctx.Token)).Forget(),
                 () => { customer.OnPaymentDone(); paid = true; });
             payQueue.Enqueue(slot);
 
-            await agent.WaitUntilAsync(() => paid, ct);
+            await actions.Execute<WaitAction>(a => a.ExecuteAsync(() => paid, ctx.Token));
+            return WorkResult.Completed;
         }
     }
 }

@@ -18,7 +18,7 @@ namespace _00._Work.Goat._02._Scripts.Exp
         public int CurrentExp => expData.currentExp;
         
         public Action<int, int> OnLevelChanged;
-        public Action<int, int> OnExpChanged;
+        public Action<int, int, int> OnExpChanged;
 
         private JsonSaveService _jsonSaveService;
         private void Awake()
@@ -44,25 +44,28 @@ namespace _00._Work.Goat._02._Scripts.Exp
 
         private void HandleExpAdd(ExpEvent exp)
         {
+            int beforeLevel = CurrentLevel;
+
             expData.currentExp += exp.amount;
-            
-            int levelUpCHangeCount = 0;
-            
+
+            int levelUpCount = 0;
             while (CanLevelUp())
             {
                 int maxExp = ExpTableSo.GetRequiredExp(CurrentLevel);
                 
-                levelUpCHangeCount++;
                 expData.currentExp -= maxExp;
                 expData.currentLevel += 1;
-            }
-
-            if (levelUpCHangeCount > 0)
-            {
-                OnLevelChanged?.Invoke(CurrentLevel, levelUpCHangeCount);
+                levelUpCount++;
             }
             
-            OnExpChanged?.Invoke(CurrentExp,  ExpTableSo.GetRequiredExp(CurrentLevel));
+            int afterLevel = CurrentLevel;
+
+            if (beforeLevel != afterLevel)
+            {
+                OnLevelChanged?.Invoke(afterLevel, beforeLevel);
+            }
+            
+            OnExpChanged?.Invoke(levelUpCount,CurrentExp,  ExpTableSo.GetRequiredExp(CurrentLevel));
             _jsonSaveService.Save(expData);
         }
         

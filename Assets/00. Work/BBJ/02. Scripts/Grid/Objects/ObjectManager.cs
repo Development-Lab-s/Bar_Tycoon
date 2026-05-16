@@ -2,6 +2,7 @@
 using BBJ.WorkplaceSystem;
 using Gamelib.EventSystem;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BBJ.GridSystem.Objects
@@ -14,51 +15,59 @@ namespace BBJ.GridSystem.Objects
 
         [Header("Event Channels")]
         [SerializeField] private EventChannelSO _objectSpawnChannel;
-
-        private void OnEnable()
+        private void Awake()
         {
+            UtilDebugger.AssertAllAssigned(this);
             SubEventCheannal();
         }
-        private void OnDisable()
-        {
-            UnSubEventCheannal();
-        }
-
         private void Start()
         {
             LoadStageLayout();
         }
+        private void OnDestroy()
+        {
+            UnSubEventCheannal();
+        }
+
 
         private void LoadStageLayout()
         {
             if (_stageLayout == null) return;
+            var workplaces = new List<Workplace>();
             foreach (var entry in _stageLayout.entries)
-                PlaceObject(entry.obstacleData, entry.cellIndex);
+            {
+                var wp = PlaceObject(entry.obstacleData, entry.cellIndex);
+                if (wp != null) workplaces.Add(wp);
+            }
+            foreach (var wp in workplaces)
+                wp.RefreshWorkPoints(_gridManager);
         }
-
-        private void PlaceObject(ObjectData data, Vector2Int cellIndex)
+        private Workplace PlaceObject(ObjectData data, Vector2Int cellIndex)
         {
             Vector3 worldPos = _gridManager.CellToWorld(cellIndex);
+            Workplace workplace = null;
 
             if (data?.Prefab != null)
             {
                 var go = Instantiate(data.Prefab, worldPos, Quaternion.identity);
-                go.GetComponent<Workplace>()?
-                    .SetupFromObjectData(data, cellIndex, _gridManager);
+                workplace = go.GetComponent<Workplace>();
+                workplace?.SetupFromObjectData(data, cellIndex, _gridManager);
             }
 
             _gridManager.ApplyObstacleAt(data, cellIndex);
+            workplace?.RefreshWorkPoints(_gridManager);
+            return workplace;
         }
-        private void ObjectSpawnHandler(ObjectSpawnEvent evt) => PlaceObject(evt.ObjectData, evt.CellIndex);
 
         private void SubEventCheannal()
         {
-            _objectSpawnChannel?.AddListener<ObjectSpawnEvent>(ObjectSpawnHandler);
+            _objectSpawnChannel?.AddListener<ObjectSpawnEvent>(HandlerSpawnObject);
         }
         private void UnSubEventCheannal()
         {
-            _objectSpawnChannel?.RemoveListener<ObjectSpawnEvent>(ObjectSpawnHandler);
+            _objectSpawnChannel?.RemoveListener<ObjectSpawnEvent>(HandlerSpawnObject);
         }
+        private void HandlerSpawnObject(ObjectSpawnEvent evt) => PlaceObject(evt.ObjectData, evt.CellIndex);
     }
 
     public class ObjectSpawnEvent : GameEvent

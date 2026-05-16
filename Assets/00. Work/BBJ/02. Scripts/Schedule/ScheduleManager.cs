@@ -1,3 +1,4 @@
+using BBJ.Order;
 using BBJ.Register;
 using BBJ.Staff;
 using BBJ.Work;
@@ -9,34 +10,34 @@ namespace BBJ.Schedule
 {
     public class ScheduleManager : MonoBehaviour
     {
-        public static ScheduleManager Instance { get; private set; }
-
         [SerializeField] private ScheduleRegisterSO _scheduleRegister;
-        [SerializeField] private EventChannelSO     _scheduleTriggerChannel;
+        [SerializeField] private EventChannelSO     _scheduleChannel;
 
         private readonly Queue<PendingRequest> _pending = new();
 
-        private void Awake() => Instance = this;
+        private void Awake()
+        {
+            UtilDebugger.AssertAllAssigned(this);
 
-        private void OnEnable()
-            => _scheduleTriggerChannel?.AddListener<ScheduleTriggerEvent>(OnAgentAvailable);
+            SubEventChannel();
+        }
 
-        private void OnDisable()
-            => _scheduleTriggerChannel?.RemoveListener<ScheduleTriggerEvent>(OnAgentAvailable);
 
-        public void Request(AgentRole role, WorkSO work, GameEvent context)
+        private void OnDestroy()
+        {
+            UnsubEventChannel();
+        }
+
+        public void Request(AgentRole role, WorkSO work, OrderTicket ticket)
         {
             var agent = _scheduleRegister.FindAvailable(role);
             if (agent != null)
             {
-                agent.AssignWork(work, context);
+                agent.AssignWork(work, ticket);
                 return;
             }
-            _pending.Enqueue(new PendingRequest(role, work, context));
+            _pending.Enqueue(new PendingRequest(role, work, ticket));
         }
-
-        private void OnAgentAvailable(ScheduleTriggerEvent _) => DrainQueue();
-
         private void DrainQueue()
         {
             int count = _pending.Count;
@@ -45,23 +46,35 @@ namespace BBJ.Schedule
                 var req   = _pending.Dequeue();
                 var agent = _scheduleRegister.FindAvailable(req.Role);
                 if (agent != null)
-                    agent.AssignWork(req.Work, req.Context);
+                    agent.AssignWork(req.Work, req.Ticket);
                 else
                     _pending.Enqueue(req);
             }
         }
+        private void SubEventChannel()
+        {
+            _scheduleChannel.AddListener<ScheduleTriggerEvent>(HandleAgentAvailable);
+            _scheduleChannel.AddListener<ScheduleRequestEvent>(HandleScheduleRequested);
+        }
+        private void UnsubEventChannel()
+        {
+            _scheduleChannel.RemoveListener<ScheduleTriggerEvent>(HandleAgentAvailable);
+            _scheduleChannel.RemoveListener<ScheduleRequestEvent>(HandleScheduleRequested);
+        }
+        private void HandleScheduleRequested(ScheduleRequestEvent e) => Request(e.Role, e.Work, e.Ticket);
+        private void HandleAgentAvailable(ScheduleTriggerEvent _) => DrainQueue();
 
         private readonly struct PendingRequest
         {
-            public readonly AgentRole Role;
-            public readonly WorkSO    Work;
-            public readonly GameEvent Context;
+            public readonly AgentRole    Role;
+            public readonly WorkSO       Work;
+            public readonly OrderTicket  Ticket;
 
-            public PendingRequest(AgentRole role, WorkSO work, GameEvent context)
+            public PendingRequest(AgentRole role, WorkSO work, OrderTicket ticket)
             {
-                Role    = role;
-                Work    = work;
-                Context = context;
+                Role   = role;
+                Work   = work;
+                Ticket = ticket;
             }
         }
     }

@@ -1,25 +1,55 @@
 using BBJ.Order;
-using BBJ.WorkplaceSystem;
+using BBJ.Staff;
 using Gamelib.EventSystem;
+using _00._Work._Resources._02._Scripts.Modules;
 
 namespace BBJ.Work
 {
-    public class TakeOrderEvent : GameEvent
+    public class OrderNotifyCompleteEvent : GameEvent
     {
-        public Workplace Seat { get; }
-        public TakeOrderEvent(Workplace seat) => Seat = seat;
-    }
-
-    public class OrderWorkEvent : GameEvent
-    {
-        public OrderTicket  Ticket       { get; }
-        public OrderManager OrderManager { get; }
-
-        public OrderWorkEvent(OrderTicket ticket, OrderManager orderManager)
+        public OrderTicket Ticket { get; }
+        public ModuleOwner Actor  { get; }
+        public OrderNotifyCompleteEvent(OrderTicket ticket, ModuleOwner actor)
         {
-            Ticket       = ticket;
-            OrderManager = orderManager;
+            Ticket = ticket;
+            Actor  = actor;
         }
     }
 
+    public class OrderNotifyReleasedEvent : GameEvent
+    {
+        public OrderTicket Ticket { get; }
+        public ModuleOwner Actor  { get; }
+        public OrderNotifyReleasedEvent(OrderTicket ticket, ModuleOwner actor)
+        {
+            Ticket = ticket;
+            Actor  = actor;
+        }
+    }
+
+    public class CookingStartEvent : GameEvent
+    {
+        public OrderTicket Ticket { get; }
+        public ModuleOwner Staff  { get; }
+
+        public CookingStartEvent(OrderTicket ticket, ModuleOwner staff)
+        {
+            Ticket = ticket;
+            Staff  = staff;
+        }
+    }
+
+    public class ScheduleRequestEvent : GameEvent
+    {
+        public AgentRole   Role   { get; }
+        public WorkSO      Work   { get; }
+        public OrderTicket Ticket { get; }
+
+        public ScheduleRequestEvent(AgentRole role, WorkSO work, OrderTicket ticket)
+        {
+            Role   = role;
+            Work   = work;
+            Ticket = ticket;
+        }
+    }
 }

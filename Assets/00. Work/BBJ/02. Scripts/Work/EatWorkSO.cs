@@ -1,8 +1,10 @@
 using BBJ.Actions;
+using BBJ.Customer;
+using BBJ.EventSystem;
+using BBJ.Modules;
+using BBJ.Order;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
 using System;
-using System.Threading;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
@@ -13,12 +15,21 @@ namespace BBJ.Work
     {
         [SerializeField] private float _eatDuration = 8f;
 
-        public override UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
+        protected override async UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
         {
-            var agent = executor as IActionDispatcher;
-            if (agent != null)
-                return agent.WaitAsync(_eatDuration, ct);
-            return UniTask.Delay(TimeSpan.FromSeconds(_eatDuration), cancellationToken: ct);
+            var customer = executor as CustomerAgent;
+            var actions  = executor.GetModule<AgentActionModule>();
+            if (actions != null)
+                await actions.Execute<WaitAction>(a => a.ExecuteAsync(_eatDuration, ctx.Token));
+            else
+                await UniTask.Delay(TimeSpan.FromSeconds(_eatDuration), cancellationToken: ctx.Token);
+            
+            var activeTicket = customer?.ActiveTicket;
+            if (activeTicket != null && !activeTicket.IsTerminal && activeTicket.WorkPhase == OrderWorkPhase.Eating)
+                _ctx.OrderChannel?.RaiseEvent(new CustomerEatCompleteEvent(activeTicket));
+
+            return WorkResult.Completed;
         }
     }
 }

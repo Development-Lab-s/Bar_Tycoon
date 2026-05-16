@@ -1,6 +1,6 @@
+using BBJ.Order;
 using BBJ.Staff;
 using BBJ.Work;
-using Gamelib.EventSystem;
 using System;
 
 namespace BBJ.Schedule
@@ -11,14 +11,8 @@ namespace BBJ.Schedule
         AgentRole Role          { get; }
 
         event Action OnWorkStarted;
-        event Action OnWorkEnded;
-
-        void AssignWork(WorkSO workSO, GameEvent context);
-        void CompleteWork();
-    }
-
-    public interface IScheduleTriggerSource
-    {
-        Gamelib.EventSystem.EventChannelSO ScheduleTriggerChannel { get; }
+        event Action<bool> OnWorkEnded;
+        void AssignWork(WorkSO workSO, OrderTicket ticket);
+        void CancelWork();
     }
 }

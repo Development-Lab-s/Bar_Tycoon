@@ -1,4 +1,5 @@
 using BBJ.Order;
+using BBJ.Work;
 using System;
 using TMPro;
 using UnityEngine;
@@ -13,11 +14,16 @@ namespace BBJ.UI.Order
         [SerializeField] private TMP_Text _foodName;
         [SerializeField] private TMP_Text _stateBadge;
         [SerializeField] private TMP_Text _workPhase;
-        [SerializeField] private TMP_Text _seatLabel;
-        [SerializeField] private Button _cancelButton;
+        [SerializeField] private TMP_Text _priceLabel;
+        //[SerializeField] private TMP_Text _seatLabel;
+        //[SerializeField] private Button _cancelButton;
 
         private OrderTicket _ticket;
         private Action<OrderTicket> _onCancel;
+        private void OnEnable() { }
+
+        private void OnDisable() { }
+
         public void Setup(OrderTicket ticket, Action<OrderTicket> onCancel)
         {
             _ticket = ticket;
@@ -25,9 +31,7 @@ namespace BBJ.UI.Order
 
             _foodIcon.sprite = ticket.Food?.Icon;
             _foodName.text = ticket.Food?.FoodName ?? "-";
-            _seatLabel.text = ticket.Seat != null ? ticket.Seat.name : "-";
-
-            _cancelButton?.onClick.AddListener(OnCancelClicked);
+            _priceLabel.text = "가격 : " + ticket.Food?.Price + " 원";
 
             Refresh();
         }
@@ -42,22 +46,22 @@ namespace BBJ.UI.Order
             }
 
             if (_workPhase != null)
-                _workPhase.text = _ticket.WorkPhase.ToString();
+                _workPhase.text = "(" +  StateColor(_ticket.WorkPhase) + "...)";
 
-            bool canCancel = _ticket.State is not (OrderState.Done or OrderState.Cancelled);
-            _cancelButton?.gameObject.SetActive(canCancel);
+            //bool canCancel = _ticket.State is not (OrderState.Done or OrderState.Cancelled);
+            //_cancelButton?.gameObject.SetActive(canCancel);
         }
 
         private void OnCancelClicked() => _onCancel?.Invoke(_ticket);
 
-        //private static Color StateColor(OrderState state) => state switch
-        //{
-        //    OrderState.Waiting => Color.white,
-        //    OrderState.Reserved => Color.yellow,
-        //    OrderState.InProgress => Color.green,
-        //    OrderState.Done => Color.cyan,
-        //    OrderState.Cancelled => Color.red,
-        //    _ => Color.white,
-        //};
+        private static string StateColor(OrderWorkPhase state) => state switch
+        {
+            OrderWorkPhase.PendingCook     => "조리 중",
+            OrderWorkPhase.ReadyForServe   => "서빙 중",
+            OrderWorkPhase.Eating          => "식사 중",
+            OrderWorkPhase.ReadyForCashier => "계산 중",
+            OrderWorkPhase.Done            => "완료",
+            _                              => "NaN"
+        };
     }
 }

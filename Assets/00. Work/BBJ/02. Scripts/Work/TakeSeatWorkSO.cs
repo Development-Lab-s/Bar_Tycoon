@@ -1,58 +1,56 @@
-using _00._Work._Resources._02._Scripts.Modules;
 using BBJ.Actions;
 using BBJ.Customer;
-using BBJ.Movement;
-using BBJ.Register;
-using BBJ.WorkplaceSystem;
+using BBJ.Modules;
+using BBJ.Order;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
-using System;
 using System.Linq;
-using System.Threading;
 using UnityEngine;
+using _00._Work._Resources._02._Scripts.Modules;
 
 namespace BBJ.Work
 {
     [CreateAssetMenu(fileName = "TakeSeatWork", menuName = "Tycoon/Work/TakeSeat")]
     public class TakeSeatWorkSO : WorkSO
     {
-        [SerializeField] private WorkplaceRegisterSO _register;
-        [SerializeField] private WorkplaceTypeSO _seatType;
-
-        public override async UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
+        protected override async UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
         {
             var customer = executor as CustomerAgent;
-            var agent = executor as IActionDispatcher;
-            if (customer == null || agent == null) return;
+            var actions  = executor.GetModule<AgentActionModule>();
+            if (customer == null || actions == null) return WorkResult.Cancelled;
 
-            var seat = _register
-                .GetCandidates(executor.transform.position, _seatType)
+            var seat = _ctx.WorkplaceRegister
+                .GetCandidates(executor.transform.position, _ctx.SeatType)
                 .FirstOrDefault(s => {
                     var occ = s.GetModule<OccupancyModule>();
                     return occ != null && !occ.IsOccupied && occ.TryReserve(executor, null);
                 });
 
-            if (seat == null) return;
+            if (seat == null) return WorkResult.Cancelled;
 
             customer.AssignedSeat = seat;
             seat.GetModule<OccupancyModule>()?.Occupy(executor);
 
-            var dest = seat.GetNearestPoint(executor.transform.position);
+            var dest       = seat.GetNearestPoint(executor.transform.position);
             var seatModule = seat.GetModule<SeatModule>();
             seatModule?.AssignCustomer(executor);
-            var movement = customer.GetModule<IPathMovement>();
 
+            bool seated = false;
             try
             {
-                await agent.MoveAsync(dest, ct);
-                seatModule.Seat(executor);
+                await actions.Execute<MoveAction>(a => a.ExecuteAsync(dest, ctx.Token));
+                seatModule?.Seat(executor);
+                seated = true;
+                return WorkResult.Completed;
             }
-            catch (OperationCanceledException)
+            finally
             {
-                seat.GetModule<OccupancyModule>()?.Release();
-                customer.AssignedSeat = null;
-                throw;
+                if (!seated)
+                {
+                    seat.GetModule<OccupancyModule>()?.Release();
+                    customer.AssignedSeat = null;
+                }
             }
         }
     }
