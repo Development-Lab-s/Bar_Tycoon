@@ -3,9 +3,8 @@ using LitMotion;
 using LitMotion.Extensions;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using UnityEngine.InputSystem.EnhancedTouch;
-using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 public class Title : MonoBehaviour
 {
@@ -36,17 +35,6 @@ public class Title : MonoBehaviour
     private bool _isAniming = true;
     private bool _isCovering = false;
     private bool _isBlink = true;
-    private bool _isTitle = true;
-    
-    private void OnEnable()
-    {
-        EnhancedTouchSupport.Enable();
-    }
-
-    private void OnDisable()
-    {
-        EnhancedTouchSupport.Disable();
-    }
     
     private void Start()
     {
@@ -67,15 +55,9 @@ public class Title : MonoBehaviour
 
     private void Update()
     {
-        if (Touch.activeTouches.Count > 0)
+        if (Mouse.current.leftButton.wasPressedThisFrame && !_isAniming)
         {
-            var touch = Touch.activeTouches[0];
-
-            if (touch.phase == UnityEngine.InputSystem.TouchPhase.Began && !_isAniming && _isTitle)
-            {
-                StartCover();
-                _isTitle = false;
-            }
+            StartCover();
         }
     }
 

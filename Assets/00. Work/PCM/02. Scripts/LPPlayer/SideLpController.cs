@@ -25,8 +25,8 @@ public class SideLpController : MonoBehaviour , IModule
             // ID 등록 및 데이터 세팅
             lpBoxes[i].SetUp(i);
             _lpBoxDict.Add(i, lpBoxes[i]);
-            //if (i == _myid)
-            //    PlayLp(_myid);
+            if (i == _myid)
+                PlayLp(_myid);
 
             // 이벤트 연결 (안전하게 기존 구독 해제 후 추가)
             lpBoxes[i].OnLPClicked -= PlayLp;

@@ -3,6 +3,7 @@ using _00._Work.PCM._02._Scripts;
 using System.Collections;
 using Systems;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Assets._00._Work.PCM._02._Scripts
 {
@@ -23,6 +24,11 @@ namespace Assets._00._Work.PCM._02._Scripts
         public void IsCheckInteract()
         {
             if (_inputSo.MainCam == null) return;
+
+            //if (EventSystem.current.IsPointerOverGameObject())
+            //{
+            //    return;
+            //}
 
             Ray ray = _inputSo.MainCam.ScreenPointToRay(_inputSo.MousePosition);
 

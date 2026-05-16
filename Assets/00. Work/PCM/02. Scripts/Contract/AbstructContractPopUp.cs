@@ -4,68 +4,83 @@ using LitMotion.Extensions;
 using Spine.Unity;
 using System.Collections;
 using System.Net.NetworkInformation;
+using System;
 using UnityEngine;
 
 namespace Assets._00._Work.PCM._02._Scripts.Contract
 {
+    public enum Uistate
+    {
+        None,Open, Close 
+    }
     public abstract class AbstructContractPopUp : MonoBehaviour, IAbstructContractPopUp , IModule, IAfterInitModule
     {
         [SerializeField] protected float animDuration = 0.1f;
         [SerializeField] protected float waitDuration = 2.0f; // 자동 종료 시 대기 시간
         [SerializeField] protected Ease easeType = Ease.OutBack;
+        public bool IsAnimating => _motionHandle.IsActive();
 
         private ModuleOwner _owner;
         private Vector3 _originScale;
         private Coroutine _timerCoroutine;
         private MotionHandle _motionHandle;
-        private bool isOpen = false;
+
+        public bool isOpen { get; set; }
+
         public virtual void Initialize(ModuleOwner owner)
         {
             _owner = owner; 
+            _originScale = transform.localScale;
+            transform.localScale = Vector3.zero;
         }
         public virtual void AfterInit()
         {
-            _originScale = transform.localScale;
-            transform.localScale = Vector3.zero;
             gameObject.SetActive(false);
         }
         public void Open(bool isAutoClose = false)
         {
-            if (isOpen) return;
-            isOpen = true;
-            if (_motionHandle.IsActive()) _motionHandle.Cancel();
-            if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
 
-            // 이미 켜져 있다면 다시 켜지 않음 (Re-enable 방지)
+            if (isOpen || IsAnimating) return;
+
+            isOpen = true;
+            
+
+            if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
+            if (_motionHandle.IsActive()) _motionHandle.Cancel();
+
             if (!gameObject.activeSelf)
             {
                 OnOpen();
                 gameObject.SetActive(true);
-                    
             }
 
             AnimateScale(true, isAutoClose);
-            
         }
-        public abstract void OnOpen();
+        public abstract void OnOpen(); //추상 받고 열때 코드 추가 하고 싶으면 여기다가 추가하셈
 
-        // 외부에서 버튼 등으로 직접 닫고 싶을 때 호출
         public virtual void Close()
         {
-            if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
-            AnimateScale(false);
+            if (!isOpen ||IsAnimating) return;
+
             isOpen = false;
+
+            if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
+            if (_motionHandle.IsActive()) _motionHandle.Cancel();
+
+            AnimateScale(false);
         }
 
         private void AnimateScale(bool isAppearing, bool isAutoClose = false)
         {
             if (_motionHandle.IsActive()) _motionHandle.Cancel();
 
-            Vector3 start = isAppearing ? Vector3.zero : transform.localScale;
+            Vector3 start = transform.localScale; 
             Vector3 end = isAppearing ? _originScale : Vector3.zero;
 
+            Ease currentEase = isAppearing ? easeType : Ease.InBack;
+
             _motionHandle = LMotion.Create(start, end, animDuration)
-                .WithEase(easeType)
+                .WithEase(currentEase)
                 .WithOnComplete(() =>
                 {
                     if (isAppearing)
@@ -78,6 +93,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
                     else
                     {
                         gameObject.SetActive(false);
+                        transform.localScale = Vector3.zero;
                     }
                 })
                 .BindToLocalScale(transform);

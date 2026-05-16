@@ -11,12 +11,16 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
         private const float AlcoholButtonHeight = 52f;
         private const float ButtonSpacing = 6f;
 
-        private AlcoholListSO _alcoholListSO;
+        private IngredientDatabaseSO _ingredientDatabase;
         private CocktailRecipeDatabaseSO _recipeDatabaseSO;
         private CocktailRecipeSO _editingRecipe;
 
         private string _cocktailName = string.Empty;
         private Sprite _cocktailIcon;
+        private int _bitterness;
+        private int _sweetness;
+        private int _sourness;
+        private string _description = string.Empty;
         private string _saveFolderPath = "Assets/00. Work/Lusaload/05. SO/Cocktail";
 
         private Vector2 _windowScroll;
@@ -31,33 +35,33 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             OpenCreateWindow(null, null);
         }
 
-        public static void OpenCreateWindow(AlcoholListSO alcoholListSO, CocktailRecipeDatabaseSO databaseSO)
+        public static void OpenCreateWindow(IngredientDatabaseSO ingredientDatabase, CocktailRecipeDatabaseSO databaseSO)
         {
             CocktailRecipeCreatorWindow window = GetWindow<CocktailRecipeCreatorWindow>("Recipe Creator");
             window.minSize = new Vector2(560f, 650f);
 
-            window._alcoholListSO = alcoholListSO;
+            window._ingredientDatabase = ingredientDatabase;
             window._recipeDatabaseSO = databaseSO;
             window._editingRecipe = null;
 
             window.ClearInput();
-            window.TryFindAlcoholListSOIfNeeded();
+            window.TryFindIngredientDatabaseIfNeeded();
             window.TryFindRecipeDatabaseSOIfNeeded();
 
             window.Show();
             window.Focus();
         }
 
-        public static void OpenEditWindow(CocktailRecipeSO recipe, AlcoholListSO alcoholListSO, CocktailRecipeDatabaseSO databaseSO)
+        public static void OpenEditWindow(CocktailRecipeSO recipe, IngredientDatabaseSO ingredientDatabase, CocktailRecipeDatabaseSO databaseSO)
         {
             CocktailRecipeCreatorWindow window = GetWindow<CocktailRecipeCreatorWindow>("Recipe Editor");
             window.minSize = new Vector2(560f, 650f);
 
             window._editingRecipe = recipe;
-            window._alcoholListSO = alcoholListSO;
+            window._ingredientDatabase = ingredientDatabase;
             window._recipeDatabaseSO = databaseSO;
 
-            window.TryFindAlcoholListSOIfNeeded();
+            window.TryFindIngredientDatabaseIfNeeded();
             window.TryFindRecipeDatabaseSOIfNeeded();
 
             if (recipe != null)
@@ -71,7 +75,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
         private void OnEnable()
         {
-            TryFindAlcoholListSOIfNeeded();
+            TryFindIngredientDatabaseIfNeeded();
             TryFindRecipeDatabaseSOIfNeeded();
         }
 
@@ -116,10 +120,10 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
             EditorGUILayout.LabelField("데이터 참조", EditorStyles.boldLabel);
 
-            _alcoholListSO = (AlcoholListSO)EditorGUILayout.ObjectField(
-                "Alcohol List SO",
-                _alcoholListSO,
-                typeof(AlcoholListSO),
+            _ingredientDatabase = (IngredientDatabaseSO)EditorGUILayout.ObjectField(
+                "Ingredient Database",
+                _ingredientDatabase,
+                typeof(IngredientDatabaseSO),
                 false);
 
             _recipeDatabaseSO = (CocktailRecipeDatabaseSO)EditorGUILayout.ObjectField(
@@ -136,16 +140,16 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
             EditorGUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("AlcoholListSO 자동 찾기"))
-                TryFindAlcoholListSO();
+            if (GUILayout.Button("Database 자동 찾기"))
+                TryFindIngredientDatabase();
 
             if (GUILayout.Button("RecipeDatabaseSO 자동 찾기"))
                 TryFindRecipeDatabaseSO();
 
             EditorGUILayout.EndHorizontal();
 
-            if (_alcoholListSO == null)
-                EditorGUILayout.HelpBox("AlcoholListSO를 연결해줘.", MessageType.Warning);
+            if (_ingredientDatabase == null)
+                EditorGUILayout.HelpBox("IngredientDatabaseSO를 연결해주세요.", MessageType.Warning);
 
             if (_recipeDatabaseSO == null)
                 EditorGUILayout.HelpBox("Recipe Database SO는 선택 사항입니다. 연결하면 생성 후 recipes에 자동 등록됩니다.", MessageType.None);
@@ -161,6 +165,17 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
             _cocktailName = EditorGUILayout.TextField("Cocktail Name", _cocktailName);
             _cocktailIcon = (Sprite)EditorGUILayout.ObjectField("Cocktail Icon", _cocktailIcon, typeof(Sprite), false);
+
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("맛 프로필", EditorStyles.boldLabel);
+            _bitterness = EditorGUILayout.IntSlider("쓴맛", _bitterness, 0, 5);
+            _sweetness  = EditorGUILayout.IntSlider("단맛", _sweetness,  0, 5);
+            _sourness   = EditorGUILayout.IntSlider("신맛", _sourness,   0, 5);
+
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("설명");
+            _description = EditorGUILayout.TextArea(_description, GUILayout.Height(60f));
+
             _saveFolderPath = EditorGUILayout.TextField("Save Folder", _saveFolderPath);
 
             EditorGUILayout.EndVertical();
@@ -171,9 +186,17 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField("술 선택", EditorStyles.boldLabel);
 
-            if (_alcoholListSO == null || _alcoholListSO.alcoholList == null || _alcoholListSO.alcoholList.Count == 0)
+            if (_ingredientDatabase == null)
             {
-                EditorGUILayout.HelpBox("표시할 술이 없습니다.", MessageType.None);
+                EditorGUILayout.HelpBox("표시할 재료가 없습니다.", MessageType.None);
+                EditorGUILayout.EndVertical();
+                return;
+            }
+
+            var allIngredients = new System.Collections.Generic.List<BaseAlcoholDataSO>(_ingredientDatabase.GetAll());
+            if (allIngredients.Count == 0)
+            {
+                EditorGUILayout.HelpBox("표시할 재료가 없습니다.", MessageType.None);
                 EditorGUILayout.EndVertical();
                 return;
             }
@@ -186,9 +209,9 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             int currentColumn = 0;
             EditorGUILayout.BeginHorizontal();
 
-            for (int i = 0; i < _alcoholListSO.alcoholList.Count; i++)
+            for (int i = 0; i < allIngredients.Count; i++)
             {
-                BaseAlcoholDataSO alcohol = _alcoholListSO.alcoholList[i];
+                BaseAlcoholDataSO alcohol = allIngredients[i];
                 if (alcohol == null)
                     continue;
 
@@ -211,7 +234,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
                 currentColumn++;
 
-                if (currentColumn >= columnCount && i < _alcoholListSO.alcoholList.Count - 1)
+                if (currentColumn >= columnCount && i < allIngredients.Count - 1)
                 {
                     currentColumn = 0;
                     EditorGUILayout.EndHorizontal();
@@ -291,7 +314,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
         private void DrawBottomButtons()
         {
-            GUI.enabled = _alcoholListSO != null;
+            GUI.enabled = _ingredientDatabase != null;
 
             EditorGUILayout.BeginHorizontal();
 
@@ -340,10 +363,10 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             return previewTexture;
         }
 
-        private void TryFindAlcoholListSOIfNeeded()
+        private void TryFindIngredientDatabaseIfNeeded()
         {
-            if (_alcoholListSO == null)
-                TryFindAlcoholListSO();
+            if (_ingredientDatabase == null)
+                TryFindIngredientDatabase();
         }
 
         private void TryFindRecipeDatabaseSOIfNeeded()
@@ -352,14 +375,14 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
                 TryFindRecipeDatabaseSO();
         }
 
-        private void TryFindAlcoholListSO()
+        private void TryFindIngredientDatabase()
         {
-            string[] guids = AssetDatabase.FindAssets("t:AlcoholListSO");
+            string[] guids = AssetDatabase.FindAssets("t:IngredientDatabaseSO");
             if (guids.Length == 0)
                 return;
 
             string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            _alcoholListSO = AssetDatabase.LoadAssetAtPath<AlcoholListSO>(path);
+            _ingredientDatabase = AssetDatabase.LoadAssetAtPath<IngredientDatabaseSO>(path);
         }
 
         private void TryFindRecipeDatabaseSO()
@@ -379,6 +402,10 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
             _cocktailName = recipe.cocktailName;
             _cocktailIcon = recipe.cocktailIcon;
+            _bitterness = recipe.bitterness;
+            _sweetness  = recipe.sweetness;
+            _sourness   = recipe.sourness;
+            _description = recipe.description ?? string.Empty;
             _selectedAlcohols.Clear();
 
             if (recipe.cocktailRecipeList != null)
@@ -387,9 +414,9 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
         private void CreateRecipeSO()
         {
-            if (_alcoholListSO == null)
+            if (_ingredientDatabase == null)
             {
-                EditorUtility.DisplayDialog("생성 실패", "AlcoholListSO를 연결해주세요.", "확인");
+                EditorUtility.DisplayDialog("생성 실패", "IngredientDatabaseSO를 연결해주세요.", "확인");
                 return;
             }
 
@@ -418,6 +445,10 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             CocktailRecipeSO recipe = CreateInstance<CocktailRecipeSO>();
             recipe.cocktailName = _cocktailName;
             recipe.cocktailIcon = _cocktailIcon;
+            recipe.bitterness = _bitterness;
+            recipe.sweetness  = _sweetness;
+            recipe.sourness   = _sourness;
+            recipe.description = _description;
             recipe.cocktailRecipeList = new List<BaseAlcoholDataSO>(_selectedAlcohols);
 
             AssetDatabase.CreateAsset(recipe, assetPath);
@@ -457,6 +488,10 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
             _editingRecipe.cocktailName = _cocktailName;
             _editingRecipe.cocktailIcon = _cocktailIcon;
+            _editingRecipe.bitterness = _bitterness;
+            _editingRecipe.sweetness  = _sweetness;
+            _editingRecipe.sourness   = _sourness;
+            _editingRecipe.description = _description;
             _editingRecipe.cocktailRecipeList = new List<BaseAlcoholDataSO>(_selectedAlcohols);
 
             EditorUtility.SetDirty(_editingRecipe);
@@ -488,6 +523,10 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
         {
             _cocktailName = string.Empty;
             _cocktailIcon = null;
+            _bitterness = 0;
+            _sweetness  = 0;
+            _sourness   = 0;
+            _description = string.Empty;
             _selectedAlcohols.Clear();
         }
     }

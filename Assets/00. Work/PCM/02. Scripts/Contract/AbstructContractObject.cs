@@ -11,7 +11,6 @@ namespace _00._Work.PCM._02._Scripts
     {
         public UnityEvent OnClickEvent;
         private ModuleOwner _owner;
-
         public virtual void ExcuteClick()
         {
             OnClickEvent?.Invoke();
