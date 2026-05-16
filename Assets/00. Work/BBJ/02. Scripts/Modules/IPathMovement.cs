@@ -4,9 +4,15 @@ namespace BBJ.Movement
 {
     public interface IPathMovement
     {
+        public Vector3 Velocity { get;}
+
+        public event Action OnMoveStarted;
+        public event Action<Vector3> OnMoveVelocityChanged;
         public event Action OnMoveCompleted;
+
         public void OnPathMove(Vector3[] newPath);
-        void OnSpeedChanged(float speed);
-        void StopMovement();
+        public void SetMoveDestination(Vector3 destination);
+        public void OnSpeedChange(float speed);
+        public void StopMovement();
     }
 }

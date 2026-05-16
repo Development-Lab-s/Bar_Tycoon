@@ -1,88 +1,101 @@
 using _00._Work._Resources._02._Scripts.Modules;
+using BBJ.EventSystem;
 using Cysharp.Threading.Tasks;
+using Gamelib.EventSystem;
 using System;
+using System.Threading;
 using UnityEngine;
 
 namespace BBJ.Movement
 {
     public class PathMovementModule : MonoBehaviour, IModule, IPathMovement
     {
-        public event Action OnMoveCompleted;
-
         [SerializeField] private float moveSpeed = 1f;
+        [SerializeField] private EventChannelSO PathRequestChannel;
 
-        private const float ArrivalThreshold = 0.01f;
-
-        private int         _generation;
-        private int         _targetIndex;
-        private Vector3[]   _path;
-
+        private CancellationTokenSource _cts;
+        private int _targetIndex;
+        private Vector3[] _path;
         private ModuleOwner _owner;
 
         public bool IsMoving { get; private set; }
+        public Vector3 Velocity { get; private set; }
+
+        public event Action OnMoveStarted;
+        public event Action<Vector3> OnMoveVelocityChanged;
+        public event Action OnMoveCompleted;
 
         public void Initialize(ModuleOwner owner)
         {
+            UtilDebugger.AssertAllAssigned(this);
             _owner = owner;
         }
 
-        public void OnSpeedChanged(float speed) => this.moveSpeed = speed;
-        public void OnPathMove(Vector3[] newPath) => StartMove(newPath);
         public void StartMove(Vector3[] path)
         {
-            _path        = path;
+            _cts.CancelAndDispose();
+            _cts = new CancellationTokenSource();
+
             _targetIndex = 0;
-            _generation++;
-            FollowPath(_generation).Forget();
+            _path = path;
+            FollowPath(_cts.Token).Forget();
         }
 
         public void StopMovement()
         {
-            _generation++;
-            IsMoving = false;
+            _cts.CancelAndDispose();
+            _cts = null;
         }
 
-        private async UniTask FollowPath(int gen)
+        private async UniTask FollowPath(CancellationToken ct)
         {
             IsMoving = true;
-
-            if (_path == null || _path.Length == 0)
+            OnMoveStarted?.Invoke();
+            try
             {
-                IsMoving = false;
-                if (_generation == gen) FireCompleted();
-                return;
-            }
-
-            while (_targetIndex < _path.Length)
-            {
-                if (_generation != gen) { IsMoving = false; return; }
-
-                Vector3 target = _path[_targetIndex];
-
-                if (Vector3.Distance(_owner.transform.position, target) <= ArrivalThreshold)
+                if (_path == null || _path.Length == 0)
                 {
-                    _targetIndex++;
-                    continue;
+                    FireCompleted();
+                    return;
                 }
 
-                _owner.transform.position = Vector3.MoveTowards(
-                    _owner.transform.position,
-                    target,
-                    moveSpeed * Time.fixedDeltaTime);
+                while (_targetIndex < _path.Length)
+                {
+                    Vector3 target = _path[_targetIndex];
+                    OnMoveVelocityChanged?.Invoke(Velocity);
+                    Velocity = target - _owner.transform.position;
 
-                await UniTask.WaitForFixedUpdate();
+                    float step = moveSpeed * Time.fixedDeltaTime;
+                    if (Vector3.Distance(_owner.transform.position, target) <= step)
+                    {
+                        _owner.transform.position = target;
+                        _targetIndex++;
+                        continue;
+                    }
+
+                    _owner.transform.position = Vector3.MoveTowards(_owner.transform.position, target, step);
+                    await UniTask.WaitForFixedUpdate(cancellationToken: ct);
+                }
+
+                FireCompleted();
             }
-
-            if (_generation != gen) { IsMoving = false; return; }
-
-            IsMoving = false;
-            FireCompleted();
+            catch (OperationCanceledException) { }
+            finally
+            {
+                IsMoving = false;
+            }
         }
 
-        private void FireCompleted()
+        public void OnPathMove(Vector3[] newPath) => StartMove(newPath);
+        public void SetMoveDestination(Vector3 destination) => PathRequestChannel.RaiseEvent(new PathRequestEvent().Init(
+                new(_owner.transform.position, destination, HandleRequestPath)));
+        private void HandleRequestPath(Vector3[] path, bool isSucces)
         {
-            OnMoveCompleted?.Invoke();
+            if (!isSucces) return;
+            OnPathMove(path);
         }
+        private void FireCompleted() => OnMoveCompleted?.Invoke();
+        public void OnSpeedChange(float speed) => this.moveSpeed = speed;
 
 #if UNITY_EDITOR
         public void OnDrawGizmos()
@@ -97,6 +110,7 @@ namespace BBJ.Movement
                     _path[i]);
             }
         }
+
 #endif
     }
 }

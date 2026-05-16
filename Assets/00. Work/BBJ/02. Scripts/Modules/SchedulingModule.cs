@@ -1,49 +1,55 @@
+using BBJ.Order;
 using BBJ.Register;
-using BBJ.Schedule;
 using BBJ.Staff;
 using BBJ.Work;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
 using System;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
+using Gamelib.EventSystem;
 
 namespace BBJ.Schedule
 {
-    public class SchedulingModule : MonoBehaviour, IModule, ISchedulable, IScheduleTriggerSource, IAfterInitModule
+    public class SchedulingModule : MonoBehaviour, IModule, ISchedulable, IAfterInitModule
     {
         [SerializeField] private ScheduleRegisterSO _scheduleRegister;
-        [field: SerializeField] public EventChannelSO ScheduleTriggerChannel { get; private set; }
+        [SerializeField] private EventChannelSO     _scheduleChannel;
         [field: SerializeField] public AgentRole Role { get; private set; }
 
         private ModuleOwner          _owner;
         private WorkExecutionContext _execCtx;
+
+        public WorkSO      CurrentWork   { get; private set; }
+        public OrderTicket CurrentTicket { get; private set; }
 
         public bool IsAvailableForWork => _execCtx == null;
 
         public event Action OnWorkStarted;
         public event Action<bool> OnWorkEnded;
 
-        public void Initialize(ModuleOwner owner) => _owner = owner;
+        public void Initialize(ModuleOwner owner)
+        {
+            this._owner = owner;
+            UtilDebugger.AssertAllAssigned(this);
+        }
+        public void AfterInit()
+        {
+            _scheduleRegister.Register(this);
+        }
 
         private void OnDisable()
         {
-            _scheduleRegister?.Unregister(this);
+            _scheduleRegister.Unregister(this);
             CancelWork();
         }
 
-        public void AfterInit() => _scheduleRegister?.Register(this);
-
-        public void AssignWork(WorkSO workSO, GameEvent context)
+        public void AssignWork(WorkSO workSO, OrderTicket ticket)
         {
             CancelWork();
-            _execCtx = new WorkExecutionContext();
-            RunAsync(workSO, context, _execCtx).Forget();
-        }
-
-        public void ResolveWork()
-        {
-            _execCtx?.ForceComplete();
+            CurrentWork   = workSO;
+            CurrentTicket = ticket;
+            _execCtx      = new WorkExecutionContext();
+            RunAsync(workSO, ticket, _execCtx).Forget();
         }
 
         public void CancelWork()
@@ -52,27 +58,30 @@ namespace BBJ.Schedule
             _execCtx = null;
         }
 
-        private async UniTaskVoid RunAsync(WorkSO workSO, GameEvent context, WorkExecutionContext ctx)
+        public void Pause()  => _execCtx?.Pause();
+        public void Resume() => _execCtx?.Resume();
+
+        private async UniTaskVoid RunAsync(
+            WorkSO workSO, OrderTicket ticket, WorkExecutionContext ctx)
         {
             OnWorkStarted?.Invoke();
             WorkResult result = WorkResult.Cancelled;
             try
             {
-                result = await workSO.ExecuteAsync(_owner, context, ctx);
+                result = await workSO.ExecuteAsync(_owner, ticket, ctx);
             }
             catch (OperationCanceledException)
             {
-                result = ctx.WasExternallyCompleted
-                    ? WorkResult.ExternallyCompleted
-                    : WorkResult.Cancelled;
+                result = WorkResult.Cancelled;
             }
             finally
             {
                 if (_execCtx == ctx) _execCtx = null;
+                CurrentWork   = null;
+                CurrentTicket = null;
                 ctx.Dispose();
-                workSO.OnResult(result, _owner, context);
-                OnWorkEnded?.Invoke(result != WorkResult.Cancelled);
-                ScheduleTriggerChannel?.RaiseEvent(new ScheduleTriggerEvent());
+                OnWorkEnded?.Invoke(result == WorkResult.Completed);
+                _scheduleChannel?.RaiseEvent(new ScheduleTriggerEvent());
             }
         }
     }
