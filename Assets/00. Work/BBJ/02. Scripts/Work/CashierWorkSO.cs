@@ -1,68 +1,81 @@
 using BBJ.Actions;
+using BBJ.Modules;
 using BBJ.Order;
-using BBJ.Register;
-using BBJ.WorkplaceSystem;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
 using System;
-using UnityEngine;
+using System.Threading;
 using _00._Work._Resources._02._Scripts.Modules;
+using UnityEngine;
+using BBJ.WorkplaceSystem;
 
 namespace BBJ.Work
 {
     [CreateAssetMenu(fileName = "CashierWork", menuName = "Tycoon/Work/Cashier")]
     public class CashierWorkSO : WorkSO
     {
-        [SerializeField] private WorkplaceTypeSO     _counterType;
-        [SerializeField] private WorkplaceRegisterSO _workplaceRegister;
-
-        public override async UniTask<WorkResult> ExecuteAsync(
-            ModuleOwner executor, GameEvent context, WorkExecutionContext ctx)
+        protected override async UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
         {
-            var agent = executor as IActionDispatcher;
-            var ev    = context as OrderWorkEvent;
-            if (agent == null || ev == null) return WorkResult.Cancelled;
+            var actions = executor.GetModule<AgentActionModule>();
+            if (actions == null || ticket == null) return WorkResult.Cancelled;
 
-            if (!ev.Ticket.TryReserve(executor)) return WorkResult.Cancelled;
+            if (!ticket.TryReserve(executor)) return WorkResult.Cancelled;
 
-            var counter = _workplaceRegister?.GetFirst(_counterType);
-            if (counter == null) { ev.OrderManager.NotifyReleased(ev.Ticket, executor); return WorkResult.Cancelled; }
+            var counter = _ctx.WorkplaceRegister?.GetFirst(_ctx.CounterType);
+            if (counter == null)
+            {
+                _ctx.OrderChannel?.RaiseEvent(new OrderNotifyReleasedEvent(ticket, executor));
+                return WorkResult.Cancelled;
+            }
 
             var queue = counter.GetModule<WorkplaceQueueModule>();
-            if (queue == null)  { ev.OrderManager.NotifyReleased(ev.Ticket, executor); return WorkResult.Cancelled; }
+            if (queue == null)
+            {
+                _ctx.OrderChannel?.RaiseEvent(new OrderNotifyReleasedEvent(ticket, executor));
+                return WorkResult.Cancelled;
+            }
 
-            OccupationSlot? slot = null;
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+                ctx.Token, ticket.Token);
+
+            OccupationSlot? slot      = null;
+            bool            processed = false;
             try
             {
-                await agent.MoveAsync(counter.GetNearestPoint(executor.transform.position), ctx.Token);
-                ctx.Token.ThrowIfCancellationRequested();
-
-                ev.Ticket.TryStartProgress(executor);
-
-                await agent.WaitUntilAsync(() => queue.HasWaiting, ctx.Token);
-                ctx.Token.ThrowIfCancellationRequested();
+                await actions.Execute<MoveAction>(
+                    a => a.ExecuteAsync(counter.GetNearestPoint(executor.transform.position), linked.Token));
+                ticket.TryStartProgress(executor);
+                await actions.Execute<WaitAction>(
+                    a => a.ExecuteAsync(() => queue.HasWaiting, linked.Token));
 
                 slot = queue.Dequeue();
-                if (slot == null) { ev.OrderManager.NotifyReleased(ev.Ticket, executor); return WorkResult.Cancelled; }
+                if (slot == null)
+                {
+                    _ctx.OrderChannel?.RaiseEvent(new OrderNotifyReleasedEvent(ticket, executor));
+                    return WorkResult.Cancelled;
+                }
 
-                await agent.DoWorkAsync(counter, ctx.Token);
-                ctx.Token.ThrowIfCancellationRequested();
+                await actions.Execute<WorkAction>(
+                    a => a.ExecuteAsync(counter, linked.Token));
 
                 slot.Value.NotifyProcessed();
-                ev.OrderManager.NotifyComplete(ev.Ticket, executor);
+                processed = true;
+
+                _ctx.OrderChannel?.RaiseEvent(new OrderNotifyCompleteEvent(ticket, executor));
                 return WorkResult.Completed;
-            }
-            catch (OperationCanceledException) when (ctx.WasExternallyCompleted)
-            {
-                slot?.NotifyProcessed();
-                ev.OrderManager.NotifyComplete(ev.Ticket, executor);
-                return WorkResult.ExternallyCompleted;
             }
             catch (OperationCanceledException)
             {
-                ev.OrderManager.NotifyReleased(ev.Ticket, executor);
+                if (!ticket.IsTerminal)
+                    _ctx.OrderChannel?.RaiseEvent(new OrderNotifyReleasedEvent(ticket, executor));
                 return WorkResult.Cancelled;
+            }
+            finally
+            {
+                // slot이 dequeue됐지만 NotifyProcessed 전에 중단된 경우 보장
+                if (!processed && slot.HasValue)
+                    slot.Value.NotifyProcessed();
             }
         }
     }

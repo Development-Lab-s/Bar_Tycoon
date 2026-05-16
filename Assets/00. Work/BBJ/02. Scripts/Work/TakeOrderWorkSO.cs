@@ -1,9 +1,10 @@
 using BBJ.Actions;
 using BBJ.Customer;
+using BBJ.Modules;
 using BBJ.Order;
-using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
+using System;
+using System.Threading;
 using _00._Work._Resources._02._Scripts.Modules;
 
 namespace BBJ.Work
@@ -11,36 +12,38 @@ namespace BBJ.Work
     [UnityEngine.CreateAssetMenu(fileName = "TakeOrderWork", menuName = "Tycoon/Work/TakeOrder")]
     public class TakeOrderWorkSO : WorkSO
     {
-        public override async UniTask<WorkResult> ExecuteAsync(
-            ModuleOwner executor, GameEvent context, WorkExecutionContext ctx)
+        protected override async UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
         {
-            var agent = executor as IActionDispatcher;
-            var ev    = context as TakeOrderEvent;
-            if (agent == null || ev == null) return WorkResult.Cancelled;
+            var actions  = executor.GetModule<AgentActionModule>();
+            var customer = ticket?.Customer as CustomerAgent;
+            if (actions == null || ticket == null || customer == null) return WorkResult.Cancelled;
 
-            var seat = ev.Seat;
+            if (ticket.WorkPhase != OrderWorkPhase.ReadyForServer) return WorkResult.Cancelled;
+            if (!ticket.TryReserve(executor)) return WorkResult.Cancelled;
+
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(ctx.Token, ticket.Token);
+            customer.SetAssignedServer(executor);
             try
             {
-                await agent.MoveAsync(seat.GetNearestPoint(executor.transform.position), ctx.Token);
-                ctx.Token.ThrowIfCancellationRequested();
+                await actions.Execute<MoveAction>(
+                    a => a.ExecuteAsync(ticket.Seat.GetNearestPoint(executor.transform.position), linked.Token));
+                ticket.TryStartProgress(executor);
 
-                await agent.DoWorkAsync(seat, ctx.Token);
-                ctx.Token.ThrowIfCancellationRequested();
+                await actions.Execute<WorkAction>(a => a.ExecuteAsync(ticket.Seat, linked.Token));
 
-                var seatModule = seat.GetModule<SeatModule>();
-                var customer   = seatModule?.AssignedAgent as CustomerAgent;
-                var ticket     = customer?.PlaceOrder(seat);
-
-                if (ticket != null)
-                    OrderManager.Instance?.Register(ticket);
-
+                _ctx.OrderChannel?.RaiseEvent(new OrderNotifyCompleteEvent(ticket, executor));
                 return WorkResult.Completed;
             }
             catch (OperationCanceledException)
             {
-                return ctx.WasExternallyCompleted
-                    ? WorkResult.ExternallyCompleted
-                    : WorkResult.Cancelled;
+                if (!ticket.IsTerminal)
+                    _ctx.OrderChannel?.RaiseEvent(new OrderNotifyReleasedEvent(ticket, executor));
+                return WorkResult.Cancelled;
+            }
+            finally
+            {
+                customer.SetAssignedServer(null);
             }
         }
     }

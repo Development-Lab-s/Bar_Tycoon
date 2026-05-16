@@ -1,31 +1,27 @@
-using _00._Work._Resources._02._Scripts.Modules;
 using BBJ.Actions;
 using BBJ.Customer;
-using BBJ.Register;
-using BBJ.WorkplaceSystem;
+using BBJ.Modules;
+using BBJ.Order;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
 using System.Linq;
 using UnityEngine;
+using _00._Work._Resources._02._Scripts.Modules;
 
 namespace BBJ.Work
 {
     [CreateAssetMenu(fileName = "TakeSeatWork", menuName = "Tycoon/Work/TakeSeat")]
     public class TakeSeatWorkSO : WorkSO
     {
-        [SerializeField] private WorkplaceRegisterSO _register;
-        [SerializeField] private WorkplaceTypeSO     _seatType;
-
-        public override async UniTask<WorkResult> ExecuteAsync(
-            ModuleOwner executor, GameEvent context, WorkExecutionContext ctx)
+        protected override async UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
         {
             var customer = executor as CustomerAgent;
-            var agent    = executor as IActionDispatcher;
-            if (customer == null || agent == null) return WorkResult.Cancelled;
+            var actions  = executor.GetModule<AgentActionModule>();
+            if (customer == null || actions == null) return WorkResult.Cancelled;
 
-            var seat = _register
-                .GetCandidates(executor.transform.position, _seatType)
+            var seat = _ctx.WorkplaceRegister
+                .GetCandidates(executor.transform.position, _ctx.SeatType)
                 .FirstOrDefault(s => {
                     var occ = s.GetModule<OccupancyModule>();
                     return occ != null && !occ.IsOccupied && occ.TryReserve(executor, null);
@@ -40,22 +36,21 @@ namespace BBJ.Work
             var seatModule = seat.GetModule<SeatModule>();
             seatModule?.AssignCustomer(executor);
 
+            bool seated = false;
             try
             {
-                await agent.MoveAsync(dest, ctx.Token);
+                await actions.Execute<MoveAction>(a => a.ExecuteAsync(dest, ctx.Token));
                 seatModule?.Seat(executor);
+                seated = true;
                 return WorkResult.Completed;
             }
-            catch (OperationCanceledException) when (ctx.WasExternallyCompleted)
+            finally
             {
-                seatModule?.Seat(executor);
-                return WorkResult.ExternallyCompleted;
-            }
-            catch (OperationCanceledException)
-            {
-                seat.GetModule<OccupancyModule>()?.Release();
-                customer.AssignedSeat = null;
-                return WorkResult.Cancelled;
+                if (!seated)
+                {
+                    seat.GetModule<OccupancyModule>()?.Release();
+                    customer.AssignedSeat = null;
+                }
             }
         }
     }

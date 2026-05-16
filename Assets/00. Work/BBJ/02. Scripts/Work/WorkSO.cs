@@ -1,6 +1,6 @@
+using BBJ.Order;
 using BBJ.Staff;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
@@ -10,10 +10,13 @@ namespace BBJ.Work
     {
         public AgentRole RequiredRole;
 
-        public abstract UniTask<WorkResult> ExecuteAsync(
-            ModuleOwner executor, GameEvent context, WorkExecutionContext ctx);
+        [SerializeField] protected WorkContextSO _ctx;
 
-        public virtual void OnResult(
-            WorkResult result, ModuleOwner executor, GameEvent context) { }
+        public UniTask<WorkResult> ExecuteAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
+            => RunAsync(executor, ticket, ctx);
+
+        protected abstract UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx);
     }
 }
