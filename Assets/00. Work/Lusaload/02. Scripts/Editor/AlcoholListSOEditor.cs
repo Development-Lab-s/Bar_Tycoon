@@ -14,10 +14,18 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
             if (GUILayout.Button("레시피 생성 창 열기", GUILayout.Height(30f)))
             {
-                Debug.Log("AlcoholListSO 인스펙터 버튼 클릭");
-                CocktailRecipeCreatorWindow.OpenCreateWindow((AlcoholListSO)target, null);
+                IngredientDatabaseSO db = FindIngredientDatabase();
+                CocktailRecipeCreatorWindow.OpenCreateWindow(db, null);
                 GUIUtility.ExitGUI();
             }
+        }
+
+        private static IngredientDatabaseSO FindIngredientDatabase()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:IngredientDatabaseSO");
+            if (guids.Length == 0) return null;
+            return AssetDatabase.LoadAssetAtPath<IngredientDatabaseSO>(
+                AssetDatabase.GUIDToAssetPath(guids[0]));
         }
     }
 }

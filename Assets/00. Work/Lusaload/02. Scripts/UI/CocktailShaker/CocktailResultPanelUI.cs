@@ -1,22 +1,31 @@
-﻿using TMPro;
+using _00._Work.Lusaload._02._Scripts.Recipe;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
 {
-    public class CocktailResultPanelUI : MonoBehaviour
+    public class CocktailResultPanelUI : MonoBehaviour, IRecipeReaderReceiver
     {
         [SerializeField] private CocktailShaker cocktailShaker;
 
         [Header("Success")]
         [SerializeField] private GameObject successPanel;
         [SerializeField] private TextMeshProUGUI successText;
+        [SerializeField] private Image cocktailImage;
         [SerializeField] private Button successCloseButton;
 
         [Header("Fail")]
         [SerializeField] private GameObject failPanel;
         [SerializeField] private TextMeshProUGUI failText;
         [SerializeField] private Button failCloseButton;
+
+        private IRecipeReader _recipeReader;
+
+        public void SetRecipeReader(IRecipeReader reader)
+        {
+            _recipeReader = reader;
+        }
 
         private void Awake()
         {
@@ -62,6 +71,9 @@ namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
             if (successText != null)
                 successText.text = "성공";
 
+            if (cocktailImage != null)
+                cocktailImage.sprite = _recipeReader?.CurrentRecipe?.cocktailIcon;
+
             successPanel.SetActive(true);
         }
 
@@ -73,9 +85,9 @@ namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
             if (failText != null)
                 failText.text = "실패...";
 
-            failPanel.SetActive(true)
-;
+            failPanel.SetActive(true);
         }
+
         public void ClosePanels()
         {
             if (successPanel != null) successPanel.SetActive(false);
