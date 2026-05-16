@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex;
-using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.CodexDetail;
 using _00._Work.Lusaload._02._Scripts.SO;
 using UnityEngine;
@@ -13,23 +12,22 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
         [Header("codex")]
         [SerializeField] private GameObject codex;
         [SerializeField] private CockTailContent cockTailContent;
-        [SerializeField] private CodexManager codexManager;
 
         [Header("codexDetail")] 
         [SerializeField] private CockTailUI cockTailUI;
+        
+        [field: SerializeField] public CocktailRecipeDatabaseSO UnlockedCockTails { get; private set; }
 
         private void Awake()
         {
             cockTailContent.OnClickBtn += HandleOnClickBtn;
             cockTailUI.OnClickExitBtn += HandleOnExitClickBtn;
-            codexManager.OnAddCockTail += HandleAddCockTail;
         }
         
         private void OnDestroy()
         {
             cockTailContent.OnClickBtn -= HandleOnClickBtn;
             cockTailUI.OnClickExitBtn -= HandleOnExitClickBtn;
-            codexManager.OnAddCockTail -= HandleAddCockTail;
         }
         
         [ContextMenu("Show UI")]
@@ -38,14 +36,8 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
             codex.SetActive(true);
             cockTailUI.gameObject.SetActive(false);
 
-            cockTailContent.SetView(codexManager.UnlockedCockTails.recipes);
+            cockTailContent.SetView(UnlockedCockTails.recipes);
         }
-        
-        private void HandleEnable()
-        {
-            cockTailContent.SetView(codexManager.UnlockedCockTails.recipes);
-        }
-
 
         private void HandleOnClickBtn(CocktailRecipeSO obj)
         {
@@ -60,11 +52,6 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
             cockTailUI.gameObject.SetActive(false);
         }
         
-        private void HandleAddCockTail(List<CocktailRecipeSO> cockTailSOs)
-        {
-            cockTailContent.SetView(cockTailSOs);
-        }
-
         public void ExitBtnClick()
         {
             codex.SetActive(false);

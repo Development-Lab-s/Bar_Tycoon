@@ -1,5 +1,4 @@
-﻿using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data;
-using _00._Work.Lusaload._02._Scripts.SO;
+﻿using _00._Work.Lusaload._02._Scripts.SO;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI

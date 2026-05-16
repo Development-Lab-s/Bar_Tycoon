@@ -1,9 +1,6 @@
 ﻿using System;
-using _00._Work.Goat._02._Scripts.Events;
 using _00._Work.Goat._02._Scripts.Exp;
-using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data;
 using _00._Work.Lusaload._02._Scripts.SO;
-using Gamelib.EventSystem;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
@@ -16,8 +13,8 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         [Header("References")]
         [SerializeField] private ExpManager expManager;
         
-        [Header("EventChannel")]
-        [SerializeField] private EventChannelSO codexAddEventChannel;
+        [Header("CockTailDatabase")]
+        [SerializeField] private CocktailRecipeDatabaseSO _cocktailRecipeDatabaseSo;
 
         public event Action<int, CocktailRecipeSO> OnCockTailAdd;
         private void Awake()
@@ -52,7 +49,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
                 
                 foreach (CocktailRecipeSO reward in rewardGroup.cockTails)
                 {
-                    codexAddEventChannel.RaiseEvent(new CockTailAddEvent().Init(reward));
+                    _cocktailRecipeDatabaseSo.AddCockTail(reward);
                     OnCockTailAdd?.Invoke(afterLevel, reward);
                 }
             }
