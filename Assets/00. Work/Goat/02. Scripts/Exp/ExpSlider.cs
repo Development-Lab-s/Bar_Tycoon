@@ -9,7 +9,13 @@ namespace _00._Work.Goat._02._Scripts.Exp
 
         public void SetFill(int amount, int max)
         {
-            expSliderImage.fillAmount = (float)amount/max;
+            if (max <= 0)
+            {
+                expSliderImage.fillAmount = 1f;
+                return;
+            }
+
+            expSliderImage.fillAmount = Mathf.Clamp01((float)amount / max);
         }
     }
 }

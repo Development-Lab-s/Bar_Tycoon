@@ -9,44 +9,71 @@ namespace _00._Work.Goat._02._Scripts.Exp
 {
     public class ExpManager : MonoBehaviour
     {
+        [field: SerializeField] public ExpTableSO ExpTableSo { get; private set; }
         [SerializeField] private EventChannelSO expChannelSO;
-        [SerializeField] private ExpTableSO expTableSo;
         [SerializeField] private ExpData expData;
         [SerializeField] private SaveFileNameSO saveFileNameSO;
         
         public int CurrentLevel => expData.currentLevel;
         public int CurrentExp => expData.currentExp;
         
-        public Action<int> OnLevelChanged;
+        public Action<int, int> OnLevelChanged;
         public Action<int, int> OnExpChanged;
 
+        private JsonSaveService _jsonSaveService;
         private void Awake()
         {
+            _jsonSaveService = new JsonSaveService(saveFileNameSO);
+            LoadExp();
+            
             expChannelSO.AddListener<ExpEvent>(HandleExpAdd);
-        }
-
-        private void Start()
-        {
-            OnLevelChanged?.Invoke(CurrentLevel);
-            OnExpChanged?.Invoke(CurrentExp, expTableSo.GetRequiredExp(CurrentLevel));
         }
 
         private void OnDestroy()
         {
             expChannelSO.RemoveListener<ExpEvent>(HandleExpAdd);
         }
+        
+        private void LoadExp()
+        {
+            expData = _jsonSaveService.Load<ExpData>();
+
+            if (expData == null)
+                expData = new ExpData();
+        }
 
         private void HandleExpAdd(ExpEvent exp)
         {
             expData.currentExp += exp.amount;
-            int maxExp = expTableSo.GetRequiredExp(CurrentLevel);
-            if (expData.currentExp >= maxExp)
+            
+            int levelUpCHangeCount = 0;
+            
+            while (CanLevelUp())
             {
+                int maxExp = ExpTableSo.GetRequiredExp(CurrentLevel);
+                
+                levelUpCHangeCount++;
                 expData.currentExp -= maxExp;
                 expData.currentLevel += 1;
-                OnLevelChanged?.Invoke(CurrentLevel);
             }
-            OnExpChanged?.Invoke(CurrentExp, maxExp);
+
+            if (levelUpCHangeCount > 0)
+            {
+                OnLevelChanged?.Invoke(CurrentLevel, levelUpCHangeCount);
+            }
+            
+            OnExpChanged?.Invoke(CurrentExp,  ExpTableSo.GetRequiredExp(CurrentLevel));
+            _jsonSaveService.Save(expData);
+        }
+        
+        private bool CanLevelUp()
+        {
+            int requiredExp = ExpTableSo.GetRequiredExp(CurrentLevel);
+
+            if (requiredExp <= 0)
+                return false;
+
+            return expData.currentExp >= requiredExp;
         }
     }
 }
