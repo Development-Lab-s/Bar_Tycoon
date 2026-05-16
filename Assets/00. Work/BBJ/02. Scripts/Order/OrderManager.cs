@@ -1,6 +1,5 @@
 using BBJ.EventSystem;
 using BBJ.Register;
-using BBJ.Schedule;
 using BBJ.Work;
 using Gamelib.EventSystem;
 using UnityEngine;
@@ -10,22 +9,29 @@ namespace BBJ.Order
 {
     public class OrderManager : MonoBehaviour
     {
-        public static OrderManager Instance { get; private set; }
-
-        [SerializeField] private OrderRegisterSO  _orderRegister;
-        [SerializeField] private ScheduleManager  _scheduleManager;
+        [Header("Setup")]
         [SerializeField] private WorkDispatchTableSO _dispatchTable;
-        [SerializeField] private EventChannelSO   _orderChannel;
-        public OrderRegisterSO OrderRegister => _orderRegister;
+        [SerializeField] private OrderRegisterSO     _orderRegister;
+        [SerializeField] private EventChannelSO      _orderChannel;
 
-        private void Awake() => Instance = this;
+        private void Awake()
+        {
+            UtilDebugger.AssertAllAssigned(this);
+
+            SubEventChannel();
+        }
+
+        private void OnDestroy()
+        {
+            UnsubEventChannel();
+            RegisterClear();
+        }
 
         public void Register(OrderTicket ticket)
         {
-            if (_orderRegister == null) return;
             _orderRegister.Register(ticket);
-            _orderChannel?.RaiseEvent(new OrderRegisteredEvent(ticket));
-            _dispatchTable?.Dispatch(ticket.WorkPhase, new OrderWorkEvent(ticket, this), _scheduleManager);
+            _orderChannel.RaiseEvent(new OrderRegisteredEvent(ticket));
+            _dispatchTable.Dispatch(ticket.WorkPhase, ticket);
         }
 
         public bool NotifyComplete(OrderTicket ticket, ModuleOwner actor)
@@ -46,7 +52,7 @@ namespace BBJ.Order
             ticket.WorkPhase = entry.Value.NextPhase;
             ticket.Release();
             _orderChannel?.RaiseEvent(new OrderStateChangedEvent(ticket));
-            _dispatchTable?.Dispatch(ticket.WorkPhase, new OrderWorkEvent(ticket, this), _scheduleManager);
+            _dispatchTable?.Dispatch(ticket.WorkPhase, ticket);
             return true;
         }
 
@@ -60,14 +66,14 @@ namespace BBJ.Order
             else
             {
                 ticket.Release();
-                _dispatchTable?.Dispatch(ticket.WorkPhase, new OrderWorkEvent(ticket, this), _scheduleManager);
+                _dispatchTable?.Dispatch(ticket.WorkPhase, ticket);
             }
             return true;
         }
 
         public void CancelOrder(OrderTicket ticket, CancelReason reason)
         {
-            if (ticket.State is OrderState.Done or OrderState.Cancelled) return;
+            if (ticket.IsTerminal) return;
 
             ticket.Cancel(reason);
             _orderRegister.Unregister(ticket);
@@ -78,13 +84,35 @@ namespace BBJ.Order
         {
             ticket.Release();
             _orderChannel?.RaiseEvent(new OrderStateChangedEvent(ticket));
-            _dispatchTable?.Dispatch(ticket.WorkPhase, new OrderWorkEvent(ticket, this), _scheduleManager);
+            _dispatchTable?.Dispatch(ticket.WorkPhase, ticket);
         }
 
-        private static bool IsOwner(OrderTicket ticket, ModuleOwner actor) =>
+        private bool IsOwner(OrderTicket ticket, ModuleOwner actor) =>
             actor != null && ticket.ReservedBy == actor;
 
-        private void OnDestroy()
+        private void SubEventChannel()
+        {
+            if (_orderChannel == null) return;
+            _orderChannel.AddListener<OrderTicketRegisterEvent>(HandleOrderRegisterRequested);
+            _orderChannel.AddListener<OrderCancelRequestEvent>(HandleOrderCancelRequested);
+            _orderChannel.AddListener<OrderNotifyCompleteEvent>(HandleOrderNotifyComplete);
+            _orderChannel.AddListener<OrderNotifyReleasedEvent>(HandleOrderNotifyReleased);
+            _orderChannel.AddListener<OrderReadyForServerEvent>(HandleReadyForServer);
+            _orderChannel.AddListener<PlayerOrderTakeEvent>(HandlePlayerOrderTake);
+            _orderChannel.AddListener<CustomerEatCompleteEvent>(HandleCustomerEatComplete);
+        }
+        private void UnsubEventChannel()
+        {
+            if (_orderChannel == null) return;
+            _orderChannel.RemoveListener<OrderTicketRegisterEvent>(HandleOrderRegisterRequested);
+            _orderChannel.RemoveListener<OrderCancelRequestEvent>(HandleOrderCancelRequested);
+            _orderChannel.RemoveListener<OrderNotifyCompleteEvent>(HandleOrderNotifyComplete);
+            _orderChannel.RemoveListener<OrderNotifyReleasedEvent>(HandleOrderNotifyReleased);
+            _orderChannel.RemoveListener<OrderReadyForServerEvent>(HandleReadyForServer);
+            _orderChannel.RemoveListener<PlayerOrderTakeEvent>(HandlePlayerOrderTake);
+            _orderChannel.RemoveListener<CustomerEatCompleteEvent>(HandleCustomerEatComplete);
+        }
+        private void RegisterClear()
         {
             if (_orderRegister == null) return;
 
@@ -92,5 +120,36 @@ namespace BBJ.Order
                 ticket.Cancel(CancelReason.SceneUnloaded);
             _orderRegister.Clear();
         }
+        private void HandleOrderRegisterRequested(OrderTicketRegisterEvent e) => Register(e.Ticket);
+        private void HandleOrderCancelRequested(OrderCancelRequestEvent e) => CancelOrder(e.Ticket, e.Reason);
+        private void HandleOrderNotifyComplete(OrderNotifyCompleteEvent e) => NotifyComplete(e.Ticket, e.Actor);
+        private void HandleOrderNotifyReleased(OrderNotifyReleasedEvent e) => NotifyReleased(e.Ticket, e.Actor);
+        private void HandleReadyForServer(OrderReadyForServerEvent e) => Register(e.Ticket);
+        private void HandlePlayerOrderTake(PlayerOrderTakeEvent e)
+        {
+            var ticket = e.Ticket;
+            if (ticket == null || ticket.IsTerminal) return;
+            if (ticket.WorkPhase != OrderWorkPhase.ReadyForServer) return;
+
+            var entry = _dispatchTable?.FindEntry(ticket.WorkPhase);
+            if (entry == null) return;
+
+            ticket.Release();
+            ticket.WorkPhase = entry.Value.NextPhase;
+            _orderChannel?.RaiseEvent(new OrderStateChangedEvent(ticket));
+            _dispatchTable?.Dispatch(ticket.WorkPhase, ticket);
+        }
+
+        private void HandleCustomerEatComplete(CustomerEatCompleteEvent e)
+        {
+            var ticket = e.Ticket;
+            if (ticket == null || ticket.IsTerminal) return;
+            if (ticket.WorkPhase != OrderWorkPhase.Eating) return;
+
+            ticket.WorkPhase = OrderWorkPhase.ReadyForCashier;
+            _orderChannel?.RaiseEvent(new OrderStateChangedEvent(ticket));
+            _dispatchTable?.Dispatch(ticket.WorkPhase, ticket);
+        }
+
     }
 }
