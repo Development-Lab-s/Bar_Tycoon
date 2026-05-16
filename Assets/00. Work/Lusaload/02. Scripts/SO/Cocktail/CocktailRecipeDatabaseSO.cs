@@ -7,6 +7,6 @@ namespace _00._Work.Lusaload._02._Scripts.SO
     [CreateAssetMenu(fileName = "CocktailDataBase", menuName = "Alcohol/CocktailDataBaseSO", order = 0)]
     public class CocktailRecipeDatabaseSO : ScriptableObject
     {
-        public List<CocktailRecipeSO> recipes = new(); // 등록된 칵테일 레시피 목록
+        public HashSet<CocktailRecipeSO> recipes = new(); // 등록된 칵테일 레시피 목록
     }
 }
