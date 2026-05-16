@@ -4,9 +4,11 @@ using UnityEngine;
 
 namespace _00._Work.Lusaload._02._Scripts.Editor
 {
+    // CocktailRecipeSO 인스펙터에 맛 프로필 바와 레시피 수정 창 버튼을 추가하는 커스텀 에디터
     [CustomEditor(typeof(CocktailRecipeSO))]
     public class CocktailRecipeSOEditor : UnityEditor.Editor
     {
+        // 기본 인스펙터 + 맛 프로필 시각화 바 + 레시피 수정 창 버튼을 순서대로 표시
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
@@ -29,6 +31,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             }
         }
 
+        // 프로젝트 내 첫 번째 IngredientDatabaseSO를 자동으로 찾아 반환
         private static IngredientDatabaseSO FindIngredientDatabase()
         {
             string[] guids = AssetDatabase.FindAssets("t:IngredientDatabaseSO");
@@ -37,6 +40,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
                 AssetDatabase.GUIDToAssetPath(guids[0]));
         }
 
+        // label·value·fillColor로 0~5 범위의 컬러 채움 바를 그림
         private static void DrawTasteBar(string label, int value, Color fillColor)
         {
             EditorGUILayout.BeginHorizontal();
