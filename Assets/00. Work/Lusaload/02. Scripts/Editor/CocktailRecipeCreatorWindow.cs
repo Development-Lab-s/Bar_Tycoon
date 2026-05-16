@@ -5,29 +5,30 @@ using UnityEngine;
 
 namespace _00._Work.Lusaload._02._Scripts.Editor
 {
+    // CocktailRecipeSO를 생성·수정할 수 있는 에디터 전용 창 (Tools/Cocktail/Recipe Creator)
     public class CocktailRecipeCreatorWindow : EditorWindow
     {
-        private const float AlcoholButtonWidth = 140f;
-        private const float AlcoholButtonHeight = 52f;
-        private const float ButtonSpacing = 6f;
+        private const float AlcoholButtonWidth  = 140f; // 재료 버튼 너비
+        private const float AlcoholButtonHeight = 52f;  // 재료 버튼 높이
+        private const float ButtonSpacing       = 6f;   // 버튼 사이 간격
 
-        private IngredientDatabaseSO _ingredientDatabase;
-        private CocktailRecipeDatabaseSO _recipeDatabaseSO;
-        private CocktailRecipeSO _editingRecipe;
+        private IngredientDatabaseSO _ingredientDatabase;     // 재료 목록을 가져올 데이터베이스
+        private CocktailRecipeDatabaseSO _recipeDatabaseSO;   // 생성 후 자동 등록할 레시피 데이터베이스 (선택)
+        private CocktailRecipeSO _editingRecipe;               // 수정 모드일 때 대상 레시피 SO
 
-        private string _cocktailName = string.Empty;
-        private Sprite _cocktailIcon;
-        private int _bitterness;
-        private int _sweetness;
-        private int _sourness;
-        private string _description = string.Empty;
-        private string _saveFolderPath = "Assets/00. Work/Lusaload/05. SO/Cocktail";
+        private string _cocktailName  = string.Empty; // 입력 중인 칵테일 이름
+        private Sprite _cocktailIcon;                 // 입력 중인 칵테일 아이콘
+        private int _bitterness;                      // 입력 중인 쓴맛 수치
+        private int _sweetness;                       // 입력 중인 단맛 수치
+        private int _sourness;                        // 입력 중인 신맛 수치
+        private string _description   = string.Empty; // 입력 중인 설명
+        private string _saveFolderPath = "Assets/00. Work/Lusaload/05. SO/Cocktail"; // 기본 저장 경로
 
-        private Vector2 _windowScroll;
-        private Vector2 _alcoholScroll;
-        private Vector2 _selectedScroll;
+        private Vector2 _windowScroll;   // 전체 창 스크롤 위치
+        private Vector2 _alcoholScroll;  // 재료 선택 영역 스크롤 위치
+        private Vector2 _selectedScroll; // 선택된 재료 목록 스크롤 위치
 
-        private readonly List<BaseAlcoholDataSO> _selectedAlcohols = new();
+        private readonly List<BaseAlcoholDataSO> _selectedAlcohols = new(); // 현재 레시피에 추가된 재료 목록 (순서 포함)
 
         [MenuItem("Tools/Cocktail/Recipe Creator")]
         private static void OpenFromMenu()
@@ -35,6 +36,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             OpenCreateWindow(null, null);
         }
 
+        // 새 레시피 생성 모드로 창을 열고 입력 폼을 초기화
         public static void OpenCreateWindow(IngredientDatabaseSO ingredientDatabase, CocktailRecipeDatabaseSO databaseSO)
         {
             CocktailRecipeCreatorWindow window = GetWindow<CocktailRecipeCreatorWindow>("Recipe Creator");
@@ -52,6 +54,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             window.Focus();
         }
 
+        // 기존 레시피 수정 모드로 창을 열고 해당 레시피 데이터를 폼에 로드
         public static void OpenEditWindow(CocktailRecipeSO recipe, IngredientDatabaseSO ingredientDatabase, CocktailRecipeDatabaseSO databaseSO)
         {
             CocktailRecipeCreatorWindow window = GetWindow<CocktailRecipeCreatorWindow>("Recipe Editor");
@@ -347,6 +350,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             GUI.enabled = true;
         }
 
+        // 스프라이트에서 에디터 미리보기 텍스처를 반환. 없으면 원본 텍스처로 폴백
         private Texture GetSpritePreviewTexture(Sprite sprite)
         {
             if (sprite == null)
@@ -395,6 +399,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             _recipeDatabaseSO = AssetDatabase.LoadAssetAtPath<CocktailRecipeDatabaseSO>(path);
         }
 
+        // 기존 레시피 SO의 데이터를 폼 필드에 로드
         private void LoadRecipe(CocktailRecipeSO recipe)
         {
             if (recipe == null)
@@ -412,6 +417,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
                 _selectedAlcohols.AddRange(recipe.cocktailRecipeList);
         }
 
+        // 입력 폼 데이터로 새 CocktailRecipeSO 에셋을 생성하고 선택적으로 데이터베이스에 등록
         private void CreateRecipeSO()
         {
             if (_ingredientDatabase == null)
@@ -464,6 +470,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             Debug.Log($"{_cocktailName} 레시피 SO 생성 완료");
         }
 
+        // 현재 편집 중인 CocktailRecipeSO를 폼 데이터로 덮어쓰고 저장
         private void UpdateRecipeSO()
         {
             if (_editingRecipe == null)
@@ -502,6 +509,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             Debug.Log($"{_editingRecipe.cocktailName} 레시피 수정 완료");
         }
 
+        // 레시피가 데이터베이스에 없을 때 추가하고 Undo를 기록
         private void AddRecipeToDatabase(CocktailRecipeSO recipe)
         {
             if (_recipeDatabaseSO == null || recipe == null)
@@ -519,6 +527,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             AssetDatabase.SaveAssets();
         }
 
+        // 모든 입력 필드와 선택 재료 목록을 초기값으로 리셋
         private void ClearInput()
         {
             _cocktailName = string.Empty;
