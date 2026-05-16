@@ -5,13 +5,15 @@ using UnityEngine;
 
 namespace _00._Work.Lusaload._02._Scripts.Editor
 {
+    // IngredientDatabaseSO 인스펙터에 카테고리별 재료 목록 폴드아웃과 레시피 생성 창 버튼을 추가하는 커스텀 에디터
     [CustomEditor(typeof(IngredientDatabaseSO))]
     public class IngredientDatabaseSOEditor : UnityEditor.Editor
     {
-        private bool _showBaseAlcohol = true;
-        private bool _showDrink       = true;
-        private bool _showGarnish     = true;
+        private bool _showBaseAlcohol = true; // 기주 카테고리 폴드아웃 상태
+        private bool _showDrink       = true; // 음료 카테고리 폴드아웃 상태
+        private bool _showGarnish     = true; // 가니시 카테고리 폴드아웃 상태
 
+        // 기본 인스펙터 + 카테고리별 폴드아웃 목록 + 전체 재료 수 + 레시피 창 버튼 표시
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
@@ -35,6 +37,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
             }
         }
 
+        // 지정 AlcoholListSO의 재료 목록을 아이콘·이름 형태의 폴드아웃으로 드로우
         private static void DrawCategorySection(string title, AlcoholListSO list, ref bool foldout)
         {
             foldout = EditorGUILayout.Foldout(foldout, title, true, EditorStyles.foldoutHeader);
