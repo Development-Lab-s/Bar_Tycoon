@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,7 +23,7 @@ namespace _00._Work.Goat._02._Scripts.Exp
             expSliderImage.fillAmount = Mathf.Clamp01((float)amount / max);
         }
 
-        public void SetSmoothFill(int levelUpCount, int amount, int max)
+        public void SetSmoothFill(int levelUpCount, int amount, int max, Action onLevelUpStep = null)
         {
             float targetFill = GetFillAmount(amount, max);
 
@@ -33,7 +34,7 @@ namespace _00._Work.Goat._02._Scripts.Exp
 
             if (levelUpCount > 0)
             {
-                _fillCoroutine = StartCoroutine(LevelUpSmoothFill(levelUpCount, targetFill));
+                _fillCoroutine = StartCoroutine(LevelUpSmoothFill(levelUpCount, targetFill, onLevelUpStep));
             }
             else
             {
@@ -57,11 +58,14 @@ namespace _00._Work.Goat._02._Scripts.Exp
             _fillCoroutine = null;
         }
         
-        private IEnumerator LevelUpSmoothFill(int levelUpCount, float finalTargetFill)
+        private IEnumerator LevelUpSmoothFill(int levelUpCount, float finalTargetFill, Action onLevelUpStep)
         {
             for (int i = 0; i < levelUpCount; i++)
             {
                 yield return SmoothFillRoutine(1f);
+
+                onLevelUpStep?.Invoke();
+
                 expSliderImage.fillAmount = 0f;
             }
 
