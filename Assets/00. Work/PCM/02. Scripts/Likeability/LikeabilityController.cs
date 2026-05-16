@@ -7,30 +7,57 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-// 1. IDragHandler를 반드시 상속받아야 합니다.
 public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    Vector3 DefaultPos;
-    Image _image;
+    private Image _image;
+
+    // 드래그 중에 마우스를 따라다닐 임시 복사본 오브젝트
+    private GameObject dragInstance;
+    private RectTransform dragRectTransform;
+    private Canvas mainCanvas;
+
     public void Awake()
     {
         _image = GetComponent<Image>();
+        mainCanvas = GetComponentInParent<Canvas>();
     }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
-        DefaultPos = this.transform.position;
-        _image.raycastTarget = false;
+        if (_image.sprite == null) return;
+
+        dragInstance = new GameObject("DragIcon_Clone");
+        dragInstance.transform.SetParent(mainCanvas.transform, false);
+        dragInstance.transform.SetAsLastSibling(); 
+
+        Image dragImg = dragInstance.AddComponent<Image>();
+        dragImg.sprite = _image.sprite;
+        dragImg.rectTransform.sizeDelta = _image.rectTransform.sizeDelta;
+
+        // 4. 가짜 이미지는 레이캐스트를 꺼서, 마우스를 놓았을 때 플레이어 레이가 막히지 않게 함
+        dragImg.raycastTarget = false;
+
+        dragRectTransform = dragInstance.GetComponent<RectTransform>();
+
+        // 초기 위치 설정
+        UpdateDragPosition(eventData);
     }
+
     public void OnDrag(PointerEventData eventData)
     {
-        this.transform.position = eventData.position;
+        if (dragRectTransform != null)
+        {
+            UpdateDragPosition(eventData);
+        }
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (dragInstance == null) Debug.Log("샤갈") ;
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(eventData.position);
         Debug.Log(mousePos);
-        RaycastHit2D hit = Physics2D.Raycast(mousePos,Vector2.zero);
+        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+
         if (hit.collider != null)
         {
             if (hit.collider.gameObject.TryGetComponent<IPlayer>(out IPlayer iq))
@@ -39,8 +66,24 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
                 iq.ChatOpen?.Invoke();
             }
         }
-        this.transform.position = DefaultPos;
-        _image.raycastTarget = true;
+        if (dragInstance != null)
+        {
+            Destroy(dragInstance);
+        }
     }
+
+    // 마우스의 스크린 좌표를 Canvas 내부 로컬 좌표로 정확하게 변환해주는 함수
+    private void UpdateDragPosition(PointerEventData eventData)
+    {
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            mainCanvas.transform as RectTransform,
+            eventData.position,
+            eventData.pressEventCamera,
+            out localPoint
+        );
+        dragRectTransform.localPosition = localPoint;
+    }
+
     public void OnDrop(PointerEventData eventData) { }
 }
