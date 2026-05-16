@@ -9,7 +9,7 @@ namespace BBJ.WorkplaceSystem.Modules
     public class WorkplaceQueueModule : MonoBehaviour, IModule
     {
         [SerializeField] private Transform[]   _queuePositions;
-        [SerializeField] private EventChannelSO _scheduleTriggerChannel;
+        [SerializeField] private EventChannelSO _scheduleChannel;
 
         private readonly List<OccupationSlot> _slots = new();
 
@@ -23,7 +23,7 @@ namespace BBJ.WorkplaceSystem.Modules
         {
             _slots.Add(slot);
             RefreshPositions();
-            _scheduleTriggerChannel?.RaiseEvent(new ScheduleTriggerEvent());
+            _scheduleChannel?.RaiseEvent(new ScheduleTriggerEvent());
         }
 
         public OccupationSlot? Dequeue()
