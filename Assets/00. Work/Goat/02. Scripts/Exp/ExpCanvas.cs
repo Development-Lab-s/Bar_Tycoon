@@ -16,8 +16,8 @@ namespace _00._Work.Goat._02._Scripts.Exp
 
         private void Start()
         {
-            HandleLevelChange(expManager.CurrentLevel, 0); // _에는 아무 숫자나 넣은거임
-            HandleExpChange(expManager.CurrentExp, expManager.ExpTableSo.GetRequiredExp(expManager.CurrentLevel));
+            expTextUI.LevelChange(expManager.CurrentLevel);
+            expSlider.SetFill(expManager.CurrentExp, expManager.ExpTableSo.GetRequiredExp(expManager.CurrentLevel));
         }
 
         private void OnDestroy()
@@ -26,9 +26,9 @@ namespace _00._Work.Goat._02._Scripts.Exp
             expManager.OnExpChanged -= HandleExpChange;
         }
         
-        private void HandleExpChange(int currentExp, int maxExp)
+        private void HandleExpChange(int levelUpCount,int currentExp, int maxExp)
         {
-            expSlider.SetFill(currentExp, maxExp);
+            expSlider.SetSmoothFill(levelUpCount,currentExp, maxExp);
         }
 
         private void HandleLevelChange(int level, int _)

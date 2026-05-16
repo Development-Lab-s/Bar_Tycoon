@@ -29,32 +29,31 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
             expManager.OnLevelChanged -= HandleLevelChange;
         }
 
-        private void HandleLevelChange(int level, int levelChangeCount)
+        private void HandleLevelChange(int afterLevel, int beforeLevel)
         {
-            int rewardIndex = level - 2;
-            int startIndex = rewardIndex - (levelChangeCount - 1);
-            
-            for (int i = startIndex; i <= rewardIndex; i++)
+            for (int level = beforeLevel + 1; level <= afterLevel; level++)
             {
+                int rewardIndex = level - 2;
                 
-                if (i < 0 || i >= levelUpRewardSOs.levelUpRewardSOs.Length)
+                if (rewardIndex < 0 || rewardIndex >= levelUpRewardSOs.levelUpRewardSOs.Length)
                 {
-                    Debug.Log($"{i}번 인덱스 레벨보상 없음");
+                    Debug.Log($"{rewardIndex}번 인덱스 레벨보상 없음");
                     continue;
                 }
                 
-                var rewardGroup = levelUpRewardSOs.levelUpRewardSOs[i];
+                var rewardGroup = levelUpRewardSOs.levelUpRewardSOs[rewardIndex];
+
                 if (rewardGroup == null)
                 {
-                    Debug.Log($"{i}번 인덱스 레벨보상 없음");
+                    Debug.Log($"{rewardIndex}번 인덱스 레벨보상 없음");
                     continue;
                 }
                 
                 foreach (CockTailSlotSo reward in rewardGroup.cockTails)
                 {
                     codexAddEventChannel.RaiseEvent(new CockTailAddEvent().Init(reward));
-                    OnCockTailAdd?.Invoke(level, reward);
-                }   
+                    OnCockTailAdd?.Invoke(afterLevel, reward);
+                }
             }
             
             //여긴 기능 해금
