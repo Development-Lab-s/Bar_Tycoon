@@ -516,7 +516,7 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
                 return;
 
             if (_recipeDatabaseSO.recipes == null)
-                _recipeDatabaseSO.recipes = new List<CocktailRecipeSO>();
+                _recipeDatabaseSO.recipes = new HashSet<CocktailRecipeSO>();
 
             if (_recipeDatabaseSO.recipes.Contains(recipe))
                 return;
