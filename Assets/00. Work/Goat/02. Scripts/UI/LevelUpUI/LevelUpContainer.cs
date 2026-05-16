@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data;
+using _00._Work.Lusaload._02._Scripts.SO;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
@@ -24,7 +25,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
             HideAllSlot();
         }
 
-        public void SpawnSlot(CockTailSlotSo levelUpReward)
+        public void SpawnSlot(CocktailRecipeSO levelUpReward)
         {
             LevelUpRewardSlot slot = GetInactiveSlot();
 
@@ -33,7 +34,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
                 slot = CreateSlot();
             }
 
-            slot.SetImage(levelUpReward.CockTailImage);
+            slot.SetImage(levelUpReward.cocktailIcon);
             slot.gameObject.SetActive(true);
         }
 

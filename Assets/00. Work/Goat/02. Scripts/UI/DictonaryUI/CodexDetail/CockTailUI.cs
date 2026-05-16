@@ -1,5 +1,6 @@
 ﻿using System;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data;
+using _00._Work.Lusaload._02._Scripts.SO;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,15 +19,15 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI.CodexDetail
 
         public event Action OnClickExitBtn;
 
-        public void SetView(CockTailSlotSo  slotSo)
+        public void SetView(CocktailRecipeSO  slotSo)
         {
-            cockTailImage.sprite = slotSo.CockTailImage;
-            cockTailName.text = slotSo.CockTailName;
-            cokcTailDescription.text = slotSo.CokcTailDescription;
+            cockTailImage.sprite = slotSo.cocktailIcon;
+            cockTailName.text = slotSo.cocktailName;
+            cokcTailDescription.text = slotSo.description;
             
-            SetScore(slotSo.SourNum, sourSlider);
-            SetScore(slotSo.SugarNum, sugarSlider);
-            SetScore(slotSo.BitterNum, bitterSlider);
+            SetScore(slotSo.sourness, sourSlider);
+            SetScore(slotSo.sweetness, sugarSlider);
+            SetScore(slotSo.bitterness, bitterSlider);
         }
 
         private void SetScore(int num, Slider slider)

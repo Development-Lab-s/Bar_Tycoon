@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.CodexDetail;
+using _00._Work.Lusaload._02._Scripts.SO;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
@@ -37,16 +38,16 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
             codex.SetActive(true);
             cockTailUI.gameObject.SetActive(false);
 
-            cockTailContent.SetView(codexManager.UnlockedCockTails);
+            cockTailContent.SetView(codexManager.UnlockedCockTails.recipes);
         }
         
         private void HandleEnable()
         {
-            cockTailContent.SetView(codexManager.UnlockedCockTails);
+            cockTailContent.SetView(codexManager.UnlockedCockTails.recipes);
         }
 
 
-        private void HandleOnClickBtn(CockTailSlotSo obj)
+        private void HandleOnClickBtn(CocktailRecipeSO obj)
         {
             codex.SetActive(false);
             cockTailUI.gameObject.SetActive(true);
@@ -59,7 +60,7 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI
             cockTailUI.gameObject.SetActive(false);
         }
         
-        private void HandleAddCockTail(List<CockTailSlotSo> cockTailSOs)
+        private void HandleAddCockTail(List<CocktailRecipeSO> cockTailSOs)
         {
             cockTailContent.SetView(cockTailSOs);
         }

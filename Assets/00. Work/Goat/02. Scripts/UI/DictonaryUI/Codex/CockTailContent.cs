@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data;
+using _00._Work.Lusaload._02._Scripts.SO;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex
@@ -12,7 +13,7 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex
         
         private List<CockTailSlotUI>  _slots = new();
         
-        public event Action<CockTailSlotSo>  OnClickBtn; 
+        public event Action<CocktailRecipeSO>  OnClickBtn; 
         
         private void Awake()
         {
@@ -37,7 +38,7 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex
             }
         }
         
-        public void SetView(List<CockTailSlotSo> cockTailList)
+        public void SetView(List<CocktailRecipeSO> cockTailList)
         {
             if (cockTailList.Count > _slots.Count)
             {
@@ -62,7 +63,7 @@ namespace _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex
             }
         }
 
-        private void HandleOnClick(CockTailSlotSo obj)
+        private void HandleOnClick(CocktailRecipeSO obj)
         {
             OnClickBtn?.Invoke(obj);
         }
