@@ -5,11 +5,12 @@ using UnityEngine;
 
 namespace _00._Work.Lusaload._02._Scripts.Recipe
 {
+    // 칵테일 레시피와 제조 시퀀스를 관리하고, 씬 내 수신자에게 의존성을 주입하는 중앙 매니저
     public class CocktailRecipeManager : MonoBehaviour, IRecipeReader, IRecipeWriter, ISequenceReader
     {
-        [field:SerializeField] public CocktailRecipeSO CurrentRecipe { get; private set; }
-        public CocktailOrderSequence CurrentSequence { get; private set; }
-        public event Action<CocktailOrderSequence> OnSequenceChanged;
+        [field:SerializeField] public CocktailRecipeSO CurrentRecipe { get; private set; } // 현재 활성 칵테일 레시피
+        public CocktailOrderSequence CurrentSequence { get; private set; }                  // 레시피에서 생성된 제조 시퀀스
+        public event Action<CocktailOrderSequence> OnSequenceChanged;                       // 시퀀스가 교체될 때 발행
 
         private void Awake()
         {
@@ -34,6 +35,7 @@ namespace _00._Work.Lusaload._02._Scripts.Recipe
             }
         }
 
+        // 씬의 모든 MonoBehaviour를 순회해 IRecipeReaderReceiver·IRecipeWriterReceiver·ISequenceReaderReceiver에 this를 주입
         private void InjectDependencies()
         {
             MonoBehaviour[] all = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -53,12 +55,14 @@ namespace _00._Work.Lusaload._02._Scripts.Recipe
 
         
 
+        // 새 레시피를 설정하고 그에 맞는 시퀀스를 생성
         public void SetRecipe(CocktailRecipeSO recipeSO)
         {
             CurrentRecipe = recipeSO;
             CreateSequenceFromRecipe(recipeSO);
         }
 
+        // 레시피와 시퀀스를 초기화하고 null 시퀀스 변경 이벤트를 발행
         public void ClearRecipe()
         {
             CurrentRecipe = null;
@@ -66,6 +70,7 @@ namespace _00._Work.Lusaload._02._Scripts.Recipe
             OnSequenceChanged?.Invoke(null);
         }
         
+        // 레시피의 재료 목록으로 CocktailOrderSequence를 생성하고 OnSequenceChanged를 발행
         private void CreateSequenceFromRecipe(CocktailRecipeSO recipe)
         {
             if (recipe == null || recipe.cocktailRecipeList == null || recipe.cocktailRecipeList.Count == 0)

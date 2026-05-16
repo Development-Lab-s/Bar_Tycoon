@@ -9,10 +9,10 @@ namespace _00._Work.Lusaload._02._Scripts.UI
     // SlideButton 클릭 시 SelectObject를 화면 아래로 숨기거나 다시 올리는 토글 컴포넌트
     public class SelectObjectSlider : MonoBehaviour
     {
-        [SerializeField] private Button slideButton;
-        [SerializeField] private RectTransform selectObject;
-        [SerializeField] private RectTransform category;
-        [SerializeField] private float duration = 0.4f;
+        [SerializeField] private Button slideButton;            // 슬라이드 토글 버튼
+        [SerializeField] private RectTransform selectObject;   // 슬라이드할 패널 RectTransform
+        [SerializeField] private RectTransform category;       // 함께 슬라이드할 카테고리 RectTransform
+        [SerializeField] private float duration = 0.4f;        // 슬라이드 애니메이션 지속 시간(초)
         [SerializeField] private Ease easeDown = Ease.InCubic;  // 내려갈 때 이징
         [SerializeField] private Ease easeUp = Ease.OutCubic;   // 올라올 때 이징
 
@@ -24,21 +24,21 @@ namespace _00._Work.Lusaload._02._Scripts.UI
         [Header("Shaker Integration")]
         [SerializeField] private MonoBehaviour shakerSourceMB;  // IShakerNotifier 구현체를 할당
 
-        private IShakerNotifier _shakerNotifier;
+        private IShakerNotifier _shakerNotifier; // 캐스팅된 IShakerNotifier 참조
 
-        [Header("Button Icon Flip")]
-        [SerializeField] private RectTransform buttonIcon;  // 회전시킬 버튼 아이콘 Transform
+        [Header("Button Icon Flip")] 
+        private RectTransform _buttonIcon;  // 회전시킬 버튼 아이콘 Transform
 
-        private float _hiddenY;
+        private float _hiddenY;           // 계산된 숨김 위치 anchoredPosition.y
         private bool _isHidden = true;
-        private bool _locked;  // true일 때 SlideUp 불가 (셰이커 완성 상태)
-        private MotionHandle _handle;
-        private MotionHandle _rotHandle;
+        private bool _locked;             // true일 때 SlideUp 불가 (셰이커 완성 상태)
+        private MotionHandle _handle;     // selectObject 슬라이드 애니메이션 핸들
+        private MotionHandle _rotHandle;  // 버튼 아이콘 회전 애니메이션 핸들
 
-        private RectTransform _categoryRect;
-        private float _categoryShownY;
-        private float _categoryHiddenY;
-        private MotionHandle _catHandle;
+        private RectTransform _categoryRect;   // category 캐시 (null이면 애니메이션 생략)
+        private float _categoryShownY;         // category 보이는 위치
+        private float _categoryHiddenY;        // category 숨겨지는 위치
+        private MotionHandle _catHandle;       // category 슬라이드 애니메이션 핸들
 
         private void Awake()
         {
@@ -54,15 +54,11 @@ namespace _00._Work.Lusaload._02._Scripts.UI
                                          .GetComponent<RectTransform>();
             _hiddenY = -(canvasRect.rect.height * 0.5f + selectObject.rect.height * 0.5f) + hiddenYCorrection;
 
-            _isHidden = startHidden;
+            // 위치 초기화를 생략하므로 실제 시각 상태는 항상 shown — 상태를 맞춤
+            _isHidden = false;
 
-            // 초기 위치·회전을 즉시 적용
-            // var pos = selectObject.anchoredPosition;
-            // pos.y = _isHidden ? _hiddenY : shownY;
-            // selectObject.anchoredPosition = pos;
-
-            if (buttonIcon != null)
-                buttonIcon.localEulerAngles = new Vector3(0f, 0f, _isHidden ? 180f : 0f);
+            if (_buttonIcon != null)
+                _buttonIcon.localEulerAngles = new Vector3(0f, 0f, 0f);
 
             if (category != null)
             {
@@ -70,11 +66,12 @@ namespace _00._Work.Lusaload._02._Scripts.UI
                 _categoryShownY = _categoryRect.anchoredPosition.y;
                 _categoryHiddenY = -(canvasRect.rect.height * 0.5f + _categoryRect.rect.height * 0.5f);
 
-                var catPos = _categoryRect.anchoredPosition;
-                catPos.y = _isHidden ? _categoryHiddenY : _categoryShownY;
-                _categoryRect.anchoredPosition = catPos;
+                // var catPos = _categoryRect.anchoredPosition;
+                // catPos.y = _isHidden ? _categoryHiddenY : _categoryShownY;
+                // _categoryRect.anchoredPosition = catPos;
             }
 
+            _buttonIcon = slideButton.gameObject.GetComponent<RectTransform>();
             slideButton.onClick.AddListener(Toggle);
         }
 
@@ -150,12 +147,12 @@ namespace _00._Work.Lusaload._02._Scripts.UI
         // 아이콘 Z축 회전 애니메이션 (슬라이드와 같은 duration 사용)
         private void RotateIcon(float targetZ)
         {
-            if (buttonIcon == null) return;
+            if (_buttonIcon == null) return;
             if (_rotHandle.IsActive()) _rotHandle.Cancel();
-            float fromZ = buttonIcon.localEulerAngles.z;
+            float fromZ = _buttonIcon.localEulerAngles.z;
             _rotHandle = LMotion.Create(fromZ, targetZ, duration)
                 .WithEase(easeUp)
-                .Bind(z => buttonIcon.localEulerAngles = new Vector3(0f, 0f, z));
+                .Bind(z => _buttonIcon.localEulerAngles = new Vector3(0f, 0f, z));
         }
     }
 }
