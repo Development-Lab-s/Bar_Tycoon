@@ -1,11 +1,9 @@
 using BBJ.Actions;
 using BBJ.Modules;
 using BBJ.Order;
-using BBJ.Register;
-using BBJ.WorkplaceSystem;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
+using System;
 using System.Linq;
 using System.Threading;
 using _00._Work._Resources._02._Scripts.Modules;
@@ -15,48 +13,46 @@ namespace BBJ.Work
     [UnityEngine.CreateAssetMenu(fileName = "CookWork", menuName = "Tycoon/Work/Cook")]
     public class CookWorkSO : WorkSO
     {
-        [UnityEngine.SerializeField] private WorkplaceTypeSO     _kitchenType;
-        [UnityEngine.SerializeField] private WorkplaceRegisterSO _workplaceRegister;
-
-        public override async UniTask ExecuteAsync(
-            ModuleOwner executor, GameEvent context, CancellationToken ct)
+        protected override async UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
         {
-            var agent = executor as IActionDispatcher;
-            var ev    = context as OrderWorkEvent;
-            if (agent == null || ev == null) return;
+            var actions = executor.GetModule<AgentActionModule>();
+            if (actions == null || ticket == null) return WorkResult.Cancelled;
 
-            var actor = executor;
-            if (!ev.Ticket.TryReserve(actor)) return;
+            if (!ticket.TryReserve(executor)) return WorkResult.Cancelled;
 
-            var kitchen = _workplaceRegister
-                .GetCandidates(executor.transform.position, _kitchenType)
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+                ctx.Token, ticket.Token);
+
+            var kitchen = _ctx.WorkplaceRegister
+                .GetCandidates(executor.transform.position, _ctx.KitchenType)
                 .FirstOrDefault(k => k.GetModule<OccupancyModule>()?.TryReserve(executor, null) == true);
 
             if (kitchen == null)
             {
-                ev.OrderManager.NotifyReleased(ev.Ticket, actor);
-                return;
+                _ctx.OrderChannel?.RaiseEvent(new OrderNotifyReleasedEvent(ticket, executor));
+                return WorkResult.Cancelled;
             }
 
             var foodContext = executor.GetModule<FoodContextModule>();
             try
             {
-                await agent.MoveAsync(
-                    kitchen.GetNearestPoint(executor.transform.position), ct);
-                ct.ThrowIfCancellationRequested();
+                await actions.Execute<MoveAction>(
+                    a => a.ExecuteAsync(kitchen.GetNearestPoint(executor.transform.position), linked.Token));
+                ticket.TryStartProgress(executor);
+                foodContext?.SetFood(ticket.Food);
 
-                ev.Ticket.TryStartProgress(actor);
+                _ctx.OrderChannel?.RaiseEvent(new CookingStartEvent(ticket, executor));
+                await actions.Execute<WorkAction>(a => a.ExecuteAsync(kitchen, linked.Token));
 
-                foodContext?.SetFood(ev.Ticket.Food);
-                await agent.DoWorkAsync(kitchen, ct);
-                ct.ThrowIfCancellationRequested();
-
-                ev.OrderManager.NotifyComplete(ev.Ticket, actor);
+                _ctx.OrderChannel?.RaiseEvent(new OrderNotifyCompleteEvent(ticket, executor));
+                return WorkResult.Completed;
             }
-            catch (System.OperationCanceledException)
+            catch (OperationCanceledException)
             {
-                ev.OrderManager.NotifyReleased(ev.Ticket, actor);
-                throw;
+                if (!ticket.IsTerminal)
+                    _ctx.OrderChannel?.RaiseEvent(new OrderNotifyReleasedEvent(ticket, executor));
+                return WorkResult.Cancelled;
             }
             finally
             {

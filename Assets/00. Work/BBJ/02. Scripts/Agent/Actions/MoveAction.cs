@@ -1,50 +1,33 @@
 using _00._Work._Resources._02._Scripts.Agents;
-using _00._Work._Resources._02._Scripts.Systems.AnimationSystems;
 using BBJ.Movement;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
-using System.Collections;
 using System.Threading;
+using UnityEngine;
 
 namespace BBJ.Actions
 {
     public class MoveAction : AgentActionBase
     {
-        private readonly IPathMovement _movement;
-        private readonly IAgentPathProvider _pathProvider;
+        private IPathMovement _movement;
 
-        public MoveAction(Agent owner, AnimParamSO stateParam) : base(owner, stateParam)
+        public override void InitOwner(Agent owner) 
         {
-            _movement     = owner.GetModule<IPathMovement>();
-            _pathProvider = owner as IAgentPathProvider;
+            base.InitOwner(owner);
+            _movement = owner.GetModule<IPathMovement>();
         }
 
-        public override IEnumerator Execute(GameEvent param)
+        public async UniTask ExecuteAsync(Vector3 destination, CancellationToken ct)
         {
-            var e   = param as MoveEvent;
-            var tcs = new UniTaskCompletionSource();
-
-            _movement.OnMoveCompleted += Complete;
-            _pathProvider?.SetMoveDestination(e.Destination);
-
-            yield return tcs.Task.ToCoroutine();
-            _movement.OnMoveCompleted -= Complete;
-
-            void Complete() => tcs.TrySetResult();
-        }
-
-        public override async UniTask ExecuteAsync(GameEvent param, CancellationToken ct)
-        {
-            var e   = param as MoveEvent;
             var tcs = new UniTaskCompletionSource();
 
             void Complete() => tcs.TrySetResult();
             _movement.OnMoveCompleted += Complete;
-            _pathProvider?.SetMoveDestination(e.Destination);
+            _movement.SetMoveDestination(destination);
 
-            using (ct.Register(() => {
+            using (ct.Register(() =>
+            {
                 _movement.StopMovement();
-                tcs.TrySetResult(); 
+                tcs.TrySetResult();
             }))
                 await tcs.Task;
 

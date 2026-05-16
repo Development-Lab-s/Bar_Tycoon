@@ -1,9 +1,10 @@
 using BBJ.Order;
-using BBJ.Schedule;
 using Gamelib.EventSystem;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+
 
 namespace BBJ.Work
 {
@@ -18,22 +19,32 @@ namespace BBJ.Work
             public WorkSO         Work;
         }
 
-        [SerializeField] private Entry[] _entries;
+        [SerializeField] private Entry[]        _entries;
+        [SerializeField] private EventChannelSO _scheduleChannel;
+
+        private Dictionary<OrderWorkPhase, Entry> _entryDic = new();
+
+        private void Awake()
+        {
+            _entryDic = _entries.ToDictionary(e => e.Phase);
+        }
+
+        public void OnDisable() => _entryDic.Clear();
 
         public Entry? FindEntry(OrderWorkPhase phase)
         {
             if (_entries == null) return null;
-            return _entries.FirstOrDefault(e => e.Phase == phase);
+            for (int i = 0; i < _entries.Length; i++)
+                if (_entries[i].Phase == phase) return _entries[i];
+            return null;
         }
 
-        public void Dispatch(OrderWorkPhase phase, GameEvent context, ScheduleManager scheduleManager)
+        public void Dispatch(OrderWorkPhase phase, OrderTicket ticket)
         {
-            if (scheduleManager == null) return;
-
             var entry = FindEntry(phase);
-            if (entry == null) return;
-
-            scheduleManager.Request(entry.Value.Work.RequiredRole, entry.Value.Work, context);
+            if (entry == null || entry.Value.Work == null) return;
+            _scheduleChannel?.RaiseEvent(
+                new ScheduleRequestEvent(entry.Value.Work.RequiredRole, entry.Value.Work, ticket));
         }
     }
 }

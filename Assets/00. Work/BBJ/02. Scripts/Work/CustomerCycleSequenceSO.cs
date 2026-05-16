@@ -1,6 +1,5 @@
+using BBJ.Order;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
-using System.Threading;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
@@ -11,17 +10,23 @@ namespace BBJ.Work
     {
         [SerializeField] private WorkSO[] _steps;
 
-        public override async UniTask ExecuteAsync(
-            ModuleOwner executor, GameEvent context, CancellationToken ct)
+        protected override async UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
         {
-            if (_steps == null) return;
+            if (_steps == null) return WorkResult.Completed;
 
             foreach (var step in _steps)
             {
-                if (step != null)
-                    await step.ExecuteAsync(executor, context, ct);
-                ct.ThrowIfCancellationRequested();
+                if (step == null) continue;
+
+                await ctx.WaitIfPausedAsync(ctx.Token);
+
+                var stepResult = await step.ExecuteAsync(executor, null, ctx);
+
+                if (stepResult == WorkResult.Cancelled) return WorkResult.Cancelled;
             }
+
+            return WorkResult.Completed;
         }
     }
 }

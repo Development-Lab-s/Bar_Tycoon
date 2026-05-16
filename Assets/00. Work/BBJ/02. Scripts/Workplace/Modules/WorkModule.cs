@@ -30,7 +30,6 @@ namespace BBJ.WorkplaceSystem.Modules
 
         public async UniTask ExecuteWorkAsync(ModuleOwner worker, CancellationToken ct)
         {
-            Debug.Log(worker.gameObject.name+ "Ω√¿€");
             float duration = GetDuration(worker);
             float elapsed  = 0f;
             while (elapsed < duration)
@@ -39,7 +38,6 @@ namespace BBJ.WorkplaceSystem.Modules
                 elapsed += Time.fixedDeltaTime;
                 OnProgressChanged?.Invoke(elapsed / duration);
             }
-            Debug.Log(worker.gameObject.name+ "≥°");
         }
     }
 }
