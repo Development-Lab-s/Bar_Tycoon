@@ -16,6 +16,9 @@ namespace _00._Work.Lusaload._02._Scripts.SO
 
         [TextArea(2, 5)] public string description; // 칵테일 특징 설명
 
+        public int price;       // 판매 가격
+        public int unlockStage; // 이 칵테일이 해금되는 스테이지 번호 (0 = 처음부터 사용 가능)
+
         // 이 칵테일을 완성하기 위해 셰이커에 넣어야 할 재료 목록 (순서 포함)
         public List<BaseAlcoholDataSO> cocktailRecipeList;
     }

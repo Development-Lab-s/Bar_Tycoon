@@ -7,6 +7,7 @@ namespace _00._Work.Goat._02._Scripts.Exp
     {
         [SerializeField] private ExpManager expManager;
         [SerializeField] private ExpTextUI expTextUI;
+        [SerializeField] private ExpTextBounceUI levelTextBounce;
         [SerializeField] private ExpSlider expSlider;
         
         private int _displayLevel;
@@ -47,6 +48,7 @@ namespace _00._Work.Goat._02._Scripts.Exp
         {
             _displayLevel++;
             expTextUI.LevelChange(_displayLevel);
+            levelTextBounce.PlayBounce();
         }
     }
 }
