@@ -6,6 +6,7 @@ using System.Collections;
 using System.Net.NetworkInformation;
 using System;
 using UnityEngine;
+using BBJ.UI;
 
 namespace Assets._00._Work.PCM._02._Scripts.Contract
 {
@@ -13,23 +14,21 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
     {
         None,Open, Close 
     }
-    public abstract class AbstructContractPopUp : MonoBehaviour, IAbstructContractPopUp , IModule, IAfterInitModule
+    public abstract class AbstructContractPopUp : MonoBehaviour, IAbstructContractPopUp , IAfterInitModule
     {
         [SerializeField] protected float animDuration = 0.1f;
         [SerializeField] protected float waitDuration = 2.0f; // 자동 종료 시 대기 시간
         [SerializeField] protected Ease easeType = Ease.OutBack;
         public bool IsAnimating => _motionHandle.IsActive();
 
-        private ModuleOwner _owner;
         private Vector3 _originScale;
         private Coroutine _timerCoroutine;
         private MotionHandle _motionHandle;
 
         public bool isOpen { get; set; }
 
-        public virtual void Initialize(ModuleOwner owner)
+        protected virtual void Awake()
         {
-            _owner = owner; 
             _originScale = transform.localScale;
             transform.localScale = Vector3.zero;
         }
@@ -58,7 +57,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         }
         public abstract void OnOpen(); //추상 받고 열때 코드 추가 하고 싶으면 여기다가 추가하셈
 
-        public virtual void Close()
+        public virtual void OnClose()
         {
             if (!isOpen ||IsAnimating) return;
 
@@ -102,7 +101,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         private IEnumerator WaitAndClose()
         {
             yield return new WaitForSeconds(waitDuration);
-            Close();
+            OnClose();
         }
 
         public virtual void OnDisable()
