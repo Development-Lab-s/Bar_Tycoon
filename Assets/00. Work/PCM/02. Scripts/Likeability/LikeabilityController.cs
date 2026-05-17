@@ -61,10 +61,9 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
         if (hit.collider != null)
         {
-            if (hit.collider.gameObject.TryGetComponent<IPlayer>(out IPlayer iq))
+            if (hit.collider.gameObject.TryGetComponent<IPlayerCharController>(out IPlayerCharController pychar))
             {
-                Debug.Log(iq.charLike.likeability);
-                iq.ChatOpen?.Invoke();
+                pychar.levelTrigger.Invoke(_itemSO.likePlus);
             }
         }
         if (dragInstance != null)
