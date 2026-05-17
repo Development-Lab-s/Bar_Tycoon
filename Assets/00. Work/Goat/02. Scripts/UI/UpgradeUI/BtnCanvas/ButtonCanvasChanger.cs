@@ -27,7 +27,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
             }
         }
 
-        public void Init()
+        private void Init()
         {
             _buttonCanvases = GetComponentsInChildren<ButtonCanvas>(true).ToList();
             foreach (ButtonCanvas buttonCanvas in _buttonCanvases)
