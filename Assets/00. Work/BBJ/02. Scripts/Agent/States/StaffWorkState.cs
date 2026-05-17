@@ -11,6 +11,7 @@ namespace BBJ.States
         private readonly WorkAction     _workAction;
         private readonly IAgentInput    _input;
         private readonly IAgentUIModule _uiModule;
+        private readonly AgentStatusUI  _statusUI;
 
         private bool _workEnded;
         private bool _shouldInteract;
@@ -20,6 +21,7 @@ namespace BBJ.States
             _workAction = owner.GetModule<IAgentActionModule>().GetAction<WorkAction>();
             _input      = owner.GetModule<IAgentInput>();
             _uiModule   = owner.GetModule<IAgentUIModule>();
+            _statusUI   = _uiModule.Get<AgentStatusUI>();
 
             UtilDebugger.AssertAllAssigned(this);
 
@@ -33,14 +35,15 @@ namespace BBJ.States
             _workEnded      = false;
             _shouldInteract = false;
 
-            _uiModule.SetActiveUI<WorkIconUI>(true);
+            _statusUI?.SetText("작업중");
+            _uiModule.SetActiveUI<AgentStatusUI>(true);
             _workAction.OnWorkPhaseEnded += HandleWorkEnded;
             _input.OnInteracted          += HandleInteract;
         }
 
         public override void Exit()
         {
-            _uiModule.SetActiveUI<WorkIconUI>(false);
+            _uiModule.SetActiveUI<AgentStatusUI>(false);
             _workAction.OnWorkPhaseEnded -= HandleWorkEnded;
             _input.OnInteracted          -= HandleInteract;
         }

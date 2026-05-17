@@ -5,16 +5,18 @@ using BBJ.Customer;
 using BBJ.Modules;
 using BBJ.Movement;
 using BBJ.Schedule;
+using BBJ.UI;
 
 namespace BBJ.States
 {
     public class CustomerIdleState : TransitionAgentState
     {
-        private readonly IPathMovement _movement;
-        private readonly ISchedulable _scheduling;
+        private readonly IPathMovement  _movement;
+        private readonly ISchedulable   _scheduling;
         private readonly IAgentUIModule _uiModule;
-        private readonly WorkAction _workAction;
-        private readonly CustomerAgent _customer;
+        private readonly WorkAction     _workAction;
+        private readonly CustomerAgent  _customer;
+        private readonly AgentStatusUI  _statusUI;
 
         private bool _isMoveStarted;
         private bool _shouldWork;
@@ -27,24 +29,25 @@ namespace BBJ.States
             _scheduling = owner.GetModule<ISchedulable>();
             _uiModule   = owner.GetModule<IAgentUIModule>();
             _workAction = owner.GetModule<IAgentActionModule>().GetAction<WorkAction>();
+            _statusUI   = _uiModule.Get<AgentStatusUI>();
 
             UtilDebugger.AssertAllAssigned(this);
 
             AddTransitionToEnum(() => _isMoveStarted, CustomerState.Move);
-            AddTransitionToEnum(() => _shouldWork, CustomerState.Work);
+            AddTransitionToEnum(() => _shouldWork,    CustomerState.Work);
         }
 
         public override void Enter()
         {
             base.Enter();
             _isMoveStarted = false;
-            _shouldWork = false;
+            _shouldWork    = false;
 
             if (IsWorking()) { HandleWorkPhaseStarted(); return; }
             if (IsMoving())  { HandleMoveStarted();      return; }
 
-            _uiModule.SetActiveUI<CustomerWaitUI>(true);
-            _uiModule.Get<CustomerWaitUI>()?.Refresh(_customer);
+            _statusUI?.SetText(GetWaitText());
+            _uiModule.SetActiveUI<AgentStatusUI>(true);
 
             _movement.OnMoveStarted        += HandleMoveStarted;
             _workAction.OnWorkPhaseStarted += HandleWorkPhaseStarted;
@@ -53,14 +56,23 @@ namespace BBJ.States
         public override void Exit()
         {
             base.Exit();
-            _uiModule.SetActiveUI<CustomerWaitUI>(false);
+            _uiModule.SetActiveUI<AgentStatusUI>(false);
 
             _movement.OnMoveStarted        -= HandleMoveStarted;
             _workAction.OnWorkPhaseStarted -= HandleWorkPhaseStarted;
         }
+
         private void HandleMoveStarted()      => _isMoveStarted = true;
         private void HandleWorkPhaseStarted() => _shouldWork = true;
         private bool IsMoving()  => _movement != null && _movement.IsMoving;
-        private bool IsWorking() => _scheduling != null && !_scheduling.IsAvailableForWork && _workAction != null && _workAction.IsInWorkPhase;
+        private bool IsWorking() => _scheduling != null && !_scheduling.IsAvailableForWork
+                                    && _workAction != null && _workAction.IsInWorkPhase;
+
+        private string GetWaitText()
+        {
+            if (_customer.IsAwaitingOrder) return "주문 대기";
+            if (_customer.OrderPlaced && !_customer.FoodServed) return "음식 대기";
+            return "대기";
+        }
     }
 }

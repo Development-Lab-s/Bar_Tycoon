@@ -27,16 +27,16 @@ namespace BBJ.Modules
             T ui = Get<T>();
             if (isActive)
             {
-                ui.Open();
+                ui.OnOpen();
                 return;
             }
-            ui.Close();
+            ui.OnClose();
         }
 
         public void CloseAll()
         {
             foreach (var ui in _uis.Values)
-                ui.Close();
+                ui.OnClose();
         }
     }
 }

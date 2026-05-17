@@ -2,7 +2,7 @@ namespace BBJ.UI
 {
     public interface IAgentUI
     {
-        void Open();
-        void Close();
+        void OnOpen();
+        void OnClose();
     }
 }
