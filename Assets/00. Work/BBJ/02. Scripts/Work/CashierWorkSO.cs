@@ -47,7 +47,7 @@ namespace BBJ.Work
                     a => a.ExecuteAsync(counter.GetNearestPoint(executor.transform.position), linked.Token));
                 ticket.TryStartProgress(executor);
                 var foodContext = executor.GetModule<FoodContextModule>();
-                foodContext?.SetFood(ticket.Food);
+                foodContext?.SetFood(ticket.Ordered);
                 await actions.Execute<WaitAction>(
                     a => a.ExecuteAsync(() => queue.HasWaiting, linked.Token));
 

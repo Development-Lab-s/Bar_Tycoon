@@ -22,7 +22,7 @@ namespace BBJ.WorkplaceSystem.Handlers
             if (food == null) return;
 
             int tip    = _tipCalculator != null ? _tipCalculator.Calculate(executor) : 0;
-            int amount = Mathf.RoundToInt(food.Price * _stageMultiplier) + tip;
+            int amount = Mathf.RoundToInt(food.price * _stageMultiplier) + tip;
 
             _coinChannel?.RaiseEvent(new CoinEvent().Init(amount));
             _particleChannel?.RaiseEvent(
