@@ -1,5 +1,5 @@
 using BBJ;
-using BBJ.Data;
+using _00._Work.Lusaload._02._Scripts.SO;
 using BBJ.EventSystem;
 using BBJ.Order;
 using Gamelib.EventSystem;
@@ -18,8 +18,8 @@ namespace BBJ.UI.Order
         [SerializeField] private Transform         _content;
         [SerializeField] private Button            _cancelButton;
 
-        private readonly Dictionary<FoodDataSO, FoodGroupCardUI> _freeCards     = new();
-        private readonly Dictionary<FoodDataSO, FoodGroupCardUI> _occupiedCards = new();
+        private readonly Dictionary<CocktailRecipeSO, FoodGroupCardUI> _freeCards     = new();
+        private readonly Dictionary<CocktailRecipeSO, FoodGroupCardUI> _occupiedCards = new();
 
         private void Awake()
         {
@@ -87,7 +87,7 @@ namespace BBJ.UI.Order
             _occupiedCards.Clear();
         }
 
-        private void RefreshCardsForFood(FoodDataSO food)
+        private void RefreshCardsForFood(CocktailRecipeSO food)
         {
             var tickets    = _handle.GetPendingTickets(food);
             int freeCount  = 0;
@@ -138,7 +138,7 @@ namespace BBJ.UI.Order
 
         // --- 클릭 핸들러 ---
 
-        private void OnFreeCardClicked(FoodDataSO food)
+        private void OnFreeCardClicked(CocktailRecipeSO food)
         {
             var ticket = _handle.GetFreeTicket(food);
             if (ticket == null) return;
@@ -148,7 +148,7 @@ namespace BBJ.UI.Order
             Close();
         }
 
-        private void OnOccupiedCardClicked(FoodDataSO food)
+        private void OnOccupiedCardClicked(CocktailRecipeSO food)
         {
             var ticket = _handle.GetOccupiedTicket(food);
             if (ticket == null) return;
@@ -170,17 +170,17 @@ namespace BBJ.UI.Order
         private void OnOrderRegistered(OrderRegisteredEvent e)
         {
             if (e.Ticket.WorkPhase != OrderWorkPhase.PendingCook) return;
-            RefreshCardsForFood(e.Ticket.Food);
+            RefreshCardsForFood(e.Ticket.Ordered);
         }
 
         private void OnOrderUnregistered(OrderUnregisteredEvent e)
         {
-            RefreshCardsForFood(e.Ticket.Food);
+            RefreshCardsForFood(e.Ticket.Ordered);
         }
 
         private void OnOrderStateChanged(OrderStateChangedEvent e)
         {
-            RefreshCardsForFood(e.Ticket.Food);
+            RefreshCardsForFood(e.Ticket.Ordered);
         }
     }
 }

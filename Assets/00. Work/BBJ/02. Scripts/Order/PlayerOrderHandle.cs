@@ -1,4 +1,4 @@
-using BBJ.Data;
+using _00._Work.Lusaload._02._Scripts.SO;
 using BBJ.EventSystem;
 using Gamelib.EventSystem;
 using System.Collections.Generic;
@@ -13,8 +13,8 @@ namespace BBJ.Order
         [SerializeField] private ModuleOwner    _playerOwner;
         [SerializeField] private EventChannelSO _orderChannel;
 
-        private readonly Dictionary<FoodDataSO, int>               _readyCount     = new();
-        private readonly Dictionary<FoodDataSO, List<OrderTicket>> _pendingTickets = new();
+        private readonly Dictionary<CocktailRecipeSO, int>               _readyCount     = new();
+        private readonly Dictionary<CocktailRecipeSO, List<OrderTicket>> _pendingTickets = new();
 
         private void Awake()
         {
@@ -37,29 +37,29 @@ namespace BBJ.Order
 
         // --- 쿼리 ---
 
-        public OrderTicket GetFreeTicket(FoodDataSO food)
+        public OrderTicket GetFreeTicket(CocktailRecipeSO food)
         {
             if (!_pendingTickets.TryGetValue(food, out var list)) return null;
             return list.FirstOrDefault(t => t.State == OrderState.Waiting);
         }
 
-        public OrderTicket GetOccupiedTicket(FoodDataSO food)
+        public OrderTicket GetOccupiedTicket(CocktailRecipeSO food)
         {
             if (!_pendingTickets.TryGetValue(food, out var list)) return null;
             return list.FirstOrDefault(t => t.State is OrderState.Reserved or OrderState.InProgress);
         }
 
-        public bool HasFreeTicket(FoodDataSO food)     => GetFreeTicket(food) != null;
-        public bool HasOccupiedTicket(FoodDataSO food) => GetOccupiedTicket(food) != null;
+        public bool HasFreeTicket(CocktailRecipeSO food)     => GetFreeTicket(food) != null;
+        public bool HasOccupiedTicket(CocktailRecipeSO food) => GetOccupiedTicket(food) != null;
 
-        public IReadOnlyList<OrderTicket> GetPendingTickets(FoodDataSO food)
+        public IReadOnlyList<OrderTicket> GetPendingTickets(CocktailRecipeSO food)
         {
             if (!_pendingTickets.TryGetValue(food, out var list))
                 return System.Array.Empty<OrderTicket>();
             return list;
         }
 
-        public IEnumerable<FoodDataSO> GetAllPendingFoods() => _pendingTickets.Keys.ToList();
+        public IEnumerable<CocktailRecipeSO> GetAllPendingFoods() => _pendingTickets.Keys.ToList();
 
         // --- 액션 ---
 
@@ -78,21 +78,21 @@ namespace BBJ.Order
             return true;
         }
 
-        public void AddReadyFood(FoodDataSO food)
+        public void AddReadyFood(CocktailRecipeSO food)
         {
             if (food == null) return;
             _readyCount.TryGetValue(food, out int count);
             _readyCount[food] = count + 1;
         }
 
-        public bool ConsumeReadyFood(FoodDataSO food)
+        public bool ConsumeReadyFood(CocktailRecipeSO food)
         {
             if (food == null || !_readyCount.TryGetValue(food, out int count) || count <= 0) return false;
             _readyCount[food] = count - 1;
             return true;
         }
 
-        public int GetReadyCount(FoodDataSO food)
+        public int GetReadyCount(CocktailRecipeSO food)
         {
             _readyCount.TryGetValue(food, out int count);
             return count;
@@ -121,7 +121,7 @@ namespace BBJ.Order
 
         private void AddToPending(OrderTicket ticket)
         {
-            var food = ticket.Food;
+            var food = ticket.Ordered;
             if (!_pendingTickets.TryGetValue(food, out var list))
             {
                 list = new List<OrderTicket>();
@@ -133,7 +133,7 @@ namespace BBJ.Order
 
         private void RemoveFromPending(OrderTicket ticket)
         {
-            var food = ticket.Food;
+            var food = ticket.Ordered;
             if (!_pendingTickets.TryGetValue(food, out var list)) return;
             list.Remove(ticket);
             if (list.Count == 0)

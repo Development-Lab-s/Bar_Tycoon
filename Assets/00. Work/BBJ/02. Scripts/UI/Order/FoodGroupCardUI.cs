@@ -1,8 +1,8 @@
-using BBJ.Data;
 using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using _00._Work.Lusaload._02._Scripts.SO;
 
 namespace BBJ.UI.Order
 {
@@ -14,8 +14,8 @@ namespace BBJ.UI.Order
         [SerializeField] private Image    _occupiedBadge;
         [SerializeField] private Button   _button;
 
-        private FoodDataSO         _food;
-        private Action<FoodDataSO> _onClick;
+        private CocktailRecipeSO         _food;
+        private Action<CocktailRecipeSO> _onClick;
 
         private void Awake()
         {
@@ -29,13 +29,13 @@ namespace BBJ.UI.Order
                 _button.onClick.RemoveListener(OnClicked);
         }
 
-        public void Setup(FoodDataSO food, int count, bool isOccupied, Action<FoodDataSO> onClick)
+        public void Setup(CocktailRecipeSO food, int count, bool isOccupied, Action<CocktailRecipeSO> onClick)
         {
             _food    = food;
             _onClick = onClick;
 
-            _foodIcon.sprite = food != null ? food.Icon : null;
-            _foodName.text   = food != null ? food.FoodName : "-";
+            _foodIcon.sprite = food != null ? food.cocktailIcon : null;
+            _foodName.text   = food != null ? food.cocktailName : "-";
 
             Refresh(count, isOccupied);
         }

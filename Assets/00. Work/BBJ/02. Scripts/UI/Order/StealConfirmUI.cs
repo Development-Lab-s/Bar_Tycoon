@@ -32,7 +32,7 @@ namespace BBJ.UI.Order
         {
             if (ticket == null) return;
             if (_messageLabel != null)
-                _messageLabel.text = $"[{ticket.Food?.FoodName}] 이미 점유 중입니다.\n작업을 빼앗겠습니까?";
+                _messageLabel.text = $"[{ticket.Ordered?.cocktailName}] 이미 점유 중입니다.\n작업을 빼앗겠습니까?";
             _onConfirm = onConfirm;
             _onCancel  = onCancel;
             gameObject.SetActive(true);
