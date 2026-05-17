@@ -1,6 +1,7 @@
 using _00._Work._Resources._02._Scripts.Agents;
 using BBJ.WorkplaceSystem;
 using Cysharp.Threading.Tasks;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -9,6 +10,10 @@ namespace BBJ.Actions
     public class WorkAction : AgentActionBase
     {
         private WorkDurationUI _durationUI;
+
+        public event Action OnWorkPhaseStarted;
+        public event Action OnWorkPhaseEnded;
+        public bool IsInWorkPhase { get; private set; }
 
         public override void  InitOwner(Agent owner)
         {
@@ -25,11 +30,22 @@ namespace BBJ.Actions
             if (_durationUI != null)
                 workExecutor.OnProgressChanged += _durationUI.SetPercent;
 
-            await workExecutor.ExecuteWorkAsync(_owner, ct);
+            IsInWorkPhase = true;
+            OnWorkPhaseStarted?.Invoke();
 
-            if (_durationUI != null)
-                workExecutor.OnProgressChanged -= _durationUI.SetPercent;
-            _durationUI?.Disable();
+            try
+            {
+                await workExecutor.ExecuteWorkAsync(_owner, ct);
+            }
+            finally
+            {
+                IsInWorkPhase = false;
+                OnWorkPhaseEnded?.Invoke();
+
+                if (_durationUI != null)
+                    workExecutor.OnProgressChanged -= _durationUI.SetPercent;
+                _durationUI?.Disable();
+            }
         }
     }
 }
