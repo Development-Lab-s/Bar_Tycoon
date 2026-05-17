@@ -9,7 +9,6 @@ namespace BBJ.States
         public IReadOnlyList<StateTransition> Transitions { get; }
         public void AddTransitionToEnum<T>(Func<bool> condition, T toState) where T : struct, Enum;
         public void AddTransitionToIndex(Func<bool> condition, int toState);
-
     }
 
     public struct StateTransition

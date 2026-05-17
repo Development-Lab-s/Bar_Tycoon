@@ -23,6 +23,7 @@ namespace BBJ.Schedule
         public OrderTicket CurrentTicket { get; private set; }
 
         public bool IsAvailableForWork => _execCtx == null;
+        public bool IsWorkPaused => _execCtx?.IsPaused ?? false;
 
         public event Action OnWorkStarted;
         public event Action<bool> OnWorkEnded;

@@ -1,5 +1,4 @@
-﻿using System;
-using _00._Work.Goat._02._Scripts.UI.DictonaryUI.Codex.Data;
+﻿using _00._Work.Lusaload._02._Scripts.SO;
 using TMPro;
 using UnityEngine;
 
@@ -26,7 +25,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
             levelUpRewardManager.OnCockTailAdd -= HandleCockTailAdd;
         }
 
-        private void HandleCockTailAdd(int level, CockTailSlotSo cockTailSo)
+        private void HandleCockTailAdd(int level, CocktailRecipeSO cockTailSo)
         {
             ShowUI();
             levelText.text = level.ToString();

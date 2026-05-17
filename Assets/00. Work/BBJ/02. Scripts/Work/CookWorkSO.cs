@@ -40,7 +40,7 @@ namespace BBJ.Work
                 await actions.Execute<MoveAction>(
                     a => a.ExecuteAsync(kitchen.GetNearestPoint(executor.transform.position), linked.Token));
                 ticket.TryStartProgress(executor);
-                foodContext?.SetFood(ticket.Food);
+                foodContext?.SetFood(ticket.Ordered);
 
                 _ctx.OrderChannel?.RaiseEvent(new CookingStartEvent(ticket, executor));
                 await actions.Execute<WorkAction>(a => a.ExecuteAsync(kitchen, linked.Token));

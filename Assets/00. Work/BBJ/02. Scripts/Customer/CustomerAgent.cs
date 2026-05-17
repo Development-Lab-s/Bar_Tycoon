@@ -1,4 +1,3 @@
-using BBJ.Data;
 using BBJ.EventSystem;
 using BBJ.Order;
 using BBJ.Schedule;
@@ -6,6 +5,7 @@ using BBJ.WorkplaceSystem;
 using Gamelib.EventSystem;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
+using _00._Work.Lusaload._02._Scripts.SO;
 
 namespace BBJ.Customer
 {
@@ -14,7 +14,7 @@ namespace BBJ.Customer
         [SerializeField] private EventChannelSO _scheduleChannel;
         [SerializeField] private EventChannelSO _orderChannel;
 
-        public FoodDataSO SelectedFood { get; private set; }
+        public CocktailRecipeSO SelectedFood { get; private set; }
         public bool IsAwaitingOrder { get; private set; }
         public Workplace AssignedSeat { get; set; }
         public OrderTicket ActiveTicket { get; private set; }
@@ -25,7 +25,7 @@ namespace BBJ.Customer
 
         public bool IsReadyForOrder => IsAwaitingOrder;
 
-        public void StartCycle(FoodDataSO food)
+        public void StartCycle(CocktailRecipeSO food)
         {
             SelectedFood = food;
             _scheduleChannel?.RaiseEvent(new ScheduleTriggerEvent());

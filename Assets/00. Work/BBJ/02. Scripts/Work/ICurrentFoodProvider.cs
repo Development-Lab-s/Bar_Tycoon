@@ -1,9 +1,9 @@
-using BBJ.Data;
+using _00._Work.Lusaload._02._Scripts.SO;
 
 namespace BBJ.Work
 {
     public interface ICurrentFoodProvider
     {
-        FoodDataSO CurrentFood { get; }
+        CocktailRecipeSO CurrentFood { get; }
     }
 }

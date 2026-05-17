@@ -1,15 +1,15 @@
 using System.Threading;
-using BBJ.Data;
 using BBJ.WorkplaceSystem;
 using _00._Work._Resources._02._Scripts.Modules;
+using _00._Work.Lusaload._02._Scripts.SO;
 
 namespace BBJ.Order
 {
     public class OrderTicket
     {
-        public FoodDataSO  Food      { get; }
-        public ModuleOwner Customer  { get; }
-        public Workplace   Seat      { get; }
+        public CocktailRecipeSO Ordered      { get; }
+        public ModuleOwner      Customer  { get; }
+        public Workplace        Seat      { get; }
 
         public OrderState     State              { get; private set; } = OrderState.Waiting;
         public OrderWorkPhase WorkPhase          { get; internal set; } = OrderWorkPhase.ReadyForServer;
@@ -21,9 +21,9 @@ namespace BBJ.Order
         public CancellationToken Token => IsTerminal ? CancellationToken.None : _cts.Token;
         public bool              IsTerminal => State is OrderState.Done or OrderState.Cancelled;
 
-        public OrderTicket(FoodDataSO food, ModuleOwner customer, Workplace seat)
+        public OrderTicket(CocktailRecipeSO food, ModuleOwner customer, Workplace seat)
         {
-            Food     = food;
+            Ordered     = food;
             Customer = customer;
             Seat     = seat;
         }
