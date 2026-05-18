@@ -50,7 +50,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
                 foreach (CocktailRecipeSO reward in rewardGroup.cockTails)
                 {
                     _cocktailRecipeDatabaseSo.AddCockTail(reward);
-                    OnCockTailAdd?.Invoke(afterLevel, reward);
+                    OnCockTailAdd?.Invoke(level, reward);
                 }
             }
             

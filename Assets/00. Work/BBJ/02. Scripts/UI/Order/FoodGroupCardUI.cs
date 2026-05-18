@@ -19,14 +19,13 @@ namespace BBJ.UI.Order
 
         private void Awake()
         {
-            if (_button != null)
-                _button.onClick.AddListener(OnClicked);
+            UtilDebugger.AssertAllAssigned(this);
+            _button.onClick.AddListener(OnClicked);
         }
 
         private void OnDestroy()
         {
-            if (_button != null)
-                _button.onClick.RemoveListener(OnClicked);
+            _button.onClick.RemoveListener(OnClicked);
         }
 
         public void Setup(CocktailRecipeSO food, int count, bool isOccupied, Action<CocktailRecipeSO> onClick)

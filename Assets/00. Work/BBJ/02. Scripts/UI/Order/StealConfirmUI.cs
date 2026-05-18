@@ -17,6 +17,8 @@ namespace BBJ.UI.Order
 
         private void Awake()
         {
+            UtilDebugger.AssertAllAssigned(this);
+
             if (_confirmButton != null) _confirmButton.onClick.AddListener(OnConfirm);
             if (_cancelButton  != null) _cancelButton.onClick.AddListener(OnCancel);
             gameObject.SetActive(false);
@@ -31,16 +33,24 @@ namespace BBJ.UI.Order
         public void Show(OrderTicket ticket, Action onConfirm, Action onCancel)
         {
             if (ticket == null) return;
-            if (_messageLabel != null)
-                _messageLabel.text = $"[{ticket.Ordered?.cocktailName}] 이미 점유 중입니다.\n작업을 빼앗겠습니까?";
+
+            _messageLabel.text = $"[{ticket.Ordered?.cocktailName}] 이미 점유 중입니다.\n작업을 빼앗겠습니까?";
             _onConfirm = onConfirm;
             _onCancel  = onCancel;
             gameObject.SetActive(true);
         }
 
+        public void ShowFailed(string message)
+        {
+            _messageLabel.text = message;
+            _confirmButton.gameObject.SetActive(false);
+        }
+
         public void Hide()
         {
             gameObject.SetActive(false);
+            if (_confirmButton != null)
+                _confirmButton.gameObject.SetActive(true);
             _onConfirm = null;
             _onCancel  = null;
         }
