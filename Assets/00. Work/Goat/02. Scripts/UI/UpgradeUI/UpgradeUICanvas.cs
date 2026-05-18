@@ -8,7 +8,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
     public class UpgradeUICanvas : MonoBehaviour
     {
         [Header("Reference")]
-        [SerializeField] private ButtonCanvasChanger buttonCanvasChanger;
+        [SerializeField] private ButtonCanvas buttonCanvas;
         [SerializeField] private UpgradeUIContent content;
         [SerializeField] private UpgradeManager upgradeManager;
         [SerializeField] private GameObject upgradeObject;
@@ -19,13 +19,13 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI
         {
             _categorySelector = new UpgradeCategorySelector(upgradeManager.UpgradeDataList);
             
-            buttonCanvasChanger.OnClickButton += HandleClickButton;
+            buttonCanvas.OnClickButton += HandleClickButton;
             content.OnClickUpgrade += HandleClickUpgrade;
         }
 
         private void OnDestroy()
         {
-            buttonCanvasChanger.OnClickButton -= HandleClickButton;
+            buttonCanvas.OnClickButton -= HandleClickButton;
             content.OnClickUpgrade -= HandleClickUpgrade;
         }
 
