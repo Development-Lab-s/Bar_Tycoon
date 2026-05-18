@@ -1,5 +1,5 @@
 using _00._Work._Resources._02._Scripts.Modules;
-using BBJ.WorkplaceSystem;
+using System;
 using UnityEngine;
 
 namespace BBJ.WorkplaceSystem.Modules
@@ -8,8 +8,10 @@ namespace BBJ.WorkplaceSystem.Modules
     {
         private ModuleOwner _owner;
         private OccupationSlot? _slot;
-        [SerializeField] private Transform seatPos;
 
+        [SerializeField] private Transform seatPos;
+        private Vector3 prevPos;
+        private Transform customer;
         public ModuleOwner AssignedAgent { get; private set; }
 
         public void Initialize(ModuleOwner owner) => _owner = owner;
@@ -22,7 +24,9 @@ namespace BBJ.WorkplaceSystem.Modules
 
         public void Seat(ModuleOwner customer)
         {
+            prevPos = customer.transform.position;
             customer.transform.position = seatPos.transform.position;
+            this.customer = customer.transform;
         }
         public void AssignWithSlot(OccupationSlot slot, ModuleOwner customer)
         {
@@ -34,6 +38,11 @@ namespace BBJ.WorkplaceSystem.Modules
         {
             AssignedAgent = null;
             _slot = null;
+        }
+
+        public void UnSeat()
+        {
+            customer.position = prevPos;
         }
     }
 }

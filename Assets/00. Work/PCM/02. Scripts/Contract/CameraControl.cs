@@ -52,7 +52,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         void Update()
         {
             HandleZoom();
-            HandleMove();
+            //HandleMove();
         }
 
         public void HandleZoom()

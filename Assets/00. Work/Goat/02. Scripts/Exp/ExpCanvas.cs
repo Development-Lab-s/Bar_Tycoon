@@ -7,11 +7,23 @@ namespace _00._Work.Goat._02._Scripts.Exp
     {
         [SerializeField] private ExpManager expManager;
         [SerializeField] private ExpTextUI expTextUI;
+        [SerializeField] private ExpTextBounceUI levelTextBounce;
         [SerializeField] private ExpSlider expSlider;
+        
+        private int _displayLevel;
+        
         private void Awake()
         {
             expManager.OnLevelChanged += HandleLevelChange;
             expManager.OnExpChanged += HandleExpChange;
+        }
+
+        private void Start()
+        {
+            _displayLevel = expManager.CurrentLevel;
+            
+            expTextUI.LevelChange(_displayLevel);
+            expSlider.SetFill(expManager.CurrentExp, expManager.ExpTableSo.GetRequiredExp(expManager.CurrentLevel));
         }
 
         private void OnDestroy()
@@ -20,14 +32,23 @@ namespace _00._Work.Goat._02._Scripts.Exp
             expManager.OnExpChanged -= HandleExpChange;
         }
         
-        private void HandleExpChange(int currentExp, int maxExp)
+        private void HandleExpChange(int levelUpCount,int currentExp, int maxExp)
         {
-            expSlider.SetFill(currentExp, maxExp);
+            expSlider.SetSmoothFill(levelUpCount,currentExp, maxExp, IncreaseLevelTextOneStep);
         }
 
-        private void HandleLevelChange(int level)
+        private void HandleLevelChange(int afterLevel, int beforeLevel)
         {
-            expTextUI.LevelChange(level);
+            _displayLevel = beforeLevel;
+
+            expTextUI.LevelChange(_displayLevel);
+        }
+        
+        private void IncreaseLevelTextOneStep()
+        {
+            _displayLevel++;
+            expTextUI.LevelChange(_displayLevel);
+            levelTextBounce.PlayBounce();
         }
     }
 }

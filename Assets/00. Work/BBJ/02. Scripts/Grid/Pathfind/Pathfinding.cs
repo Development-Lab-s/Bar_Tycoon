@@ -9,11 +9,10 @@ namespace BBJ.GridSystem.Pathfind
     public class Pathfinding : MonoBehaviour
     {
         [SerializeField] private PathRequestManager _requestManager;
-        private GridManager _gridManager;
+        [SerializeField]private GridManager _gridManager;
 
         private void Awake()
         {
-            _gridManager = GetComponent<GridManager>();
             _requestManager = GetComponent<PathRequestManager>();
         }
 

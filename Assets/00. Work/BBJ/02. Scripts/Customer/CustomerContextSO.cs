@@ -2,7 +2,6 @@
 using BBJ.Register;
 using Gamelib.EventSystem;
 using UnityEngine;
-using BBJ.GridSystem.Pathfind;
 
 namespace BBJ.Customer
 {
@@ -10,7 +9,6 @@ namespace BBJ.Customer
     public class CustomerContextSO : ScriptableObject
     {
         public WorkplaceRegisterSO WorkplaceRegister;
-        public PathRequestSO       PathRequest;
         public EventChannelSO      OrderChannel;
         public EventChannelSO      CustomerChannel;
     }

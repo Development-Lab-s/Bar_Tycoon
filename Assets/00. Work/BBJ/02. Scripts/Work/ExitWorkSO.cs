@@ -1,12 +1,10 @@
 using BBJ.Actions;
 using BBJ.Customer;
 using BBJ.EventSystem;
-using BBJ.Register;
-using BBJ.WorkplaceSystem;
+using BBJ.Modules;
+using BBJ.Order;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
-using System.Threading;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
@@ -15,17 +13,14 @@ namespace BBJ.Work
     [CreateAssetMenu(fileName = "ExitWork", menuName = "Tycoon/Work/Exit")]
     public class ExitWorkSO : WorkSO
     {
-        [SerializeField] private WorkplaceRegisterSO _register;
-        [SerializeField] private WorkplaceTypeSO     _exitType;
-        [SerializeField] private EventChannelSO      _customerChannel;
-
-        public override async UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
+        protected override async UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
         {
             var customer = executor as CustomerAgent;
-            if (customer == null) return;
+            if (customer == null) return WorkResult.Cancelled;
 
-            var seat  = customer.AssignedSeat;
-            var agent = executor as IActionDispatcher;
+            var seat    = customer.AssignedSeat;
+            var actions = executor.GetModule<AgentActionModule>();
 
             if (seat != null)
             {
@@ -33,12 +28,13 @@ namespace BBJ.Work
                 seat.GetModule<OccupancyModule>()?.Release();
                 customer.AssignedSeat = null;
 
-                var exits = _register?.GetAll(_exitType);
-                if (exits != null && exits.Count > 0 && agent != null)
-                    await agent.MoveAsync(exits[0].GetNearestPoint(executor.transform.position), ct);
+                var exits = _ctx.WorkplaceRegister?.GetAll(_ctx.ExitType);
+                if (exits != null && exits.Count > 0 && actions != null)
+                    await actions.Execute<MoveAction>(a => a.ExecuteAsync(exits[0].GetNearestPoint(executor.transform.position), ctx.Token));
             }
 
-            _customerChannel?.RaiseEvent(new CustomerLeftEvent { Customer = customer });
+            _ctx.CustomerChannel?.RaiseEvent(new CustomerLeftEvent { Customer = customer });
+            return WorkResult.Completed;
         }
     }
 }

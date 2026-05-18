@@ -1,7 +1,7 @@
 using BBJ.EventSystem;
 using BBJ.Order;
+using BBJ.Work;
 using Gamelib.EventSystem;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -35,18 +35,15 @@ namespace BBJ.UI.Order
             if (_active.ContainsKey(e.Ticket)) return;
 
             var ui = Instantiate(_ticketPrefab, _content);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(_content as RectTransform);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(ui.transform as RectTransform);
+            //LayoutRebuilder.ForceRebuildLayoutImmediate(_content as RectTransform);
+            //LayoutRebuilder.ForceRebuildLayoutImmediate(ui.transform as RectTransform);
             ui.Setup(e.Ticket, RequestCancel);
             _active[e.Ticket] = ui;
         }
 
         private void OnUnregistered(OrderUnregisteredEvent e)
         {
-            Debug.Log(e.Ticket + " | ªË¡¶");
-
             if (!_active.TryGetValue(e.Ticket, out var ui)) return;
-
             _active.Remove(e.Ticket);
             Destroy(ui.gameObject);
         }
@@ -59,7 +56,7 @@ namespace BBJ.UI.Order
 
         public void RequestCancel(OrderTicket ticket)
         {
-            OrderManager.Instance?.CancelOrder(ticket, CancelReason.PlayerCancelled);
+            _orderChannel?.RaiseEvent(new OrderCancelRequestEvent(ticket, CancelReason.PlayerCancelled));
         }
     }
 }

@@ -10,8 +10,9 @@ namespace _00._Work.PCM._02._Scripts
     public abstract class AbstructContractObject : MonoBehaviour, IContractObject , IModule
     {
         public UnityEvent OnClickEvent;
-        private ModuleOwner _owner;
+        public event Action OnClick;
 
+        private ModuleOwner _owner;
         public virtual void ExcuteClick()
         {
             OnClickEvent?.Invoke();
