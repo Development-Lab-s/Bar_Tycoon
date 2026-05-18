@@ -28,10 +28,14 @@ namespace BBJ.UI.Order
         {
             _ticket = ticket;
             _onCancel = onCancel;
+            var ordered = ticket.Ordered;
 
-            _foodIcon.sprite = ticket.Food?.Icon;
-            _foodName.text = ticket.Food?.FoodName ?? "-";
-            _priceLabel.text = "가격 : " + ticket.Food?.Price + " 원";
+            if (ordered != null)
+            {
+                _foodIcon.sprite = ordered.cocktailIcon;
+                _foodName.text   = ordered.cocktailName ?? "-";
+                _priceLabel.text = "가격 : " + ordered.price + " 원";
+            }
 
             Refresh();
         }
@@ -46,7 +50,7 @@ namespace BBJ.UI.Order
             }
 
             if (_workPhase != null)
-                _workPhase.text = "(" +  StateColor(_ticket.WorkPhase) + "...)";
+                _workPhase.text = "(" + StateColor(_ticket.WorkPhase) + "...)";
 
             //bool canCancel = _ticket.State is not (OrderState.Done or OrderState.Cancelled);
             //_cancelButton?.gameObject.SetActive(canCancel);
@@ -56,12 +60,12 @@ namespace BBJ.UI.Order
 
         private static string StateColor(OrderWorkPhase state) => state switch
         {
-            OrderWorkPhase.PendingCook     => "조리 중",
-            OrderWorkPhase.ReadyForServe   => "서빙 중",
-            OrderWorkPhase.Eating          => "식사 중",
+            OrderWorkPhase.PendingCook => "조리 중",
+            OrderWorkPhase.ReadyForServe => "서빙 중",
+            OrderWorkPhase.Eating => "식사 중",
             OrderWorkPhase.ReadyForCashier => "계산 중",
-            OrderWorkPhase.Done            => "완료",
-            _                              => "NaN"
+            OrderWorkPhase.Done => "완료",
+            _ => "NaN"
         };
     }
 }

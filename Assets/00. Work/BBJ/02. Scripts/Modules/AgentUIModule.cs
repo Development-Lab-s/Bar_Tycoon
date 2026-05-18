@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace BBJ.Modules
 {
-    public class AgentUIModule : MonoBehaviour, IModule
+    public class AgentUIModule : MonoBehaviour, IModule, IAgentUIModule
     {
         private Dictionary<Type, IAgentUI> _uis;
 
@@ -15,8 +15,6 @@ namespace BBJ.Modules
         {
             _uis = GetComponentsInChildren<IAgentUI>()
                 .ToDictionary(ui => ui.GetType());
-            foreach (var ui in _uis.Values)
-                ui.Init();
         }
 
         public T Get<T>() where T : class, IAgentUI
@@ -29,16 +27,16 @@ namespace BBJ.Modules
             T ui = Get<T>();
             if (isActive)
             {
-                ui.Open();
+                ui.OnOpen();
                 return;
             }
-            ui.Close();
+            ui.OnClose();
         }
 
         public void CloseAll()
         {
             foreach (var ui in _uis.Values)
-                ui.Close();
+                ui.OnClose();
         }
     }
 }

@@ -1,26 +1,28 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
-public class PlayerCharController : MonoBehaviour
+public class PlayerCharController : MonoBehaviour, IPlayerCharController
 {
     [Header("연동할 SO (인스펙터에서 할당)")]
-    [field:SerializeField]public CharacterSO characterData { get; private set; }
-    [field:SerializeField]public CharacterRegisterSO registerSO { get; private set; }
+    [field: SerializeField] public CharacterSO characterData { get; private set; }
+    [field: SerializeField] public CharacterRegisterSO registerSO { get; private set; }
 
     [Header("현재 실시간 상태 정보")]
-    public int currentLevel { get; private set; } = 1;
-    public int currentExp { get; private set; } = 0;
-    public int maxLevel { get; private set; } = 100;
+
 
     [Header("연동할 UI (선택 사항)")]
     public Slider expSlider { get; private set; }
 
     public Image characterImage { get; private set; }
+    public Action<int> levelTrigger { get; private set; }
 
     private void OnEnable()
     {
         if (registerSO != null) registerSO.Register(this);
+        levelTrigger += GiveItem;
     }
 
     private void OnDisable()
@@ -35,26 +37,26 @@ public class PlayerCharController : MonoBehaviour
 
     public float GetExpRatio()
     {
-        if (currentLevel >= maxLevel) return 1f;
-        int maxExp = characterData.GetMaxExpForLevel(currentLevel);
-        return (float)currentExp / maxExp;
+        if (characterData.currentLevel >= characterData.maxLevel) return 1f;
+        int maxExp = characterData.GetMaxExpForLevel(characterData.currentLevel);
+        return (float)characterData.currentExp / maxExp;
     }
     public void GiveItem(int expAmount)
     {
-        if (currentLevel >= maxLevel) return;
+        if (characterData.currentLevel >= characterData.maxLevel) return;
 
-        currentExp += expAmount;
+        characterData.currentExp += expAmount;
         Debug.Log($"{characterData.characterName} 호감도 경험치 +{expAmount}");
 
         bool isLeveledUp = false;
 
         // 레벨업 체크
-        while (currentLevel < maxLevel && currentExp >= characterData.GetMaxExpForLevel(currentLevel))
+        while (characterData.currentLevel < characterData.maxLevel && characterData.currentExp >= characterData.GetMaxExpForLevel(characterData.currentLevel))
         {
-            currentExp -= characterData.GetMaxExpForLevel(currentLevel);
-            currentLevel++;
+            characterData.currentExp -= characterData.GetMaxExpForLevel(characterData.currentLevel);
+            characterData.currentLevel++;
             isLeveledUp = true;
-            Debug.Log($"레벨업! 현재 레벨: {currentLevel}");
+            Debug.Log($"레벨업! 현재 레벨: {characterData.currentLevel}");
         }
 
         if (isLeveledUp)
@@ -67,21 +69,20 @@ public class PlayerCharController : MonoBehaviour
 
     private void PlayLevelUpDialogue()
     {
-        List<CharacterSO.DialogueData> availableDialogues = characterData.GetAvailableDialogues(currentLevel);
+        List<CharacterSO.DialogueData> availableDialogues = characterData.GetAvailableDialogues(characterData.currentLevel);
 
         if (availableDialogues != null && availableDialogues.Count > 0)
         {
             int randomIndex = Random.Range(0, availableDialogues.Count);
             CharacterSO.DialogueData selectedDialogue = availableDialogues[randomIndex];
 
-            Debug.Log($"[{characterData.characterName} Lv.{currentLevel} 대사]: {selectedDialogue.context}");
+            Debug.Log($"[{characterData.characterName} Lv.{characterData.currentLevel} 대사]: {selectedDialogue.context}");
 
-            // 표정 이미지가 등록되어 있고 UI가 연결되어 있다면 표정 변경
-            if (selectedDialogue.characterFace != null && characterImage != null)
-            {
-                characterImage.sprite = selectedDialogue.characterFace;
-            }
-    
+            //if (selectedDialogue.characterFace != null && characterImage != null)
+            //{
+            //    characterImage.sprite = selectedDialogue.characterFace;
+            //}
+
         }
     }
 
