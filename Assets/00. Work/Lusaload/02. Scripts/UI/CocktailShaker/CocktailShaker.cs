@@ -2,6 +2,7 @@ using System;
 using _00._Work.Lusaload._02._Scripts.SO;
 using _00._Work.Lusaload._02._Scripts.UI.AlcoholList;
 using LitMotion;
+using LitMotion.Extensions;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -122,6 +123,16 @@ namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
                     Debug.Log("셰이커가 가득 찼습니다.");
                     break;
             }
+            ItemPlusAnimation();
+        }
+
+        // 셰이커에 알콜이 추가될 때, 실행될 애니메이션
+        private void ItemPlusAnimation()
+        {
+            LMotion.Create(Vector3.one, Vector3.one * 1.15f, 0.15f)
+                .WithEase(Ease.OutQuad)
+                .WithLoops(2, LoopType.Yoyo)
+                .BindToLocalScale(GetComponent<RectTransform>());
         }
 
         // 셰이크 버튼을 표시하고 OnShakerFull 이벤트를 발행
