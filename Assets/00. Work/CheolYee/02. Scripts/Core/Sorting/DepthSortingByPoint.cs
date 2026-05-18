@@ -64,12 +64,12 @@ namespace _00._Work.CheolYee._02._Scripts.Core.Sorting
                 targetRenderers = GetComponentsInChildren<Renderer>(true);
         }
 
-        void OnDrawGizmosSelected()
+        /*void OnDrawGizmosSelected()
         {
             if (sortPoint == null) return;
             Gizmos.color = new Color(1f, 0.85f, 0f);
             Gizmos.DrawWireSphere(sortPoint.position, 0.06f);
             Gizmos.DrawLine(transform.position, sortPoint.position);
-        }
+        }*/
     }
 }

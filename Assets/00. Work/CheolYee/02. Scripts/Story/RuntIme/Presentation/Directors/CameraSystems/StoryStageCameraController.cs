@@ -26,6 +26,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
         [Tooltip("Optional. If empty, runtime focus target will be created automatically.")]
         [SerializeField] private Transform focusTarget;
 
+        [Header("Aspect Override")]
+        [SerializeField] private StoryAspectRatioController aspectRatioController;
+
         [Header("Fallback Metrics")]
         [SerializeField] private float fallbackAspect = 9f / 16f;
         [SerializeField] private float fallbackCameraWorldWidth = StoryStageVisualSizing.DefaultCameraWorldWidth;
@@ -76,6 +79,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
 
             ResolveRuntimeCamera();
             ResolveCinemachineCamera();
+
             EnsureStageReferenceMetrics();
 
             _initialized = true;
@@ -103,31 +107,55 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
         public StoryStageCameraMetrics ResolveRuntimeCameraMetrics()
         {
             Camera cam = ResolveRuntimeCamera();
+
+            if (aspectRatioController != null)
+            {
+                float storyAspect = aspectRatioController.StoryVisibleAspect;
+                if (cam != null && cam.orthographic)
+                {
+                    float height = cam.orthographicSize * 2f;
+                    Vector3 center = cam.transform.position;
+                    center.z = 0f;
+                    return StoryStageCameraMetrics.FromCenteredFrame(center, height * storyAspect, storyAspect);
+                }
+
+                EnsureStageReferenceMetrics();
+                float refHeight = _stageReferenceOrthoSize > 0f
+                    ? _stageReferenceOrthoSize * 2f
+                    : fallbackCameraWorldWidth / Mathf.Max(0.0001f, fallbackAspect);
+                return StoryStageCameraMetrics.FromCenteredFrame(_stageReferenceCenter, refHeight * storyAspect, storyAspect);
+            }
+
             if (cam != null && cam.orthographic)
                 return StoryStageCameraMetrics.FromOrthographicCamera(cam);
 
             float aspect = cam != null ? cam.aspect : fallbackAspect;
-
             EnsureStageReferenceMetrics();
             float width = _stageReferenceWorldWidth > 0f
                 ? _stageReferenceWorldWidth
                 : fallbackCameraWorldWidth;
-
             return StoryStageCameraMetrics.FromCenteredFrame(_stageReferenceCenter, width, aspect);
         }
 
         public StoryStageCameraMetrics ResolveStageReferenceMetrics()
         {
             Camera cam = ResolveRuntimeCamera();
-            float aspect = cam != null ? cam.aspect : fallbackAspect;
-
             EnsureStageReferenceMetrics();
 
-            float width = _stageReferenceWorldWidth > 0f
+            if (aspectRatioController != null)
+            {
+                float storyAspect = aspectRatioController.StoryVisibleAspect;
+                float refHeight = _stageReferenceOrthoSize > 0f
+                    ? _stageReferenceOrthoSize * 2f
+                    : fallbackCameraWorldWidth / Mathf.Max(0.0001f, fallbackAspect);
+                return StoryStageCameraMetrics.FromCenteredFrame(_stageReferenceCenter, refHeight * storyAspect, storyAspect);
+            }
+
+            float aspect = cam != null ? cam.aspect : fallbackAspect;
+            float refWidth = _stageReferenceWorldWidth > 0f
                 ? _stageReferenceWorldWidth
                 : fallbackCameraWorldWidth;
-
-            return StoryStageCameraMetrics.FromCenteredFrame(_stageReferenceCenter, width, aspect);
+            return StoryStageCameraMetrics.FromCenteredFrame(_stageReferenceCenter, refWidth, aspect);
         }
 
         public Vector3 GetCurrentCameraCenter()

@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Aspect;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
@@ -36,6 +37,41 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             panel.Add(_inspectorScrollView);
 
+            _inspectorScrollView.Add(MakeBoldLabel("Aspect Settings"));
+            _aspectSettingsField = new ObjectField("Aspect SO")
+            {
+                objectType = typeof(StoryAspectSettingsSO),
+                allowSceneObjects = false,
+                value = _previewAspectSettings,
+                style = { marginBottom = 4 }
+            };
+            _aspectSettingsField.RegisterValueChangedCallback(e =>
+            {
+                _previewAspectSettings = e.newValue as StoryAspectSettingsSO;
+                SaveAspectSettingsGuid();
+                UpdateCameraFrameGeometry();
+                float ww = _stageWrapper?.resolvedStyle.width ?? 0f;
+                float wh = _stageWrapper?.resolvedStyle.height ?? 0f;
+                if (ww > 0 && wh > 0) InitWorldView(ww, wh);
+                RebuildActorLayer();
+                RefreshAspectMetricsDisplay();
+                Repaint();
+            });
+            _inspectorScrollView.Add(_aspectSettingsField);
+
+            _aspectMetricsInfoLabel = new Label("")
+            {
+                style =
+                {
+                    fontSize = 9,
+                    whiteSpace = WhiteSpace.Normal,
+                    color = new StyleColor(new Color(0.58f, 0.64f, 0.72f)),
+                    marginBottom = 4
+                }
+            };
+            _inspectorScrollView.Add(_aspectMetricsInfoLabel);
+            _inspectorScrollView.Add(MakeSeparator());
+
             _inspectorScrollView.Add(BuildAuthoringTools());
             _inspectorScrollView.Add(MakeSeparator());
 
@@ -48,7 +84,26 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _inspectorRoot = new VisualElement { style = { flexDirection = FlexDirection.Column, flexGrow = 1 } };
             _inspectorScrollView.Add(_inspectorRoot);
 
+            RefreshAspectMetricsDisplay();
             return panel;
+        }
+
+        private void RefreshAspectMetricsDisplay()
+        {
+            if (_aspectMetricsInfoLabel == null) return;
+
+            float physical = GetPhysicalAspect();
+            float visible  = GetStoryVisibleAspect();
+            float ratio    = _previewAspectSettings?.VisibleWidthRatio ?? 1f;
+
+            int renderW  = _renderResolution.x > 0 ? _renderResolution.x : FallbackRenderWidth;
+            int renderH  = _renderResolution.y > 0 ? _renderResolution.y : FallbackRenderHeight;
+            int visW     = Mathf.RoundToInt(renderW * ratio);
+            int letterW  = Mathf.RoundToInt((renderW - visW) * 0.5f);
+
+            _aspectMetricsInfoLabel.text =
+                $"Physical: {physical:F3}  Visible: {visible:F3}\n" +
+                $"View: {visW}×{renderH}  Letterbox: ±{letterW}px";
         }
 
         private VisualElement BuildAuthoringTools()
@@ -895,72 +950,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
             else if (key.property == StoryActorKeyframeProperty.CameraShake)
             {
-                var strengthField = new FloatField("Strength")
-                {
-                    value = key.cameraShakeStrength,
-                    style = { marginBottom = 3 }
-                };
-                strengthField.RegisterValueChangedCallback(e =>
-                {
-                    SaveCurrentTimelineKeyframes(currentKeys =>
-                    {
-                        int index = currentKeys.IndexOf(selectedKeyRef);
-                        if (index >= 0)
-                            currentKeys[index].cameraShakeStrength = Mathf.Max(0f, e.newValue);
-                    }, refresh: false);
-                    RefreshTimelinePanel();
-                });
-                _inspectorRoot.Add(strengthField);
-
-                var durationField = new FloatField("Duration")
-                {
-                    value = key.cameraShakeDuration,
-                    style = { marginBottom = 3 }
-                };
-                durationField.RegisterValueChangedCallback(e =>
-                {
-                    SaveCurrentTimelineKeyframes(currentKeys =>
-                    {
-                        int index = currentKeys.IndexOf(selectedKeyRef);
-                        if (index >= 0)
-                            currentKeys[index].cameraShakeDuration = Mathf.Max(0f, e.newValue);
-                    }, refresh: false);
-                    RefreshTimelinePanel();
-                });
-                _inspectorRoot.Add(durationField);
-
-                var frequencyField = new FloatField("Frequency")
-                {
-                    value = key.cameraShakeFrequency,
-                    style = { marginBottom = 3 }
-                };
-                frequencyField.RegisterValueChangedCallback(e =>
-                {
-                    SaveCurrentTimelineKeyframes(currentKeys =>
-                    {
-                        int index = currentKeys.IndexOf(selectedKeyRef);
-                        if (index >= 0)
-                            currentKeys[index].cameraShakeFrequency = Mathf.Max(0f, e.newValue);
-                    }, refresh: false);
-                    RefreshTimelinePanel();
-                });
-                _inspectorRoot.Add(frequencyField);
-
-                var targetModeField = new EnumField("Target Mode", key.cameraShakeTargetMode)
-                {
-                    style = { marginBottom = 3 }
-                };
-                targetModeField.RegisterValueChangedCallback(e =>
-                {
-                    SaveCurrentTimelineKeyframes(currentKeys =>
-                    {
-                        int index = currentKeys.IndexOf(selectedKeyRef);
-                        if (index >= 0)
-                            currentKeys[index].cameraShakeTargetMode = (StoryCameraShakeTargetMode)e.newValue;
-                    }, refresh: false);
-                    RefreshTimelinePanel();
-                });
-                _inspectorRoot.Add(targetModeField);
+                _inspectorRoot.Add(new HelpBox("Camera Shake keys are no longer supported.", HelpBoxMessageType.Info));
             }
 
         }

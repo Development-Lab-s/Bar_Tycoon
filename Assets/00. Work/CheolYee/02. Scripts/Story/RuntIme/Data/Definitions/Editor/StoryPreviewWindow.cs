@@ -5,6 +5,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Aspect;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 {
@@ -72,7 +73,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private const float ActorMaxHeightScale  = 1.10f;
         private const float InspectorWidth       = 220f;
         private const float DialoguePanelH       = 80f;
-        private const string PrefsKeyPrefix      = "CheolYee.StoryPreview.";
+        private const string PrefsKeyPrefix           = "CheolYee.StoryPreview.";
+        private const string PrefsKeyAspectSettingsGuid = PrefsKeyPrefix + "AspectSettingsGuid";
 
         // ── Stage World 상수 ───────────────────────────
 
@@ -106,6 +108,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private bool        _isPlaying;
         private bool        _isLineSample;
         private StoryLineSO _pendingFromLine;
+
+        // ── Aspect Settings ───────────────────────────
+
+        private StoryAspectSettingsSO _previewAspectSettings;
+
+        // ── Phase 3: Letterbox overlay ────────────────
+
+        private VisualElement _letterboxLeftOverlay;
+        private VisualElement _letterboxRightOverlay;
+        private Label _aspectMetricsInfoLabel;
 
         // ── GameView 해상도 ────────────────────────────
 
@@ -196,6 +208,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private Label         _dialogueLabel;
         private VisualElement _choiceArea;
 
+        // ── UI 참조: Aspect Settings ──────────────────
+
+        private ObjectField _aspectSettingsField;
+
         // ── UI 참조: 우측 인스펙터 ────────────────────
 
         private VisualElement _actorListRoot;
@@ -282,10 +298,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private StoryBackgroundStateData _transitionToBackground;
         private string _transitionCameraFocusTarget = "";
         private float _transitionPreviewElapsed;
-        private double _previewCameraShakeStartedAt;
-        private float _previewCameraShakeDuration;
-        private float _previewCameraShakeStrength;
-        private float _previewCameraShakeFrequency;
 
         // ── 생명주기 ─────────────────────────────────
 
@@ -313,6 +325,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Undo.undoRedoPerformed += OnUndoRedo;
             EditorApplication.update += UpdateTransitionPreview;
             EditorApplication.update += UpdateTimelinePlayback;
+            LoadAspectSettingsFromPrefs();
         }
 
         private void OnDisable()
@@ -321,6 +334,32 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             EditorApplication.update -= UpdateTransitionPreview;
             EditorApplication.update -= UpdateTimelinePlayback;
             SavePreviewLayoutPrefs();
+            SaveAspectSettingsGuid();
+        }
+
+        private void LoadAspectSettingsFromPrefs()
+        {
+            string guid = EditorPrefs.GetString(PrefsKeyAspectSettingsGuid, "");
+            if (string.IsNullOrEmpty(guid))
+                return;
+
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            _previewAspectSettings = string.IsNullOrEmpty(path)
+                ? null
+                : AssetDatabase.LoadAssetAtPath<StoryAspectSettingsSO>(path);
+        }
+
+        private void SaveAspectSettingsGuid()
+        {
+            if (_previewAspectSettings != null)
+            {
+                string path = AssetDatabase.GetAssetPath(_previewAspectSettings);
+                EditorPrefs.SetString(PrefsKeyAspectSettingsGuid, AssetDatabase.AssetPathToGUID(path));
+            }
+            else
+            {
+                EditorPrefs.DeleteKey(PrefsKeyAspectSettingsGuid);
+            }
         }
         private void OnFocus()   => RefreshRenderAreaFromGameView();
 

@@ -266,7 +266,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             Vector2 pivot = data.EffectivePivot;
             float camW = DefaultUnitPixels;
-            float camH = DefaultUnitPixels / GetRenderAspect();
+            float camH = DefaultUnitPixels / GetStoryVisibleAspect();
             float pivotX = Mathf.Clamp01(pivot.x) * Mathf.Max(1f, el.resolvedStyle.width);
             float pivotY = (1f - Mathf.Clamp01(pivot.y)) * Mathf.Max(1f, el.resolvedStyle.height);
             Vector2 focusOffset = data.actor.CameraFocusOffset;
@@ -394,7 +394,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             sample.scale = lineScale;
             if (ShouldApplyCameraFocusToRenderedPreview())
                 sample.normalizedPosition -= ResolvePreviewCameraFocusOffset();
-            float camH = DefaultUnitPixels / GetRenderAspect();
+            float camH = DefaultUnitPixels / GetStoryVisibleAspect();
             return StoryStageVisualSizing.CalculateActorPreviewRect(
                 sample,
                 StoryStageVisualSizing.ResolveActorSprite(sample),
@@ -408,7 +408,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             sample.scale = lineScale;
             if (ShouldApplyCameraFocusToRenderedPreview())
                 sample.normalizedPosition -= ResolvePreviewCameraFocusOffset();
-            float camH = DefaultUnitPixels / GetRenderAspect();
+            float camH = DefaultUnitPixels / GetStoryVisibleAspect();
             return StoryStageVisualSizing.CalculateActorPreviewSize(
                 sample,
                 StoryStageVisualSizing.ResolveActorSprite(sample),
@@ -450,7 +450,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             focusX += cameraState.normalizedOffset.x;
             focusX -= 0.5f;
-            return new Vector2(focusX, 0f) + ResolvePreviewCameraShakeOffset();
+            return new Vector2(focusX, 0f);
         }
 
         private static bool TryGetPreviewCameraTargetKeys(
@@ -526,24 +526,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             StoryCameraStateData cameraState = ResolveCurrentPreviewCameraState();
             return StoryStageVisualSizing.DefaultCameraWorldWidth / Mathf.Max(0.01f, cameraState.zoomMultiplier);
-        }
-
-        private Vector2 ResolvePreviewCameraShakeOffset()
-        {
-            if (_previewCameraShakeDuration <= 0f)
-                return Vector2.zero;
-
-            float elapsed = (float)(EditorApplication.timeSinceStartup - _previewCameraShakeStartedAt);
-            if (elapsed >= _previewCameraShakeDuration)
-            {
-                _previewCameraShakeDuration = 0f;
-                return Vector2.zero;
-            }
-
-            float normalized = 1f - Mathf.Clamp01(elapsed / Mathf.Max(0.01f, _previewCameraShakeDuration));
-            float phase = elapsed * Mathf.Max(0f, _previewCameraShakeFrequency) * Mathf.PI * 2f;
-            float amplitude = _previewCameraShakeStrength * 0.012f * normalized;
-            return new Vector2(Mathf.Sin(phase) * amplitude, Mathf.Cos(phase) * amplitude * 0.35f);
         }
 
         private bool ShouldApplyCameraFocusToRenderedPreview() =>
@@ -637,7 +619,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 if (_draggingActorKey != actorKey) return;
 
                 float camW = DefaultUnitPixels;
-                float camH = DefaultUnitPixels / GetRenderAspect();
+                float camH = DefaultUnitPixels / GetStoryVisibleAspect();
 
                 // panel 공간 delta → world 공간 delta (zoom 보정)
                 Vector2 panelDelta = (Vector2)e.position - _dragStartPanelPos;
@@ -819,7 +801,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Vector2 pivot = data.EffectivePivot;
             Vector2 offset = data.EffectiveOffset;
             float camW = DefaultUnitPixels;
-            float camH = DefaultUnitPixels / GetRenderAspect();
+            float camH = DefaultUnitPixels / GetStoryVisibleAspect();
 
             data.normalizedPosition = new Vector2(
                 (targetRect.x + actualSize.x * Mathf.Clamp01(pivot.x)) / camW - offset.x,
@@ -830,7 +812,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             StoryActorStateData baseSample = data.ShallowClone();
             baseSample.scale = Vector2.one;
-            float camH = DefaultUnitPixels / GetRenderAspect();
+            float camH = DefaultUnitPixels / GetStoryVisibleAspect();
             Vector2 baseSize = StoryStageVisualSizing.CalculateActorPreviewSize(
                 baseSample,
                 StoryStageVisualSizing.ResolveActorSprite(baseSample),
