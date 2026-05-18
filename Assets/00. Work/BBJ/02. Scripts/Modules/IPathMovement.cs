@@ -4,6 +4,7 @@ namespace BBJ.Movement
 {
     public interface IPathMovement
     {
+        public bool IsMoving { get; }
         public Vector3 Velocity { get;}
 
         public event Action OnMoveStarted;

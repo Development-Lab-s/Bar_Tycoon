@@ -34,7 +34,7 @@ public class UiOwner : MonoBehaviour , IModule
             if(settingUi.IsAnimating)return;
 
             SettingUis.Pop();
-            settingUi.Close();
+            settingUi.OnClose();
             return;
         }
         if (contractUis.Count > 0)
@@ -43,7 +43,7 @@ public class UiOwner : MonoBehaviour , IModule
             if (topUi.IsAnimating) return;
 
             contractUis.Pop();
-            topUi.Close();
+            topUi.OnClose();
         }
     }
 }

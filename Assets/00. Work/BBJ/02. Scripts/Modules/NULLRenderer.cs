@@ -7,11 +7,12 @@ namespace BBJ.Modules
 
     public class NULLRenderer : MonoBehaviour, IModule, IRenderer, IAfterInitModule
     {
-        public float FacingDirection { get; }
+        [field: SerializeField] public float FacingDirection { get; private set; } = 1f;
 
         private IPathMovement _movement;
         private ModuleOwner _owner;
         private SpriteRenderer _renderer;
+
         public void Initialize(ModuleOwner owner)
         {
             _owner = owner;
@@ -28,11 +29,16 @@ namespace BBJ.Modules
         }
         public void Flip()
         {
+            FacingDirection *= -1;
+            float targetYRotation = FacingDirection > 0 ? 0 : 180f;
+            _owner.transform.rotation = Quaternion.Euler(0, targetYRotation, 0);
         }
 
         public void FlipController(float xMoveDirection)
         {
-            _renderer.flipX = xMoveDirection > 0f;
+
+            if (Mathf.Abs(FacingDirection + xMoveDirection) < 0.5f)
+                Flip();
         }
 
 

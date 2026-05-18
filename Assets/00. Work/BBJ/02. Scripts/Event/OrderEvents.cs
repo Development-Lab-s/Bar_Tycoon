@@ -56,4 +56,10 @@ namespace BBJ.EventSystem
         public OrderTicket Ticket { get; }
         public CustomerEatCompleteEvent(OrderTicket ticket) => Ticket = ticket;
     }
+
+    public class PlayerCraftStartEvent : GameEvent
+    {
+        public OrderTicket Ticket { get; }
+        public PlayerCraftStartEvent(OrderTicket ticket) => Ticket = ticket;
+    }
 }

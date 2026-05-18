@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace BBJ.Modules
 {
-    public class AgentActionModule : MonoBehaviour, IModule
+    public class AgentActionModule : MonoBehaviour, IModule, IAgentActionModule
     {
         private Dictionary<Type, IAgentAction> _actions = new Dictionary<Type, IAgentAction>();
         private Agent _agent;
