@@ -8,16 +8,17 @@ using _00._Work._Resources._02._Scripts.Modules;
 
 namespace BBJ.Order
 {
-    public class PlayerOrderHandle : MonoBehaviour
+    public class PlayerOrderHandle : ModuleOwner
     {
-        [SerializeField] private ModuleOwner    _playerOwner;
         [SerializeField] private EventChannelSO _orderChannel;
 
         private readonly Dictionary<CocktailRecipeSO, int>               _readyCount     = new();
         private readonly Dictionary<CocktailRecipeSO, List<OrderTicket>> _pendingTickets = new();
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+
             UtilDebugger.AssertAllAssigned(this);
         }
 
@@ -65,7 +66,7 @@ namespace BBJ.Order
 
         public bool TryOccupy(OrderTicket ticket)
         {
-            if (!ticket.TryReserve(_playerOwner)) return false;
+            if (!ticket.TryReserve(this)) return false;
             _orderChannel?.RaiseEvent(new OrderStateChangedEvent(ticket));
             return true;
         }
@@ -73,7 +74,7 @@ namespace BBJ.Order
         public bool TrySteal(OrderTicket ticket)
         {
             if (ticket.WorkPhase != OrderWorkPhase.PendingCook) return false;
-            if (!ticket.TrySteal(_playerOwner)) return false;
+            if (!ticket.TrySteal(this)) return false;
             _orderChannel?.RaiseEvent(new OrderStateChangedEvent(ticket));
             return true;
         }
