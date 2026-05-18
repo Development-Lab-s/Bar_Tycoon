@@ -1,3 +1,4 @@
+using _00._Work._Resources._02._Scripts.Modules;
 using BBJ.UI;
 using TMPro;
 using UnityEngine;
@@ -9,8 +10,9 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         [SerializeField] private ChatSO chat;
         private TextMeshPro _text;
 
-        protected override void Awake()
+        public override void Initialize(ModuleOwner owner)
         {
+            base.Initialize(owner);
             _text = GetComponentInChildren<TextMeshPro>();
         }
 
