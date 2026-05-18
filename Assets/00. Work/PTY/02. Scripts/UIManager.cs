@@ -7,7 +7,8 @@ public enum MenuType
     Character,
     LeaderBoard,
     Story,
-    Collection,
+    Codex,
+    CocktailCodex,
     Achievement,
     Arbeit,
     Rename,
@@ -17,22 +18,25 @@ public enum MenuType
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
-
     private UIManager() {}
 
     [SerializeField] private GameObject menu;
     [SerializeField] private List<MenuPopupEntry> popupEntries;
 
     private Dictionary<MenuType, GameObject> _popupMap;
+    private Stack<GameObject> _popupStack = new Stack<GameObject>();
 
-    public GameObject CurPopup { get; private set; }
+    public GameObject CurPopup => _popupStack.Count > 0 ? _popupStack.Peek() : null;
 
     private void Awake()
     {
         if (Instance == null)
             Instance = this;
         else
+        {
             Destroy(this);
+            return;
+        }
 
         _popupMap = new Dictionary<MenuType, GameObject>();
         foreach (var entry in popupEntries)
@@ -54,25 +58,29 @@ public class UIManager : MonoBehaviour
         if (_popupMap.TryGetValue(type, out var popup))
         {
             menu.SetActive(false);
-            ClosePopup();           // 기존 팝업 끄기
-            CurPopup = popup;
-            CurPopup.SetActive(true); // 새 팝업 켜기 → OnEnable → OnOpen() 자동 호출
+            PushPopup(popup);
         }
     }
 
-    public void OnOpen(GameObject popup)
+    public void PushPopup(GameObject popup)
     {
-        menu.SetActive(false);
-        ClosePopup();
-        CurPopup = popup;
-        CurPopup.SetActive(true);
+        popup.SetActive(true);
+        _popupStack.Push(popup);
     }
 
     public void ClosePopup()
     {
-        if (CurPopup != null)
-            CurPopup.SetActive(false);
-        CurPopup = null;
+        if (_popupStack.Count == 0) return;
+
+        var top = _popupStack.Pop();
+        top.SetActive(false);
+    }
+
+    public void CloseAllPopups()
+    {
+        while (_popupStack.Count > 0)
+            _popupStack.Pop().SetActive(false);
+        menu.SetActive(true);
     }
 
     public void Cancel() => menu.SetActive(false);
