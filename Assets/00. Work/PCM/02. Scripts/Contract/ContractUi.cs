@@ -5,18 +5,8 @@ using UnityEngine;
 public class ContractUi : AbstructContractPopUp
 {
     private UiOwner _uiOwner;
-    public override void Initialize(ModuleOwner owner)
-    {
-        base.Initialize(owner);
-        _uiOwner = owner.GetModule<UiOwner>();
-    }
-    public override void AfterInit()
-    {
-        base.AfterInit();
-    }
-
     public override void OnOpen()
     {
-        _uiOwner.StackAdd(this);
+        //_uiOwner.StackAdd(this);
     }
 }

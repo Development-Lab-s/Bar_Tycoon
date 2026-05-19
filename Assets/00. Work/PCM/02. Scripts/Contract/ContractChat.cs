@@ -1,23 +1,33 @@
+using _00._Work._Resources._02._Scripts.Modules;
 using BBJ.UI;
 using TMPro;
 using UnityEngine;
 
 namespace Assets._00._Work.PCM._02._Scripts.Contract
 {
-    public class ContractChat : AbstructContractPopUp, IAgentUI
+    public class ContractChat : AbstructContractPopUp, IAgentUI , IModule , IAfterInitModule
     {
-        [SerializeField] private ChatSO chat;
         private TextMeshPro _text;
+        private ModuleOwner _owner;
 
-        protected override void Awake()
+
+        public void Initialize(ModuleOwner owner)
         {
+            _owner = owner;
             _text = GetComponentInChildren<TextMeshPro>();
         }
-
+        public void AfterInit()
+        {
+            _owner.GetModule<PlayerCharController>(); 
+        }
         public override void OnOpen()
         {
-            var a = chat.Line[Random.Range(0, chat.Line.Count)];
-            _text.text = a;
+
         }
+        public void Message(string message)
+        {
+            _text.text = message;
+        }
+
     }
 }
