@@ -12,7 +12,8 @@ public enum MenuType
     Achievement,
     Arbeit,
     Rename,
-    LvUp
+    LvUp,
+    Menu
 }
 
 public class UIManager : MonoBehaviour

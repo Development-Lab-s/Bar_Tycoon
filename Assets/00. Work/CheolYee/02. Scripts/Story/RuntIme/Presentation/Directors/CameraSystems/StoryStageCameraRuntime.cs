@@ -18,7 +18,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
     {
         [Header("Runtime Dependencies")]
         [SerializeField] private StoryStageCameraController cameraController;
-        [SerializeField] private StoryCameraShakeController cameraShakeController;
         [SerializeField] private StoryActorStageRuntime actorRuntime;
 
         private bool _loggedMissingActorRuntime;
@@ -41,7 +40,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
             if (useCameraTrack)
             {
                 ApplyCameraTrackSample(layout, currentTime, transitionRuntime);
-                TriggerCameraTrackShakeKeys(layout.CameraTrack, previousTime, currentTime, transitionRuntime);
             }
             else
             {
@@ -116,31 +114,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
                 controller.MoveToSmooth(desiredX, desiredY);
         }
 
-        private void TriggerCameraTrackShakeKeys(
-            StoryCameraTrackData track,
-            float previousTime,
-            float currentTime,
-            StoryStageTransitionRuntime transitionRuntime)
-        {
-            if (transitionRuntime == null)
-                return;
-
-            List<StoryActorKeyframeData> shakeKeys = transitionRuntime.CollectCameraShakeKeysBetween(
-                track,
-                previousTime,
-                currentTime);
-
-            if (shakeKeys.Count <= 0)
-                return;
-
-            StoryCameraShakeController shake = ResolveCameraShakeController();
-            if (shake == null)
-                return;
-
-            for (int i = 0; i < shakeKeys.Count; i++)
-                shake.Trigger(shakeKeys[i]);
-        }
-
         private bool TryGetActorWorldPosition(string actorInstanceKey, out Vector3 position)
         {
             position = default;
@@ -156,11 +129,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
 
             controller?.Initialize();
             return controller;
-        }
-
-        private StoryCameraShakeController ResolveCameraShakeController()
-        {
-            return StoryRuntimeComponentResolver.GetInSelfOrParent(this, ref cameraShakeController);
         }
 
         private StoryActorStageRuntime ResolveActorRuntime()

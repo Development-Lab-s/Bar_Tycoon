@@ -39,7 +39,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void FitCameraFrameToWrapper(float wrapW, float wrapH, float fill)
         {
-            float camH = DefaultUnitPixels / GetRenderAspect();
+            float camH = DefaultUnitPixels / GetStoryVisibleAspect();
 
             // 카메라 프레임이 래퍼 안에 항상 들어오는 최대 zoom.
             float fitZoom  = Mathf.Min((wrapW * fill) / DefaultUnitPixels, (wrapH * fill) / camH);
@@ -61,12 +61,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_stageWorld == null) return;
             _stageWorld.style.translate = new Vector3(_stagePanOffset.x, _stagePanOffset.y, 0);
             _stageWorld.style.scale    = new Vector3(_stageZoom, _stageZoom, 1);
+            UpdateLetterboxOverlay();
         }
 
         /// <summary>GameView 해상도 변경 시 카메라 프레임 가이드와 배경 레이어 크기를 갱신한다.</summary>
         private void UpdateCameraFrameGeometry()
         {
-            float camH = DefaultUnitPixels / GetRenderAspect();
+            float camH = DefaultUnitPixels / GetStoryVisibleAspect();
 
             if (_stageWorld != null)
             {
@@ -123,6 +124,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     ? DisplayStyle.Flex
                     : DisplayStyle.None;
             }
+
+            UpdateLetterboxOverlay();
         }
 
         private void RefreshFocusPreviewGuide()
@@ -131,7 +134,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
 
             Vector2 focusOffset = ResolvePreviewCameraFocusOffset();
-            float camH = DefaultUnitPixels / GetRenderAspect();
+            float camH = DefaultUnitPixels / GetStoryVisibleAspect();
             _focusPreviewFrameGuide.style.left = focusOffset.x * DefaultUnitPixels;
             _focusPreviewFrameGuide.style.top = 0f;
             _focusPreviewFrameGuide.style.width = DefaultUnitPixels;
@@ -141,12 +144,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 : DisplayStyle.None;
         }
 
-        private float GetRenderAspect()
+        private float GetPhysicalAspect()
         {
             if (_renderResolution.x <= 0 || _renderResolution.y <= 0)
                 return (float)FallbackRenderWidth / FallbackRenderHeight;
 
             return Mathf.Clamp((float)_renderResolution.x / _renderResolution.y, 0.2f, 4f);
+        }
+
+        private float GetStoryVisibleAspect()
+        {
+            float physical = GetPhysicalAspect();
+            if (_previewAspectSettings == null)
+                return physical;
+            return physical * _previewAspectSettings.VisibleWidthRatio;
         }
 
         // ── Pan / Zoom 이벤트 ─────────────────────────
@@ -237,6 +248,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (ww > 0 && wh > 0) InitWorldView(ww, wh);
 
             RebuildActorLayer();
+            RefreshAspectMetricsDisplay();
             Repaint();
         }
 

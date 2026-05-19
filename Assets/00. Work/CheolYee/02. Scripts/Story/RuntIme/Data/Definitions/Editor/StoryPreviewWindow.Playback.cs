@@ -411,7 +411,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             float previousElapsed = _transitionPreviewElapsed;
             float elapsed = (float)(EditorApplication.timeSinceStartup - _transitionPreviewStartedAt);
             _transitionPreviewElapsed = elapsed;
-            TriggerPreviewCameraShakeKeys(_transitionCameraTrack, previousElapsed, elapsed);
             ApplyTransitionPreviewFrame(elapsed);
 
             if (elapsed >= _transitionPreviewDuration)
@@ -454,7 +453,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _transitionToBackground   = null;
             _transitionCameraFocusTarget = "";
             _transitionPreviewElapsed = 0f;
-            _previewCameraShakeDuration = 0f;
         }
 
         private float CalculateTransitionDuration()
@@ -521,25 +519,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
 
             Repaint();
-        }
-
-        private void TriggerPreviewCameraShakeKeys(StoryCameraTrackData track, float previousTime, float currentTime)
-        {
-            if (track == null)
-                return;
-
-            var shakeKeys = new List<StoryActorKeyframeData>();
-            StoryTransitionSampler.CollectCameraShakeKeysBetween(track, previousTime, currentTime, shakeKeys);
-            foreach (StoryActorKeyframeData key in shakeKeys)
-            {
-                if (key == null || key.cameraShakeTargetMode != StoryCameraShakeTargetMode.All)
-                    continue;
-
-                _previewCameraShakeStartedAt = EditorApplication.timeSinceStartup;
-                _previewCameraShakeDuration = Mathf.Max(0f, key.cameraShakeDuration);
-                _previewCameraShakeStrength = Mathf.Max(0f, key.cameraShakeStrength);
-                _previewCameraShakeFrequency = Mathf.Max(0f, key.cameraShakeFrequency);
-            }
         }
 
         // ── 대화 / 선택지 텍스트 갱신 ─────────────────────────────────────────

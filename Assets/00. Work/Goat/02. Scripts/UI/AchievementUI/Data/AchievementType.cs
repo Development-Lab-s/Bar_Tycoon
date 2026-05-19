@@ -7,9 +7,7 @@
         FirstMeet,
         SecondMeet,
         ThirdMeet,
-        TenLevelUp,
-        TwentyLevelUp,
-        ThirdLevelUp,
-        Gold10000
+        LevelUp,
+        GoldAdd
     }
 }

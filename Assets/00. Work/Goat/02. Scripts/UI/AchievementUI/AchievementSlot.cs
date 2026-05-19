@@ -40,7 +40,6 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
             
             titleText.text = data.AchievementDataSO.AchievementName;
             descriptionText.text = data.AchievementDataSO.AchievementDescription;
-            coinTitle.text = data.AchievementDataSO.AchieveCoin.ToString();
             Refresh(data);
         }
         
@@ -59,10 +58,11 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
             OnClickAchievementBtn?.Invoke(MyData);
         }
         
-        private void Refresh(AchievementData _)
+        private void Refresh(AchievementData data)
         {
-            achievementSliderText.text = $"{MyData.AchieveSaveData.nowAchievementDegree} / {MyData.AchievementDataSO.TargetAchievementDegree}";
-            slider.value = (float)MyData.AchieveSaveData.nowAchievementDegree / MyData.AchievementDataSO.TargetAchievementDegree;
+            achievementSliderText.text = $"{MyData.AchieveSaveData.nowAchievementDegree} / {MyData.AchievementDataSO.TargetAchievementDegree[MyData.AchieveSaveData.nowTargetData]}";
+            slider.value = (float)MyData.AchieveSaveData.nowAchievementDegree / MyData.AchievementDataSO.TargetAchievementDegree[MyData.AchieveSaveData.nowTargetData];
+            coinTitle.text = data.AchievementDataSO.AchieveCoin[data.AchieveSaveData.nowTargetData].ToString();
             panelImage.gameObject.SetActive(MyData.AchieveSaveData.getAward);
         }
     }

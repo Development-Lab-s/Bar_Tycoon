@@ -84,7 +84,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void PositionBackgroundElement(VisualElement el, StoryBackgroundStateData state)
         {
             float camW = DefaultUnitPixels;
-            float camH = DefaultUnitPixels / GetRenderAspect();
+            float camH = DefaultUnitPixels / GetStoryVisibleAspect();
             StoryBackgroundStateData sample = state.ShallowClone();
             sample.normalizedOffset += ResolvePreviewBackgroundParallaxOffset(state);
             Rect rect = StoryStageVisualSizing.CalculateBackgroundPreviewRect(

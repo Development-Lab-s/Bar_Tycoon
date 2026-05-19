@@ -194,6 +194,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             BuildStoryRenderingRoot();
             _stageWrapper.Add(_stageWorld);
+            BuildLetterboxOverlays();
             _stageWrapper.RegisterCallback<GeometryChangedEvent>(OnStageWrapperResized);
             RegisterPanZoomCallbacks();
             left.Add(_stageWrapper);
@@ -355,6 +356,82 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _stageWorld.Add(_actorLayer);
             _stageWorld.Add(_focusPreviewFrameGuide);
             _stageWorld.Add(_cameraFrameGuide);
+        }
+
+        // ── Letterbox Overlays ────────────────────────
+
+        private void BuildLetterboxOverlays()
+        {
+            _letterboxLeftOverlay = new VisualElement
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    top = 0, bottom = 0, left = 0, width = 0,
+                    display = DisplayStyle.None
+                }
+            };
+            _letterboxRightOverlay = new VisualElement
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    top = 0, bottom = 0, left = 0, width = 0,
+                    display = DisplayStyle.None
+                }
+            };
+            _stageWrapper.Add(_letterboxLeftOverlay);
+            _stageWrapper.Add(_letterboxRightOverlay);
+        }
+
+        internal void UpdateLetterboxOverlay()
+        {
+            if (_letterboxLeftOverlay == null || _letterboxRightOverlay == null) return;
+
+            float ratio = _previewAspectSettings?.VisibleWidthRatio ?? 1f;
+            if (ratio >= 0.999f)
+            {
+                _letterboxLeftOverlay.style.display  = DisplayStyle.None;
+                _letterboxRightOverlay.style.display = DisplayStyle.None;
+                return;
+            }
+
+            float frameLeft  = _stagePanOffset.x;
+            float frameWidth = DefaultUnitPixels * _stageZoom;
+            float rightStart = frameLeft + frameWidth;
+            float wrapW      = _stageWrapper?.resolvedStyle.width ?? 0f;
+
+            Color color = IsRuntimePreviewMode && _previewAspectSettings != null
+                ? _previewAspectSettings.LetterboxColor
+                : new Color(0f, 0f, 0f, 0.38f);
+
+            _letterboxLeftOverlay.style.display = DisplayStyle.Flex;
+            _letterboxLeftOverlay.style.left    = 0;
+            _letterboxLeftOverlay.style.width   = Mathf.Max(0f, frameLeft);
+            _letterboxLeftOverlay.style.backgroundColor = new StyleColor(color);
+
+            _letterboxRightOverlay.style.display = DisplayStyle.Flex;
+            _letterboxRightOverlay.style.left    = Mathf.Max(0f, rightStart);
+            _letterboxRightOverlay.style.width   = Mathf.Max(0f, wrapW - rightStart);
+            _letterboxRightOverlay.style.backgroundColor = new StyleColor(color);
+
+            if (IsRuntimePreviewMode && _previewAspectSettings != null)
+            {
+                SetLetterboxSprite(_letterboxLeftOverlay,  _previewAspectSettings.LeftLetterboxSprite);
+                SetLetterboxSprite(_letterboxRightOverlay, _previewAspectSettings.RightLetterboxSprite);
+            }
+            else
+            {
+                _letterboxLeftOverlay.style.backgroundImage  = StyleKeyword.Null;
+                _letterboxRightOverlay.style.backgroundImage = StyleKeyword.Null;
+            }
+        }
+
+        private static void SetLetterboxSprite(VisualElement el, Sprite sprite)
+        {
+            el.style.backgroundImage = sprite != null ? new StyleBackground(sprite) : StyleKeyword.Null;
         }
 
         private static VisualElement BuildAuthoringGridLayer()

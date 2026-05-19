@@ -449,20 +449,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             List<StoryActorKeyframeData> results)
         {
             results?.Clear();
-            if (track == null || track.keyframes == null || results == null)
-                return;
-
-            float from = Mathf.Min(previousTime, currentTime);
-            float to = Mathf.Max(previousTime, currentTime);
-            foreach (StoryActorKeyframeData keyframe in track.keyframes)
-            {
-                if (keyframe == null || keyframe.property != StoryActorKeyframeProperty.CameraShake)
-                    continue;
-
-                float keyTime = GetKeyTime(keyframe);
-                if (keyTime > from && keyTime <= to)
-                    results.Add(keyframe);
-            }
         }
 
         private static bool TrySampleBackgroundCut(
