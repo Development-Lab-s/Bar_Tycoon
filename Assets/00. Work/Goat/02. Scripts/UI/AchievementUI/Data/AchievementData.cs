@@ -18,9 +18,9 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
             
             AchieveSaveData.nowAchievementDegree += value;
 
-            if (AchieveSaveData.nowAchievementDegree >= AchievementDataSO.TargetAchievementDegree)
+            if (AchieveSaveData.nowAchievementDegree >= AchievementDataSO.TargetAchievementDegree[AchieveSaveData.nowTargetData])
             {
-                AchieveSaveData.nowAchievementDegree = AchievementDataSO.TargetAchievementDegree;
+                AchieveSaveData.nowAchievementDegree = AchievementDataSO.TargetAchievementDegree[AchieveSaveData.nowTargetData];
                 Complete();
             }
             
@@ -35,6 +35,15 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
         public void GetAwardTrue()
         {
             AchieveSaveData.getAward = true;
+            int nextIndex = AchieveSaveData.nowTargetData + 1;
+
+            if (nextIndex < AchievementDataSO.TargetAchievementDegree.Count)
+            {
+                AchieveSaveData.nowTargetData = nextIndex;
+                AchieveSaveData.nowAchievementDegree = 0;
+                AchieveSaveData.isComplete = false;
+                AchieveSaveData.getAward = false;
+            }
             OnChanged?.Invoke(this);
         }
         

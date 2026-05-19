@@ -35,7 +35,6 @@ public class Title : MonoBehaviour
     private bool _isAniming = true;
     private bool _isCovering = false;
     private bool _isBlink = true;
-    private bool _isTitle = true;
     
     private void Start()
     {
@@ -59,7 +58,6 @@ public class Title : MonoBehaviour
         if (Mouse.current.leftButton.wasPressedThisFrame && !_isAniming)
         {
             StartCover();
-            _isTitle = false;
         }
     }
 

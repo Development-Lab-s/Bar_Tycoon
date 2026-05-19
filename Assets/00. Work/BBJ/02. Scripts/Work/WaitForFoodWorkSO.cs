@@ -1,24 +1,23 @@
 using BBJ.Actions;
 using BBJ.Customer;
+using BBJ.Modules;
+using BBJ.Order;
 using Cysharp.Threading.Tasks;
-using Gamelib.EventSystem;
-using System.Threading;
-using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
 
 namespace BBJ.Work
 {
-    [CreateAssetMenu(fileName = "WaitForFoodWork", menuName = "Tycoon/Work/WaitForFood")]
+    [UnityEngine.CreateAssetMenu(fileName = "WaitForFoodWork", menuName = "Tycoon/Work/WaitForFood")]
     public class WaitForFoodWorkSO : WorkSO
     {
-        //[SerializeField] private float _timeout = 120f;
-
-        public override async UniTask ExecuteAsync(ModuleOwner executor, GameEvent context, CancellationToken ct)
+        protected override async UniTask<WorkResult> RunAsync(
+            ModuleOwner executor, OrderTicket ticket, WorkExecutionContext ctx)
         {
             var customer = executor as CustomerAgent;
-            var agent    = executor as IActionDispatcher;
-            if (customer == null || agent == null) return;
-            await agent.WaitUntilAsync(() => customer.FoodServed, ct);
+            var actions  = executor.GetModule<AgentActionModule>();
+            if (customer == null || actions == null) return WorkResult.Cancelled;
+            await actions.Execute<WaitAction>(a => a.ExecuteAsync(() => customer.FoodServed, ctx.Token));
+            return WorkResult.Completed;
         }
     }
 }

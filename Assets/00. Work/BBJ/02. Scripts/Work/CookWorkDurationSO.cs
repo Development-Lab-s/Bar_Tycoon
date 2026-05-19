@@ -8,7 +8,8 @@ namespace BBJ.Work
     public class CookWorkDurationSO : WorkDurationSO
     {
         [SerializeField] private StatSO _cookStat;
-        [SerializeField] private float  _minDuration = 0.5f;
+        [SerializeField] private float  _minDuration  = 0.5f;
+        [SerializeField] private float  _timePerStage = 3f;   // stage당 추가되는 기본 조리 시간
 
         public override float GetDuration(ModuleOwner worker)
         {
@@ -20,9 +21,9 @@ namespace BBJ.Work
         private float GetBaseCookTime(ModuleOwner worker)
         {
             var provider = worker.GetModule<ICurrentFoodProvider>();
-            if (provider?.CurrentFood != null)
-                return provider.CurrentFood.CookTime;
-            return _minDuration;
+            if (provider?.CurrentFood == null) return _minDuration;
+            int stage = Mathf.Max(1, provider.CurrentFood.unlockStage);
+            return _timePerStage * stage;
         }
 
         private float GetStatValue(ModuleOwner worker)

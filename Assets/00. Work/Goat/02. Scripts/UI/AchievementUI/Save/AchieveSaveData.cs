@@ -10,5 +10,6 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Save
         public int nowAchievementDegree;
         public bool isComplete;
         public bool getAward;
+        public int nowTargetData;
     }
 }

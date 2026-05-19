@@ -12,6 +12,11 @@ namespace _00._Work.Goat._02._Scripts.Coin
             coinManager.OnChangeCoin += HandleChangeCoin;
         }
 
+        private void Start()
+        {
+            HandleChangeCoin(coinManager.CurrentCoin);
+        }
+
         private void OnDestroy()
         {
             coinManager.OnChangeCoin -= HandleChangeCoin;
