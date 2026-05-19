@@ -2,6 +2,7 @@
 using _00._Work.Goat._02._Scripts.Coin.CoinDatas;
 using _00._Work.Goat._02._Scripts.Events;
 using _00._Work.Goat._02._Scripts.SaveCode;
+using _00._Work.Goat._02._Scripts.UI.AchievementUI.Data;
 using Gamelib.EventSystem;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ namespace _00._Work.Goat._02._Scripts.Coin
     public class CoinManager : MonoBehaviour
     {
         [SerializeField] private EventChannelSO coinChannelSO;
+        [SerializeField] private EventChannelSO achievementChannelSo;
         [SerializeField] private SaveFileNameSO saveFileNameSO;
         
         private CoinData _coinData;
@@ -47,6 +49,7 @@ namespace _00._Work.Goat._02._Scripts.Coin
         private void HandleCoinEvent(CoinEvent coin)
         {
             AddCoin(coin.amount);
+            achievementChannelSo.RaiseEvent(new AchievementEvent().Init(AchievementType.GoldAdd, coin.amount));
         }
         
         private void AddCoin(int amount)

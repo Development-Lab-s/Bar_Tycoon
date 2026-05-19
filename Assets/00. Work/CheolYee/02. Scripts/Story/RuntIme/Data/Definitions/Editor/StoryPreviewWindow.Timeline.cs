@@ -407,11 +407,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 BuildTimelineKeyframeRow("Zoom", track.keyframes, StoryActorKeyframeProperty.CameraZoom);
                 hasVisibleRow = true;
             }
-            if (HasProperty(track.keyframes, StoryActorKeyframeProperty.CameraShake))
-            {
-                BuildTimelineKeyframeRow("Shake", track.keyframes, StoryActorKeyframeProperty.CameraShake);
-                hasVisibleRow = true;
-            }
 
             if (!hasVisibleRow)
                 AddTimelineEmpty("No editable camera property row. Use Add Property.");
@@ -699,7 +694,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 StoryActorKeyframeProperty.CameraTarget => new Color(1f, 0.72f, 0.30f),
                 StoryActorKeyframeProperty.CameraOffset => new Color(0.40f, 0.82f, 1f),
                 StoryActorKeyframeProperty.CameraZoom => new Color(0.94f, 0.84f, 0.42f),
-                StoryActorKeyframeProperty.CameraShake => new Color(1f, 0.42f, 0.42f),
                 _ => Color.white
             };
 
@@ -1423,8 +1417,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _timelineIsPlaying = false;
             }
             StoryStageLayoutModuleSO layout = FindCurrentStageLayout();
-            if (layout != null)
-                TriggerPreviewCameraShakeKeys(layout.CameraTrackEditable, previousTime, _timelinePlayheadTime);
             ApplyTimelinePlayheadSample();
             RefreshTimelinePanel();
         }
@@ -1515,7 +1507,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 AddPropertyMenuItem(menu, keyframes, StoryActorKeyframeProperty.CameraTarget, "Camera Target");
                 AddPropertyMenuItem(menu, keyframes, StoryActorKeyframeProperty.CameraOffset, "Camera Offset");
                 AddPropertyMenuItem(menu, keyframes, StoryActorKeyframeProperty.CameraZoom, "Camera Zoom");
-                AddPropertyMenuItem(menu, keyframes, StoryActorKeyframeProperty.CameraShake, "Camera Shake");
                 menu.ShowAsContext();
                 return;
             }
@@ -2162,13 +2153,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 {
                     key.cameraZoom = Mathf.Max(0.01f, state.zoomMultiplier);
                 }
-                else if (property == StoryActorKeyframeProperty.CameraShake)
-                {
-                    key.cameraShakeStrength = 1f;
-                    key.cameraShakeDuration = 0.25f;
-                    key.cameraShakeFrequency = 2f;
-                    key.cameraShakeTargetMode = StoryCameraShakeTargetMode.All;
-                }
 
                 if (selectKey)
                 {
@@ -2264,8 +2248,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private static bool IsCameraTimelineProperty(StoryActorKeyframeProperty property) =>
             property == StoryActorKeyframeProperty.CameraTarget
             || property == StoryActorKeyframeProperty.CameraOffset
-            || property == StoryActorKeyframeProperty.CameraZoom
-            || property == StoryActorKeyframeProperty.CameraShake;
+            || property == StoryActorKeyframeProperty.CameraZoom;
 
         private static bool IsBackgroundTimelineProperty(StoryActorKeyframeProperty property) =>
             property == StoryActorKeyframeProperty.BackgroundCut

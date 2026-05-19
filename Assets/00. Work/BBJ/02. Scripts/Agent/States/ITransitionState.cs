@@ -17,7 +17,7 @@ namespace BBJ.States
         public int ToStateindex;
         public StateTransition(Func<bool> condition, int toState)
         {
-            this.Condition = condition;
+            Condition = condition;
             this.ToStateindex = toState;
         }
         public bool CheckAndTransition() => Condition.Invoke();

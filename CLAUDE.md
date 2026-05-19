@@ -60,6 +60,20 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## Unconfirmed Requirement Protocol
+
+If a requirement, behavior rule, data model, file ownership boundary, UI hierarchy, naming convention, migration direction, or runtime/editor responsibility is not clearly defined, do not guess and do not implement the uncertain part.
+
+Instead:
+
+1. Stop before modifying code related to the uncertain area.
+2. Summarize the ambiguity briefly.
+3. Ask the user focused questions with 2-3 concrete options when possible.
+4. State the recommended option and why.
+5. Continue implementation only after the user confirms the direction.
+
+Assumptions must be explicitly labeled as assumptions. Do not silently turn assumptions into code, serialized data, prefab hierarchy changes, or migration logic.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

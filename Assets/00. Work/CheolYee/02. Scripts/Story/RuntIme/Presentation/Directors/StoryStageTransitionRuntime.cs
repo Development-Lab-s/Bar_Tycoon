@@ -18,7 +18,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
         private readonly Dictionary<string, StoryActorTrackData> _actorTrackMap = new();
         private readonly Dictionary<string, StoryActorStateData> _actorSampleMap = new();
         private readonly HashSet<string> _actorKeyBuffer = new();
-        private readonly List<StoryActorKeyframeData> _cameraShakeScratch = new();
 
         public Dictionary<string, StoryActorStateData> BuildTargetMap(IReadOnlyList<StoryActorStateData> targetActors)
         {
@@ -162,23 +161,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                 track,
                 fallbackTargetActorInstanceKey,
                 elapsed);
-        }
-
-        public List<StoryActorKeyframeData> CollectCameraShakeKeysBetween(
-            StoryCameraTrackData track,
-            float previousTime,
-            float currentTime)
-        {
-            _cameraShakeScratch.Clear();
-
-            if (track != null)
-                StoryTransitionSampler.CollectCameraShakeKeysBetween(
-                    track,
-                    previousTime,
-                    currentTime,
-                    _cameraShakeScratch);
-
-            return _cameraShakeScratch;
         }
 
         private void AddActorKeys<TValue>(IReadOnlyDictionary<string, TValue> map)

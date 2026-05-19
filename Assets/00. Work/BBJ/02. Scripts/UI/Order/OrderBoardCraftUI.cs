@@ -1,4 +1,3 @@
-using BBJ;
 using _00._Work.Lusaload._02._Scripts.SO;
 using BBJ.EventSystem;
 using BBJ.Order;
@@ -6,41 +5,41 @@ using Gamelib.EventSystem;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Systems;
 
 namespace BBJ.UI.Order
 {
     public class OrderBoardCraftUI : MonoBehaviour
     {
         [SerializeField] private PlayerOrderHandle _handle;
-        [SerializeField] private FoodGroupCardUI   _cardPrefab;
-        [SerializeField] private StealConfirmUI    _confirmUI;
-        [SerializeField] private EventChannelSO    _orderChannel;
-        [SerializeField] private Transform         _content;
-        [SerializeField] private Button            _cancelButton;
+        [SerializeField] private FoodGroupCardUI _cardPrefab;
+        [SerializeField] private StealConfirmUI _confirmUI;
+        [SerializeField] private EventChannelSO _orderChannel;
+        [SerializeField] private EventChannelSO _uiChannel;
+        [SerializeField] private Transform _content;
+        [SerializeField] private Button _cancelButton;
+        [SerializeField] private PlayerInputSO playerInputSO;
 
-        private readonly Dictionary<CocktailRecipeSO, FoodGroupCardUI> _freeCards     = new();
+        private readonly Dictionary<CocktailRecipeSO, FoodGroupCardUI> _freeCards = new();
         private readonly Dictionary<CocktailRecipeSO, FoodGroupCardUI> _occupiedCards = new();
 
         private void Awake()
         {
             UtilDebugger.AssertAllAssigned(this);
-            if (_cancelButton != null) _cancelButton.onClick.AddListener(Close);
+
+            _cancelButton.onClick.AddListener(Close);
             gameObject.SetActive(false);
         }
 
         private void OnDestroy()
         {
-            if (_cancelButton != null) _cancelButton.onClick.RemoveListener(Close);
-        }
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.Escape))
-                Close();
+            _cancelButton.onClick.RemoveListener(Close);
         }
 
         public void Open()
         {
+            playerInputSO.DownPopupClick += Close;
+
             gameObject.SetActive(true);
             SubscribeEvents();
             RebuildAllCards();
@@ -48,7 +47,9 @@ namespace BBJ.UI.Order
 
         public void Close()
         {
-            _confirmUI?.Hide();
+            playerInputSO.DownPopupClick -= Close;
+
+            _confirmUI.Hide();
             UnsubscribeEvents();
             ClearAllCards();
             gameObject.SetActive(false);
@@ -58,39 +59,39 @@ namespace BBJ.UI.Order
 
         private void SubscribeEvents()
         {
-            _orderChannel?.AddListener<OrderRegisteredEvent>(OnOrderRegistered);
-            _orderChannel?.AddListener<OrderUnregisteredEvent>(OnOrderUnregistered);
-            _orderChannel?.AddListener<OrderStateChangedEvent>(OnOrderStateChanged);
+            _orderChannel.AddListener<OrderRegisteredEvent>(HandleOrderRegistered);
+            _orderChannel.AddListener<OrderUnregisteredEvent>(HandleOrderUnregistered);
+            _orderChannel.AddListener<OrderStateChangedEvent>(HandleOrderStateChanged);
         }
 
         private void UnsubscribeEvents()
         {
-            _orderChannel?.RemoveListener<OrderRegisteredEvent>(OnOrderRegistered);
-            _orderChannel?.RemoveListener<OrderUnregisteredEvent>(OnOrderUnregistered);
-            _orderChannel?.RemoveListener<OrderStateChangedEvent>(OnOrderStateChanged);
+            _orderChannel.RemoveListener<OrderRegisteredEvent>(HandleOrderRegistered);
+            _orderChannel.RemoveListener<OrderUnregisteredEvent>(HandleOrderUnregistered);
+            _orderChannel.RemoveListener<OrderStateChangedEvent>(HandleOrderStateChanged);
         }
-
-        // --- 카드 빌드 ---
 
         private void RebuildAllCards()
         {
             ClearAllCards();
-            foreach (var food in _handle.GetAllPendingFoods())
-                RefreshCardsForFood(food);
+
+            var foodsAll = _handle.GetAllPendingFoods();
+            foreach (var food in foodsAll) RefreshCardsForFood(food);
         }
 
         private void ClearAllCards()
         {
-            foreach (var card in _freeCards.Values)    Destroy(card.gameObject);
+            foreach (var card in _freeCards.Values) Destroy(card.gameObject);
             foreach (var card in _occupiedCards.Values) Destroy(card.gameObject);
+
             _freeCards.Clear();
             _occupiedCards.Clear();
         }
 
         private void RefreshCardsForFood(CocktailRecipeSO food)
         {
-            var tickets    = _handle.GetPendingTickets(food);
-            int freeCount  = 0;
+            var tickets = _handle.GetPendingTickets(food);
+            int freeCount = 0;
             bool hasOccupied = false;
 
             foreach (var t in tickets)
@@ -136,16 +137,16 @@ namespace BBJ.UI.Order
             }
         }
 
-        // --- 클릭 핸들러 ---
-
         private void OnFreeCardClicked(CocktailRecipeSO food)
         {
             var ticket = _handle.GetFreeTicket(food);
             if (ticket == null) return;
-            if (!_handle.TryOccupy(ticket)) return;
 
-            _orderChannel?.RaiseEvent(new PlayerCraftStartEvent(ticket));
-            Close();
+            if (_handle.TryOccupy(ticket))
+            {
+                _orderChannel.RaiseEvent(new PlayerCraftStartEvent(ticket));
+                Close();
+            }
         }
 
         private void OnOccupiedCardClicked(CocktailRecipeSO food)
@@ -153,34 +154,26 @@ namespace BBJ.UI.Order
             var ticket = _handle.GetOccupiedTicket(food);
             if (ticket == null) return;
 
-            _confirmUI?.Show(
-                ticket,
-                onConfirm: () =>
-                {
-                    if (_handle.TrySteal(ticket))
-                        _orderChannel?.RaiseEvent(new PlayerCraftStartEvent(ticket));
-                    Close();
-                },
-                onCancel: () => { }
-            );
+            _confirmUI.Show(ticket, onConfirm, null);
+
+            void onConfirm()
+            {
+                if (_handle.TrySteal(ticket))
+                    _orderChannel.RaiseEvent(new PlayerCraftStartEvent(ticket));
+                else
+                    _uiChannel.RaiseEvent(new MessageEvent($"[{ticket.Ordered?.cocktailName}] 작업이 이미 완료되어 빼앗을 수 없습니다."));
+
+                Close();
+            };
         }
 
-        // --- 이벤트 핸들러 ---
-
-        private void OnOrderRegistered(OrderRegisteredEvent e)
+        private void HandleOrderRegistered(OrderRegisteredEvent e)
         {
             if (e.Ticket.WorkPhase != OrderWorkPhase.PendingCook) return;
             RefreshCardsForFood(e.Ticket.Ordered);
         }
 
-        private void OnOrderUnregistered(OrderUnregisteredEvent e)
-        {
-            RefreshCardsForFood(e.Ticket.Ordered);
-        }
-
-        private void OnOrderStateChanged(OrderStateChangedEvent e)
-        {
-            RefreshCardsForFood(e.Ticket.Ordered);
-        }
+        private void HandleOrderUnregistered(OrderUnregisteredEvent e) => RefreshCardsForFood(e.Ticket.Ordered);
+        private void HandleOrderStateChanged(OrderStateChangedEvent e) => RefreshCardsForFood(e.Ticket.Ordered);
     }
 }

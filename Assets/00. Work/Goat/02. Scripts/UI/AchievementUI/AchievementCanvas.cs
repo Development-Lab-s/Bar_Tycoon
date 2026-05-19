@@ -34,7 +34,7 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI
         
         private void HandleClickAchievementBtn(AchievementData data)
         {
-            coinChannelSo.RaiseEvent(new CoinEvent().Init(data.AchievementDataSO.AchieveCoin));
+            coinChannelSo.RaiseEvent(new CoinEvent().Init(data.AchievementDataSO.AchieveCoin[data.AchieveSaveData.nowTargetData]));
             data.GetAwardTrue();
         }
 

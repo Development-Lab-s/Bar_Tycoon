@@ -17,7 +17,7 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
         [field: SerializeField] public SaveFileNameSO SaveFileName { get; private set; }
         [SerializeField] private EventChannelSO eventChannel;
         
-            private Dictionary<AchievementType, AchievementData> _achievementDatasDict;
+        private Dictionary<AchievementType, AchievementData> _achievementDatasDict;
         private JsonSaveService  _jsonSaveService;
         
         private void Awake()

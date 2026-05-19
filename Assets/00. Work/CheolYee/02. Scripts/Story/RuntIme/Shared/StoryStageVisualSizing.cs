@@ -155,11 +155,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             bool preserveAspect = state == null || state.background == null || state.background.PreserveAspectRatio;
             if (preserveAspect)
             {
-                float uniformScale = ResolveBackgroundUniformScale(effectiveScale);
+                // Phase 4: clamp so scale < 1 never causes under-coverage of StoryVisibleFrame.
+                float uniformScale = Mathf.Max(1f, ResolveBackgroundUniformScale(effectiveScale));
                 return new Vector3(cover * overscan * uniformScale, cover * overscan * uniformScale, 1f);
             }
 
-            return new Vector3(cover * overscan * effectiveScale.x, cover * overscan * effectiveScale.y, 1f);
+            // Clamp positive axes only; negative values are intentional flips and preserve sign.
+            float sx = effectiveScale.x >= 0f ? Mathf.Max(1f, effectiveScale.x) : effectiveScale.x;
+            float sy = effectiveScale.y >= 0f ? Mathf.Max(1f, effectiveScale.y) : effectiveScale.y;
+            return new Vector3(cover * overscan * sx, cover * overscan * sy, 1f);
         }
 
         public static Rect CalculateBackgroundPreviewRect(
