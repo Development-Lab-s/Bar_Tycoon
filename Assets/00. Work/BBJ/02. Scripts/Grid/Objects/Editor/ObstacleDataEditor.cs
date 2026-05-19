@@ -65,6 +65,7 @@ namespace BBJ.GridSystem.Objects.Editor
         private HashSet<Vector2Int> _blocked = new HashSet<Vector2Int>();
         private HashSet<Vector2Int> _interact = new HashSet<Vector2Int>();
         private Vector2Int _hovered = new Vector2Int(int.MinValue, int.MinValue);
+        private Sprite _sprite;
 
         // ──────────────────────────────────────────────
         // 파생 값
@@ -74,7 +75,14 @@ namespace BBJ.GridSystem.Objects.Editor
         private int ViewCols => _viewMaxX - _viewMinX + 1;
         private int ViewRows => _viewMaxY - _viewMinY + 1;
 
-        private void OnEnable() => LoadFromSO();
+        private void OnEnable() { LoadFromSO(); RefreshSprite(); }
+
+        private void RefreshSprite()
+        {
+            var so = (ObjectData)target;
+            var sr = so.Prefab != null ? so.Prefab.GetComponentInChildren<SpriteRenderer>() : null;
+            _sprite = sr?.sprite;
+        }
 
         // ──────────────────────────────────────────────
         // SO ↔ HashSet 동기화
@@ -193,6 +201,25 @@ namespace BBJ.GridSystem.Objects.Editor
             }, fill, border);
         }
 
+        private void DrawSpriteAtOrigin(Rect localCanvas)
+        {
+            if (_sprite == null) return;
+            Vector2 ctr = GridToScreen(0, 0, localCanvas);
+            Bounds b = _sprite.bounds;
+            float scale = TileW * 2f;
+            float sw = b.size.x * scale;
+            float sh = b.size.y * scale;
+            Vector2 pivot = new Vector2(ctr.x, ctr.y + TileH * 0.5f);
+            Rect drawRect = new Rect(pivot.x + b.min.x * scale, pivot.y - b.max.y * scale, sw, sh);
+            Texture2D tex = _sprite.texture;
+            Rect uv = new Rect(
+                _sprite.textureRect.x / tex.width,
+                _sprite.textureRect.y / tex.height,
+                _sprite.textureRect.width  / tex.width,
+                _sprite.textureRect.height / tex.height);
+            GUI.DrawTextureWithTexCoords(drawRect, tex, uv, true);
+        }
+
         private void DrawLabel(Vector2 c, string text, Color color)
         {
             int size = Mathf.RoundToInt(Mathf.Clamp(9f * _zoom, 7f, 12f));
@@ -240,9 +267,11 @@ namespace BBJ.GridSystem.Objects.Editor
         {
             // 기본 필드
             serializedObject.Update();
+            EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(serializedObject.FindProperty("Prefab"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("IsWalkable"));
             serializedObject.ApplyModifiedProperties();
+            if (EditorGUI.EndChangeCheck()) RefreshSprite();
 
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("타일 오프셋 에디터 (쿼터뷰)", EditorStyles.boldLabel);
@@ -490,6 +519,9 @@ namespace BBJ.GridSystem.Objects.Editor
 
                 // 좌표축 범례 (우하단)
                 DrawAxisLegend(localCanvas);
+
+                // 원점 스프라이트 (모든 타일 위에)
+                DrawSpriteAtOrigin(localCanvas);
 
                 GUI.EndClip();
             }
