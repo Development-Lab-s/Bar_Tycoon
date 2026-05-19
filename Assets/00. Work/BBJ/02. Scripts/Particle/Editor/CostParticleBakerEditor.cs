@@ -77,9 +77,9 @@ namespace BBJ.Particle.Editor
             Rect[] uvRects = atlas.PackTextures(spriteTex.ToArray(), 2, config.maxAtlasSize);
 
             // 3. 아틀라스 저장 (Application.dataPath = "[Project]/Assets")
-            string saveDir = "Assets/00. Work/Goat/05. SO/CostParticle";
+            string saveDir = "Assets/00. Work/BBJ/05. SO/CostParticle";
             if (!AssetDatabase.IsValidFolder(saveDir))
-                AssetDatabase.CreateFolder("Assets/00. Work/Goat/05. SO", "CostParticle");
+                AssetDatabase.CreateFolder("Assets/00. Work/BBJ/05. SO", "CostParticle");
 
             string atlasPath = saveDir + "/CostParticleAtlas.png";
             string fullPath = Path.Combine(Application.dataPath, atlasPath.Substring("Assets/".Length));
