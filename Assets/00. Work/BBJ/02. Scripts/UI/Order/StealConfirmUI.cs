@@ -34,7 +34,7 @@ namespace BBJ.UI.Order
         {
             if (ticket == null) return;
 
-            _messageLabel.text = $"[{ticket.Ordered?.cocktailName}] 이미 점유 중입니다.\n작업을 빼앗겠습니까?";
+            _messageLabel.text = $"[{ticket.Ordered?.cocktailName}] 현재 제작 중입니다.\n작업을 빼앗겠습니까?";
             _onConfirm = onConfirm;
             _onCancel  = onCancel;
             gameObject.SetActive(true);
