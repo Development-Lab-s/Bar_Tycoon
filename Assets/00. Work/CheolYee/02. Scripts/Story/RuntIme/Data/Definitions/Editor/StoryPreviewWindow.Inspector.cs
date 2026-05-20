@@ -1244,14 +1244,32 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             SaveLayoutAndRefresh(layout);
         }
 
-        private void OnImportPreviousStageClicked()
+        private List<StoryLineSO> GetAllPreviousLineCandidates(StoryLineSO line)
         {
-            if (!IsStageAuthoringMode || _currentLine == null)
-                return;
+            var candidates = new List<StoryLineSO>();
+            if (line == null || episode == null)
+                return candidates;
 
-            if (!TryGetPreviousLine(_currentLine, out StoryLineSO previousLine) || previousLine == null)
-                return;
+            // Primary: find all lines whose NextLineId == current line's LineId
+            foreach (StoryLineSO candidate in episode.Lines)
+            {
+                if (candidate != null && candidate.NextLineId == line.LineId)
+                    candidates.Add(candidate);
+            }
 
+            // Fallback: no explicit link → use linear episode order
+            if (candidates.Count == 0)
+            {
+                int index = FindLineIndex(line);
+                if (index > 0 && episode.Lines[index - 1] != null)
+                    candidates.Add(episode.Lines[index - 1]);
+            }
+
+            return candidates;
+        }
+
+        private void ApplyImportPreviousStage(StoryLineSO previousLine)
+        {
             if (!TryBuildFinalStageStateAtLine(previousLine, out var previousActors, out var previousBackground, out var previousCamera))
                 return;
 
@@ -1296,6 +1314,50 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             CopyCameraState(previousCamera, layout.CameraTrackEditable.defaultState);
             layout.CameraFocusTargetEditable = previousCamera?.targetActorInstanceKey ?? "";
             SaveLayoutAndRefresh(layout);
+        }
+
+        private void OnImportPreviousStageClicked()
+        {
+            if (!IsStageAuthoringMode || _currentLine == null)
+                return;
+
+            List<StoryLineSO> candidates = GetAllPreviousLineCandidates(_currentLine);
+            if (candidates.Count == 0)
+                return;
+
+            if (candidates.Count == 1)
+            {
+                ApplyImportPreviousStage(candidates[0]);
+                return;
+            }
+
+            // Multiple predecessors: show selection menu
+            var menu = new GenericMenu();
+            foreach (StoryLineSO candidate in candidates)
+            {
+                StoryLineSO captured = candidate;
+                string label = BuildCandidateMenuLabel(candidate);
+                menu.AddItem(new GUIContent(label), false, () => ApplyImportPreviousStage(captured));
+            }
+            menu.ShowAsContext();
+        }
+
+        private static string BuildCandidateMenuLabel(StoryLineSO candidate)
+        {
+            if (candidate == null)
+                return "(null)";
+
+            string lineId = !string.IsNullOrWhiteSpace(candidate.LineId) ? candidate.LineId : candidate.name;
+            string speaker = candidate.Speaker != null ? candidate.Speaker.DisplayName : "";
+            string dialogue = candidate.DialogueText ?? "";
+            if (dialogue.Length > 20)
+                dialogue = dialogue.Substring(0, 20) + "…";
+
+            if (!string.IsNullOrWhiteSpace(speaker) && !string.IsNullOrWhiteSpace(dialogue))
+                return $"{lineId}: {speaker} — {dialogue}";
+            if (!string.IsNullOrWhiteSpace(dialogue))
+                return $"{lineId}: {dialogue}";
+            return lineId;
         }
 
         private void OnPreviewTransitionClicked()
@@ -1390,10 +1452,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             bool isAuthoring = IsStageAuthoringMode;
             bool hasLine = _currentLine != null;
             bool hasCurrentStageLayout = FindCurrentStageLayout() != null;
-            bool hasPreviousStage = hasLine && TryBuildStageStateBeforeLine(
-                _currentLine,
-                out var previousActors,
-                out var previousBackground)
+            bool hasPreviousStage = hasLine
+                && GetAllPreviousLineCandidates(_currentLine).Count > 0
+                && TryBuildStageStateBeforeLine(
+                    _currentLine,
+                    out var previousActors,
+                    out var previousBackground)
                 && (previousActors.Count > 0 || previousBackground != null);
 
             SetElementVisible(_authoringToolsRoot, isAuthoring);
