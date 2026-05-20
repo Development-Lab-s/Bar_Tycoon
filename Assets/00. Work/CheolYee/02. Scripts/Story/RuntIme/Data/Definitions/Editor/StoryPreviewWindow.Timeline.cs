@@ -331,6 +331,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             var indexes = GetOrderedKeyIndexes(keyframes, property);
             if (SupportsTimelineSegment(property))
             {
+                if (indexes.Count > 0)
+                    AddPreFirstSegmentBar(lane, keyframes, indexes[0]);
+
                 for (int i = 0; i < indexes.Count - 1; i++)
                     AddSegmentBar(lane, keyframes, indexes[i], indexes[i + 1]);
             }
@@ -582,12 +585,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             float fromX = StoryTransitionSampler.GetKeyTime(from) * _timelinePixelsPerSecond;
             float toX = StoryTransitionSampler.GetKeyTime(to) * _timelinePixelsPerSecond;
             float width = Mathf.Max(2f, toX - fromX);
-            bool selected = _selectedTimelineSegmentKeyIndex == fromIndex
-                && _selectedTimelineSegmentProperty == from.property;
-            Color segmentColor = ResolveEasingColor(from.easing);
+            bool selected = _selectedTimelineSegmentKeyIndex == toIndex
+                && _selectedTimelineSegmentProperty == to.property;
+            Color segmentColor = ResolveEasingColor(to.easing);
             var hitArea = new VisualElement
             {
-                tooltip = $"{from.property} segment {from.easing}",
+                tooltip = $"{to.property} segment [{StoryTransitionSampler.GetKeyTime(from):0.00}s → {to.easing}]",
                 style =
                 {
                     position = Position.Absolute,
@@ -598,13 +601,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     backgroundColor = new StyleColor(new Color(1f, 1f, 1f, 0.001f))
                 }
             };
-            hitArea.RegisterCallback<PointerDownEvent>(e => HandleSegmentPointerDown(e, from, to, fromIndex));
+            hitArea.RegisterCallback<PointerDownEvent>(e => HandleSegmentPointerDown(e, from, to, fromIndex, toIndex));
             lane.Add(hitArea);
 
             float visualHeight = selected ? TimelineSelectedSegmentHeight : TimelineSegmentHeight;
             var bar = new VisualElement
             {
-                tooltip = $"{from.property} segment {from.easing}",
+                tooltip = $"{to.property} segment [{StoryTransitionSampler.GetKeyTime(from):0.00}s → {to.easing}]",
                 style =
                 {
                     position = Position.Absolute,
@@ -619,12 +622,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     borderBottomColor = new StyleColor(new Color(1f, 0.88f, 0.30f, 0.95f))
                 }
             };
-            bar.RegisterCallback<PointerDownEvent>(e => HandleSegmentPointerDown(e, from, to, fromIndex));
+            bar.RegisterCallback<PointerDownEvent>(e => HandleSegmentPointerDown(e, from, to, fromIndex, toIndex));
             lane.Add(bar);
 
             if (width >= 56f)
             {
-                lane.Add(new Label(ShortEasingLabel(from.easing))
+                lane.Add(new Label(ShortEasingLabel(to.easing))
                 {
                     pickingMode = PickingMode.Ignore,
                     style =
@@ -636,7 +639,85 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                         height = 12,
                         fontSize = 8,
                         unityTextAlign = TextAnchor.MiddleCenter,
-                        color = new StyleColor(selected ? new Color(1f, 0.84f, 0.38f) : ResolveEasingLabelColor(from.easing))
+                        color = new StyleColor(selected ? new Color(1f, 0.84f, 0.38f) : ResolveEasingLabelColor(to.easing))
+                    }
+                });
+            }
+        }
+
+        private void AddPreFirstSegmentBar(VisualElement lane, IReadOnlyList<StoryActorKeyframeData> keyframes, int firstKeyIndex)
+        {
+            StoryActorKeyframeData firstKey = keyframes[firstKeyIndex];
+            float firstKeyTime = StoryTransitionSampler.GetKeyTime(firstKey);
+            if (firstKeyTime <= 0.001f) return;
+
+            float fromX = 0f;
+            float toX = firstKeyTime * _timelinePixelsPerSecond;
+            float width = Mathf.Max(2f, toX - fromX);
+            bool selected = _selectedTimelineSegmentKeyIndex == firstKeyIndex
+                && _selectedTimelineSegmentProperty == firstKey.property;
+
+            Color baseColor = ResolveEasingColor(firstKey.easing);
+            Color segmentColor = Color.Lerp(baseColor, new Color(0.25f, 0.25f, 0.27f, 0.85f), 0.45f);
+
+            var hitArea = new VisualElement
+            {
+                tooltip = $"{firstKey.property} segment [Line Start → {firstKey.easing}]",
+                style =
+                {
+                    position = Position.Absolute,
+                    left = fromX,
+                    top = (TimelineRowHeight - TimelineSegmentHitHeight) * 0.5f,
+                    width = width,
+                    height = TimelineSegmentHitHeight,
+                    backgroundColor = new StyleColor(new Color(1f, 1f, 1f, 0.001f))
+                }
+            };
+            hitArea.RegisterCallback<PointerDownEvent>(e =>
+                HandleSegmentPointerDown(e, null, firstKey, -1, firstKeyIndex));
+            lane.Add(hitArea);
+
+            float visualHeight = selected ? TimelineSelectedSegmentHeight : TimelineSegmentHeight;
+            var bar = new VisualElement
+            {
+                tooltip = $"{firstKey.property} segment [Line Start → {firstKey.easing}]",
+                style =
+                {
+                    position = Position.Absolute,
+                    left = fromX,
+                    top = TimelineRowHeight * 0.5f - visualHeight * 0.5f,
+                    width = width,
+                    height = visualHeight,
+                    backgroundColor = new StyleColor(selected
+                        ? Color.Lerp(segmentColor, new Color(1f, 0.60f, 0.18f, 0.95f), 0.45f)
+                        : segmentColor),
+                    borderTopWidth = selected ? 1 : 0,
+                    borderBottomWidth = selected ? 1 : 0,
+                    borderTopColor = new StyleColor(new Color(1f, 0.88f, 0.30f, 0.95f)),
+                    borderBottomColor = new StyleColor(new Color(1f, 0.88f, 0.30f, 0.95f))
+                }
+            };
+            bar.RegisterCallback<PointerDownEvent>(e =>
+                HandleSegmentPointerDown(e, null, firstKey, -1, firstKeyIndex));
+            lane.Add(bar);
+
+            if (width >= 56f)
+            {
+                lane.Add(new Label(ShortEasingLabel(firstKey.easing))
+                {
+                    pickingMode = PickingMode.Ignore,
+                    style =
+                    {
+                        position = Position.Absolute,
+                        left = fromX + width * 0.5f - 38f,
+                        top = 1,
+                        width = 76,
+                        height = 12,
+                        fontSize = 8,
+                        unityTextAlign = TextAnchor.MiddleCenter,
+                        color = new StyleColor(selected
+                            ? new Color(1f, 0.84f, 0.38f)
+                            : ResolveEasingLabelColor(firstKey.easing))
                     }
                 });
             }
@@ -646,24 +727,27 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             PointerDownEvent e,
             StoryActorKeyframeData from,
             StoryActorKeyframeData to,
-            int fromIndex)
+            int fromIndex,
+            int toIndex)
         {
             if (e.button != 0 && e.button != 1)
                 return;
 
             _timelinePanel?.Focus();
-            if (ShouldStartTimelineGroupDragFromSegment(e, from, to))
+            if (from != null && ShouldStartTimelineGroupDragFromSegment(e, from, to))
             {
                 BeginTimelineGroupKeyDrag(e);
                 e.StopPropagation();
                 return;
             }
 
-            SelectTimelineSegment(fromIndex, from.property);
-            _timelinePlayheadTime = StoryTransitionSampler.GetKeyTime(from);
+            SelectTimelineSegment(toIndex, to.property);
+            _timelinePlayheadTime = from != null
+                ? StoryTransitionSampler.GetKeyTime(from)
+                : 0f;
             ApplyTimelinePlayheadSample();
             if (e.button == 1)
-                ShowEasingMenu(fromIndex, from.property);
+                ShowEasingMenu(toIndex, to.property);
             else
                 RefreshTimelinePanel();
             RefreshActorInspector();
@@ -724,41 +808,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 StoryStageMoveMotionType.SmootherStep => "Smoother",
                 _ => easing.ToString()
             };
-
-        private void AddBackgroundTransitionMarker(VisualElement lane, StoryBackgroundStateData state)
-        {
-            float x = state.transitionDuration * _timelinePixelsPerSecond;
-            var marker = new VisualElement
-            {
-                style =
-                {
-                    position = Position.Absolute,
-                    left = x - TimelineMarkerSize * 0.5f,
-                    top = (TimelineRowHeight - TimelineMarkerSize) * 0.5f,
-                    width = TimelineMarkerSize,
-                    height = TimelineMarkerSize,
-                    backgroundColor = new StyleColor(new Color(0.45f, 0.78f, 0.55f)),
-                    borderTopWidth = 1,
-                    borderRightWidth = 1,
-                    borderBottomWidth = 1,
-                    borderLeftWidth = 1,
-                    borderTopColor = new StyleColor(Color.black),
-                    borderRightColor = new StyleColor(Color.black),
-                    borderBottomColor = new StyleColor(Color.black),
-                    borderLeftColor = new StyleColor(Color.black)
-                }
-            };
-            marker.RegisterCallback<PointerMoveEvent>(e =>
-            {
-                if ((e.pressedButtons & 1) == 0) return;
-                float laneX = Mathf.Max(0f, e.localPosition.x + marker.resolvedStyle.left);
-                float time = Mathf.Max(0.05f, laneX / Mathf.Max(1f, _timelinePixelsPerSecond));
-                SaveBackgroundStateToCurrent(bg => bg.transitionDuration = time);
-                marker.style.left = time * _timelinePixelsPerSecond - TimelineMarkerSize * 0.5f;
-                e.StopPropagation();
-            });
-            lane.Add(marker);
-        }
 
         private void AddTimelineTick(VisualElement lane, float time, bool withLabel)
         {
@@ -1022,7 +1071,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_selectionKind == StageSelectionKind.Actor && !string.IsNullOrWhiteSpace(_selectedActorKey))
                 return Mathf.Max(1f, StoryTransitionSampler.GetActorTrackDuration(FindActorTrack(layout, _selectedActorKey)));
             if (_selectionKind == StageSelectionKind.Background)
-                return Mathf.Max(1f, StoryTransitionSampler.GetBackgroundTrackDuration(layout?.BackgroundTrack), (layout?.Background ?? _bgState)?.transitionDuration ?? 1f);
+                return Mathf.Max(1f, StoryTransitionSampler.GetBackgroundTrackDuration(layout?.BackgroundTrack));
             if (_selectionKind == StageSelectionKind.Camera)
                 return Mathf.Max(1f, StoryTransitionSampler.GetCameraTrackDuration(layout?.CameraTrackEditable));
             return 1f;
@@ -1505,7 +1554,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 IReadOnlyList<StoryActorKeyframeData> keyframes = GetCurrentTimelineKeyframes();
                 AddPropertyMenuItem(menu, keyframes, StoryActorKeyframeProperty.CameraTarget, "Camera Target");
-                AddPropertyMenuItem(menu, keyframes, StoryActorKeyframeProperty.CameraOffset, "Camera Offset");
+                AddPropertyMenuItem(menu, keyframes, StoryActorKeyframeProperty.CameraOffset, "Camera Position");
                 AddPropertyMenuItem(menu, keyframes, StoryActorKeyframeProperty.CameraZoom, "Camera Zoom");
                 menu.ShowAsContext();
                 return;
@@ -1943,11 +1992,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     return;
 
                 if (property == StoryActorKeyframeProperty.Position)
-                    key.normalizedPosition = state.normalizedPosition;
+                    key.stageLocalPosition = state.stageLocalPosition;
                 else if (property == StoryActorKeyframeProperty.Scale)
                 {
-                    key.scale = ResolveNonZeroScale(state.scale);
-                    key.scaleX = state.scaleX;
+                    float sm = state.scaleMultiplier > 0f ? state.scaleMultiplier : 1f;
+                    key.scale = new Vector2(sm, sm);
                 }
             }, refresh: false);
 
@@ -1985,12 +2034,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 key.property = property;
                 key.timeSeconds = Mathf.Max(0f, time);
                 key.normalizedTime = Mathf.Clamp01(time / Mathf.Max(1f, GetTimelineDuration()));
-                key.easing = state.moveMotion;
-                if (property == StoryActorKeyframeProperty.Position) key.normalizedPosition = state.normalizedPosition;
+                if (property == StoryActorKeyframeProperty.Position) key.stageLocalPosition = state.stageLocalPosition;
                 if (property == StoryActorKeyframeProperty.Scale)
                 {
-                    key.scale = state.scale;
-                    key.scaleX = state.scaleX;
+                    float sm = state.scaleMultiplier > 0f ? state.scaleMultiplier : 1f;
+                    key.scale = new Vector2(sm, sm);
                 }
                 if (property == StoryActorKeyframeProperty.Expression)
                     key.expression = state.ResolvedExpression;
@@ -2063,11 +2111,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 }
                 else if (property == StoryActorKeyframeProperty.BackgroundPosition)
                 {
-                    key.normalizedPosition = state.normalizedOffset;
+                    key.stageLocalPosition = state.stageLocalPosition;
                 }
                 else if (property == StoryActorKeyframeProperty.BackgroundScale)
                 {
-                    key.scale = ResolveNonZeroScale(state.scale);
+                    float sm = state.scaleMultiplier > 0f ? state.scaleMultiplier : 1f;
+                    key.scale = new Vector2(sm, sm);
                 }
 
                 if (selectKey)
@@ -2138,7 +2187,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     if (!string.IsNullOrWhiteSpace(key.cameraTargetActorKey)
                         && _stageState.TryGetValue(key.cameraTargetActorKey, out StoryActorStateData actorState))
                     {
-                        key.cameraSnapshotNormalizedPosition = actorState.normalizedPosition + actorState.EffectiveOffset;
+                        key.cameraSnapshotNormalizedPosition = actorState.stageLocalPosition;
                     }
                     else
                     {
@@ -2147,11 +2196,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 }
                 else if (property == StoryActorKeyframeProperty.CameraOffset)
                 {
-                    key.cameraOffset = state.normalizedOffset;
+                    key.cameraStageLocalPosition = state.stageLocalPosition;
                 }
                 else if (property == StoryActorKeyframeProperty.CameraZoom)
                 {
-                    key.cameraZoom = Mathf.Max(0.01f, state.zoomMultiplier);
+                    key.cameraZoom = Mathf.Max(0.01f, state.zoom);
                 }
 
                 if (selectKey)
@@ -2230,8 +2279,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 && (_selectedTimelineSegmentKeyIndex >= keyframes.Count
                     || keyframes[_selectedTimelineSegmentKeyIndex] == null
                     || keyframes[_selectedTimelineSegmentKeyIndex].property != _selectedTimelineSegmentProperty
-                    || !SupportsTimelineSegment(_selectedTimelineSegmentProperty)
-                    || FindNextKeyIndex(keyframes, _selectedTimelineSegmentKeyIndex, _selectedTimelineSegmentProperty) < 0))
+                    || !SupportsTimelineSegment(_selectedTimelineSegmentProperty)))
             {
                 _selectedTimelineSegmentKeyIndex = -1;
             }
@@ -2304,6 +2352,28 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
 
             return nextIndex;
+        }
+
+        private static int FindPreviousKeyIndex(
+            IReadOnlyList<StoryActorKeyframeData> keyframes,
+            int keyIndex,
+            StoryActorKeyframeProperty property)
+        {
+            if (keyframes == null || keyIndex < 0 || keyIndex >= keyframes.Count)
+                return -1;
+
+            float keyTime = StoryTransitionSampler.GetKeyTime(keyframes[keyIndex]);
+            int prevIndex = -1;
+            float prevTime = -1f;
+            for (int i = 0; i < keyframes.Count; i++)
+            {
+                if (i == keyIndex) continue;
+                StoryActorKeyframeData k = keyframes[i];
+                if (k == null || k.property != property) continue;
+                float t = StoryTransitionSampler.GetKeyTime(k);
+                if (t < keyTime && t > prevTime) { prevTime = t; prevIndex = i; }
+            }
+            return prevIndex;
         }
 
         private void ShowEasingMenu(int keyIndex, StoryActorKeyframeProperty property)
