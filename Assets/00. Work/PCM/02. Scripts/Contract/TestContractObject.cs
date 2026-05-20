@@ -7,10 +7,7 @@ using UnityEngine.Events;
 
 namespace Assets._00._Work.PCM._02._Scripts
 {
-    public class TestContractObject : AbstructContractObject, IPlayer
+    public class TestContractObject : AbstructContractObject
     {
-        [field:SerializeField]public CharcterLikeSO charLike { get; private set; }
-
-        [field:SerializeField]public UnityEvent ChatOpen {  get; private set; }
     }
 }

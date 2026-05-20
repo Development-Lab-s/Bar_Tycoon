@@ -5,7 +5,7 @@ using UnityEngine;
 namespace BBJ.Modules
 {
 
-    public class NULLRenderer : MonoBehaviour, IModule, IRenderer, IAfterInitModule
+    public class NULLRenderer : MonoBehaviour, IModule, IRenderer
     {
         [field: SerializeField] public float FacingDirection { get; private set; } = 1f;
 
@@ -17,12 +17,9 @@ namespace BBJ.Modules
         {
             _owner = owner;
             _renderer = GetComponentInChildren<SpriteRenderer>();
-        }
-
-        public void AfterInit()
-        {
             _movement = _owner.GetModule<IPathMovement>();
         }
+
         private void Update()
         {
             FlipController(_movement.Velocity.x);
@@ -30,8 +27,8 @@ namespace BBJ.Modules
         public void Flip()
         {
             FacingDirection *= -1;
-            float targetYRotation = FacingDirection > 0 ? 0 : 180f;
-            _owner.transform.rotation = Quaternion.Euler(0, targetYRotation, 0);
+            float targetYRotation = FacingDirection > 0 ? 180f: 0;
+            transform.rotation = Quaternion.Euler(0, targetYRotation, 0);
         }
 
         public void FlipController(float xMoveDirection)

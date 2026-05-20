@@ -9,7 +9,7 @@ namespace BBJ.UI
         [SerializeField] private Image    _icon;
         [SerializeField] private TMP_Text _label;
 
-        private void Awake() { gameObject.SetActive(false); }
+        private void Start() { gameObject.SetActive(false); }
 
         public void OnOpen()  { gameObject.SetActive(true); }
         public void OnClose() { gameObject.SetActive(false); }
@@ -18,14 +18,16 @@ namespace BBJ.UI
         {
             if (_icon == null) return;
             _icon.sprite = sprite;
-            _icon.gameObject.SetActive(sprite != null);
+            _icon.gameObject.SetActive(true);
+            _label.gameObject.SetActive(false);
         }
 
         public void SetText(string text)
         {
             if (_label == null) return;
             _label.text = text;
-            _label.gameObject.SetActive(!string.IsNullOrEmpty(text));
+            _icon.gameObject.SetActive(false);
+            _label.gameObject.SetActive(true);
         }
     }
 }

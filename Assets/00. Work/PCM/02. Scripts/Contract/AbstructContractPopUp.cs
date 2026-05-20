@@ -14,7 +14,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
     {
         None,Open, Close 
     }
-    public abstract class AbstructContractPopUp : MonoBehaviour, IAbstructContractPopUp , IAfterInitModule, IModule
+    public abstract class AbstructContractPopUp : MonoBehaviour, IAbstructContractPopUp
     {
         [SerializeField] protected float animDuration = 0.1f;
         [SerializeField] protected float waitDuration = 2.0f; // 자동 종료 시 대기 시간
@@ -26,14 +26,14 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         private MotionHandle _motionHandle;
 
         public bool isOpen { get; set; }
-        public virtual void Initialize(ModuleOwner owner)
+
+        protected virtual void Awake()
         {
             _originScale = transform.localScale;
             transform.localScale = Vector3.zero;
         }
-
-        public virtual void AfterInit()
-        {
+        public virtual void Start()
+        {            
             gameObject.SetActive(false);
         }
         public void Open(bool isAutoClose = false)
@@ -111,6 +111,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
                 _motionHandle.Cancel();
             }
         }
+
 
     }
 }

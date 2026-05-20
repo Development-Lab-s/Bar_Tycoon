@@ -51,7 +51,7 @@ MonoBehaviour:
   - {fileID: 7387454450536885738}
   - {fileID: 3026351357789893678}
   - {fileID: 1909526257700839545}
-  _scheduleTriggerChannel: {fileID: 11400000, guid: 72e1fc65f4671364c9f01b3cc24fd5c3, type: 2}
+  _scheduleChannel: {fileID: 11400000, guid: 72e1fc65f4671364c9f01b3cc24fd5c3, type: 2}
 --- !u!1 &230401305694965952
 GameObject:
   m_ObjectHideFlags: 0
@@ -300,7 +300,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8234982f91f15eb4e8629453e20b3235, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.Modules.CustomerQueueModule
-  _scheduleTriggerChannel: {fileID: 11400000, guid: 72e1fc65f4671364c9f01b3cc24fd5c3, type: 2}
+  _scheduleChannel: {fileID: 11400000, guid: 72e1fc65f4671364c9f01b3cc24fd5c3, type: 2}
 --- !u!1 &6461117872120118446
 GameObject:
   m_ObjectHideFlags: 0
@@ -406,6 +406,14 @@ PrefabInstance:
       propertyPath: _durationSO
       value: 
       objectReference: {fileID: 11400000, guid: e00740a932bcf264a9001d6afe2568f7, type: 2}
+    - target: {fileID: 2625602195367912941, guid: fed35b244756d20418715cf09921be95, type: 3}
+      propertyPath: _completionHandlers.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2625602195367912941, guid: fed35b244756d20418715cf09921be95, type: 3}
+      propertyPath: '_completionHandlers.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 92924fc6d0e843e4aa700416741ad857, type: 2}
     - target: {fileID: 6036837462409196458, guid: fed35b244756d20418715cf09921be95, type: 3}
       propertyPath: m_Name
       value: WorkModule

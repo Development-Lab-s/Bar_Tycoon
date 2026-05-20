@@ -12,6 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 213ce22313033f64e83377bd5902ea1f, type: 3}
   m_Name: Cian
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSO
+  currentLevel: 1
+  currentExp: 0
+  maxLevel: 10
   characterName: Cian
   characterPortrait: {fileID: 0}
-  dialogueGroups: []
+  dialogueGroups:
+  - unlockLevel: 0
+    dialogues:
+    - context: 1
+  - unlockLevel: 2
+    dialogues:
+    - context: 2
+  - unlockLevel: 3
+    dialogues:
+    - context: 3

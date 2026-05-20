@@ -13,7 +13,7 @@ namespace BBJ.Modules
 
         public void Initialize(ModuleOwner owner)
         {
-            _uis = GetComponentsInChildren<IAgentUI>()
+            _uis = GetComponentsInChildren<IAgentUI>(true)
                 .ToDictionary(ui => ui.GetType());
         }
 
