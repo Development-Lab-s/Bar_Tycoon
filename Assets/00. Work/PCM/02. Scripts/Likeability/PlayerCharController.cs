@@ -18,13 +18,13 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
 
 
     [Header("연동할 UI (선택 사항)")]
-    public Slider expSlider { get; private set; }
-
     public Image characterImage { get; private set; }
     public Action<int> levelTrigger { get; private set; }
 
 
     private ModuleOwner _owner;
+    private int maxExp;
+
     public void Initialize(ModuleOwner owner)
     {
         _owner = owner;
@@ -40,17 +40,10 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     {
         if (registerSO != null) registerSO.Unregister(this);
     }
-
-    private void Start()
-    {
-        UpdateUI();
-    }
-
     public float GetExpRatio()
     {
-        if (characterData.currentLevel >= characterData.maxLevel) return 1f;
-        int maxExp = characterData.GetMaxExpForLevel(characterData.currentLevel);
-        return (float)characterData.currentExp / maxExp;
+        float ratio = characterData.GetTotalProgressRatio();
+        return ratio ;
     }
     public void GiveItem(int expAmount)
     {
@@ -74,9 +67,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
         //{
         //    PlayLevelUpDialogue();
         //}
-
-        UpdateUI();
-    }
+}
 
     public string PlayClickUpDialogue()
     {
@@ -97,12 +88,4 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
         }
         return "";
     }
-
-    private void UpdateUI()
-    {
-        if (expSlider != null)
-        {
-            expSlider.value = GetExpRatio();
-        }
-    } 
 }
