@@ -6,7 +6,7 @@ public class CharacterSO : ScriptableObject
 {
     public int currentLevel = 1;
     public int currentExp;
-    public int maxLevel = 100;
+    public int maxLevel = 10;
     [System.Serializable]
     public struct DialogueData
     {
@@ -45,7 +45,28 @@ public class CharacterSO : ScriptableObject
 
     public int GetMaxExpForLevel(int level)
     {
-        return level * 50;
+        return level * level *50;
+    }
+    public int GetTotalExpUpToLevel(int level)
+    {
+        int total = 0;
+        for (int i = 1; i < level; i++)
+        {
+            total += GetMaxExpForLevel(i);
+        }
+        return total;
+    }
+
+    public float GetTotalProgressRatio()
+    {
+        if (currentLevel >= maxLevel) return 1f;
+
+        float levelBaseRatio = (float)(currentLevel - 1) / (maxLevel - 1);
+        int maxExpForCurrentLevel = GetMaxExpForLevel(currentLevel);
+        if (maxExpForCurrentLevel <= 0) return levelBaseRatio;
+        float currentLevelExpRatio = (float)currentExp / maxExpForCurrentLevel;
+        float expMicroRatio = currentLevelExpRatio / (maxLevel - 1);
+        return levelBaseRatio + expMicroRatio;
     }
 }
 

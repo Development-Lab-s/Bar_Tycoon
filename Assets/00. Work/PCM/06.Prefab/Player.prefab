@@ -102,6 +102,7 @@ GameObject:
   - component: {fileID: 8878427590658111351}
   - component: {fileID: 1105060361522575257}
   - component: {fileID: 4327823377658395829}
+  - component: {fileID: 3188582136279272211}
   m_Layer: 19
   m_Name: PlayerEvent
   m_TagString: Untagged
@@ -136,7 +137,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8fa16224a25d3e44b7e98c54ce16c27, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Assets._00._Work.PCM._02._Scripts.TestContractObject
-  OnClickEvent:
+  <OnClickEvent>k__BackingField:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 6792289985286197206}
@@ -152,10 +153,21 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-  <charLike>k__BackingField: {fileID: 11400000, guid: 4f2108c16c5862742b43c53b3bd65d75, type: 2}
-  <ChatOpen>k__BackingField:
+  <OnLike>k__BackingField:
     m_PersistentCalls:
       m_Calls:
+      - m_Target: {fileID: 3188582136279272211}
+        m_TargetAssemblyTypeName: PlayerCharController, Assembly-CSharp
+        m_MethodName: GiveItem
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
       - m_Target: {fileID: 6792289985286197206}
         m_TargetAssemblyTypeName: Assets._00._Work.PCM._02._Scripts.Contract.ContractChat,
           Assembly-CSharp
@@ -215,6 +227,37 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 2.5774736}
   m_EdgeRadius: 0
+--- !u!114 &3188582136279272211
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6126224826346222347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33f6139e5e99b1843ab5aa78c4d790b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCharController
+  <characterData>k__BackingField: {fileID: 11400000, guid: 7e6e7524e8326ec4cad0244672206abe, type: 2}
+  <registerSO>k__BackingField: {fileID: 11400000, guid: f761594e970ed9f48abfa7cbf9ebefd6, type: 2}
+  <CharlikeSo>k__BackingField: {fileID: 11400000, guid: 4cfa318de1e40f847bdf57b1e2ede9ea, type: 2}
+  <ChatOpen>k__BackingField:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 6792289985286197206}
+        m_TargetAssemblyTypeName: Assets._00._Work.PCM._02._Scripts.Contract.ContractChat,
+          Assembly-CSharp
+        m_MethodName: Message
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &6343629743945905020
 GameObject:
   m_ObjectHideFlags: 0
