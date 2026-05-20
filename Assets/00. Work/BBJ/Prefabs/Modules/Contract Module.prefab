@@ -9,7 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5090612577067697272}
-  - component: {fileID: 319116588875143089}
+  - component: {fileID: 2772086232929873412}
+  - component: {fileID: 8819080869063847965}
   m_Layer: 0
   m_Name: Contract Module
   m_TagString: Untagged
@@ -32,7 +33,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &319116588875143089
+--- !u!61 &2772086232929873412
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3059886861373003527}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0.5310352}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.86441666, y: 1.0903888}
+  m_EdgeRadius: 0
+--- !u!114 &8819080869063847965
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,9 +88,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3059886861373003527}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8fa16224a25d3e44b7e98c54ce16c27, type: 3}
+  m_Script: {fileID: 11500000, guid: 7c085c444edcc40498a5b461046f23f7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Assets._00._Work.PCM._02._Scripts.TestContractObject
+  m_EditorClassIdentifier: Assembly-CSharp::BBJ.Modules.AgentInputModule
   OnClickEvent:
     m_PersistentCalls:
       m_Calls: []

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace BBJ.Particle
 {
-    [CreateAssetMenu(fileName = "CostParticleConfig", menuName = "Goat/CostParticleConfig", order = 0)]
+    [CreateAssetMenu(fileName = "CostParticleConfig", menuName = "BBJ/CostParticleConfig", order = 0)]
     public class CostParticleConfigSO : ScriptableObject
     {
         public List<CostTypeConfig> costTypes = new();
