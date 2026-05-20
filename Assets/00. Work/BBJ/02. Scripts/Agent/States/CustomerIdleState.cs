@@ -6,6 +6,7 @@ using BBJ.Modules;
 using BBJ.Movement;
 using BBJ.Schedule;
 using BBJ.UI;
+using UnityEngine;
 
 namespace BBJ.States
 {
@@ -46,7 +47,8 @@ namespace BBJ.States
             if (IsWorking()) { HandleWorkPhaseStarted(); return; }
             if (IsMoving())  { HandleMoveStarted();      return; }
 
-            _statusUI?.SetText(GetWaitText());
+            Debug.Log("Customer Idle 상태");
+            _statusUI.SetText(GetWaitText());
             _uiModule.SetActiveUI<AgentStatusUI>(true);
 
             _movement.OnMoveStarted        += HandleMoveStarted;

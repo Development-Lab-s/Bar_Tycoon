@@ -38,7 +38,6 @@ namespace BBJ.Customer
             UtilDebugger.AssertAllAssigned(this);
             _activeCount = 0;
             _customerChannel.AddListener<CustomerLeftEvent>(HandleCustomerLeft);
-            _poolInitializer.PoolManager.InitializePool(_poolInitializer.transform);
         }
 
         private void OnDestroy()
