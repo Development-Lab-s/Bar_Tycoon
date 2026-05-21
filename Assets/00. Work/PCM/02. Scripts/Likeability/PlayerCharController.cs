@@ -1,4 +1,5 @@
 using _00._Work._Resources._02._Scripts.Modules;
+using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -28,6 +29,17 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     public void Initialize(ModuleOwner owner)
     {
         _owner = owner;
+    }
+    public void Awake()
+    {
+        //SaveManager.DeleteSave($"{characterData.id}.save", "Characters");
+        if (!SaveManager.IsSaveFile($"{characterData.id}.save","Characters"))return;
+        CharlikeabilitySave saveData =
+            (CharlikeabilitySave)SaveManager.Load(
+                typeof(CharlikeabilitySave),
+                $"{characterData.id}.save",
+                "Characters");
+        characterData.LoadSaveData(saveData);
     }
 
     private void OnEnable()
@@ -62,12 +74,13 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
             //isLeveledUp = true;
             Debug.Log($"레벨업! 현재 레벨: {characterData.currentLevel}");
         }
+        SaveManager.Save(characterData.GetSaveData(), $"{characterData.id}.save", "Characters");
 
         //if (isLeveledUp)
         //{
         //    PlayLevelUpDialogue();
         //}
-}
+    }
 
     public string PlayClickUpDialogue()
     {

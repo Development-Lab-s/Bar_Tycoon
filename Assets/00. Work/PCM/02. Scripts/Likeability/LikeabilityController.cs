@@ -1,6 +1,7 @@
 using _00._Work._Resources._02._Scripts.Agents.Players;
 using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work._Resources._02._Scripts.Systems;
+using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
 using _00._Work.PCM._02._Scripts;
 using Systems;
 using TMPro;
@@ -22,7 +23,26 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
         _image = GetComponent<Image>();
         _text = GetComponentInChildren<TextMeshProUGUI>();
         mainCanvas = GetComponentInParent<Canvas>();
+        LoadItem();
         ChangedText();
+    }
+    private void LoadItem()
+    {
+        //SaveManager.DeleteSave($"{_itemSO.ItemName}.save", "Items");
+        if (!SaveManager.IsSaveFile(
+            $"{_itemSO.ItemName}.save",
+            "Items"))
+        {
+            return;
+        }
+
+        CharItemSaveData saveData =
+            (CharItemSaveData)SaveManager.Load(
+                typeof(CharItemSaveData),
+                $"{_itemSO.ItemName}.save",
+                "Items");
+
+        _itemSO.LoadSaveData(saveData);
     }
     private void OnEnable()
     {
