@@ -58,6 +58,8 @@ namespace _00._Work._Resources._02._Scripts.Systems.SaveSystem
 
             using FileStream saveFile = File.Create(filePath);
             _dataSaver.Save(objectToSave, saveFile);
+
+            Debug.Log(Application.persistentDataPath);
         }
 
         // 디스크에서 저장된 파일을 불러옵니다.
@@ -65,7 +67,6 @@ namespace _00._Work._Resources._02._Scripts.Systems.SaveSystem
         public static object Load(System.Type typeToLoad, string fileName = DefaultFileName, string subFolder = DefaultSubFolder)
         {
             string filePath = GetSaveFilePath(fileName, subFolder);
-
             if (!File.Exists(filePath))
             {
                 Debug.LogError("SaveManager: Save file not found at: " + filePath);
@@ -89,21 +90,36 @@ namespace _00._Work._Resources._02._Scripts.Systems.SaveSystem
             Debug.LogError("SaveManager: Save file not found at: " + savePath + fileName);
             return string.Empty;
         }
-
-        // 디스크에서 저장된 파일을 삭제합니다.
-        // 파일 이름과 폴더를 매개변수로 전달하십시오.
-        public static void DeleteSave(string fileName, string subFolder = DefaultSubFolder)
+        public static void DeleteSave(string fileName,string subFolder = DefaultSubFolder)
         {
-            string savePath = GetSavePath(subFolder);
+            string filePath = GetSaveFilePath(fileName, subFolder);
 
-            if (File.Exists(savePath + fileName))
+            if (File.Exists(filePath))
             {
-                File.Delete(savePath + fileName);
+                File.Delete(filePath);
+
+                Debug.Log($"Deleted Save : {filePath}");
             }
             else
             {
-                Debug.LogError("SaveManager: Save file not found at: " + savePath + fileName);
+                Debug.LogError(
+                    $"Save file not found at : {filePath}");
             }
         }
+        // 디스크에서 저장된 파일을 삭제합니다.
+        // 파일 이름과 폴더를 매개변수로 전달하십시오.
+        //public static void DeleteSave(string fileName, string subFolder = DefaultSubFolder)
+        //{
+        //    string savePath = GetSavePath(subFolder);
+
+        //    if (File.Exists(savePath + fileName))
+        //    {
+        //        File.Delete(savePath + fileName);
+        //    }
+        //    else
+        //    {
+        //        Debug.LogError("SaveManager: Save file not found at: " + savePath + fileName);
+        //    }
+        //}
     }
 }

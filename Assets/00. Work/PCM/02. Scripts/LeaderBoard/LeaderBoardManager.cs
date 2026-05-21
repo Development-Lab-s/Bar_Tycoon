@@ -1,19 +1,28 @@
-using UnityEngine;
-using Unity.Services.Core;
-using Unity.Services.Authentication;
-using Unity.Services.Leaderboards;
-using UnityEngine.SocialPlatforms.Impl;
-using System;
-using System.Threading.Tasks;
-using UnityEngine.InputSystem;
 using Gamelib.EventSystem;
-using UnityEngine.Rendering;
-using Random = UnityEngine.Random;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+using Unity.Services.Leaderboards;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class LeaderBoardManager : MonoBehaviour
 {
+    [System.Serializable]
+    public class LeaderboardExtraData
+    {
+        public int playerLevel;
+        public string favoriteCharacter;
+    }
+
     [SerializeField]private EventChannelSO _eventChannel;
     private int limit = 50;
+    public List<GameObject> RankList = new List<GameObject>();
+    string favoriteCharacter;
+    int level = 10;
     async void Start()
     {
         try
@@ -45,14 +54,32 @@ public class LeaderBoardManager : MonoBehaviour
     {
         _ = NameSetAsync(pyName);
     }
-    private async Task ScoreAddAsync(int level)
+    private async Task ScoreAddAsync(int gold)
     {
-        level = Random.Range(0, level);
-        Debug.Log($"님 랜덤 점수{level}");
-        await LeaderboardsService.Instance.AddPlayerScoreAsync("Bar_Tycoon",level);
+        LeaderboardExtraData extraData = new LeaderboardExtraData
+        {
+            playerLevel = level,
+            favoriteCharacter = favoriteCharacter
+        };
+        string jsonMetadata = JsonConvert.SerializeObject(extraData);
+
+        var options = new AddPlayerScoreOptions
+        {
+            Metadata = new Dictionary<string, string> { { "extra_info", jsonMetadata } }
+        };
+
+        try
+        {
+            var scoreEntry = await LeaderboardsService.Instance.AddPlayerScoreAsync("Bar_Tycoon",gold, options);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[리더보드] 제출 실패: {e.Message}");
+        }
     }
     private async Task NameSetAsync(string pyName)
     {
+        Debug.Log(pyName);
         await AuthenticationService.Instance.UpdatePlayerNameAsync(pyName);
     }
     public async Task GetMyLeaderboardInfo()
@@ -60,14 +87,47 @@ public class LeaderBoardManager : MonoBehaviour
         try
         {
             string myid = AuthenticationService.Instance.PlayerId;
+
             var scoresResponse = await LeaderboardsService.Instance.GetScoresAsync("Bar_Tycoon", new GetScoresOptions
             {
                 Offset = 0,
-                Limit = limit
+                Limit = limit 
             });
+            foreach (var entry in scoresResponse.Results)
+            {
+                string playerName = entry.PlayerName;
+                double gold = entry.Score;
+                int rank = entry.Rank + 1;
 
-            _eventChannel.RaiseEvent(new LeaderBoardEvent(myid, scoresResponse.Results));
-            //가져온 리스트를 루프 돌며 처리하거나, 리스트 전용 이벤트를 발생시킵니다.
+                int level = 1;
+                string favoriteChar = "None";
+
+                if (entry.Metadata != null)
+                {
+                    try
+                    {
+                        string jsonMetadata = entry.Metadata;
+
+                        if (jsonMetadata.Contains("playerLevel"))
+                        {
+                            LeaderboardExtraData extraData = JsonConvert.DeserializeObject<LeaderboardExtraData>(jsonMetadata);
+
+                            level = extraData.playerLevel;
+                            favoriteChar = extraData.favoriteCharacter;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"메타데이터 파싱 실패 (기존 데이터 포맷 다름): {ex.Message}");
+                    }
+                }
+                Debug.Log($"[{rank}등] {playerName} | 골드: {gold} | 레벨: {level} | 최애캐: {favoriteChar}");
+
+                if (entry.PlayerId == myid)
+                {
+                    Debug.Log("이 데이터는 현재 로그인한 내 리더보드 정보입니다!");
+                }
+            }
         }
         catch (Exception e)
         {
