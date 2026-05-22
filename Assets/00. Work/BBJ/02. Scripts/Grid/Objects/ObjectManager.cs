@@ -4,26 +4,27 @@ using Gamelib.EventSystem;
 using System.Collections.Generic;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
+using System;
 
 namespace BBJ.GridSystem.Objects
 {
     public class ObjectManager : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private GridManager           _gridManager;
-        [SerializeField] private StageLayoutSO         _stageLayout;
-        [SerializeField] private ObjectDataRegistrySO  _registry;
+        [SerializeField] private GridManager _gridManager;
+        [SerializeField] private StageLayoutSO _stageLayout;
+        [SerializeField] private ObjectDataRegistrySO _registry;
 
         [Header("Event Channels")]
         [SerializeField] private EventChannelSO _objectSpawnChannel;
 
-        private const string SaveFile   = "stage.save";
+        private const string SaveFile = "stage.save";
         private const string SaveFolder = "BarTycoon";
 
         private readonly List<PlacedObstacleEntrySave> _placed = new();
 
-        private void Awake()  { SubEventChannel(); }
-        private void Start()  { LoadStageLayout(); }
+        private void Awake() { SubEventChannel(); }
+        private void Start() { LoadStageLayout(); }
         private void OnDestroy() { UnSubEventChannel(); }
 
         private void LoadStageLayout()
@@ -58,7 +59,7 @@ namespace BBJ.GridSystem.Objects
                 if (obj is Workplace wp) workplaces.Add(wp);
                 if (entry.obstacleData != null && !string.IsNullOrEmpty(entry.obstacleData.Id))
                     _placed.Add(new PlacedObstacleEntrySave
-                        { ObjectDataId = entry.obstacleData.Id, CellIndex = entry.cellIndex, FlipX = entry.flipX });
+                    { ObjectDataId = entry.obstacleData.Id, CellIndex = entry.cellIndex, FlipX = entry.flipX });
             }
             foreach (var wp in workplaces)
                 wp.RefreshWorkPoints(_gridManager);
@@ -78,7 +79,7 @@ namespace BBJ.GridSystem.Objects
 
         private TycoonObject PlaceObjectInternal(ObjectDataSO data, Vector2Int cellIndex, bool flipX)
         {
-            Vector3      worldPos    = _gridManager.CellToWorld(cellIndex);
+            Vector3 worldPos = _gridManager.CellToWorld(cellIndex);
             TycoonObject tycoonObject = null;
 
             if (data?.WorkplacePrefab != null)
@@ -111,20 +112,27 @@ namespace BBJ.GridSystem.Objects
         {
             _objectSpawnChannel?.RemoveListener<ObjectSpawnEvent>(HandleSpawnObject);
         }
-        private void HandleSpawnObject(ObjectSpawnEvent evt) => PlaceObject(evt.ObjectData, evt.CellIndex, evt.FlipX);
+        private void HandleSpawnObject(ObjectSpawnEvent evt)
+        {
+            var obj = PlaceObject(evt.ObjectData, evt.CellIndex, evt.FlipX);
+            evt.OnSpawnEnded(obj.transform.position);
+        }
     }
 
     public class ObjectSpawnEvent : GameEvent
     {
         public ObjectDataSO ObjectData { get; private set; }
-        public Vector2Int   CellIndex  { get; private set; }
-        public bool         FlipX      { get; private set; }
+        public Vector2Int CellIndex { get; private set; }
+        public bool FlipX { get; private set; }
+        public event Action<Vector3> CallBack;
+        public void OnSpawnEnded(Vector3 pos) => CallBack?.Invoke(pos);
 
-        public ObjectSpawnEvent Init(ObjectDataSO data, Vector2Int cellIndex, bool flipX = false)
+        public ObjectSpawnEvent Init(ObjectDataSO data, Vector2Int cellIndex, bool flipX = false, Action<Vector3> callback = default)
         {
             ObjectData = data;
-            CellIndex  = cellIndex;
-            FlipX      = flipX;
+            CellIndex = cellIndex;
+            FlipX = flipX;
+            CallBack = callback;
             return this;
         }
     }
