@@ -31,7 +31,7 @@ namespace BBJ.WorkplaceSystem.Modules
             yield return new WaitForSeconds(GetDuration(worker));
         }
 
-        public async UniTask ExecuteWorkAsync(ModuleOwner worker, CancellationToken ct)
+        public async UniTask RunAsync(ModuleOwner worker, CancellationToken ct)
         {
             float duration = GetDuration(worker);
             float elapsed  = 0f;
@@ -41,8 +41,18 @@ namespace BBJ.WorkplaceSystem.Modules
                 elapsed += Time.fixedDeltaTime;
                 OnProgressChanged?.Invoke(elapsed / duration);
             }
+        }
+
+        public async UniTask ExecuteWorkAsync(ModuleOwner worker, CancellationToken ct)
+        {
+            await RunAsync(worker, ct);
+            NotifyCompleted(worker, worker.transform.position);
+        }
+
+        public void NotifyCompleted(ModuleOwner worker, Vector3 position)
+        {
             foreach (var handler in _completionHandlers)
-                handler.OnCompleted(worker);
+                handler.OnCompleted(worker, position);
         }
     }
 }

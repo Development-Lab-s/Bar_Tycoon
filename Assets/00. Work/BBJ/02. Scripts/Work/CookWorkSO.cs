@@ -1,6 +1,7 @@
 using BBJ.Actions;
 using BBJ.Modules;
 using BBJ.Order;
+using BBJ.Schedule;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using System;
@@ -24,6 +25,7 @@ namespace BBJ.Work
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(
                 ctx.Token, ticket.Token);
 
+            var role    = executor.GetModule<SchedulingModule>()?.InteractRole;
             var kitchen = _ctx.WorkplaceRegister
                 .GetCandidates(executor.transform.position, _ctx.KitchenType)
                 .FirstOrDefault(k => k.GetModule<OccupancyModule>()?.TryReserve(executor, null) == true);
@@ -38,7 +40,7 @@ namespace BBJ.Work
             try
             {
                 await actions.Execute<MoveAction>(
-                    a => a.ExecuteAsync(kitchen.GetNearestPoint(executor.transform.position), linked.Token));
+                    a => a.ExecuteAsync(kitchen.GetNearestPoint(role, executor.transform.position), linked.Token));
                 ticket.TryStartProgress(executor);
                 foodContext?.SetFood(ticket.Ordered);
 
