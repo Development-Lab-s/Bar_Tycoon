@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using BBJ.GridSystem.Objects;
+using BBJ.WorkplaceSystem;
 
 namespace BBJ.GridSystem.Objects.Editor
 {
@@ -31,7 +32,7 @@ namespace BBJ.GridSystem.Objects.Editor
         // 에디터 전용 상태
         // ──────────────────────────────────────────────
         private int    _selectedIndex = -1;
-        private Dictionary<ObjectData, Texture2D> _previewCache = new Dictionary<ObjectData, Texture2D>();
+        private Dictionary<ObjectDataSO, Texture2D> _previewCache = new Dictionary<ObjectDataSO, Texture2D>();
 
         private Vector2 _panOffset      = Vector2.zero;
         private float   _zoom           = 1f;
@@ -40,9 +41,7 @@ namespace BBJ.GridSystem.Objects.Editor
         private Vector2 _panStartMouse;
         private Vector2 _panStartOffset;
 
-        private Dictionary<ObjectData, Sprite> _spriteCache = new Dictionary<ObjectData, Sprite>();
-
-        private List<ObjectData>  _paletteItems         = new List<ObjectData>();
+        private List<ObjectDataSO>  _paletteItems         = new List<ObjectDataSO>();
         private int               _selectedPaletteIndex = -1;
         private Vector2           _paletteScroll        = Vector2.zero;
 
@@ -66,8 +65,13 @@ namespace BBJ.GridSystem.Objects.Editor
         private void OnDisable()
         {
             _previewCache.Clear();
-            _spriteCache.Clear();
             _selectedIndex = -1;
+        }
+
+        private static TileSetData GetTileSetData(ObjectDataSO od)
+        {
+            if (od?.WorkplacePrefab == null) return null;
+            return od.WorkplacePrefab.GetComponent<TycoonObject>()?.TileSetData;
         }
 
         private void ComputeBounds(List<PlacedObstacleEntry> entries)
@@ -86,8 +90,10 @@ namespace BBJ.GridSystem.Objects.Editor
                 if (en.cellIndex.x > maxX) maxX = en.cellIndex.x;
                 if (en.cellIndex.y < minY) minY = en.cellIndex.y;
                 if (en.cellIndex.y > maxY) maxY = en.cellIndex.y;
-                if (en.obstacleData == null || en.obstacleData.BlockedOffsets == null) continue;
-                foreach (var offset in en.obstacleData.BlockedOffsets)
+                if (en.obstacleData == null) continue;
+                var tsd = GetTileSetData(en.obstacleData);
+                if (tsd?.BlockedOffsets == null) continue;
+                foreach (var offset in tsd.BlockedOffsets)
                 {
                     int bx = en.cellIndex.x + offset.x, by = en.cellIndex.y + offset.y;
                     if (bx < minX) minX = bx;
@@ -146,25 +152,18 @@ namespace BBJ.GridSystem.Objects.Editor
             }, fill, border);
         }
 
-        private Texture2D GetPreview(ObjectData data)
+        private Texture2D GetPreview(ObjectDataSO data)
         {
-            if (data == null || data.Prefab == null) return null;
+            if (data == null || data.WorkplacePrefab == null) return null;
             if (_previewCache.TryGetValue(data, out Texture2D tex) && tex != null) return tex;
-            tex = AssetPreview.GetAssetPreview(data.Prefab);
+            tex = AssetPreview.GetAssetPreview(data.WorkplacePrefab);
             if (tex != null) _previewCache[data] = tex;
             return tex;
         }
 
-        private Sprite GetSprite(ObjectData data)
-        {
-            if (data == null || data.Prefab == null) return null;
-            if (_spriteCache.TryGetValue(data, out Sprite s) && s != null) return s;
-            var sr = data.Prefab.GetComponentInChildren<SpriteRenderer>();
-            if (sr != null && sr.sprite != null) _spriteCache[data] = sr.sprite;
-            return sr?.sprite;
-        }
+        private static Sprite GetSprite(ObjectDataSO data) => data?.Icon;
 
-        private void DrawSpriteAtCell(ObjectData data, Vector2 cellCenter)
+        private void DrawSpriteAtCell(ObjectDataSO data, Vector2 cellCenter)
         {
             if (data == null) return;
             Sprite s = GetSprite(data);
@@ -238,7 +237,6 @@ namespace BBJ.GridSystem.Objects.Editor
                         if (idx >= 0)
                         {
                             Undo.RecordObject(layout, "Delete Entry");
-                            _spriteCache.Remove(layout.entries[idx].obstacleData);
                             _previewCache.Remove(layout.entries[idx].obstacleData);
                             layout.entries.RemoveAt(idx);
                             if (_selectedIndex == idx) _selectedIndex = -1;
@@ -285,7 +283,6 @@ namespace BBJ.GridSystem.Objects.Editor
                 _selectedIndex >= 0 && _selectedIndex < layout.entries.Count)
             {
                 Undo.RecordObject(layout, "Delete Entry");
-                _spriteCache.Remove(layout.entries[_selectedIndex].obstacleData);
                 _previewCache.Remove(layout.entries[_selectedIndex].obstacleData);
                 layout.entries.RemoveAt(_selectedIndex);
                 _selectedIndex = -1;
@@ -305,8 +302,10 @@ namespace BBJ.GridSystem.Objects.Editor
                 var blockedSet = new HashSet<Vector2Int>();
                 foreach (var en in layout.entries)
                 {
-                    if (en.obstacleData == null || en.obstacleData.BlockedOffsets == null) continue;
-                    foreach (var offset in en.obstacleData.BlockedOffsets)
+                    if (en.obstacleData == null) continue;
+                    var entryTsd = GetTileSetData(en.obstacleData);
+                    if (entryTsd?.BlockedOffsets == null) continue;
+                    foreach (var offset in entryTsd.BlockedOffsets)
                         blockedSet.Add(en.cellIndex + offset);
                 }
 
@@ -354,7 +353,7 @@ namespace BBJ.GridSystem.Objects.Editor
             var entry = layout.entries[_selectedIndex];
 
             // AssetPreview 128×128
-            if (entry.obstacleData != null && entry.obstacleData.Prefab != null)
+            if (entry.obstacleData != null && entry.obstacleData.WorkplacePrefab != null)
             {
                 Texture2D preview = GetPreview(entry.obstacleData);
                 if (preview != null)
@@ -391,13 +390,12 @@ namespace BBJ.GridSystem.Objects.Editor
 
             // obstacleData 필드
             EditorGUI.BeginChangeCheck();
-            var newData = (ObjectData)EditorGUILayout.ObjectField(
-                "obstacleData", entry.obstacleData, typeof(ObjectData), false);
+            var newData = (ObjectDataSO)EditorGUILayout.ObjectField(
+                "obstacleData", entry.obstacleData, typeof(ObjectDataSO), false);
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RecordObject(layout, "Edit obstacleData");
                 _previewCache.Remove(entry.obstacleData);
-                _spriteCache.Remove(entry.obstacleData);
                 PlacedObstacleEntry modified = entry;
                 modified.obstacleData = newData;
                 layout.entries[_selectedIndex] = modified;
@@ -452,11 +450,11 @@ namespace BBJ.GridSystem.Objects.Editor
                 {
                     _paletteItems.Clear();
                     _selectedPaletteIndex = -1;
-                    string[] guids = AssetDatabase.FindAssets("t:ObjectData");
+                    string[] guids = AssetDatabase.FindAssets("t:ObjectDataSO");
                     foreach (string guid in guids)
                     {
                         string path = AssetDatabase.GUIDToAssetPath(guid);
-                        var data = AssetDatabase.LoadAssetAtPath<ObjectData>(path);
+                        var data = AssetDatabase.LoadAssetAtPath<ObjectDataSO>(path);
                         if (data != null) _paletteItems.Add(data);
                     }
                     AssetPreview.SetPreviewTextureCacheSize(
@@ -531,13 +529,13 @@ namespace BBJ.GridSystem.Objects.Editor
             bool needsRepaint = false;
             foreach (var en in layout.entries)
             {
-                if (en.obstacleData != null && en.obstacleData.Prefab != null
+                if (en.obstacleData != null && en.obstacleData.WorkplacePrefab != null
                     && GetPreview(en.obstacleData) == null)
                     needsRepaint = true;
             }
             foreach (var item in _paletteItems)
             {
-                if (item != null && item.Prefab != null && GetPreview(item) == null)
+                if (item != null && item.WorkplacePrefab != null && GetPreview(item) == null)
                     needsRepaint = true;
             }
             if (needsRepaint) Repaint();

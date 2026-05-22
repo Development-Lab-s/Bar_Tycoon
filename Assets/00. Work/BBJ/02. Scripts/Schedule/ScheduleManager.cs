@@ -1,3 +1,4 @@
+using BBJ.EventSystem;
 using BBJ.Order;
 using BBJ.Register;
 using BBJ.Staff;
@@ -12,20 +13,36 @@ namespace BBJ.Schedule
     {
         [SerializeField] private ScheduleRegisterSO _scheduleRegister;
         [SerializeField] private EventChannelSO     _scheduleChannel;
+        [SerializeField] private EventChannelSO     _sceneChannel;
 
         private readonly Queue<PendingRequest> _pending = new();
+        private bool _isDraining;
 
         private void Awake()
         {
             UtilDebugger.AssertAllAssigned(this);
 
             SubEventChannel();
+            _sceneChannel?.AddListener<SceneTypeChangedEvent>(HandleSceneChanged);
         }
-
 
         private void OnDestroy()
         {
             UnsubEventChannel();
+            _sceneChannel?.RemoveListener<SceneTypeChangedEvent>(HandleSceneChanged);
+        }
+
+        private void HandleSceneChanged(SceneTypeChangedEvent e)
+        {
+            if (e.Current == SceneType.Main)
+            {
+                _scheduleChannel.AddListener<ScheduleRequestEvent>(HandleScheduleRequested);
+                DrainQueue();
+            }
+            else
+            {
+                _scheduleChannel.RemoveListener<ScheduleRequestEvent>(HandleScheduleRequested);
+            }
         }
 
         public void Request(AgentRole role, WorkSO work, OrderTicket ticket)
@@ -40,6 +57,9 @@ namespace BBJ.Schedule
         }
         private void DrainQueue()
         {
+            if (_isDraining) return;
+            _isDraining = true;
+
             int count = _pending.Count;
             while (count-- > 0)
             {
@@ -50,6 +70,8 @@ namespace BBJ.Schedule
                 else
                     _pending.Enqueue(req);
             }
+
+            _isDraining = false;
         }
         private void SubEventChannel()
         {

@@ -8,18 +8,15 @@ namespace BBJ.Particle
     {
         [SerializeField] private CostParticleConfigSO _config;
 
-        private Action<CostParticleEvent> _handler;
-
         private void Start()
         {
             _config.poolManager.InitializePool(transform);
-            _handler = OnParticleEvent;
-            _config.particleChannel.AddListener(_handler);
+            _config.particleChannel.AddListener<CostParticleEvent>(OnParticleEvent);
         }
 
         private void OnDisable()
         {
-            _config.particleChannel.RemoveListener(_handler);
+            _config.particleChannel.RemoveListener<CostParticleEvent>(OnParticleEvent);
         }
 
         private void OnParticleEvent(CostParticleEvent evt)
@@ -29,9 +26,10 @@ namespace BBJ.Particle
 
             CostTypeConfig config = _config.costTypes[idx];
             CostParticleItem item = _config.poolManager.Pop<CostParticleItem>(_config.particlePoolItem);
+            Debug.Log("aaaaa");
             if (item == null) return;
-
-            item.Play(evt.amount, config.spriteIndex, config.gainColor, config.spendColor,
+            string assetName = config.spriteAsset != null ? config.spriteAsset.name : null;
+            item.Play(evt.amount, assetName, config.spriteIndex, config.gainColor, config.spendColor,
                 evt.position, () => _config.poolManager.Push(item));
         }
     }

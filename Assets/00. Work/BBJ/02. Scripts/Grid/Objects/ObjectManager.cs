@@ -1,9 +1,10 @@
-
+using BBJ.Save;
 using BBJ.WorkplaceSystem;
 using Gamelib.EventSystem;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
+using System;
 
 namespace BBJ.GridSystem.Objects
 {
@@ -12,73 +13,126 @@ namespace BBJ.GridSystem.Objects
         [Header("References")]
         [SerializeField] private GridManager _gridManager;
         [SerializeField] private StageLayoutSO _stageLayout;
+        [SerializeField] private ObjectDataRegistrySO _registry;
 
         [Header("Event Channels")]
         [SerializeField] private EventChannelSO _objectSpawnChannel;
-        private void Awake()
-        {
-            UtilDebugger.AssertAllAssigned(this);
-            SubEventCheannal();
-        }
-        private void Start()
-        {
-            LoadStageLayout();
-        }
-        private void OnDestroy()
-        {
-            UnSubEventCheannal();
-        }
 
+        private const string SaveFile = "stage.save";
+        private const string SaveFolder = "BarTycoon";
+
+        private readonly List<PlacedObstacleEntrySave> _placed = new();
+
+        private void Awake() { SubEventChannel(); }
+        private void Start() { LoadStageLayout(); }
+        private void OnDestroy() { UnSubEventChannel(); }
 
         private void LoadStageLayout()
         {
-            if (_stageLayout == null) return;
             var workplaces = new List<Workplace>();
+
+            if (SaveManager.IsSaveFile(SaveFile, SaveFolder))
+            {
+                var saveData = SaveManager.Load(typeof(StageSaveData), SaveFile, SaveFolder) as StageSaveData;
+                if (saveData != null)
+                {
+                    _placed.Clear();
+                    _registry?.BuildRuntimeDict();
+                    foreach (var entry in saveData.PlacedObjects)
+                    {
+                        var data = _registry?.GetById(entry.ObjectDataId);
+                        if (data == null) continue;
+                        var obj = PlaceObjectInternal(data, entry.CellIndex, entry.FlipX);
+                        if (obj is Workplace wp) workplaces.Add(wp);
+                        _placed.Add(entry);
+                    }
+                    foreach (var wp in workplaces)
+                        wp.RefreshWorkPoints(_gridManager);
+                    return;
+                }
+            }
+
+            if (_stageLayout == null) return;
             foreach (var entry in _stageLayout.entries)
             {
-                var wp = PlaceObject(entry.obstacleData, entry.cellIndex);
-                if (wp != null) workplaces.Add(wp);
+                var obj = PlaceObjectInternal(entry.obstacleData, entry.cellIndex, entry.flipX);
+                if (obj is Workplace wp) workplaces.Add(wp);
+                if (entry.obstacleData != null && !string.IsNullOrEmpty(entry.obstacleData.Id))
+                    _placed.Add(new PlacedObstacleEntrySave
+                    { ObjectDataId = entry.obstacleData.Id, CellIndex = entry.cellIndex, FlipX = entry.flipX });
             }
             foreach (var wp in workplaces)
                 wp.RefreshWorkPoints(_gridManager);
+            SaveStage();
         }
-        private Workplace PlaceObject(ObjectData data, Vector2Int cellIndex)
+
+        public TycoonObject PlaceObject(ObjectDataSO data, Vector2Int cellIndex, bool flipX = false)
+        {
+            var obj = PlaceObjectInternal(data, cellIndex, flipX);
+            if (data != null && !string.IsNullOrEmpty(data.Id))
+            {
+                _placed.Add(new PlacedObstacleEntrySave { ObjectDataId = data.Id, CellIndex = cellIndex, FlipX = flipX });
+                SaveStage();
+            }
+            return obj;
+        }
+
+        private TycoonObject PlaceObjectInternal(ObjectDataSO data, Vector2Int cellIndex, bool flipX)
         {
             Vector3 worldPos = _gridManager.CellToWorld(cellIndex);
-            Workplace workplace = null;
+            TycoonObject tycoonObject = null;
 
-            if (data?.Prefab != null)
+            if (data?.WorkplacePrefab != null)
             {
-                var go = Instantiate(data.Prefab, worldPos, Quaternion.identity);
-                workplace = go.GetComponent<Workplace>();
-                workplace?.SetupFromObjectData(data, cellIndex, _gridManager);
+                var go = Instantiate(data.WorkplacePrefab, worldPos, Quaternion.identity);
+                tycoonObject = go.GetComponent<TycoonObject>();
+                tycoonObject?.Setup(cellIndex, _gridManager.CellToWorld, flipX);
+
+                if (tycoonObject?.TileSetData != null)
+                    _gridManager.ApplyObstacleAt(tycoonObject.TileSetData, cellIndex, flipX);
             }
 
-            _gridManager.ApplyObstacleAt(data, cellIndex);
-            workplace?.RefreshWorkPoints(_gridManager);
-            return workplace;
+            if (tycoonObject is Workplace wp)
+                wp.RefreshWorkPoints(_gridManager);
+
+            return tycoonObject;
         }
 
-        private void SubEventCheannal()
+        private void SaveStage()
         {
-            _objectSpawnChannel?.AddListener<ObjectSpawnEvent>(HandlerSpawnObject);
+            var data = new StageSaveData { PlacedObjects = new List<PlacedObstacleEntrySave>(_placed) };
+            SaveManager.Save(data, SaveFile, SaveFolder);
         }
-        private void UnSubEventCheannal()
+
+        private void SubEventChannel()
         {
-            _objectSpawnChannel?.RemoveListener<ObjectSpawnEvent>(HandlerSpawnObject);
+            _objectSpawnChannel?.AddListener<ObjectSpawnEvent>(HandleSpawnObject);
         }
-        private void HandlerSpawnObject(ObjectSpawnEvent evt) => PlaceObject(evt.ObjectData, evt.CellIndex);
+        private void UnSubEventChannel()
+        {
+            _objectSpawnChannel?.RemoveListener<ObjectSpawnEvent>(HandleSpawnObject);
+        }
+        private void HandleSpawnObject(ObjectSpawnEvent evt)
+        {
+            var obj = PlaceObject(evt.ObjectData, evt.CellIndex, evt.FlipX);
+            evt.OnSpawnEnded(obj.transform.position);
+        }
     }
 
     public class ObjectSpawnEvent : GameEvent
     {
-        public ObjectData ObjectData { get; private set; }
+        public ObjectDataSO ObjectData { get; private set; }
         public Vector2Int CellIndex { get; private set; }
+        public bool FlipX { get; private set; }
+        public event Action<Vector3> CallBack;
+        public void OnSpawnEnded(Vector3 pos) => CallBack?.Invoke(pos);
 
-        public ObjectSpawnEvent Init(ObjectData data, Vector2Int cellIndex)
+        public ObjectSpawnEvent Init(ObjectDataSO data, Vector2Int cellIndex, bool flipX = false, Action<Vector3> callback = default)
         {
             ObjectData = data;
             CellIndex = cellIndex;
+            FlipX = flipX;
+            CallBack = callback;
             return this;
         }
     }

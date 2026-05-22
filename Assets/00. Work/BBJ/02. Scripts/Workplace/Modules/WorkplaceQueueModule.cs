@@ -35,6 +35,20 @@ namespace BBJ.WorkplaceSystem.Modules
             return slot;
         }
 
+        public bool TryCompleteSlotByOwner(Transform owner)
+        {
+            for (int i = 0; i < _slots.Count; i++)
+            {
+                if (_slots[i].Owner != owner) continue;
+                var slot = _slots[i];
+                _slots.RemoveAt(i);
+                RefreshPositions();
+                slot.NotifyProcessed();
+                return true;
+            }
+            return false;
+        }
+
         private void RefreshPositions()
         {
             for (int i = 0; i < _slots.Count && i < _queuePositions.Length; i++)

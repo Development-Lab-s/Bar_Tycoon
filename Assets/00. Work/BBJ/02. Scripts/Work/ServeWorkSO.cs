@@ -2,6 +2,7 @@ using BBJ.Actions;
 using BBJ.Customer;
 using BBJ.Modules;
 using BBJ.Order;
+using BBJ.Schedule;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using System;
@@ -32,15 +33,16 @@ namespace BBJ.Work
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(
                 ctx.Token, ticket.Token);
 
+            var role = executor.GetModule<SchedulingModule>()?.InteractRole;
             try
             {
                 Vector3 from = executor.transform.position;
                 await actions.Execute<MoveAction>(
-                    a => a.ExecuteAsync(serveStation.GetNearestPoint(from), linked.Token));
+                    a => a.ExecuteAsync(serveStation.GetNearestPoint(role, from), linked.Token));
                 ticket.TryStartProgress(executor);
 
                 await actions.Execute<MoveAction>(
-                    a => a.ExecuteAsync(ticket.Seat.GetNearestPoint(from), linked.Token));
+                    a => a.ExecuteAsync(ticket.Seat.GetNearestPoint(role, from), linked.Token));
                 await actions.Execute<WorkAction>(
                     a => a.ExecuteAsync(ticket.Seat, linked.Token));
 

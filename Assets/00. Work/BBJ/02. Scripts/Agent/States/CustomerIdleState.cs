@@ -47,12 +47,11 @@ namespace BBJ.States
             if (IsWorking()) { HandleWorkPhaseStarted(); return; }
             if (IsMoving())  { HandleMoveStarted();      return; }
 
-            Debug.Log("Customer Idle 상태");
-            _statusUI.SetText(GetWaitText());
-            _uiModule.SetActiveUI<AgentStatusUI>(true);
+            RefreshUI();
 
             _movement.OnMoveStarted        += HandleMoveStarted;
             _workAction.OnWorkPhaseStarted += HandleWorkPhaseStarted;
+            _customer.OnOrderStateChanged  += RefreshUI;
         }
 
         public override void Exit()
@@ -62,6 +61,7 @@ namespace BBJ.States
 
             _movement.OnMoveStarted        -= HandleMoveStarted;
             _workAction.OnWorkPhaseStarted -= HandleWorkPhaseStarted;
+            _customer.OnOrderStateChanged  -= RefreshUI;
         }
 
         private void HandleMoveStarted()      => _isMoveStarted = true;
@@ -70,11 +70,33 @@ namespace BBJ.States
         private bool IsWorking() => _scheduling != null && !_scheduling.IsAvailableForWork
                                     && _workAction != null && _workAction.IsInWorkPhase;
 
-        private string GetWaitText()
+        private void RefreshUI()
         {
-            if (_customer.IsAwaitingOrder) return "주문 대기";
-            if (_customer.OrderPlaced && !_customer.FoodServed) return "음식 대기";
-            return "대기";
+            if (_customer.FoodServed)
+            {
+                _uiModule.SetActiveUI<AgentStatusUI>(false);
+                return;
+            }
+
+            _uiModule.SetActiveUI<AgentStatusUI>(true);
+
+            if (!_customer.OrderPlaced || _customer.IsAwaitingOrder)
+            {
+                _statusUI.SetText("...");
+                return;
+            }
+
+            var ticket = _customer.ActiveTicket;
+            var icon   = _customer.SelectedFood?.cocktailIcon;
+            if (icon != null)
+            {
+                _statusUI.SetIcon(icon);
+                _statusUI.SetIconColor(ticket?.IsPlayerActionable ?? false ? Color.white : Color.gray);
+            }
+            else
+            {
+                _statusUI.SetText(_customer.SelectedFood?.cocktailName ?? "...");
+            }
         }
     }
 }

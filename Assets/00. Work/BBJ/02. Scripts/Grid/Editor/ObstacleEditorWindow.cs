@@ -1,4 +1,5 @@
 ﻿using BBJ.GridSystem.Objects;
+using BBJ.WorkplaceSystem;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -80,8 +81,8 @@ namespace BBJ.GridSystem.Editor
         //  _placed   : 원점 셀 인덱스 → (GO instanceID, ObjectData)
         //  _occupied : 원점 + BlockedOffsets 전체 점유 셀 집합
         // ─────────────────────────────────────────────────────────────
-        private readonly Dictionary<Vector2Int, (int goID, ObjectData data)> _placed
-            = new Dictionary<Vector2Int, (int, ObjectData)>();
+        private readonly Dictionary<Vector2Int, (int goID, ObjectDataSO data)> _placed
+            = new Dictionary<Vector2Int, (int, ObjectDataSO)>();
         private readonly HashSet<Vector2Int> _occupied = new HashSet<Vector2Int>();
 
         // [FIX-8] 저장 시점 스냅샷을 HashSet으로 보관, 비교 시 할당 없음
@@ -112,13 +113,13 @@ namespace BBJ.GridSystem.Editor
         // ─────────────────────────────────────────────────────────────
         //  팔레트
         // ─────────────────────────────────────────────────────────────
-        private List<ObjectData> _palette = new List<ObjectData>();
+        private List<ObjectDataSO> _palette = new List<ObjectDataSO>();
         private int _selectedIdx = -1;
-        private ObjectData SelectedOD => (_selectedIdx >= 0 && _selectedIdx < _palette.Count)
+        private ObjectDataSO SelectedOD => (_selectedIdx >= 0 && _selectedIdx < _palette.Count)
                                          ? _palette[_selectedIdx] : null;
         private Vector2 _paletteScroll;
-        private Dictionary<ObjectData, Texture2D> _previewCache
-            = new Dictionary<ObjectData, Texture2D>();
+        private Dictionary<ObjectDataSO, Texture2D> _previewCache
+            = new Dictionary<ObjectDataSO, Texture2D>();
 
         // ─────────────────────────────────────────────────────────────
         //  스크롤
@@ -269,10 +270,11 @@ namespace BBJ.GridSystem.Editor
                 if (placedGOIDs.Contains(go.GetInstanceID())) continue; // 이미 추적 중
 
                 // 프리팹 에셋 소스로 ObjectData 확정 매칭
-                var prefabAsset = PrefabUtility.GetCorrespondingObjectFromOriginalSource(go) as GameObject;
-                ObjectData matched = prefabAsset == null ? null :
+                var prefabRoot   = PrefabUtility.GetCorrespondingObjectFromOriginalSource(go) as GameObject;
+                var prefabTycoon = prefabRoot?.GetComponent<TycoonObject>();
+                ObjectDataSO matched = prefabTycoon == null ? null :
                     _palette.FirstOrDefault(od =>
-                        od != null && od.Prefab != null && od.Prefab == prefabAsset);
+                        od != null && od.WorkplacePrefab != null && od.WorkplacePrefab == prefabTycoon);
 
                 if (matched == null) continue;
 
@@ -311,10 +313,10 @@ namespace BBJ.GridSystem.Editor
         {
             _palette.Clear();
             _previewCache.Clear();
-            foreach (string guid in AssetDatabase.FindAssets("t:ObjectData"))
+            foreach (string guid in AssetDatabase.FindAssets("t:ObjectDataSO"))
             {
                 string p = AssetDatabase.GUIDToAssetPath(guid);
-                var od = AssetDatabase.LoadAssetAtPath<ObjectData>(p);
+                var od = AssetDatabase.LoadAssetAtPath<ObjectDataSO>(p);
                 if (od != null) _palette.Add(od);
             }
             if (_selectedIdx >= _palette.Count) _selectedIdx = _palette.Count - 1;
@@ -454,7 +456,7 @@ namespace BBJ.GridSystem.Editor
 
             for (int i = 0; i < _palette.Count; i++)
             {
-                ObjectData od = _palette[i];
+                ObjectDataSO od = _palette[i];
                 bool sel = (i == _selectedIdx);
 
                 Rect row = EditorGUILayout.BeginHorizontal(GUILayout.Height(rowH));
@@ -462,11 +464,11 @@ namespace BBJ.GridSystem.Editor
                     sel ? new Color(0.22f, 0.44f, 0.70f, 0.50f)
                         : new Color(0.16f, 0.16f, 0.18f, 0.50f));
 
-                if (od.Prefab != null)
+                if (od.WorkplacePrefab != null)
                 {
                     if (!_previewCache.TryGetValue(od, out Texture2D tex) || tex == null)
                     {
-                        tex = AssetPreview.GetAssetPreview(od.Prefab);
+                        tex = AssetPreview.GetAssetPreview(od.WorkplacePrefab);
                         if (tex != null) _previewCache[od] = tex;
                         else Repaint();
                     }
@@ -485,10 +487,9 @@ namespace BBJ.GridSystem.Editor
                 if (_paletteBoldStyle == null)
                     _paletteBoldStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 11 };
                 GUILayout.Label(od.name, _paletteBoldStyle);
+                var tsd = GetTileSetData(od);
                 GUILayout.Label(
-                    $"Blocked:{od.BlockedOffsets?.Length ?? 0}  " +
-                    $"Interact:{od.InteractOffsets?.Length ?? 0}  " +
-                    $"Walkable:{od.IsWalkable}",
+                    $"Blocked:{tsd?.BlockedOffsets?.Length ?? 0}  Walkable:{tsd?.IsWalkable}",
                     EditorStyles.miniLabel);
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.EndHorizontal();
@@ -727,8 +728,9 @@ namespace BBJ.GridSystem.Editor
 
             if (SelectedOD == null || _isEraseMode) return;
 
-            if (SelectedOD.BlockedOffsets != null)
-                foreach (var bo in SelectedOD.BlockedOffsets)
+            var selectedTsd = GetTileSetData(SelectedOD);
+            if (selectedTsd?.BlockedOffsets != null)
+                foreach (var bo in selectedTsd.BlockedOffsets)
                 {
                     Vector2Int tc = cell + bo;
                     if (!InGrid(tc)) continue;
@@ -737,15 +739,6 @@ namespace BBJ.GridSystem.Editor
                     DrawDiamond(tcCenter, g.cellSize,
                         conflict ? CConflict : CBlocked,
                         conflict ? CConflictB : CBlockedB);
-                }
-
-            if (SelectedOD.InteractOffsets != null)
-                foreach (var io in SelectedOD.InteractOffsets)
-                {
-                    Vector2Int tc = cell + io;
-                    if (!InGrid(tc)) continue;
-                    Vector3 tcCenter = _gridManager.CellToWorld(tc) + new Vector3(0f, halfCellY, 0f);
-                    DrawDiamond(tcCenter, g.cellSize, CInteract, CInteractB);
                 }
 
             _hoverLabelStyle ??= new GUIStyle { normal = { textColor = Color.white }, fontSize = 9 };
@@ -757,7 +750,7 @@ namespace BBJ.GridSystem.Editor
         // ─────────────────────────────────────────────────────────────
         private void PlaceObstacle(Vector2Int cell)
         {
-            if (SelectedOD == null || SelectedOD.Prefab == null)
+            if (SelectedOD == null || SelectedOD.WorkplacePrefab == null)
             {
                 Debug.LogWarning("[ObstaclePlacer] 팔레트에서 장애물을 먼저 선택하세요.");
                 return;
@@ -786,7 +779,8 @@ namespace BBJ.GridSystem.Editor
             Vector3 worldPos = _gridManager.CellToWorld(cell);
             worldPos.z = 0f;
 
-            GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(SelectedOD.Prefab);
+            var placedInstance = (TycoonObject)PrefabUtility.InstantiatePrefab(SelectedOD.WorkplacePrefab);
+            GameObject go = placedInstance.gameObject;
             go.transform.position = worldPos;
             go.transform.SetParent(_gridManager.transform);
             Undo.RegisterCreatedObjectUndo(go, $"Place [{cell.x},{cell.y}]");
@@ -904,7 +898,7 @@ namespace BBJ.GridSystem.Editor
 
             foreach (var entry in _layoutSO.entries)
             {
-                if (entry.obstacleData == null || entry.obstacleData.Prefab == null)
+                if (entry.obstacleData == null || entry.obstacleData.WorkplacePrefab == null)
                 { skipped++; continue; }
 
                 Vector2Int cell = entry.cellIndex;
@@ -917,8 +911,9 @@ namespace BBJ.GridSystem.Editor
                 Vector3 worldPos = _gridManager.CellToWorld(cell);
                 worldPos.z = 0f;
 
-                GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(
-                    entry.obstacleData.Prefab);
+                var loadedInstance = (TycoonObject)PrefabUtility.InstantiatePrefab(
+                    entry.obstacleData.WorkplacePrefab);
+                GameObject go = loadedInstance.gameObject;
                 go.transform.position = worldPos;
                 go.transform.SetParent(_gridManager.transform);
                 Undo.RegisterCreatedObjectUndo(go, $"Load [{cell.x},{cell.y}]");
@@ -940,11 +935,18 @@ namespace BBJ.GridSystem.Editor
         // ─────────────────────────────────────────────────────────────
         //  헬퍼
         // ─────────────────────────────────────────────────────────────
-        private static List<Vector2Int> Footprint(Vector2Int origin, ObjectData od)
+        private static TileSetData GetTileSetData(ObjectDataSO od)
+        {
+            if (od?.WorkplacePrefab == null) return null;
+            return od.WorkplacePrefab?.TileSetData;
+        }
+
+        private static List<Vector2Int> Footprint(Vector2Int origin, ObjectDataSO od)
         {
             var r = new List<Vector2Int> { origin };
-            if (od?.BlockedOffsets != null)
-                foreach (var b in od.BlockedOffsets) r.Add(origin + b);
+            var tsd = GetTileSetData(od);
+            if (tsd?.BlockedOffsets != null)
+                foreach (var b in tsd.BlockedOffsets) r.Add(origin + b);
             return r;
         }
 

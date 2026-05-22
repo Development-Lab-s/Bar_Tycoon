@@ -2,6 +2,7 @@ using BBJ.Order;
 using BBJ.Register;
 using BBJ.Staff;
 using BBJ.Work;
+using BBJ.WorkplaceSystem;
 using Cysharp.Threading.Tasks;
 using System;
 using UnityEngine;
@@ -14,7 +15,10 @@ namespace BBJ.Schedule
     {
         [SerializeField] private ScheduleRegisterSO _scheduleRegister;
         [SerializeField] private EventChannelSO     _scheduleChannel;
+        [SerializeField] private InteractRoleSO     _interactRole;
         [field: SerializeField] public AgentRole Role { get; private set; }
+
+        public InteractRoleSO InteractRole => _interactRole;
 
         private ModuleOwner          _owner;
         private WorkExecutionContext _execCtx;
@@ -77,9 +81,13 @@ namespace BBJ.Schedule
             }
             finally
             {
-                if (_execCtx == ctx) _execCtx = null;
-                CurrentWork   = null;
-                CurrentTicket = null;
+                bool isCurrentCtx = _execCtx == ctx;
+                if (isCurrentCtx)
+                {
+                    _execCtx      = null;
+                    CurrentWork   = null;
+                    CurrentTicket = null;
+                }
                 ctx.Dispose();
                 OnWorkEnded?.Invoke(result == WorkResult.Completed);
                 _scheduleChannel?.RaiseEvent(new ScheduleTriggerEvent());

@@ -3,6 +3,7 @@ using BBJ.Customer;
 using BBJ.EventSystem;
 using BBJ.Modules;
 using BBJ.Order;
+using BBJ.Schedule;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -30,7 +31,11 @@ namespace BBJ.Work
 
                 var exits = _ctx.WorkplaceRegister?.GetAll(_ctx.ExitType);
                 if (exits != null && exits.Count > 0 && actions != null)
-                    await actions.Execute<MoveAction>(a => a.ExecuteAsync(exits[0].GetNearestPoint(executor.transform.position), ctx.Token));
+                {
+                    var role = executor.GetModule<SchedulingModule>()?.InteractRole;
+                    await actions.Execute<MoveAction>(
+                        a => a.ExecuteAsync(exits[0].GetNearestPoint(role, executor.transform.position), ctx.Token));
+                }
             }
 
             _ctx.CustomerChannel?.RaiseEvent(new CustomerLeftEvent { Customer = customer });

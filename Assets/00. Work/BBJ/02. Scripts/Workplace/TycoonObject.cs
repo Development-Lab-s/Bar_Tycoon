@@ -1,0 +1,22 @@
+using _00._Work._Resources._02._Scripts.Modules;
+using BBJ.GridSystem.Objects;
+using System;
+using UnityEngine;
+
+namespace BBJ.WorkplaceSystem
+{
+    public class 
+        TycoonObject : ModuleOwner
+    {
+        [SerializeField] protected TileSetData _tileSetData;
+        [SerializeField] protected bool        _flipX;
+        public TileSetData TileSetData => _tileSetData;
+        public bool        FlipX       => _flipX;
+
+
+        public virtual void Setup(Vector2Int cellIndex, Func<Vector2Int, Vector3> cellToWorld, bool flipX)
+        {
+            _flipX = flipX;
+        }
+    }
+}
