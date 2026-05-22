@@ -7,9 +7,9 @@ namespace BBJ.Order
 {
     public class OrderTicket
     {
-        public CocktailRecipeSO Ordered      { get; }
-        public ModuleOwner      Customer  { get; }
-        public Workplace        Seat      { get; }
+        public CocktailRecipeSO Ordered  { get; }
+        public ModuleOwner      Customer { get; internal set; }
+        public Workplace        Seat     { get; internal set; }
 
         public OrderState     State              { get; private set; } = OrderState.Waiting;
         public OrderWorkPhase WorkPhase          { get; internal set; } = OrderWorkPhase.ReadyForServer;
@@ -19,7 +19,10 @@ namespace BBJ.Order
         // CancellationTokenSource — Cancel() 시 연결된 워커에 전파
         private readonly CancellationTokenSource _cts = new();
         public CancellationToken Token => IsTerminal ? CancellationToken.None : _cts.Token;
-        public bool              IsTerminal => State is OrderState.Done or OrderState.Cancelled;
+        public bool IsTerminal        => State is OrderState.Done or OrderState.Cancelled;
+        public bool IsPlayerActionable => WorkPhase is OrderWorkPhase.ReadyForServer
+                                                    or OrderWorkPhase.ReadyForServe
+                                                    or OrderWorkPhase.ReadyForCashier;
 
         public OrderTicket(CocktailRecipeSO food, ModuleOwner customer, Workplace seat)
         {

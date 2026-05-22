@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class LeaderBoardUi : MonoBehaviour , IModule
 {
-    [SerializeField]private EventChannelSO _eventChannel;
+    [field:SerializeField]public EventChannelSO _eventChannel { get; set; }
     private ModuleOwner _owner;
     public void Initialize(ModuleOwner owner)
     {

@@ -1,4 +1,6 @@
+using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
 using LitMotion;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -13,10 +15,15 @@ public class CharItemSO : ScriptableObject
 
     public UnityEvent OnChangedCount { get; set; }
 
-    public void SetCount(int value)
-    {
-        CurrentCount = Mathf.Clamp(value, 0, MaxCount);
-        OnChangedCount?.Invoke();
+        public void SetCount(int value)
+        {
+            CurrentCount = Mathf.Clamp(value, 0, MaxCount);
+            OnChangedCount?.Invoke();
+
+            SaveManager.Save(
+                GetSaveData(),
+                $"{ItemName}.save",
+                "Items");
     }
     public void AddCount(int amount = 1)
     {
@@ -26,4 +33,20 @@ public class CharItemSO : ScriptableObject
     {
         SetCount(CurrentCount - amount);
     }
+    public CharItemSaveData GetSaveData()
+    {
+        return new CharItemSaveData
+        {
+            itemName = ItemName,
+            currentCount = CurrentCount
+        };
+    }
+
+    public void LoadSaveData(CharItemSaveData saveData)
+    {
+        CurrentCount = saveData.currentCount;
+
+        OnChangedCount?.Invoke();
+    }
 }
+

@@ -35,9 +35,8 @@ namespace BBJ.UI.Order
             if (_active.ContainsKey(e.Ticket)) return;
 
             var ui = Instantiate(_ticketPrefab, _content);
-            //LayoutRebuilder.ForceRebuildLayoutImmediate(_content as RectTransform);
-            //LayoutRebuilder.ForceRebuildLayoutImmediate(ui.transform as RectTransform);
             ui.Setup(e.Ticket, RequestCancel);
+            ui.gameObject.SetActive(false);
             _active[e.Ticket] = ui;
         }
 
@@ -50,8 +49,11 @@ namespace BBJ.UI.Order
 
         private void OnStateChanged(OrderStateChangedEvent e)
         {
-            if (_active.TryGetValue(e.Ticket, out var ui))
-                ui.Refresh();
+            if (!_active.TryGetValue(e.Ticket, out var ui)) return;
+
+            bool show = e.Ticket.State == OrderState.InProgress;
+            ui.gameObject.SetActive(show);
+            if (show) ui.Refresh();
         }
 
         public void RequestCancel(OrderTicket ticket)

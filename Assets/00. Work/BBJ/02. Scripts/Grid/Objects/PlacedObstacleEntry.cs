@@ -4,10 +4,10 @@ using UnityEngine;
 namespace BBJ.GridSystem.Objects
 {
     [Serializable]
-    public struct PlacedObstacleEntry 
+    public struct PlacedObstacleEntry
     {
         public Vector2Int cellIndex;
-        public ObjectData obstacleData;
+        public ObjectDataSO obstacleData;
+        public bool flipX;
     }
-
 }

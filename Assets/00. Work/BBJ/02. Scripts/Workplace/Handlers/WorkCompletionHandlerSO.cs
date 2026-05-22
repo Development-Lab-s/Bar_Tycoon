@@ -5,6 +5,6 @@ namespace BBJ.WorkplaceSystem.Handlers
 {
     public abstract class WorkCompletionHandlerSO : ScriptableObject
     {
-        public abstract void OnCompleted(ModuleOwner executor);
+        public abstract void OnCompleted(ModuleOwner executor, Vector3 position);
     }
 }

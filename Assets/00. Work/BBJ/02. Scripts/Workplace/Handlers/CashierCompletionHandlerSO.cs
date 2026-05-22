@@ -16,7 +16,7 @@ namespace BBJ.WorkplaceSystem.Handlers
         [SerializeField] private EventChannelSO   _particleChannel;
         [SerializeField] private CostParticleType _particleType;
 
-        public override void OnCompleted(ModuleOwner executor)
+        public override void OnCompleted(ModuleOwner executor, Vector3 position)
         {
             var food = executor.GetModule<ICurrentFoodProvider>()?.CurrentFood;
             if (food == null) return;
@@ -24,9 +24,10 @@ namespace BBJ.WorkplaceSystem.Handlers
             int tip    = _tipCalculator != null ? _tipCalculator.Calculate(executor) : 0;
             int amount = Mathf.RoundToInt(food.price * _stageMultiplier) + tip;
 
+            Debug.Log("계산 완료는 들어옴");
             _coinChannel?.RaiseEvent(new CoinEvent().Init(amount));
             _particleChannel?.RaiseEvent(
-                new CostParticleEvent().Init(_particleType, amount, executor.transform.position));
+                new CostParticleEvent().Init(_particleType, amount, position));
         }
     }
 }

@@ -1,9 +1,14 @@
+using BBJ.Customer;
 using BBJ.EventSystem;
 using BBJ.Register;
+using BBJ.Save;
 using BBJ.Work;
 using Gamelib.EventSystem;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
+using _00._Work.Lusaload._02._Scripts.SO;
 
 namespace BBJ.Order
 {
@@ -149,6 +154,60 @@ namespace BBJ.Order
             ticket.WorkPhase = OrderWorkPhase.ReadyForCashier;
             _orderChannel?.RaiseEvent(new OrderStateChangedEvent(ticket));
             _dispatchTable?.Dispatch(ticket.WorkPhase, ticket);
+        }
+
+        // ─── 복원 API ───────────────────────────────────
+
+        public OrdersSaveData GetOrdersSaveData()
+        {
+            var data = new OrdersSaveData();
+            foreach (var ticket in _orderRegister.Registry)
+            {
+                if (ticket.IsTerminal) continue;
+                var id = ticket.Ordered?.name;
+                if (string.IsNullOrEmpty(id)) continue;
+                data.Tickets.Add(new OrderTicketSaveData
+                {
+                    RecipeId  = id,
+                    WorkPhase = ticket.WorkPhase,
+                });
+            }
+            return data;
+        }
+
+        public List<OrderTicket> RestoreTickets(OrdersSaveData data, CocktailRecipeDatabaseSO database)
+        {
+            var restored = new List<OrderTicket>(data.Tickets.Count);
+            foreach (var save in data.Tickets)
+            {
+                var recipe = database?.recipes.FirstOrDefault(r => r.name == save.RecipeId);
+                if (recipe == null) continue;
+
+                var ticket = new OrderTicket(recipe, null, null);
+                ticket.WorkPhase = save.WorkPhase;
+                _orderRegister.Register(ticket);
+                restored.Add(ticket);
+            }
+            return restored;
+        }
+
+        public void LinkTicketsToCustomers(List<OrderTicket> tickets, List<CustomerAgent> customers)
+        {
+            int count = Mathf.Min(tickets.Count, customers.Count);
+            for (int i = 0; i < count; i++)
+            {
+                var ticket   = tickets[i];
+                var customer = customers[i];
+                var seat     = customer.AssignedSeat;
+
+                ticket.Customer = customer;
+                ticket.Seat     = seat;
+
+                customer.RestoreActiveTicket(ticket);
+
+                _orderChannel?.RaiseEvent(new OrderStateChangedEvent(ticket));
+                _dispatchTable?.Dispatch(ticket.WorkPhase, ticket);
+            }
         }
 
     }
