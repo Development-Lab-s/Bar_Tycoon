@@ -1,8 +1,10 @@
 using _00._Work._Resources._02._Scripts.Agents.Players;
 using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work._Resources._02._Scripts.Systems;
+using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
 using _00._Work.PCM._02._Scripts;
 using Systems;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -10,6 +12,7 @@ using UnityEngine.UI;
 public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField]private CharItemSO _itemSO; //Char은 매력이라는 뜻 ㅇㅇ
+    private TextMeshProUGUI _text;
     private Image _image;
     private GameObject dragInstance;
     private RectTransform dragRectTransform;
@@ -18,11 +21,44 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
     public void Awake()
     {
         _image = GetComponent<Image>();
+        _text = GetComponentInChildren<TextMeshProUGUI>();
         mainCanvas = GetComponentInParent<Canvas>();
+        LoadItem();
+        ChangedText();
     }
+    private void LoadItem()
+    {
+        //SaveManager.DeleteSave($"{_itemSO.ItemName}.save", "Items");
+        if (!SaveManager.IsSaveFile(
+            $"{_itemSO.ItemName}.save",
+            "Items"))
+        {
+            return;
+        }
 
+        CharItemSaveData saveData =
+            (CharItemSaveData)SaveManager.Load(
+                typeof(CharItemSaveData),
+                $"{_itemSO.ItemName}.save",
+                "Items");
+
+        _itemSO.LoadSaveData(saveData);
+    }
+    private void OnEnable()
+    {
+        _itemSO.OnChangedCount.AddListener(ChangedText);
+    }
+    private void OnDisable()
+    {
+        _itemSO.OnChangedCount.RemoveListener(ChangedText);
+    }
+    public void ChangedText()
+    {
+        _text.text = _itemSO.CurrentCount.ToString();
+    }
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (_itemSO.CurrentCount == 0) return;
         if (_image.sprite == null)
         {
             return;
@@ -55,15 +91,18 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (_itemSO.CurrentCount == 0) return;
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(eventData.position);
         Debug.Log(mousePos);
         RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
         if (hit.collider != null)
         {
-            if (hit.collider.gameObject.TryGetComponent<IPlayerCharController>(out IPlayerCharController pychar))
+            if (hit.collider.gameObject.TryGetComponent<IContractObject>(out IContractObject pychar))
             {
-                pychar.levelTrigger.Invoke(_itemSO.likePlus);
+                if(_itemSO.CharacterEnum != pychar.characterEnum)return;
+                _itemSO.RemoveCount();
+                pychar.OnLike.Invoke(_itemSO.LikePlus);
             }
         }
         if (dragInstance != null)

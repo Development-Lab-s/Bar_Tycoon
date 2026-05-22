@@ -6,15 +6,15 @@ using UnityEngine.UI;
 
 public class LPBOX : MonoBehaviour
 {
+    [SerializeField]private SideLp _lpScript;
     public event Action<int> OnLPClicked;
     private int _myId;
-    private SideLp _lpScript;
     private Button _button;
     private bool _isOpen = false;
     public void SetUp(int id)
     {
+        Debug.Log("adad");
         _myId = id;
-        _lpScript = GetComponentInChildren<SideLp>();
         _button = GetComponent<Button>();
         _button.onClick.RemoveAllListeners();
         _button.onClick.AddListener(() => OnLPClicked?.Invoke(_myId));
