@@ -64,18 +64,31 @@ namespace _00._Work.Goat._02._Scripts.Camera
             focusCamera.transform.position = playCamera.transform.position;
             focusCamera.Lens.OrthographicSize = playCamera.Lens.OrthographicSize;
             
+            float originZoom = playCamera.Lens.OrthographicSize;
+            
             focusCamera.Priority = focusCameraActivePriority;
             
             while(_objectPositionQueue.Count > 0)
             {
                 List<Vector2> nowObjectPositions = _objectPositionQueue.Dequeue();
                 yield return MovePositionCoroutine(nowObjectPositions);
-                yield return ZoomInCoroutine();
+                
+                float zoomInTarget = focusCamera.Lens.OrthographicSize * zoomPercent;
+                yield return ZoomToCoroutine(zoomInTarget);
+                
                 yield return new WaitForSeconds(waitDuration);
+                
+                yield return ZoomToCoroutine(originZoom);
             }
             
             Vector3 finalPosition = focusCamera.transform.position;
             _cameraPanController.MoveTo(finalPosition);
+            
+            var playLens = playCamera.Lens;
+            playLens.OrthographicSize = originZoom;
+            playCamera.Lens = playLens;
+            
+            _freeZoomController.SetZoom(originZoom, true);
             
             _cameraPanController.SetInputEnabled(true);
             _freeZoomController.SetInputEnabled(true);
@@ -100,12 +113,10 @@ namespace _00._Work.Goat._02._Scripts.Camera
             
             focusCamera.transform.position = new Vector3(targetPos.x, targetPos.y, focusCamera.transform.position.z);
         }
-
-        private IEnumerator ZoomInCoroutine()
+        
+        private IEnumerator ZoomToCoroutine(float targetLens)
         {
             float startLens = focusCamera.Lens.OrthographicSize;
-            float targetLens = startLens * zoomPercent;
-
             float startTime = Time.time;
 
             while (Time.time < startTime + moveZoomDuration)
