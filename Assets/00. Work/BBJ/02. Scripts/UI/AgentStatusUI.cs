@@ -18,8 +18,15 @@ namespace BBJ.UI
         {
             if (_icon == null) return;
             _icon.sprite = sprite;
+            _icon.color  = Color.white;
             _icon.gameObject.SetActive(true);
             _label.gameObject.SetActive(false);
+        }
+
+        public void SetIconColor(Color color)
+        {
+            if (_icon == null) return;
+            _icon.color = color;
         }
 
         public void SetText(string text)
@@ -28,6 +35,7 @@ namespace BBJ.UI
             _label.text = text;
             _icon.gameObject.SetActive(false);
             _label.gameObject.SetActive(true);
+
         }
     }
 }
