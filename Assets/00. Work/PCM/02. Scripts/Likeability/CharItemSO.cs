@@ -9,6 +9,7 @@ public class CharItemSO : ScriptableObject
 {
     public CharacterEnum CharacterEnum;
     [field:SerializeField]public string ItemName { get; private set; }
+    [field: SerializeField] public string Ownercharacter { get; private set; }
     [field: SerializeField] public int MaxCount { get; private set; } = 99;
     [field: SerializeField]public int CurrentCount { get; set; }
     [field: SerializeField] public int LikePlus { get; private set; }

@@ -1,4 +1,5 @@
 using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -48,7 +49,7 @@ public class CharacterSO : ScriptableObject
 
     public int GetMaxExpForLevel(int level)
     {
-        return level * level *50;
+        return (int)(Math.Pow(level -1, 2) * 21.875 + 200);
     }
     public int GetTotalExpUpToLevel(int level)
     {
