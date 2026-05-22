@@ -1,5 +1,6 @@
 using Gamelib.EventSystem;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -7,61 +8,83 @@ using UnityEngine.UI;
 
 public class LeaderBoardContent : MonoBehaviour
 {
-    [field: SerializeField] public EventChannelSO _eventChannel { get; set; }
+    [SerializeField] private LikeitemListSo _likeitemListSo;
     [SerializeField] private GameObject leaderBoardItem;
-    [SerializeField]private LeaderBoardManager LeaderBoardManager;
+    [SerializeField] private LeaderBoardManager LeaderBoardManager;
+    [SerializeField] private CharacterUiSO _characterUiSO;
+    public List<GameObject> RankList = new List<GameObject>();
     public int itemAmount = 10;
     private RectTransform _rT;
     private GridLayoutGroup _gridLayout;
+    private int loopCount = 0;
 
     private void Awake()
     {
         _rT = GetComponent<RectTransform>();
         _gridLayout = GetComponent<GridLayoutGroup>();
-        //_eventChannel.AddListener<LeaderBoardEvent>(UpdateLeaderBoardUI);
     }
-    //public void UpdateLeaderBoardUI(LeaderBoardEvent evt)
-    //{
-    //    for (int i = 0; i < evt.Entris.Count; i++)
-    //    {
-    //        if (evt.Entris[i].PlayerId == evt.Id)
-    //        {
-    //            Debug.Log($"당신의 기록은, Score: {evt.Entris[i].Score}");
-    //        }
-    //        else
-    //            Debug.Log($"Id:{evt.Entris[i].PlayerId}, Name:{evt.Entris[i].PlayerName}, Score: {evt.Entris[i].Score}");
 
-    //    }
-    //}
-    private void OnEnable()
+    private async void OnEnable()
     {
-        float newHeight = (_gridLayout.cellSize.y + _gridLayout.spacing.y) * (itemAmount - 3) + 75;
+        await LeaderBoardManager.GetMyLeaderboardInfo();
+        loopCount = LeaderBoardManager.infoTuple.Count;
+        LeaderBoardSetup(loopCount);
+    }
 
+    private void LeaderBoardSetup(int loop)
+    {
+        int dataCount = LeaderBoardManager.infoTuple.Count;
+        loopCount = Mathf.Min(itemAmount, dataCount);
+
+        float newHeight = (_gridLayout.cellSize.y + _gridLayout.spacing.y) * (loopCount - 3) + 75;
         Vector2 size = _rT.sizeDelta;
         size.y = newHeight;
         _rT.sizeDelta = size;
-        _ = LeaderBoardManager.GetMyLeaderboardInfo(); 
-        for (int i = 1; i <= itemAmount; i++)
+
+        for (int i = 1; i <= loopCount; i++)
         {
-            if(i > 3)
+            GameObject item = null;
+
+            if (i > 3)
             {
-                GameObject item = Instantiate(leaderBoardItem, Vector3.zero, Quaternion.identity);
+                item = Instantiate(leaderBoardItem, Vector3.zero, Quaternion.identity);
                 item.transform.SetParent(transform, false);
                 item.name = $"LeaderBoardItem {i - 3}";
-                item.GetComponentInChildren<TextMeshProUGUI>().text = i.ToString();
-                LeaderBoardManager.RankList.Add(item);
+                item.GetComponent<LeaderBoardInfo>().LBRank.text = i.ToString();
+                RankList.Add(item);
             }
-            //LeaderBoardManager.RankList[i].
+            else
+            {
+                if (RankList.Count >= i)
+                {
+                    item = RankList[i - 1];
+                }
+            }
+
+            if (item != null)
+            {
+                LeaderBoardInfo info = item.GetComponent<LeaderBoardInfo>();
+                var data = LeaderBoardManager.infoTuple[i - 1];
+
+                info.LBName.text = data.Name;
+                info.LBPlayerLv.text ="Lv "+ data.Level.ToString();
+                info.GoldAmount.text = data.Gold.ToString();
+                info.Image.sprite = _characterUiSO.GetSprite(data.FavoriteCharacter);
+            }
         }
     }
 
     private void OnDisable()
     {
-        for (int i = 4; i < LeaderBoardManager.RankList.Count; i++)
+        for (int i = RankList.Count - 1; i >= 3; i--)
         {
-            var item = LeaderBoardManager.RankList[i];
-            LeaderBoardManager.RankList.RemoveAt(i);
-            Destroy(item);
+            GameObject item = RankList[i];
+            RankList.RemoveAt(i);
+            if (item != null)
+            {
+                Destroy(item);
+            }
         }
+        LeaderBoardManager.infoTuple.Clear();
     }
 }
