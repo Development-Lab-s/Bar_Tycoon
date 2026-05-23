@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using _00._Work._Resources._02._Scripts.Systems.SaveSystem.Savers;
 using UnityEngine;
 
@@ -11,9 +12,9 @@ namespace _00._Work._Resources._02._Scripts.Systems.SaveSystem
 
         // 모든 파일을 체계적으로 정리하기 위해
         // 다음 폴더 및 하위 폴더 이름을 사용하세요(예: 게임이나 앱마다 새로운 하위 폴더를 생성하세요).
-        private const string SaveFolder = "/Saves/";
+        private const string SaveFolder = "Saves";
         private const string DefaultSubFolder = "Default";
-        private const string DefaultFileName = "/Data.save";
+        private const string DefaultFileName = "Data.save";
 
         // Properties
 
@@ -21,7 +22,7 @@ namespace _00._Work._Resources._02._Scripts.Systems.SaveSystem
         public static IDataSaver SaveDataSerializer
         {
             get => _dataSaver;
-            set => _dataSaver = value;
+            set => _dataSaver = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         // 이 메서드는 전체 저장 경로를 반환합니다
@@ -64,7 +65,7 @@ namespace _00._Work._Resources._02._Scripts.Systems.SaveSystem
 
         // 디스크에서 저장된 파일을 불러옵니다.
         // 유형, 파일 이름, 서브 폴더를 매개변수로 전달하십시오.
-        public static object Load(System.Type typeToLoad, string fileName = DefaultFileName, string subFolder = DefaultSubFolder)
+        public static object Load(Type typeToLoad, string fileName = DefaultFileName, string subFolder = DefaultSubFolder)
         {
             string filePath = GetSaveFilePath(fileName, subFolder);
             if (!File.Exists(filePath))
@@ -86,7 +87,7 @@ namespace _00._Work._Resources._02._Scripts.Systems.SaveSystem
             {
                 return File.ReadAllText(savePath + fileName);
             }
-
+            Debug.Log($"<color=green>[SaveManager] 파일 불러오기 성공!</color>\n경로: {savePath}");
             Debug.LogError("SaveManager: Save file not found at: " + savePath + fileName);
             return string.Empty;
         }

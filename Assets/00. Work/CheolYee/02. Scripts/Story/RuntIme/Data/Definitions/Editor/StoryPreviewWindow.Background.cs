@@ -29,6 +29,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 if (!IsStageAuthoringMode || e.button != 0) return;
                 if (IsBackgroundRecordSelectionLocked()) return;
                 if (_bgState == null || !_bgState.HasBackground) return;
+                SetInteractionContext(InteractionContext.Stage);
+                FocusStageWorkspace();
                 if (_timelineIsPlaying) StopTimelinePlayback();
                 SelectBackground();
                 _isDraggingBackground = true;

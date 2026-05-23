@@ -28,6 +28,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private enum PreviewMode { RuntimePreview, StageAuthoring }
         private enum DialogueDisplayMode { RenderOnly, EditorOnly, Both, None }
         private enum StageSelectionKind { None, Actor, Background, Camera, Sound }
+        private enum InteractionContext { None, Stage, Timeline }
+        private enum PreviewUndoDirection { None, Undo, Redo }
         private enum DragAxisLock { None, X, Y }
         private enum ActorScaleHandle { None, TopLeft, TopRight, BottomLeft, BottomRight }
 
@@ -301,11 +303,22 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private readonly Dictionary<StorySfxKeyframeData, StoryActorKeyframeData> _sfxTimelineKeyProxies = new();
         private readonly Dictionary<StoryActorKeyframeData, StoryBgmKeyframeData> _timelineProxyToBgmKeys = new();
         private readonly Dictionary<StoryActorKeyframeData, StorySfxKeyframeData> _timelineProxyToSfxKeys = new();
+        private readonly List<PreviewUndoEntry> _previewUndoEntries = new();
+        private readonly List<PreviewUndoEntry> _previewRedoEntries = new();
+        private InteractionContext _interactionContext = InteractionContext.Stage;
+        private PreviewUndoDirection _pendingPreviewUndoDirection;
 
         private sealed class TimelineKeyDragState
         {
             public StoryActorKeyframeData key;
             public float startTime;
+        }
+
+        private sealed class PreviewUndoEntry
+        {
+            public int groupId;
+            public InteractionContext context;
+            public string name;
         }
 
         // actor → VisualElement 매핑
@@ -335,6 +348,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             var root = rootVisualElement;
             root.style.flexDirection = FlexDirection.Column;
+            root.RegisterCallback<KeyDownEvent>(OnRootKeyDown);
             root.Add(BuildTopBar());
 
             var main = new VisualElement { style = { flexDirection = FlexDirection.Row, flexGrow = 1 } };
@@ -429,10 +443,155 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         }
         private void OnFocus()   => RefreshRenderAreaFromGameView();
 
+        private static string FormatUndoName(InteractionContext context, string actionName) =>
+            $"{context}: {actionName}";
+
+        private void SetInteractionContext(InteractionContext context)
+        {
+            if (context == InteractionContext.None)
+                return;
+
+            _interactionContext = context;
+        }
+
+        private void FocusStageWorkspace()
+        {
+            _stageWrapper?.Focus();
+        }
+
+        private void ShowUndoStatus(InteractionContext context, bool redo)
+        {
+            if (_statusLabel == null)
+                return;
+
+            _statusLabel.text = $"No {context} {(redo ? "redo" : "undo")} available";
+        }
+
+        private void RegisterUndoMetadata(InteractionContext context)
+        {
+            int groupId = Undo.GetCurrentGroup();
+            string groupName = Undo.GetCurrentGroupName();
+            if (_previewUndoEntries.Count > 0 && _previewUndoEntries[^1].groupId == groupId)
+            {
+                _previewUndoEntries[^1].context = context;
+                _previewUndoEntries[^1].name = groupName;
+            }
+            else
+            {
+                _previewUndoEntries.Add(new PreviewUndoEntry
+                {
+                    groupId = groupId,
+                    context = context,
+                    name = groupName
+                });
+            }
+
+            _previewRedoEntries.Clear();
+        }
+
+        private void RecordPreviewUndo(UnityEngine.Object target, InteractionContext context, string actionName)
+        {
+            if (target == null)
+                return;
+
+            Undo.RegisterCompleteObjectUndo(target, FormatUndoName(context, actionName));
+            RegisterUndoMetadata(context);
+        }
+
+        private void RecordStageUndo(UnityEngine.Object target, string actionName) =>
+            RecordPreviewUndo(target, InteractionContext.Stage, actionName);
+
+        private void RecordTimelineUndo(UnityEngine.Object target, string actionName) =>
+            RecordPreviewUndo(target, InteractionContext.Timeline, actionName);
+
+        private bool TryPerformContextUndo(InteractionContext context, bool redo)
+        {
+            List<PreviewUndoEntry> source = redo ? _previewRedoEntries : _previewUndoEntries;
+            if (source.Count == 0)
+            {
+                ShowUndoStatus(context, redo);
+                return true;
+            }
+
+            PreviewUndoEntry next = source[^1];
+            if (next.context != context)
+            {
+                ShowUndoStatus(context, redo);
+                return true;
+            }
+
+            _pendingPreviewUndoDirection = redo ? PreviewUndoDirection.Redo : PreviewUndoDirection.Undo;
+            if (redo)
+                Undo.PerformRedo();
+            else
+                Undo.PerformUndo();
+            return true;
+        }
+
+        private bool HandleStageShortcut(KeyCode keyCode, bool control, bool shift)
+        {
+            if (!IsStageAuthoringMode)
+                return false;
+
+            if (control && keyCode == KeyCode.Z)
+            {
+                return TryPerformContextUndo(InteractionContext.Stage, redo: shift);
+            }
+
+            if (control && keyCode == KeyCode.Y)
+            {
+                return TryPerformContextUndo(InteractionContext.Stage, redo: true);
+            }
+
+            if (keyCode == KeyCode.Delete || keyCode == KeyCode.Backspace)
+                return DeleteCurrentStageSelection();
+
+            return false;
+        }
+
+        private bool HandleSharedTimelineShortcut(KeyCode keyCode, bool control)
+        {
+            if (!IsStageAuthoringMode)
+                return false;
+
+            if (!control && keyCode == KeyCode.Space)
+            {
+                ToggleTimelinePlayback();
+                return true;
+            }
+
+            if (control && keyCode == KeyCode.C)
+            {
+                CopySelectedTimelineKey();
+                return true;
+            }
+
+            if (control && keyCode == KeyCode.V)
+            {
+                PasteTimelineKeyAtPlayhead();
+                return true;
+            }
+
+            return false;
+        }
+
         private void OnUndoRedo()
         {
             CancelTimelinePointerDrag();
             StopTransitionPreview(applyTargetState: false);
+            if (_pendingPreviewUndoDirection == PreviewUndoDirection.Undo && _previewUndoEntries.Count > 0)
+            {
+                PreviewUndoEntry entry = _previewUndoEntries[^1];
+                _previewUndoEntries.RemoveAt(_previewUndoEntries.Count - 1);
+                _previewRedoEntries.Add(entry);
+            }
+            else if (_pendingPreviewUndoDirection == PreviewUndoDirection.Redo && _previewRedoEntries.Count > 0)
+            {
+                PreviewUndoEntry entry = _previewRedoEntries[^1];
+                _previewRedoEntries.RemoveAt(_previewRedoEntries.Count - 1);
+                _previewUndoEntries.Add(entry);
+            }
+            _pendingPreviewUndoDirection = PreviewUndoDirection.None;
             BuildStageStateAt(_currentLine);
             if (_selectionKind == StageSelectionKind.Actor && !_stageState.ContainsKey(_selectedActorKey))
                 ClearStageSelection();
@@ -458,27 +617,29 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 CancelTimelinePointerDrag();
                 return;
             }
+        }
 
-            if (e.type != EventType.KeyDown)
+        private void OnRootKeyDown(KeyDownEvent e)
+        {
+            if (!IsStageAuthoringMode)
                 return;
 
             if (IsFocusedOnTextInput(rootVisualElement))
                 return;
 
-            if (IsTimelinePanelFocused())
-                return;
-
-            if (HandleTimelineShortcut(e.keyCode, e.control || e.command, e.shift))
+            if (HandleSharedTimelineShortcut(e.keyCode, e.ctrlKey || e.commandKey))
             {
-                e.Use();
+                e.StopPropagation();
                 return;
             }
 
-            if (e.keyCode != KeyCode.Delete && e.keyCode != KeyCode.Backspace)
-                return;
-
-            if (DeleteCurrentStageSelection())
-                e.Use();
+            bool handled = _interactionContext == InteractionContext.Timeline
+                ? HandleTimelineShortcut(e.keyCode, e.ctrlKey || e.commandKey, e.shiftKey)
+                : _interactionContext == InteractionContext.Stage
+                    ? HandleStageShortcut(e.keyCode, e.ctrlKey || e.commandKey, e.shiftKey)
+                    : false;
+            if (handled)
+                e.StopPropagation();
         }
 
         // ── 외부 API ─────────────────────────────────

@@ -1257,7 +1257,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, "Add Actor To Stage");
+            RecordStageUndo(layout, "Add Actor To Stage");
 
             string instanceKey = GenerateActorInstanceKey(actor, layout);
             StoryActorStateData entry = new()
@@ -1328,7 +1328,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     return;
             }
 
-            Undo.RecordObject(layout, "Import Previous Stage");
+            RecordStageUndo(layout, "Import Previous Stage");
             layout.ActorsEditable.Clear();
             layout.ActorTracksEditable.Clear();
             layout.BackgroundTrackEditable.keyframes.Clear();
@@ -1412,7 +1412,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, "Remove Actor From Stage");
+            RecordStageUndo(layout, "Remove Actor From Stage");
 
             StoryActorStateData entry = FindActorEntry(layout, _selectedActorKey);
             if (entry == null)
@@ -1441,7 +1441,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, "Set Stage Background");
+            RecordStageUndo(layout, "Set Stage Background");
 
             StoryBackgroundStateData state = layout.BackgroundEditable;
             state.background = background;
@@ -1467,7 +1467,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, "Clear Stage Background");
+            RecordStageUndo(layout, "Clear Stage Background");
 
             StoryBackgroundStateData state = layout.BackgroundEditable;
             state.background = null;
@@ -1515,7 +1515,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return null;
         }
 
-        private StoryStageLayoutModuleSO GetOrCreateCurrentStageLayout(string undoName)
+        private StoryStageLayoutModuleSO GetOrCreateCurrentStageLayout(string undoName, InteractionContext context = InteractionContext.Stage)
         {
             StoryStageLayoutModuleSO layout = FindCurrentStageLayout();
             if (layout != null)
@@ -1524,7 +1524,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_currentLine == null)
                 return null;
 
-            Undo.RecordObject(_currentLine, undoName);
+            RecordPreviewUndo(_currentLine, context, undoName);
             return StoryEditorUtility.AddModule(_currentLine, typeof(StoryStageLayoutModuleSO)) as StoryStageLayoutModuleSO;
         }
 
@@ -1603,20 +1603,18 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (!IsStageAuthoringMode || _currentLine == null || string.IsNullOrWhiteSpace(actorInstanceKey))
                 return;
 
-            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Actor Timeline");
+            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Actor Timeline", InteractionContext.Timeline);
             if (layout == null)
                 return;
 
             if (!_suppressTimelineUndoRecording)
-                Undo.RecordObject(layout, "Edit Actor Timeline");
+                RecordTimelineUndo(layout, "Edit Actor Timeline");
             StoryActorTrackData track = GetOrCreateActorTrack(layout, actorInstanceKey);
             if (track == null)
                 return;
             track.keyframes ??= new List<StoryActorKeyframeData>();
 
-            StoryActorKeyframeData selectedKey = _selectedTimelineKeyIndex >= 0 && _selectedTimelineKeyIndex < track.keyframes.Count
-                ? track.keyframes[_selectedTimelineKeyIndex]
-                : null;
+            StoryActorKeyframeData selectedKey = GetPrimarySelectedTimelineKey(track.keyframes);
             StoryActorKeyframeData selectedSegmentKey = _selectedTimelineSegmentKeyIndex >= 0 && _selectedTimelineSegmentKeyIndex < track.keyframes.Count
                 ? track.keyframes[_selectedTimelineSegmentKeyIndex]
                 : null;
@@ -1651,20 +1649,18 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (!IsStageAuthoringMode || _currentLine == null)
                 return;
 
-            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Background Timeline");
+            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Background Timeline", InteractionContext.Timeline);
             if (layout == null)
                 return;
 
             if (!_suppressTimelineUndoRecording)
-                Undo.RecordObject(layout, "Edit Background Timeline");
+                RecordTimelineUndo(layout, "Edit Background Timeline");
             StoryBackgroundTrackData track = layout.BackgroundTrackEditable;
             if (track == null)
                 return;
             track.keyframes ??= new List<StoryActorKeyframeData>();
 
-            StoryActorKeyframeData selectedKey = _selectedTimelineKeyIndex >= 0 && _selectedTimelineKeyIndex < track.keyframes.Count
-                ? track.keyframes[_selectedTimelineKeyIndex]
-                : null;
+            StoryActorKeyframeData selectedKey = GetPrimarySelectedTimelineKey(track.keyframes);
             StoryActorKeyframeData selectedSegmentKey = _selectedTimelineSegmentKeyIndex >= 0 && _selectedTimelineSegmentKeyIndex < track.keyframes.Count
                 ? track.keyframes[_selectedTimelineSegmentKeyIndex]
                 : null;
@@ -1699,12 +1695,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (!IsStageAuthoringMode || _currentLine == null)
                 return;
 
-            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Camera Timeline");
+            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Camera Timeline", InteractionContext.Timeline);
             if (layout == null)
                 return;
 
             if (!_suppressTimelineUndoRecording)
-                Undo.RecordObject(layout, "Edit Camera Timeline");
+                RecordTimelineUndo(layout, "Edit Camera Timeline");
             StoryCameraTrackData track = layout.CameraTrackEditable;
             if (track == null)
                 return;
@@ -1712,9 +1708,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             track.defaultState ??= CreateDefaultCameraState();
             track.keyframes ??= new List<StoryActorKeyframeData>();
 
-            StoryActorKeyframeData selectedKey = _selectedTimelineKeyIndex >= 0 && _selectedTimelineKeyIndex < track.keyframes.Count
-                ? track.keyframes[_selectedTimelineKeyIndex]
-                : null;
+            StoryActorKeyframeData selectedKey = GetPrimarySelectedTimelineKey(track.keyframes);
             StoryActorKeyframeData selectedSegmentKey = _selectedTimelineSegmentKeyIndex >= 0 && _selectedTimelineSegmentKeyIndex < track.keyframes.Count
                 ? track.keyframes[_selectedTimelineSegmentKeyIndex]
                 : null;
@@ -1749,11 +1743,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (!IsStageAuthoringMode || _currentLine == null)
                 return;
 
-            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Camera State");
+            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Camera State", InteractionContext.Stage);
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, "Edit Camera State");
+            RecordStageUndo(layout, "Edit Camera State");
             StoryCameraTrackData track = layout.CameraTrackEditable;
             track.defaultState ??= CreateDefaultCameraState();
             ClearPreviewCameraSampleState();
@@ -1923,11 +1917,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_currentLine == null)
                 return;
 
-            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Stage Background");
+            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Stage Background", InteractionContext.Stage);
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, "Edit Stage Background");
+            RecordStageUndo(layout, "Edit Stage Background");
             setter(layout.BackgroundEditable);
             layout.BackgroundEditable.SyncBackgroundKey();
             _bgState = layout.Background.ShallowClone();
@@ -2049,10 +2043,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (_currentLine == null || string.IsNullOrWhiteSpace(actorInstanceKey)) return;
 
-            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Actor Stage State");
+            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Actor Stage State", InteractionContext.Stage);
             if (layout == null) return;
 
-            Undo.RecordObject(layout, "Edit Actor Stage State");
+            RecordStageUndo(layout, "Edit Actor Stage State");
 
             var entry = FindActorEntry(layout, actorInstanceKey);
 

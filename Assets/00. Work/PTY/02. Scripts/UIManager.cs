@@ -13,7 +13,8 @@ public enum MenuType
     Arbeit,
     Rename,
     LvUp,
-    Menu
+    Menu,
+    LP
 }
 
 [System.Serializable]
