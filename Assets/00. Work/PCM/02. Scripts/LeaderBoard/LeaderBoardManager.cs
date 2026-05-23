@@ -3,6 +3,7 @@ using _00._Work.Goat._02._Scripts.Exp.ExpDatas;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
@@ -35,6 +36,7 @@ public class LeaderBoardManager : MonoBehaviour
     private int limit = 50;
 
     public List<LeaderBoardData> infoTuple = new();
+    private bool _isInitialized;
 
     private async void Start()
     {
@@ -47,6 +49,8 @@ public class LeaderBoardManager : MonoBehaviour
                 await AuthenticationService.Instance
                     .SignInAnonymouslyAsync();
             }
+
+            _isInitialized = true;
         }
         catch (Exception e)
         {
@@ -69,6 +73,9 @@ public class LeaderBoardManager : MonoBehaviour
 
     public void NameSet(string pyName)
     {
+        if (!_isInitialized)
+            return;
+
         _ = NameSetAsync(pyName);
     }
 
@@ -147,13 +154,10 @@ public class LeaderBoardManager : MonoBehaviour
             {
                 string playerName = entry.PlayerName;
 
-                if (!string.IsNullOrEmpty(playerName) &&
-                    playerName.Length >= 5)
+                if (Regex.IsMatch(playerName, @"#\d{4}$"))
                 {
                     playerName =
-                        playerName.Substring(
-                            0,
-                            playerName.Length - 5);
+                        playerName.Substring(0, playerName.Length - 5);
                 }
 
                 double gold = entry.Score;

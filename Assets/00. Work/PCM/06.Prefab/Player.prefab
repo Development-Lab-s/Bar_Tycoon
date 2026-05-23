@@ -104,7 +104,7 @@ GameObject:
   - component: {fileID: 4327823377658395829}
   - component: {fileID: 3188582136279272211}
   m_Layer: 19
-  m_Name: PlayerEvent
+  m_Name: CianEvent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -140,6 +140,18 @@ MonoBehaviour:
   <OnClickEvent>k__BackingField:
     m_PersistentCalls:
       m_Calls:
+      - m_Target: {fileID: 3188582136279272211}
+        m_TargetAssemblyTypeName: PlayerCharController, Assembly-CSharp
+        m_MethodName: PlayClickUpDialogue
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
       - m_Target: {fileID: 6792289985286197206}
         m_TargetAssemblyTypeName: Assets._00._Work.PCM._02._Scripts.Contract.ContractChat,
           Assembly-CSharp
@@ -343,12 +355,40 @@ PrefabInstance:
       propertyPath: m_TextWrappingMode
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 34888668574213345, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 34888668574213345, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 34888668574213345, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.231
+      objectReference: {fileID: 0}
     - target: {fileID: 724232234802486213, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
       propertyPath: m_Name
       value: Chat
       objectReference: {fileID: 0}
     - target: {fileID: 724232234802486213, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
       propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3942792371478016651, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
+      propertyPath: m_Size.x
+      value: 0.32
+      objectReference: {fileID: 0}
+    - target: {fileID: 3942792371478016651, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
+      propertyPath: m_Size.y
+      value: 0.32
+      objectReference: {fileID: 0}
+    - target: {fileID: 3942792371478016651, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 718074e4e56a5404e824bf8e6571ea7d, type: 3}
+    - target: {fileID: 3942792371478016651, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}
+      propertyPath: m_WasSpriteAssigned
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7567503195946539938, guid: 9a40a5101c983ce42bd8a83b16b580ca, type: 3}

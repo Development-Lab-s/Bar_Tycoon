@@ -1,5 +1,6 @@
 using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
+using Assets._00._Work.PCM._02._Scripts.Contract;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,6 +15,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     [field: SerializeField] public CharacterRegisterSO registerSO { get; private set; }
     [field: SerializeField]public CharcterLikeSO CharlikeSo{ get; set; }
     [field:SerializeField]public  UnityEvent<string> ChatOpen { get; set; }
+    private ContractChat chat;
 
     [Header("현재 실시간 상태 정보")]
 
@@ -29,6 +31,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     public void Initialize(ModuleOwner owner)
     {
         _owner = owner;
+        chat = owner.GetModule<ContractChat>();
     }
     public void Awake()
     {
@@ -55,6 +58,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     public float GetExpRatio()
     {
         float ratio = characterData.GetTotalProgressRatio();
+        Debug.Log(ratio);
         return ratio ;
     }
     public void GiveItem(int expAmount)
@@ -82,7 +86,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
         //}
     }
 
-    public string PlayClickUpDialogue()
+    public void PlayClickUpDialogue()
     {
         List<CharacterSO.DialogueData> availableDialogues = characterData.GetAvailableDialogues(characterData.currentLevel);
 
@@ -93,12 +97,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
 
             Debug.Log($"[{characterData.characterName} Lv.{characterData.currentLevel} 대사]: {selectedDialogue.context}");
 
-            //if (selectedDialogue.characterFace != null && characterImage != null)
-            //{
-            //    characterImage.sprite = selectedDialogue.characterFace;
-            //}
-            return selectedDialogue.context;
+            chat.Message(selectedDialogue.context);
         }
-        return "";
     }
 }

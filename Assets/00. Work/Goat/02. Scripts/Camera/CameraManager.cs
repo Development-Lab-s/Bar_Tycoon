@@ -26,7 +26,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
         [SerializeField] private int focusCameraUnActivePriority = 1;
         [SerializeField] private float waitDuration = 1;
         [SerializeField] private float zoomPercent = 0.7f;
-        [SerializeField] private float spacing = 0.6f;
+        [SerializeField] private float space = 0.6f;
         
         private Queue<List<Vector2>> _objectPositionQueue = new();
 
@@ -74,14 +74,15 @@ namespace _00._Work.Goat._02._Scripts.Camera
             {
                 List<Vector2> nowObjectPositions = _objectPositionQueue.Dequeue();
                 
-                yield return ZoomToBoundsContain(nowObjectPositions);
+                float containLens = CalculateContainLens(nowObjectPositions);
                 
                 yield return MovePositionCoroutine(nowObjectPositions);
                 
                 float zoomInTarget = focusCamera.Lens.OrthographicSize * zoomPercent;
-                yield return ZoomToCoroutine(zoomInTarget);
+                yield return ZoomToCoroutine(zoomInTarget, containLens);
                 
                 yield return new WaitForSeconds(waitDuration);
+                
                 yield return ZoomToCoroutine(originZoom);
             }
             
@@ -111,47 +112,11 @@ namespace _00._Work.Goat._02._Scripts.Camera
                 yield return null;
             }
         }
-
-        private IEnumerator ZoomToBoundsContain(List<Vector2> vecList)
-        {
-            Bounds bounds = CalculateBounds(vecList);
-            
-            float boundsSizeX =  bounds.size.x + spacing;
-            float boundsSizeY =  bounds.size.y + spacing;
-            
-            float aspect = UnityEngine.Camera.main.aspect;
-            
-            float needSizeByX = boundsSizeX / (2f * aspect);
-            float needSizeByY = boundsSizeY / 2f;
-
-            float targetSize = Mathf.Max(needSizeByX, needSizeByY);
-            
-            if(zoomPercent > 0)
-                targetSize /= zoomPercent;
-
-            float startSize = focusCamera.Lens.OrthographicSize;
-            
-            if (startSize >= targetSize)
-                yield break;
-            
-            float time = 0f;
-
-            while (time < moveZoomDuration)
-            {
-                time += Time.deltaTime;
-                
-                float t = time / moveZoomDuration;
-                t = Mathf.SmoothStep(0f, 1f, t);
-                
-                focusCamera.Lens.OrthographicSize = Mathf.Lerp(startSize, targetSize, t);
-                
-                yield return null;
-                Debug.Log("실행중");
-            }
-        }
         
-        private IEnumerator ZoomToCoroutine(float targetLens)
+        private IEnumerator ZoomToCoroutine(float targetLens, float minContainLens = 0f)
         {
+            targetLens = Mathf.Max(targetLens, minContainLens);
+            
             float startLens = focusCamera.Lens.OrthographicSize;
             float startTime = Time.time;
 
@@ -159,10 +124,8 @@ namespace _00._Work.Goat._02._Scripts.Camera
             {
                 float t = (Time.time - startTime) / moveZoomDuration;
                 t = Mathf.SmoothStep(0f, 1f, t);
-
-                float nextLens = Mathf.Lerp(startLens, targetLens, t);
                 
-                focusCamera.Lens.OrthographicSize = nextLens;
+                focusCamera.Lens.OrthographicSize = Mathf.Lerp(startLens, targetLens, t);
 
                 yield return null;
             }
@@ -186,6 +149,21 @@ namespace _00._Work.Goat._02._Scripts.Camera
             }
 
             return bounds;
+        }
+        
+        private float CalculateContainLens(List<Vector2> vecList)
+        {
+            Bounds bounds = CalculateBounds(vecList);
+
+            float boundsSizeX = bounds.size.x + space;
+            float boundsSizeY = bounds.size.y + space;
+
+            float aspect = UnityEngine.Camera.main.aspect;
+
+            float needSizeByX = boundsSizeX / (2f * aspect);
+            float needSizeByY = boundsSizeY / 2f;
+
+            return Mathf.Max(needSizeByX, needSizeByY);
         }
     }
 }

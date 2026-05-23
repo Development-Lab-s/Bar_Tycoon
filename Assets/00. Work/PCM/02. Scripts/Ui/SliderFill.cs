@@ -4,7 +4,8 @@ using UnityEngine.UI;
 
 public class SliderFill : MonoBehaviour
 {
-    [SerializeField]private PlayerCharController charController;
+    [SerializeField]private PlayerCharController[] charController;
+    [SerializeField]private int choseCharacter; 
     private Image Slider;
     private void Awake()
     {
@@ -12,6 +13,11 @@ public class SliderFill : MonoBehaviour
     }
     private void OnEnable()
     {
-       Slider.fillAmount = charController.GetExpRatio();
+        SliderAmount();
+    }
+
+    private void SliderAmount()
+    {
+        Slider.fillAmount = charController[choseCharacter].GetExpRatio();
     }
 }
