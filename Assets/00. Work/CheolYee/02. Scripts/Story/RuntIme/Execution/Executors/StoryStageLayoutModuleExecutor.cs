@@ -54,7 +54,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
                 {
                     var background = layout.Background;
                     Debug.Log($"[StageLayout] background={background.ResolvedBackgroundKey} " +
-                              $"visible={background.visible} opacity={background.EffectiveOpacity}");
+                              $"visible={background.visible} tint={background.EffectiveTint}");
                 }
 
                 foreach (var actor in layout.Actors)
@@ -63,7 +63,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
                         continue;
 
                     Debug.Log($"[StageLayout] {actor.actor?.DisplayName ?? actor.ResolvedActorKey} " +
-                              $"pos={actor.normalizedPosition}  visible={actor.visible}  focused={actor.focused}");
+                              $"pos={actor.stageLocalPosition}  visible={actor.visible}  focused={actor.focused}");
                 }
                 return UniTask.CompletedTask;
             }

@@ -2,8 +2,6 @@ using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Views;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.CameraSystems;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.Util;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
@@ -18,13 +16,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
         [Header("Shared Visual Prefab")]
         [SerializeField] private StoryBackgroundVisualView sharedBackgroundPrefab;
-
-        [Header("Legacy Fallback")]
-        [SerializeField] private bool useLegacyBackgroundPrefabFallback;
-
-        [Header("Fallback Metrics")]
-        [SerializeField] private float fallbackAspect = 9f / 16f;
-        [SerializeField] private float fallbackCameraWorldWidth = StoryStageVisualSizing.DefaultCameraWorldWidth;
 
         private GameObject _instance;
         private StoryBackgroundVisualView _view;
@@ -105,10 +96,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             if (_view == null || state == null)
                 return;
 
-            StoryStageCameraMetrics metrics = ResolveRuntimeCameraMetrics();
-            Vector2 parallax = ResolveParallaxOffset(state);
-
-            _view.Apply(state, metrics, parallax);
+            Vector3 parallaxBase = ResolveParallaxBase(state);
+            _view.Apply(state, parallaxBase);
         }
 
         private void RecreateInstance(StoryBackgroundStateData state, string key)
@@ -122,16 +111,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             {
                 _view = Instantiate(sharedBackgroundPrefab, parent);
                 _instance = _view.gameObject;
-            }
-            else if (useLegacyBackgroundPrefabFallback
-                     && state.background != null
-                     && state.background.RuntimePrefab != null)
-            {
-                _instance = Instantiate(state.background.RuntimePrefab, parent);
-                _view = _instance.GetComponent<StoryBackgroundVisualView>();
-
-                if (_view == null)
-                    _view = _instance.AddComponent<StoryBackgroundVisualView>();
             }
             else
             {
@@ -148,27 +127,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             _activeKey = key;
         }
 
-        private StoryStageCameraMetrics ResolveRuntimeCameraMetrics()
+        private Vector3 ResolveParallaxBase(StoryBackgroundStateData state)
         {
             StoryStageCameraController controller = ResolveCameraController();
 
             if (controller != null)
-                return controller.ResolveRuntimeCameraMetrics();
+                return controller.ResolveParallaxBase(state);
 
-            return StoryStageCameraMetrics.FromCenteredFrame(
-                Vector3.zero,
-                fallbackCameraWorldWidth,
-                fallbackAspect);
-        }
-
-        private Vector2 ResolveParallaxOffset(StoryBackgroundStateData state)
-        {
-            StoryStageCameraController controller = ResolveCameraController();
-
-            if (controller != null)
-                return controller.ResolveParallaxOffset(state);
-
-            return Vector2.zero;
+            return Vector3.zero;
         }
 
         private StoryStageCameraController ResolveCameraController()

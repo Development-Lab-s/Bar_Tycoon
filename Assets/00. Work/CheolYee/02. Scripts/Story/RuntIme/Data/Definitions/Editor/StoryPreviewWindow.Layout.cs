@@ -275,16 +275,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 {
                     position = Position.Absolute, left = 0, top = 0,
                     width = DefaultUnitPixels, height = DefaultUnitPixels,
-                    borderTopWidth = 2f, borderRightWidth = 2f, borderBottomWidth = 2f, borderLeftWidth = 2f,
-                    borderTopColor    = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
-                    borderRightColor  = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
-                    borderBottomColor = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
-                    borderLeftColor   = new StyleColor(new Color(0.55f, 0.72f, 1f, 0.88f)),
+                    // 파란 Reference Frame 제거: border 없음
                     overflow = Overflow.Visible
                 }
             };
             _cameraGizmoLayer = BuildCameraGizmoLayer();
-            _cameraFrameGuide.Add(_cameraGizmoLayer);
 
             _focusPreviewFrameGuide = new VisualElement
             {
@@ -353,6 +348,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             _stageWorld.Add(_authoringGridLayer);
             _stageWorld.Add(_backgroundLayer);
+            _stageWorld.Add(_cameraGizmoLayer);
             _stageWorld.Add(_actorLayer);
             _stageWorld.Add(_focusPreviewFrameGuide);
             _stageWorld.Add(_cameraFrameGuide);
@@ -493,56 +489,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private static VisualElement BuildCameraGizmoLayer()
         {
-            var layer = new VisualElement
+            return new VisualElement
             {
-                name = "CameraGizmoOverlay",
+                name = "StoryPreviewCameraGizmoLayer",
                 pickingMode = PickingMode.Ignore,
-                style = { position = Position.Absolute, left = 0, top = 0, right = 0, bottom = 0 }
+                style = { position = Position.Absolute, left = 0, top = 0, right = 0, bottom = 0, overflow = Overflow.Visible }
             };
-
-            layer.Add(new Label("REFERENCE FRAME")
-            {
-                pickingMode = PickingMode.Ignore,
-                style =
-                {
-                    position = Position.Absolute,
-                    left = 8,
-                    top = 6,
-                    fontSize = 9,
-                    color = new StyleColor(new Color(0.72f, 0.84f, 1f, 0.9f)),
-                    unityFontStyleAndWeight = FontStyle.Bold
-                }
-            });
-
-            layer.Add(new VisualElement
-            {
-                pickingMode = PickingMode.Ignore,
-                style =
-                {
-                    position = Position.Absolute,
-                    left = new StyleLength(new Length(50, LengthUnit.Percent)),
-                    top = 0,
-                    width = 1,
-                    bottom = 0,
-                    backgroundColor = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.2f))
-                }
-            });
-
-            layer.Add(new VisualElement
-            {
-                pickingMode = PickingMode.Ignore,
-                style =
-                {
-                    position = Position.Absolute,
-                    left = 0,
-                    right = 0,
-                    top = new StyleLength(new Length(50, LengthUnit.Percent)),
-                    height = 1,
-                    backgroundColor = new StyleColor(new Color(0.45f, 0.58f, 0.85f, 0.2f))
-                }
-            });
-
-            return layer;
         }
 
         private static VisualElement BuildFocusPreviewGizmoLayer()

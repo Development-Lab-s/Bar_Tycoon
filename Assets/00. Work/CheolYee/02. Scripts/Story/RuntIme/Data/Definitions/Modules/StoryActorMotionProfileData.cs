@@ -12,6 +12,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         EaseInOut,
         SmoothStep,
         SmootherStep,
+        None,
     }
 
     [Serializable]

@@ -6,6 +6,8 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Aspect;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Camera;
+using Gamelib.SoundSystem;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 {
@@ -25,7 +27,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
     {
         private enum PreviewMode { RuntimePreview, StageAuthoring }
         private enum DialogueDisplayMode { RenderOnly, EditorOnly, Both, None }
-        private enum StageSelectionKind { None, Actor, Background, Camera }
+        private enum StageSelectionKind { None, Actor, Background, Camera, Sound }
         private enum DragAxisLock { None, X, Y }
         private enum ActorScaleHandle { None, TopLeft, TopRight, BottomLeft, BottomRight }
 
@@ -75,6 +77,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private const float DialoguePanelH       = 80f;
         private const string PrefsKeyPrefix           = "CheolYee.StoryPreview.";
         private const string PrefsKeyAspectSettingsGuid = PrefsKeyPrefix + "AspectSettingsGuid";
+        private const string PrefsKeyCameraInitGuid     = PrefsKeyPrefix + "CameraInitGuid";
 
         // ── Stage World 상수 ───────────────────────────
 
@@ -111,7 +114,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         // ── Aspect Settings ───────────────────────────
 
-        private StoryAspectSettingsSO _previewAspectSettings;
+        private StoryAspectSettingsSO    _previewAspectSettings;
+        private StoryCameraInitSettingsSO _previewCameraInitSettings;
 
         // ── Phase 3: Letterbox overlay ────────────────
 
@@ -128,6 +132,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private readonly Dictionary<string, StoryActorStateData> _stageState = new();
         private StoryBackgroundStateData _bgState;
+        private StoryCameraStateData _previewCameraSampleState;
 
         // ── Stage World (pan / zoom) ───────────────────
 
@@ -145,6 +150,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private Vector2               _dragStartPanelPos;
         private Vector2               _dragStartNormPos;
         private DragAxisLock          _dragAxisLock;
+
+        // ── 카메라 gizmo 드래그 인터랙션 ─────────────
+
+        private bool    _isDraggingCamera;
+        private Vector2 _cameraDragStartPanelPos;
+        private Vector2 _cameraDragStartStagePos;
+        private int     _cameraDragPointerId = -1;
+
+        // ── Background 드래그 인터랙션 ─────────────
+
+        private bool    _isDraggingBackground;
+        private Vector2 _bgDragStartPanelPos;
+        private Vector2 _bgDragStartStagePos;
 
         private string           _scalingActorKey;
         private ActorScaleHandle _activeScaleHandle;
@@ -211,6 +229,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         // ── UI 참조: Aspect Settings ──────────────────
 
         private ObjectField _aspectSettingsField;
+        private VisualElement _soundSettingsPanelRoot;
+        private VisualElement _episodeSoundDefaultsRoot;
+        private VisualElement _lineSoundOverrideRoot;
 
         // ── UI 참조: 우측 인스펙터 ────────────────────
 
@@ -258,9 +279,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private bool _isTimelineKeyDragging;
         private bool _isTimelineGroupKeyDragging;
         private bool _isTimelineBoxSelecting;
+        private bool _suppressTimelineUndoRecording;
+        private bool _timelineDragUndoActive;
         private string _draggingTimelineActorKey;
         private int _draggingTimelineKeyIndex = -1;
         private StageSelectionKind _draggingTimelineSelectionKind;
+        private float _draggingTimelineKeyStartTime;
         private float _timelineKeyDragStartPanelX;
         private Vector2 _timelineBoxSelectStart;
         private VisualElement _timelineSelectionBox;
@@ -273,6 +297,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private readonly Dictionary<StoryActorKeyframeData, VisualElement> _timelineKeyElements = new();
         private readonly List<TimelineKeyDragState> _timelineKeyDragStates = new();
         private readonly List<StoryActorKeyframeData> _timelineClipboardKeys = new();
+        private readonly Dictionary<StoryBgmKeyframeData, StoryActorKeyframeData> _bgmTimelineKeyProxies = new();
+        private readonly Dictionary<StorySfxKeyframeData, StoryActorKeyframeData> _sfxTimelineKeyProxies = new();
+        private readonly Dictionary<StoryActorKeyframeData, StoryBgmKeyframeData> _timelineProxyToBgmKeys = new();
+        private readonly Dictionary<StoryActorKeyframeData, StorySfxKeyframeData> _timelineProxyToSfxKeys = new();
 
         private sealed class TimelineKeyDragState
         {
@@ -326,6 +354,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             EditorApplication.update += UpdateTransitionPreview;
             EditorApplication.update += UpdateTimelinePlayback;
             LoadAspectSettingsFromPrefs();
+            LoadCameraInitSettingsFromPrefs();
         }
 
         private void OnDisable()
@@ -335,6 +364,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             EditorApplication.update -= UpdateTimelinePlayback;
             SavePreviewLayoutPrefs();
             SaveAspectSettingsGuid();
+            SaveCameraInitGuid();
         }
 
         private void LoadAspectSettingsFromPrefs()
@@ -361,6 +391,42 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 EditorPrefs.DeleteKey(PrefsKeyAspectSettingsGuid);
             }
         }
+
+        private void LoadCameraInitSettingsFromPrefs()
+        {
+            string guid = EditorPrefs.GetString(PrefsKeyCameraInitGuid, "");
+            if (string.IsNullOrEmpty(guid))
+                return;
+
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            _previewCameraInitSettings = string.IsNullOrEmpty(path)
+                ? null
+                : AssetDatabase.LoadAssetAtPath<StoryCameraInitSettingsSO>(path);
+        }
+
+        private void SaveCameraInitGuid()
+        {
+            if (_previewCameraInitSettings != null)
+            {
+                string path = AssetDatabase.GetAssetPath(_previewCameraInitSettings);
+                EditorPrefs.SetString(PrefsKeyCameraInitGuid, AssetDatabase.AssetPathToGUID(path));
+            }
+            else
+            {
+                EditorPrefs.DeleteKey(PrefsKeyCameraInitGuid);
+            }
+        }
+
+        private StoryCameraStateData CreateDefaultCameraState()
+        {
+            var state = new StoryCameraStateData();
+            if (_previewCameraInitSettings != null)
+            {
+                state.zoom = _previewCameraInitSettings.DefaultZoom;
+                state.stageLocalPosition = _previewCameraInitSettings.DefaultStageLocalPosition;
+            }
+            return state;
+        }
         private void OnFocus()   => RefreshRenderAreaFromGameView();
 
         private void OnUndoRedo()
@@ -371,6 +437,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_selectionKind == StageSelectionKind.Actor && !_stageState.ContainsKey(_selectedActorKey))
                 ClearStageSelection();
             ValidateTimelineSelection();
+            ClearSoundTimelineProxyCache();
+            UpdateSelectedSoundKeysFromTimelineSelection();
             RebuildActorLayer();
             ApplyTimelinePlayheadSample();
             RefreshActorInspector();
@@ -397,6 +465,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (IsFocusedOnTextInput(rootVisualElement))
                 return;
 
+            if (IsTimelinePanelFocused())
+                return;
+
             if (HandleTimelineShortcut(e.keyCode, e.control || e.command, e.shift))
             {
                 e.Use();
@@ -419,7 +490,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             StopPlayback();
             _stageState.Clear();
             _bgState = null;
+            ClearSoundTimelineSelection();
+            ClearSoundTimelineProxyCache();
             RebuildActorLayer();
+            RefreshActorList();
+            RefreshActorInspector();
             RefreshDialogue();
             RefreshButtons();
         }

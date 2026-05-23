@@ -109,6 +109,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             StopTransitionPreview(applyTargetState: false);
             EnsureEpisodeForLine(line);
             _currentLine = line;
+            ClearPreviewCameraSampleState();
 
             // RuntimePreview 재생 중 자동 전환: 기존 스테이지 상태가 있을 때만 적용
             bool autoTransition = IsRuntimePreviewMode
@@ -439,9 +440,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     CloneBackgroundState(_transitionToBackground),
                     _transitionBackgroundTrack,
                     _transitionPreviewDuration);
+                SetPreviewCameraSampleState(StoryTransitionSampler.SampleCameraTrackAtTime(
+                    _transitionCameraTrack,
+                    _transitionCameraFocusTarget,
+                    _transitionPreviewDuration));
                 RebuildActorLayer(refreshInspectorLists: false);
                 RefreshActorInspector();
                 RefreshAuthoringControls();
+            }
+            else
+            {
+                ClearPreviewCameraSampleState();
             }
 
             _transitionFromActors.Clear();
@@ -505,6 +514,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _bgState = StoryTransitionSampler.SampleBackground(
                 _transitionFromBackground, _transitionToBackground, elapsed);
             _bgState = StoryTransitionSampler.SampleBackgroundTrackAtTime(_bgState, _transitionBackgroundTrack, elapsed);
+            StoryCameraStateData cameraSample = StoryTransitionSampler.SampleCameraTrackAtTime(
+                _transitionCameraTrack,
+                _transitionCameraFocusTarget,
+                elapsed);
+            SetPreviewCameraSampleState(cameraSample);
 
             // First frame: full DOM rebuild to initialise _actorElements for this transition.
             // Subsequent frames: fast style-only update (no Clear/re-add).
@@ -518,6 +532,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 UpdateActorLayerPositions();
             }
 
+            UpdateCameraGizmoVisual(cameraSample);
+            RefreshFocusPreviewGuide();
             Repaint();
         }
 

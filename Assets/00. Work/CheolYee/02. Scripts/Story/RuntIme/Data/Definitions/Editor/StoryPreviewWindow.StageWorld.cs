@@ -92,6 +92,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _backgroundLayer.style.width = DefaultUnitPixels;
                 _backgroundLayer.style.height = camH;
             }
+            if (_cameraGizmoLayer != null)
+            {
+                _cameraGizmoLayer.style.left = 0;
+                _cameraGizmoLayer.style.top = 0;
+                _cameraGizmoLayer.style.width = DefaultUnitPixels;
+                _cameraGizmoLayer.style.height = camH;
+            }
 
             ApplyCameraFrameModeStyles();
             RefreshFocusPreviewGuide();
@@ -111,12 +118,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_cameraFrameGuide != null)
             {
                 _cameraFrameGuide.style.overflow = isRuntime ? Overflow.Hidden : Overflow.Visible;
-                float borderWidth = isRuntime ? 0f : 2f;
-                _cameraFrameGuide.style.borderTopWidth = borderWidth;
-                _cameraFrameGuide.style.borderRightWidth = borderWidth;
-                _cameraFrameGuide.style.borderBottomWidth = borderWidth;
-                _cameraFrameGuide.style.borderLeftWidth = borderWidth;
+                // 파란 Reference Frame 제거: border 항상 0
+                _cameraFrameGuide.style.borderTopWidth    = 0f;
+                _cameraFrameGuide.style.borderRightWidth  = 0f;
+                _cameraFrameGuide.style.borderBottomWidth = 0f;
+                _cameraFrameGuide.style.borderLeftWidth   = 0f;
             }
+
+            if (_authoringGridLayer != null)
+                _authoringGridLayer.style.display = isRuntime ? DisplayStyle.None : DisplayStyle.Flex;
 
             if (_focusPreviewFrameGuide != null)
             {
@@ -168,6 +178,55 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _stageWrapper.RegisterCallback<PointerDownEvent>(OnStagePanDown);
             _stageWrapper.RegisterCallback<PointerMoveEvent>(OnStagePanMove);
             _stageWrapper.RegisterCallback<PointerUpEvent>(OnStagePanUp);
+            // 빈 공간 클릭 시 selection clear (actor/camera/bg 가 StopPropagation 하면 여기 안 옴)
+            _stageWrapper.RegisterCallback<PointerDownEvent>(OnStageEmptyClick);
+        }
+
+        private void OnStageCameraGizmoPointerDown(PointerDownEvent e)
+        {
+            if (previewMode != PreviewMode.StageAuthoring || e.button != 0)
+                return;
+
+            if (IsPointerTargetWithinActor(e.target) || !IsCameraGizmoHandleHit(e.position))
+                return;
+
+            if (TryBeginCameraGizmoDrag(_stageWrapper, e.pointerId, e.position))
+                e.StopPropagation();
+        }
+
+        private void OnStageCameraGizmoPointerMove(PointerMoveEvent e)
+        {
+            if (!IsCameraGizmoDragPointer(e.pointerId))
+                return;
+
+            UpdateCameraGizmoDragVisual(e.position);
+            e.StopPropagation();
+        }
+
+        private void OnStageCameraGizmoPointerUp(PointerUpEvent e)
+        {
+            if (!IsCameraGizmoDragPointer(e.pointerId))
+                return;
+
+            EndCameraGizmoDrag(_stageWrapper, e.pointerId, e.position);
+            e.StopPropagation();
+        }
+
+        private void OnStageCameraGizmoPointerCaptureOut(PointerCaptureOutEvent _)
+        {
+            if (!_isDraggingCamera)
+                return;
+
+            CancelCameraGizmoDrag(_stageWrapper, _cameraDragPointerId);
+        }
+
+        private void OnStageEmptyClick(PointerDownEvent e)
+        {
+            if (previewMode != PreviewMode.StageAuthoring || e.button != 0) return;
+            ClearStageSelection();
+            HighlightSelectedActor();
+            RefreshActorInspector();
+            Repaint();
         }
 
         private void OnStageWheel(WheelEvent e)
