@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using _00._Work.Goat._02._Scripts.Exp;
+using _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards;
 using _00._Work.Lusaload._02._Scripts.SO;
+using BBJ.GridSystem.Objects;
+using Gamelib.EventSystem;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
@@ -17,6 +21,8 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         [SerializeField] private CocktailRecipeDatabaseSO _cocktailRecipeDatabaseSo;
 
         public event Action<int, CocktailRecipeSO> OnCockTailAdd;
+        public event Action<Sprite> OnFuncAdd; 
+        public event Action<List<Vector2>> OnObjectAddCameraMove; 
         private void Awake()
         {
             expManager.OnLevelChanged += HandleLevelChange;
@@ -52,9 +58,24 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
                     _cocktailRecipeDatabaseSo.AddCockTail(reward);
                     OnCockTailAdd?.Invoke(level, reward);
                 }
+                
+                rewardGroup.unlockData.LevelUpReward();
+                
+                List<Vector2> objectPositions = rewardGroup.unlockData.GetSpawnPositions();
+
+                if (objectPositions.Count > 0)
+                {
+                    OnObjectAddCameraMove?.Invoke(objectPositions);
+                }
+
+                foreach (AbstractUnlockSO unlockData in rewardGroup.unlockData.unlockDatas)
+                {
+                    foreach (Sprite sprite in unlockData.GetSprite())
+                    {
+                        OnFuncAdd?.Invoke(sprite);
+                    }
+                }
             }
-            
-            //여긴 기능 해금
         }
     }
 }
