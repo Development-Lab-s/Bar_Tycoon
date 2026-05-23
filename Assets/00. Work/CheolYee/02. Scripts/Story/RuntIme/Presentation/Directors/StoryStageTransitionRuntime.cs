@@ -139,28 +139,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             if (track == null)
                 return false;
 
+            // Any keyframe (CameraOffset, CameraZoom, CameraTarget, etc.) counts as authored.
             if (track.keyframes is { Count: > 0 })
                 return true;
 
+            // No keyframes: check defaultState for non-default offset or zoom.
+            // Legacy state fields (targetActorInstanceKey, followMode, etc.) are not checked here.
+            // CameraTarget is key-only. defaultState contributes only offset and zoom.
             StoryCameraStateData state = track.defaultState;
             if (state == null)
                 return false;
 
-            return !string.IsNullOrWhiteSpace(state.targetActorInstanceKey)
-                || state.followMode != StoryCameraFollowMode.FollowActor
-                || state.normalizedOffset != Vector2.zero
-                || !Mathf.Approximately(state.zoomMultiplier, 1f);
+            return state.stageLocalPosition != Vector2.zero
+                || !Mathf.Approximately(state.zoom, 1f);
         }
 
-        public StoryCameraStateData SampleCameraTrack(
-            StoryCameraTrackData track,
-            string fallbackTargetActorInstanceKey,
-            float elapsed)
+        public StoryCameraStateData SampleCameraTrack(StoryCameraTrackData track, float elapsed)
         {
-            return StoryTransitionSampler.SampleCameraTrackAtTime(
-                track,
-                fallbackTargetActorInstanceKey,
-                elapsed);
+            return StoryTransitionSampler.SampleCameraTrackAtTime(track, "", elapsed);
         }
 
         private void AddActorKeys<TValue>(IReadOnlyDictionary<string, TValue> map)

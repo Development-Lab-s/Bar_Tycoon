@@ -66,8 +66,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             if (string.IsNullOrWhiteSpace(characterId))
                 return UniTask.CompletedTask;
 
-            if (_actors.ContainsKey(characterId))
+            if (_actors.TryGetValue(characterId, out ActorEntry existingEntry))
+            {
+                if (existingEntry.CurrentState is { visible: false })
+                {
+                    StoryActorStateData revealState = existingEntry.CurrentState.ShallowClone();
+                    revealState.visible = true;
+                    ApplyActorEntry(existingEntry, revealState);
+                }
+
                 return UniTask.CompletedTask;
+            }
 
             ActorEntry entry = CreateActorEntry(characterId, line.Speaker, ResolveActorRoot());
             if (entry == null)
@@ -87,6 +96,62 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             _actors[characterId] = entry;
 
             return UniTask.CompletedTask;
+        }
+
+        public void PrewarmHiddenActors(IReadOnlyDictionary<string, StoryActorStateData> targetMap)
+        {
+            if (targetMap == null)
+                return;
+
+            Transform parent = ResolveActorRoot();
+            foreach (KeyValuePair<string, StoryActorStateData> pair in targetMap)
+            {
+                string actorKey = pair.Key;
+                StoryActorStateData data = pair.Value;
+                if (data == null || string.IsNullOrWhiteSpace(actorKey))
+                    continue;
+
+                if (!_actors.TryGetValue(actorKey, out ActorEntry entry))
+                {
+                    entry = CreateActorEntry(actorKey, data.actor, parent);
+                    if (entry == null)
+                        continue;
+
+                    _actors[actorKey] = entry;
+                }
+
+                StoryActorStateData hiddenState = data.ShallowClone();
+                hiddenState.visible = false;
+                hiddenState.focused = false;
+                ApplyActorEntry(entry, hiddenState);
+            }
+        }
+
+        public void PrewarmHiddenSpeaker(CharacterDefinitionSO speaker)
+        {
+            if (speaker == null || string.IsNullOrWhiteSpace(speaker.CharacterId))
+                return;
+
+            string actorKey = speaker.CharacterId;
+            if (_actors.ContainsKey(actorKey))
+                return;
+
+            ActorEntry entry = CreateActorEntry(actorKey, speaker, ResolveActorRoot());
+            if (entry == null)
+                return;
+
+            StoryActorStateData hiddenState = new()
+            {
+                actor = speaker,
+                actorKey = actorKey,
+                actorInstanceKey = actorKey,
+                stageLocalPosition = Vector2.zero,
+                visible = false,
+                focused = false
+            };
+
+            ApplyActorEntry(entry, hiddenState);
+            _actors[actorKey] = entry;
         }
 
         public void ApplySpeakerFocus(StoryLineSO line)

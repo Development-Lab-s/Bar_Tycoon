@@ -202,54 +202,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             out StoryActorKeyframeData to,
             out float local)
         {
-            from = null;
-            to = null;
-            local = 0f;
-
-            var keys = new List<StoryActorKeyframeData>();
-            foreach (StoryActorKeyframeData keyframe in track.keyframes)
-            {
-                if (keyframe != null && keyframe.property == property)
-                    keys.Add(keyframe);
-            }
-
-            keys.Sort((a, b) => GetKeyTime(a).CompareTo(GetKeyTime(b)));
-            if (keys.Count == 0)
+            if (!TryFindTrackSegment(track?.keyframes, property, time, out from, out to, out local))
                 return false;
-
-            float firstKeyTime = GetKeyTime(keys[0]);
-
-            if (time <= firstKeyTime)
-            {
-                from = null;
-                to = keys[0];
-                local = firstKeyTime <= 0f ? 1f : Mathf.Clamp01(time / firstKeyTime);
-                return true;
-            }
-
-            StoryActorKeyframeData last = keys[keys.Count - 1];
-            if (time >= GetKeyTime(last))
-            {
-                from = last;
-                to = last;
-                return true;
-            }
-
-            from = keys[0];
-            to = last;
-            for (int i = 1; i < keys.Count; i++)
-            {
-                if (GetKeyTime(keys[i]) >= time)
-                {
-                    to = keys[i];
-                    break;
-                }
-                from = keys[i];
-            }
-
-            float fromTime = GetKeyTime(from);
-            float toTime = GetKeyTime(to);
-            local = Mathf.Clamp01((time - fromTime) / Mathf.Max(0.0001f, toTime - fromTime));
             return true;
         }
 
@@ -361,15 +315,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
 
         public static StoryCameraStateData SampleCameraTrackAtTime(
             StoryCameraTrackData track,
-            string fallbackTargetActorKey,
+            string fallbackTargetActorKey, // kept for API compatibility; no longer used in sampling (Phase 1)
             float timeSeconds)
         {
             StoryCameraStateData sample = track?.defaultState != null
                 ? track.defaultState.ShallowClone()
                 : new StoryCameraStateData();
-
-            if (string.IsNullOrWhiteSpace(sample.targetActorInstanceKey))
-                sample.targetActorInstanceKey = fallbackTargetActorKey ?? string.Empty;
 
             if (track == null || track.keyframes == null || track.keyframes.Count == 0)
                 return sample;
@@ -379,7 +330,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             {
                 sample.targetActorInstanceKey = targetKey.cameraTargetActorKey ?? string.Empty;
                 sample.followMode = targetKey.cameraFollowMode;
-                sample.moveMode = targetKey.cameraMoveMode;
+                // moveMode is not propagated: cameraMoveMode is phased out (Phase 2 removes UI)
                 sample.snapshotNormalizedPosition = targetKey.cameraSnapshotNormalizedPosition;
             }
 
@@ -391,10 +342,107 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
                     k => k.cameraZoom, sample.zoom, out float zoom))
                 sample.zoom = Mathf.Max(0.01f, zoom);
 
-            if (string.IsNullOrWhiteSpace(sample.targetActorInstanceKey))
-                sample.targetActorInstanceKey = fallbackTargetActorKey ?? string.Empty;
-
             return sample;
+        }
+
+        /// <summary>
+        /// Returns the XY target contribution at <paramref name="timeSeconds"/> using key-only rules.
+        /// Returns <see cref="Vector2.zero"/> when no CameraTarget keys are authored.
+        ///
+        /// Segment rule: prevKey.time (or 0) → nextKey.time is the full easing window.
+        /// After the last key: hold its endpoint with no further easing.
+        ///
+        /// Phase 3/4 will add this result to the camera offset (from SampleCameraTrackAtTime)
+        /// to compute the final camera stage-local position.
+        /// </summary>
+        /// <param name="getActorStagePivot">
+        /// Resolves an actorInstanceKey to its current stage-local pivot position.
+        /// Return null when the actor cannot be found; contribution is then Vector2.zero for that key.
+        /// </param>
+        public static Vector2 SampleCameraTargetContribution(
+            StoryCameraTrackData track,
+            float timeSeconds,
+            System.Func<string, Vector2?> getActorStagePivot)
+        {
+            if (track == null || track.keyframes == null)
+                return Vector2.zero;
+
+            float t = Mathf.Max(0f, timeSeconds);
+            if (!TryFindCameraTargetSegment(track.keyframes, t, out StoryActorKeyframeData prevKey, out StoryActorKeyframeData nextKey))
+                return Vector2.zero;
+
+            // Past the last key: hold its endpoint, no easing.
+            if (nextKey == null)
+                return ResolveCameraTargetEndpoint(prevKey, getActorStagePivot);
+
+            float segmentStart = prevKey != null ? GetKeyTime(prevKey) : 0f;
+            float segmentEnd   = GetKeyTime(nextKey);
+            float segmentLen   = segmentEnd - segmentStart;
+            float local        = segmentLen <= 0f ? 1f : Mathf.Clamp01((t - segmentStart) / segmentLen);
+
+            float progress = ResolveMoveProgress(nextKey.easing, 1f, local);
+
+            Vector2 fromEndpoint = prevKey != null
+                ? ResolveCameraTargetEndpoint(prevKey, getActorStagePivot)
+                : Vector2.zero;
+            Vector2 toEndpoint = ResolveCameraTargetEndpoint(nextKey, getActorStagePivot);
+
+            return Vector2.LerpUnclamped(fromEndpoint, toEndpoint, progress);
+        }
+
+        // prevKey = last key whose time <= t; nextKey = first key whose time > t (null = past all keys).
+        private static bool TryFindCameraTargetSegment(
+            IReadOnlyList<StoryActorKeyframeData> keyframes,
+            float time,
+            out StoryActorKeyframeData prevKey,
+            out StoryActorKeyframeData nextKey)
+        {
+            prevKey = null;
+            nextKey = null;
+            if (keyframes == null)
+                return false;
+
+            bool foundAny = false;
+            float prevTime = float.MinValue;
+            float nextTime = float.MaxValue;
+
+            foreach (StoryActorKeyframeData key in keyframes)
+            {
+                if (key == null || key.property != StoryActorKeyframeProperty.CameraTarget)
+                    continue;
+
+                foundAny = true;
+                float keyTime = GetKeyTime(key);
+                if (keyTime <= time)
+                {
+                    if (keyTime >= prevTime)
+                    {
+                        prevTime = keyTime;
+                        prevKey = key;
+                    }
+                }
+                else if (keyTime < nextTime)
+                {
+                    nextTime = keyTime;
+                    nextKey = key;
+                }
+            }
+
+            return foundAny;
+        }
+
+        private static Vector2 ResolveCameraTargetEndpoint(
+            StoryActorKeyframeData key,
+            System.Func<string, Vector2?> getActorStagePivot)
+        {
+            if (key == null || string.IsNullOrWhiteSpace(key.cameraTargetActorKey))
+                return Vector2.zero;
+
+            if (key.cameraFollowMode == StoryCameraFollowMode.SnapshotPosition)
+                return key.cameraSnapshotNormalizedPosition; // stage-local position captured at authoring time
+
+            // FollowActor: resolve current actor stage-local pivot each frame.
+            return getActorStagePivot?.Invoke(key.cameraTargetActorKey) ?? Vector2.zero;
         }
 
         public static float GetCameraTrackDuration(StoryCameraTrackData track)
@@ -451,17 +499,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             if (track == null || track.keyframes == null)
                 return false;
 
-            foreach (StoryActorKeyframeData keyframe in track.keyframes)
-            {
-                if (keyframe == null || keyframe.property != StoryActorKeyframeProperty.CameraTarget)
-                    continue;
-
-                float keyTime = GetKeyTime(keyframe);
-                if (keyTime <= time && (target == null || keyTime >= GetKeyTime(target)))
-                    target = keyframe;
-            }
-
-            return target != null;
+            return TryFindCameraTargetSegment(track.keyframes, time, out target, out _)
+                && target != null;
         }
 
         public static bool TryGetCameraTargetKeys(
@@ -475,33 +514,28 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             if (track == null || track.keyframes == null)
                 return false;
 
-            var keys = new List<StoryActorKeyframeData>();
-            foreach (StoryActorKeyframeData keyframe in track.keyframes)
-            {
-                if (keyframe != null && keyframe.property == StoryActorKeyframeProperty.CameraTarget)
-                    keys.Add(keyframe);
-            }
-
-            keys.Sort((a, b) => GetKeyTime(a).CompareTo(GetKeyTime(b)));
-            if (keys.Count == 0)
+            if (!TryFindCameraTargetSegment(track.keyframes, time, out current, out _))
                 return false;
 
-            for (int i = 0; i < keys.Count; i++)
+            if (current == null)
+                return false;
+
+            float currentTime = GetKeyTime(current);
+            float previousTime = float.MinValue;
+            foreach (StoryActorKeyframeData keyframe in track.keyframes)
             {
-                float keyTime = GetKeyTime(keys[i]);
-                if (keyTime <= time)
+                if (keyframe == null || keyframe.property != StoryActorKeyframeProperty.CameraTarget || ReferenceEquals(keyframe, current))
+                    continue;
+
+                float keyTime = GetKeyTime(keyframe);
+                if (keyTime < currentTime && keyTime >= previousTime)
                 {
-                    current = keys[i];
-                    if (i > 0)
-                        previous = keys[i - 1];
-                }
-                else
-                {
-                    break;
+                    previousTime = keyTime;
+                    previous = keyframe;
                 }
             }
 
-            return current != null;
+            return true;
         }
 
         private static bool TrySampleCameraVector2(
@@ -554,59 +588,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             out StoryActorKeyframeData to,
             out float local)
         {
-            from = null;
-            to = null;
-            local = 0f;
-
-            if (track == null || track.keyframes == null)
-                return false;
-
-            var keys = new List<StoryActorKeyframeData>();
-            foreach (StoryActorKeyframeData keyframe in track.keyframes)
-            {
-                if (keyframe != null && keyframe.property == property)
-                    keys.Add(keyframe);
-            }
-
-            keys.Sort((a, b) => GetKeyTime(a).CompareTo(GetKeyTime(b)));
-            if (keys.Count == 0)
-                return false;
-
-            float firstKeyTime = GetKeyTime(keys[0]);
-
-            if (time <= firstKeyTime)
-            {
-                from = null;
-                to = keys[0];
-                local = firstKeyTime <= 0f ? 1f : Mathf.Clamp01(time / firstKeyTime);
-                return true;
-            }
-
-            StoryActorKeyframeData last = keys[keys.Count - 1];
-            if (time >= GetKeyTime(last))
-            {
-                from = last;
-                to = last;
-                return true;
-            }
-
-            from = keys[0];
-            to = last;
-            for (int i = 1; i < keys.Count; i++)
-            {
-                if (GetKeyTime(keys[i]) >= time)
-                {
-                    to = keys[i];
-                    break;
-                }
-
-                from = keys[i];
-            }
-
-            float fromTime = GetKeyTime(from);
-            float toTime = GetKeyTime(to);
-            local = Mathf.Clamp01((time - fromTime) / Mathf.Max(0.0001f, toTime - fromTime));
-            return true;
+            return TryFindTrackSegment(track?.keyframes, property, time, out from, out to, out local);
         }
 
         private static bool TrySampleBackgroundVector2(
@@ -659,54 +641,81 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             out StoryActorKeyframeData to,
             out float local)
         {
+            return TryFindTrackSegment(track?.keyframes, property, time, out from, out to, out local);
+        }
+
+        private static bool TryFindTrackSegment(
+            IReadOnlyList<StoryActorKeyframeData> keyframes,
+            StoryActorKeyframeProperty property,
+            float time,
+            out StoryActorKeyframeData from,
+            out StoryActorKeyframeData to,
+            out float local)
+        {
             from = null;
             to = null;
             local = 0f;
 
-            if (track == null || track.keyframes == null)
+            if (keyframes == null)
                 return false;
 
-            var keys = new List<StoryActorKeyframeData>();
-            foreach (StoryActorKeyframeData keyframe in track.keyframes)
+            StoryActorKeyframeData first = null;
+            StoryActorKeyframeData last = null;
+            StoryActorKeyframeData prev = null;
+            StoryActorKeyframeData next = null;
+            float firstTime = float.MaxValue;
+            float lastTime = float.MinValue;
+            float prevTime = float.MinValue;
+            float nextTime = float.MaxValue;
+
+            foreach (StoryActorKeyframeData keyframe in keyframes)
             {
-                if (keyframe != null && keyframe.property == property)
-                    keys.Add(keyframe);
+                if (keyframe == null || keyframe.property != property)
+                    continue;
+
+                float keyTime = GetKeyTime(keyframe);
+                if (keyTime < firstTime)
+                {
+                    firstTime = keyTime;
+                    first = keyframe;
+                }
+                if (keyTime > lastTime)
+                {
+                    lastTime = keyTime;
+                    last = keyframe;
+                }
+                if (keyTime <= time && keyTime >= prevTime)
+                {
+                    prevTime = keyTime;
+                    prev = keyframe;
+                }
+                if (keyTime > time && keyTime < nextTime)
+                {
+                    nextTime = keyTime;
+                    next = keyframe;
+                }
             }
 
-            keys.Sort((a, b) => GetKeyTime(a).CompareTo(GetKeyTime(b)));
-            if (keys.Count == 0)
+            if (first == null)
                 return false;
 
-            float firstKeyTime = GetKeyTime(keys[0]);
-
-            if (time <= firstKeyTime)
+            if (time <= firstTime)
             {
                 from = null;
-                to = keys[0];
-                local = firstKeyTime <= 0f ? 1f : Mathf.Clamp01(time / firstKeyTime);
+                to = first;
+                local = firstTime <= 0f ? 1f : Mathf.Clamp01(time / firstTime);
                 return true;
             }
 
-            StoryActorKeyframeData last = keys[keys.Count - 1];
-            if (time >= GetKeyTime(last))
+            if (time >= lastTime)
             {
                 from = last;
                 to = last;
                 return true;
             }
 
-            from = keys[0];
-            to = last;
-            for (int i = 1; i < keys.Count; i++)
-            {
-                if (GetKeyTime(keys[i]) >= time)
-                {
-                    to = keys[i];
-                    break;
-                }
-
-                from = keys[i];
-            }
+            from = prev ?? first;
+            to = next ?? last;
 
             float fromTime = GetKeyTime(from);
             float toTime = GetKeyTime(to);

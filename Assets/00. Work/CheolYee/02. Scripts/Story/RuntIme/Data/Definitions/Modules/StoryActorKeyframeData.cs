@@ -79,11 +79,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         [Min(0.01f)]
         public float cameraZoom = 1f;
 
-        [Tooltip("Snapshot target position captured when Camera Target uses SnapshotPosition.")]
-        public Vector2 cameraSnapshotNormalizedPosition = new Vector2(0.5f, 0.5f);
-
-        [Tooltip("Camera target transition mode used by Camera Target keys.")]
-        public StoryCameraMoveMode cameraMoveMode = StoryCameraMoveMode.Smooth;
+        [Tooltip("Stage-local actor pivot position captured at key-authoring time when CameraTarget uses SnapshotPosition. (0,0) = stage root center.")]
+        public Vector2 cameraSnapshotNormalizedPosition = Vector2.zero;
 
         [Tooltip("Camera shake strength used by Camera Shake keys.")]
         [Min(0f)]

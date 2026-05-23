@@ -153,10 +153,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (state?.background != null)
             {
-                StoryCameraStateData cameraState = ResolveCurrentPreviewCameraState();
+                Vector2 cameraStageLocal = ResolvePreviewCameraFocusOffset();
                 Vector2 cameraPixel = new Vector2(
-                    camW * 0.5f + cameraState.stageLocalPosition.x * pixelsPerWorld,
-                    camH * 0.5f - cameraState.stageLocalPosition.y * pixelsPerWorld);
+                    camW * 0.5f + cameraStageLocal.x * pixelsPerWorld,
+                    camH * 0.5f - cameraStageLocal.y * pixelsPerWorld);
                 parallaxBasePixel = Vector2.Lerp(panelCenter, cameraPixel, state.background.ParallaxFactor);
             }
 

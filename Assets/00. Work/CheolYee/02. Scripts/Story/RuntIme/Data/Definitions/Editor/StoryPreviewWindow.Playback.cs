@@ -391,7 +391,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
                 _transitionBackgroundTrack = currentLayout.BackgroundTrack;
                 _transitionCameraTrack = currentLayout.CameraTrackEditable;
-                _transitionCameraFocusTarget = currentLayout.CameraFocusTarget;
             }
 
             _transitionFromBackground   = CloneBackgroundState(fromBackground);
@@ -482,8 +481,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 StoryTransitionSampler.BackgroundTransitionDuration(_transitionFromBackground, _transitionToBackground));
             duration = Mathf.Max(duration, StoryTransitionSampler.GetBackgroundTrackDuration(_transitionBackgroundTrack));
             duration = Mathf.Max(duration, StoryTransitionSampler.GetCameraTrackDuration(_transitionCameraTrack));
-            if (!string.IsNullOrWhiteSpace(_transitionCameraFocusTarget))
-                duration = Mathf.Max(duration, 0.35f);
             return duration;
         }
 

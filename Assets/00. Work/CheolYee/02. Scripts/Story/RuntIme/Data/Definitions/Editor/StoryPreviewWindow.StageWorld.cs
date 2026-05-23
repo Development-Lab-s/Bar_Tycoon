@@ -80,11 +80,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _cameraFrameGuide.style.width  = DefaultUnitPixels;
                 _cameraFrameGuide.style.height = camH;
             }
-            if (_focusPreviewFrameGuide != null)
-            {
-                _focusPreviewFrameGuide.style.width = DefaultUnitPixels;
-                _focusPreviewFrameGuide.style.height = camH;
-            }
             if (_backgroundLayer != null)
             {
                 _backgroundLayer.style.left = 0;
@@ -101,7 +96,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
 
             ApplyCameraFrameModeStyles();
-            RefreshFocusPreviewGuide();
             RefreshBackgroundLayer();
         }
 
@@ -128,31 +122,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_authoringGridLayer != null)
                 _authoringGridLayer.style.display = isRuntime ? DisplayStyle.None : DisplayStyle.Flex;
 
-            if (_focusPreviewFrameGuide != null)
-            {
-                _focusPreviewFrameGuide.style.display = !isRuntime && !string.IsNullOrWhiteSpace(ResolveCurrentPreviewCameraFocusTarget())
-                    ? DisplayStyle.Flex
-                    : DisplayStyle.None;
-            }
-
             UpdateLetterboxOverlay();
         }
 
-        private void RefreshFocusPreviewGuide()
-        {
-            if (_focusPreviewFrameGuide == null)
-                return;
-
-            Vector2 focusOffset = ResolvePreviewCameraFocusOffset();
-            float camH = DefaultUnitPixels / GetStoryVisibleAspect();
-            _focusPreviewFrameGuide.style.left = focusOffset.x * DefaultUnitPixels;
-            _focusPreviewFrameGuide.style.top = 0f;
-            _focusPreviewFrameGuide.style.width = DefaultUnitPixels;
-            _focusPreviewFrameGuide.style.height = camH;
-            _focusPreviewFrameGuide.style.display = IsStageAuthoringMode && !string.IsNullOrWhiteSpace(ResolveCurrentPreviewCameraFocusTarget())
-                ? DisplayStyle.Flex
-                : DisplayStyle.None;
-        }
+        private void RefreshFocusPreviewGuide() { }
 
         private float GetPhysicalAspect()
         {

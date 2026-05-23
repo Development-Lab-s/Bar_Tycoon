@@ -36,8 +36,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             if (_actorLayer == null) return;
 
-            RefreshFocusPreviewGuide();
-            RefreshFocusPreviewGuide();
             RefreshBackgroundLayer();
             if (refreshInspectorLists)
                 RefreshActorList();
@@ -113,8 +111,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 AddActorPivotMarker(el, data);
                 if (data.focused)
                     AddFocusMarker(el);
-                if (string.Equals(actorKey, ResolveCurrentPreviewCameraFocusTarget(), StringComparison.Ordinal))
-                    AddCameraFocusTargetMarker(el);
                 if (_selectionKind == StageSelectionKind.Actor && _selectedActorKey == actorKey)
                     AddCharacterDefinitionHandles(el, data);
             }
@@ -375,37 +371,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private Vector2 ResolvePreviewCameraFocusOffset()
         {
             StoryCameraStateData cameraState = ResolveCurrentPreviewCameraState();
-            string focusActorKey = cameraState.targetActorInstanceKey;
-            if (string.IsNullOrWhiteSpace(focusActorKey))
-                return Vector2.zero;
-
-            float focusX = ResolvePreviewCameraTargetX(focusActorKey, cameraState.followMode, cameraState.snapshotNormalizedPosition);
-            if (Mathf.Approximately(focusX, float.MinValue))
-                return Vector2.zero;
-
-            StoryCameraTrackData track = _isTransitionPreviewing ? _transitionCameraTrack : FindCurrentStageLayout()?.CameraTrackEditable;
-            float time = _isTransitionPreviewing
-                ? _transitionPreviewElapsed
-                : ShouldUseTimelinePlayheadForPreviewSampling()
-                    ? _timelinePlayheadTime
-                    : 0f;
-            if (cameraState.moveMode == StoryCameraMoveMode.Smooth
-                && TryGetPreviewCameraTargetKeys(track, time, out StoryActorKeyframeData previousKey, out StoryActorKeyframeData currentKey)
-                && currentKey != null)
-            {
-                float keyTime = StoryTransitionSampler.GetKeyTime(currentKey);
-                float local = Mathf.Clamp01((time - keyTime) / 0.45f);
-                if (local < 1f)
-                {
-                    float previousX = previousKey != null
-                        ? ResolvePreviewCameraTargetX(previousKey.cameraTargetActorKey, previousKey.cameraFollowMode, previousKey.cameraSnapshotNormalizedPosition)
-                        : 0f;
-                    focusX = Mathf.Lerp(previousX, focusX, local);
-                }
-            }
-
-            focusX += cameraState.normalizedOffset.x;
-            return new Vector2(focusX, 0f);
+            return cameraState.stageLocalPosition + ResolvePreviewCameraTargetContribution();
         }
 
         private static bool TryGetPreviewCameraTargetKeys(
@@ -469,13 +435,28 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             StoryStageLayoutModuleSO layout = FindCurrentStageLayout();
             StoryCameraTrackData track = _isTransitionPreviewing ? _transitionCameraTrack : layout?.CameraTrackEditable;
-            string fallbackTarget = _isTransitionPreviewing ? _transitionCameraFocusTarget : layout?.CameraFocusTarget;
             float time = _isTransitionPreviewing
                 ? _transitionPreviewElapsed
                 : ShouldUseTimelinePlayheadForPreviewSampling()
                     ? _timelinePlayheadTime
                     : 0f;
-            return StoryTransitionSampler.SampleCameraTrackAtTime(track, fallbackTarget, time);
+            return StoryTransitionSampler.SampleCameraTrackAtTime(track, "", time);
+        }
+
+        private Vector2 ResolvePreviewCameraTargetContribution()
+        {
+            StoryCameraTrackData track = _isTransitionPreviewing ? _transitionCameraTrack : FindCurrentStageLayout()?.CameraTrackEditable;
+            float time = _isTransitionPreviewing
+                ? _transitionPreviewElapsed
+                : ShouldUseTimelinePlayheadForPreviewSampling()
+                    ? _timelinePlayheadTime
+                    : 0f;
+            return StoryTransitionSampler.SampleCameraTargetContribution(track, time, key =>
+            {
+                if (string.IsNullOrWhiteSpace(key) || !_stageState.TryGetValue(key, out var s) || s == null)
+                    return null;
+                return s.stageLocalPosition;
+            });
         }
 
         private float ResolveBasePreviewCameraWorldWidth()
@@ -575,7 +556,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             float safeZoom = Mathf.Max(0.01f, cameraState.zoom);
             float viewW = panelW / safeZoom;
             float viewH = panelH / safeZoom;
-            Vector2 sp = cameraState.stageLocalPosition;
+            Vector2 sp = cameraState.stageLocalPosition + ResolvePreviewCameraTargetContribution();
             float pixelsPerWorld = panelW / ResolveBasePreviewCameraWorldWidth();
             float cx = panelW * 0.5f + sp.x * pixelsPerWorld;
             float cy = panelH * 0.5f - sp.y * pixelsPerWorld;
@@ -761,8 +742,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             float safeZoom = Mathf.Max(0.01f, ResolveCurrentPreviewCameraState()?.zoom ?? 1f);
             float viewW = panelW / safeZoom;
             float viewH = panelH / safeZoom;
-            float cx = panelW * 0.5f + newStagePos.x * pixelsPerWorld;
-            float cy = panelH * 0.5f - newStagePos.y * pixelsPerWorld;
+            Vector2 targetContrib = ResolvePreviewCameraTargetContribution();
+            float cx = panelW * 0.5f + (newStagePos.x + targetContrib.x) * pixelsPerWorld;
+            float cy = panelH * 0.5f - (newStagePos.y + targetContrib.y) * pixelsPerWorld;
             _cameraGizmoElement.style.left = cx - viewW * 0.5f;
             _cameraGizmoElement.style.top = cy - viewH * 0.5f;
 
@@ -1152,7 +1134,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             float viewW = panelW / safeZoom;
             float viewH = panelH / safeZoom;
 
-            Vector2 sp = cameraState.stageLocalPosition;
+            Vector2 sp = cameraState.stageLocalPosition + ResolvePreviewCameraTargetContribution();
             float pixelsPerWorld = panelW / ResolveBasePreviewCameraWorldWidth();
             float centerX = panelW * 0.5f + sp.x * pixelsPerWorld;
             float centerY = panelH * 0.5f - sp.y * pixelsPerWorld;

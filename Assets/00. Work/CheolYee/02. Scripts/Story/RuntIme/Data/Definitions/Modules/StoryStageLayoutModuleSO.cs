@@ -22,12 +22,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         [Tooltip("Absolute actor states visible at this line.")]
         [SerializeField] private List<StoryActorStateData> actors = new();
 
-        [Header("Camera Focus")]
-        [Tooltip("ActorInstanceKey of the actor the camera follows during this line. Empty means no camera movement.")]
+        [Header("Camera Focus (legacy – kept for executor debug log only)")]
+        [Tooltip("Legacy field. Not used in camera sampling. " +
+                 "Use CameraTrack CameraTarget keys instead.")]
         [SerializeField] private string cameraFocusTarget = "";
 
         [Header("Camera Timeline (optional)")]
-        [Tooltip("Optional camera defaults and per-line keyframes. cameraFocusTarget remains as fallback for older lines.")]
+        [Tooltip("Optional camera defaults and per-line keyframes.")]
         [SerializeField] private StoryCameraTrackData cameraTrack = new();
 
         [Header("Per-Line Timeline (optional)")]
@@ -83,7 +84,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         }
         public List<StoryActorStateData> ActorsEditable => actors;
         public List<StoryActorTrackData> ActorTracksEditable => actorTracks;
-        public string CameraFocusTargetEditable { get => cameraFocusTarget ?? ""; set => cameraFocusTarget = value ?? ""; }
 #endif
 
         private void OnValidate()

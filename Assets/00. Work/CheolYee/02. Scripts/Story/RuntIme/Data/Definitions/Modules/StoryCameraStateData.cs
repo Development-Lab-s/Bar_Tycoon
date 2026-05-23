@@ -14,12 +14,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         [Min(0.01f)]
         public float zoom = 1f;
 
-        // ── Legacy fields: data preserved, not used in runtime path ──────────
+        // Written by the sampler from CameraTarget keyframe data; read by Inspector/Timeline authoring UI.
         [HideInInspector] public string targetActorInstanceKey = "";
         [HideInInspector] public StoryCameraFollowMode followMode = StoryCameraFollowMode.FollowActor;
-        [HideInInspector] public StoryCameraMoveMode moveMode = StoryCameraMoveMode.Smooth;
-        [HideInInspector] public Vector2 normalizedOffset = Vector2.zero;
-        [HideInInspector] public float zoomMultiplier = 1f;
         [HideInInspector] public Vector2 snapshotNormalizedPosition = new Vector2(0.5f, 0.5f);
 
         public StoryCameraStateData ShallowClone() => (StoryCameraStateData)MemberwiseClone();

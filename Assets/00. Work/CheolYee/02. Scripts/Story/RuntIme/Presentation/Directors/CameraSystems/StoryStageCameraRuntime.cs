@@ -1,3 +1,4 @@
+using System;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.Util;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
@@ -33,13 +34,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
             bool useCameraTrack,
             float previousTime,
             float currentTime,
-            StoryStageTransitionRuntime transitionRuntime)
+            StoryStageTransitionRuntime transitionRuntime,
+            Func<string, Vector2?> actorPivotResolver = null)
         {
             if (layout == null)
                 return;
 
             if (useCameraTrack)
-                ApplyCameraTrackSample(layout, currentTime, transitionRuntime);
+                ApplyCameraTrackSample(layout, currentTime, transitionRuntime, actorPivotResolver);
             else
                 ApplyCameraDefault(layout);
         }
@@ -61,20 +63,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
         private void ApplyCameraTrackSample(
             StoryStageLayoutModuleSO layout,
             float elapsed,
-            StoryStageTransitionRuntime transitionRuntime)
+            StoryStageTransitionRuntime transitionRuntime,
+            Func<string, Vector2?> actorPivotResolver)
         {
             if (transitionRuntime == null)
                 return;
 
-            StoryCameraStateData sample = transitionRuntime.SampleCameraTrack(
-                layout?.CameraTrack,
-                layout?.CameraFocusTarget,
-                elapsed);
-
+            StoryCameraStateData sample = transitionRuntime.SampleCameraTrack(layout?.CameraTrack, elapsed);
             if (sample == null)
                 return;
 
-            // stageLocalPosition / zoom 기반 단일 경로. FollowMode는 다음 Phase에서 구현.
+            Vector2 targetContrib = StoryTransitionSampler.SampleCameraTargetContribution(
+                layout?.CameraTrack, elapsed, actorPivotResolver);
+            sample.stageLocalPosition += targetContrib;
+
             ResolveCameraController().ApplyStageCamera(sample);
         }
 

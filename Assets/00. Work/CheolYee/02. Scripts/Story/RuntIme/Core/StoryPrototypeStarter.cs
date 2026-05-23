@@ -9,7 +9,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
     {
         [SerializeField] private StoryService storyService;
         [SerializeField] private StoryEpisodeSO episode;
-        [SerializeField] private bool playOnStart = true;
+        [SerializeField] private bool playOnStart = false;
 
         private async UniTaskVoid Start()
         {

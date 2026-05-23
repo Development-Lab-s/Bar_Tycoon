@@ -71,7 +71,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         public async UniTask<StoryPlayResult> RunAsync(StorySession session, CancellationToken ct = default)
         {
             if (session == null || session.Episode == null)
-                return new StoryPlayResult(string.Empty, StoryCloseReason.Aborted, false, false);
+                return new StoryPlayResult(string.Empty, StoryCloseReason.Aborted, false);
 
             ResetFlags();
             IsRunning = true;
@@ -106,18 +106,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                         await _characterStage.EnsureSpeakerVisibleAsync(line, ct);
                         _characterStage.ApplySpeakerFocus(line);
 
+                        if (isFirstPresentedLine && stageLayout != null)
+                        {
+                            // Warm the first line's stage visuals before the authored with-dialogue
+                            // timeline begins so initial actor/background/camera setup does not hitch
+                            // on the same frame as text/audio start.
+                            _characterStage?.ApplyStageLayoutImmediate(stageLayout);
+                            await WarmupPresentationFramesAsync(1, ct);
+                        }
+
                         UniTask withModulesTask = ExecuteModulesAsync(
                             line,
                             StoryModuleTiming.WithDialogue,
                             session,
                             ct);
-
-                        if (isFirstPresentedLine && stageLayout != null)
-                        {
-                            // Let the first stage layout instantiate and render once before
-                            // audio/text start so startup hitch does not cause audio-first playback.
-                            await WarmupFirstPresentationFrameAsync(ct);
-                        }
 
                         lineSoundCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                         lineSoundTask = RunLineSoundTrackAsync(session.Episode, line, stageLayout, lineSoundCts.Token);
@@ -162,7 +164,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                         }
 
                         if (string.IsNullOrWhiteSpace(line.NextLineId))
+                        {
+                            await ExecuteModulesAsync(line, StoryModuleTiming.AfterDialogue, session, ct);
+
+                            if (_abortRequested)
+                                return CreateResult(session, _abortReason, false);
+
+                            if (_skipRequested)
+                                return CreateResult(session, StoryCloseReason.Skipped, true);
+
                             return CreateResult(session, StoryCloseReason.Completed, false);
+                        }
 
                         if (ShouldAutoAdvance(session, line))
                         {
@@ -234,6 +246,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
             StoryStageLayoutModuleSO layout = FindStageLayout(line);
             _characterStage.ApplyBackgroundOnly(layout);
+        }
+
+        public async UniTask PreloadLinePresentationAsync(StoryLineSO line, CancellationToken ct)
+        {
+            if (line == null || _characterStage == null)
+                return;
+
+            await _characterStage.PrewarmLinePresentationAsync(line, ct);
+
+            await WarmupPresentationFramesAsync(2, ct);
         }
 
         // ── 내부 헬퍼 ────────────────────────────────────────────────────────
@@ -364,15 +386,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             StoryCloseReason closeReason,
             bool wasSkipped)
         {
-            bool hasResumePoint = closeReason == StoryCloseReason.UserClosed
-                                  || closeReason == StoryCloseReason.ExternalRequest
-                                  || session.HasPendingResumePoint;
-
             return new StoryPlayResult(
                 session.Episode != null ? session.Episode.EpisodeId : string.Empty,
                 closeReason,
-                wasSkipped,
-                hasResumePoint);
+                wasSkipped);
         }
 
         private void ResetFlags()
@@ -495,9 +512,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             return elapsed;
         }
 
-        private static async UniTask WarmupFirstPresentationFrameAsync(CancellationToken ct)
+        private static async UniTask WarmupPresentationFramesAsync(int frameCount, CancellationToken ct)
         {
-            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, ct);
+            int count = Mathf.Max(1, frameCount);
+            for (int i = 0; i < count; i++)
+                await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, ct);
         }
 
         private async UniTask CleanupLineSoundAsync(

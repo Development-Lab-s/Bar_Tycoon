@@ -124,7 +124,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Input
             if (facade == null || !facade.IsRunning)
                 return;
 
-            facade.RequestClose(StoryCloseReason.UserClosed, saveResumePoint: true);
+            facade.RequestClose(StoryCloseReason.UserClosed);
         }
     }
 }

@@ -42,9 +42,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
         [SerializeField] private float fallbackCameraWorldWidth = StoryStageVisualSizing.DefaultCameraWorldWidth;
         [SerializeField] private float fallbackOrthographicSize = 5.16f;
 
-        [Header("Motion")]
-        [SerializeField] private float defaultFocusDuration = 0.45f;
-
         private bool _initialized;
         private bool _runtimeCameraSearchAttempted;
         private bool _cinemachineSearchAttempted;
@@ -53,12 +50,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
         private Vector3 _stageReferenceCenter;
         private float _stageReferenceWorldWidth;
         private float _stageReferenceOrthoSize;
-
-        private bool _focusMoveActive;
-        private Vector3 _focusStartPosition;
-        private Vector3 _focusTargetPosition;
-        private float _focusMoveElapsed;
-        private float _focusMoveDuration;
 
         private MonoBehaviour _resolvedCinemachineCamera;
         private CinemachineCamera _typedCinemachineCamera;
@@ -76,18 +67,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
             // 남아 있어 Initialize()가 no-op이 된다. Awake마다 강제 초기화한다.
             _stageReferenceInitialized = false;
             _initialized = false;
-            _focusMoveActive = false;
 
             Initialize();
 
             // focusTarget이 이전 Play Mode에서 actor-follow로 이동한 위치를 보유하고 있을 수 있다.
             // 항상 controller.transform.position 기준으로 reset한다.
             ResetFocusTargetToReferencePosition();
-        }
-
-        private void Update()
-        {
-            TickFocusMove(Time.deltaTime);
         }
 
         public void Initialize()
@@ -275,7 +260,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
                 if (cm != null)
                     cm.PreviousStateIsValid = false;
 
-                _focusMoveActive = false;
                 return;
             }
 
@@ -287,40 +271,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
                 pos.y = desiredY;
                 cam.transform.position = pos;
             }
-
-            _focusMoveActive = false;
-        }
-
-        public void MoveToSmooth(float desiredX, float desiredY, float duration = -1f)
-        {
-            Transform target = EnsureFocusTargetTransform();
-            _cinemachineConnected = TryBindCinemachineFollow(target);
-
-            Vector3 start = _cinemachineConnected
-                ? target.position
-                : ResolveFallbackCameraPosition();
-
-            Vector3 end = start;
-            end.x = desiredX;
-            end.y = desiredY;
-
-            _focusStartPosition = start;
-            _focusTargetPosition = end;
-            _focusMoveElapsed = 0f;
-            _focusMoveDuration = duration > 0f ? duration : defaultFocusDuration;
-            _focusMoveActive = true;
-        }
-
-        public void FocusXImmediate(float worldX)
-        {
-            float y = GetCurrentCameraCenter().y;
-            MoveToImmediate(worldX, y);
-        }
-
-        public void FocusXSmooth(float worldX, float duration = -1f)
-        {
-            float y = GetCurrentCameraCenter().y;
-            MoveToSmooth(worldX, y, duration);
         }
 
         /// <summary>
@@ -341,41 +291,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
             Vector3 camCenter = GetCurrentCameraCenter();
             camCenter.z = 0f;
             return Vector3.Lerp(_stageReferenceCenter, camCenter, parallaxFactor);
-        }
-
-        private void TickFocusMove(float deltaTime)
-        {
-            if (!_focusMoveActive)
-                return;
-
-            _focusMoveElapsed += deltaTime;
-
-            float t = Mathf.SmoothStep(
-                0f,
-                1f,
-                Mathf.Clamp01(_focusMoveElapsed / Mathf.Max(0.01f, _focusMoveDuration)));
-
-            Vector3 next = Vector3.Lerp(_focusStartPosition, _focusTargetPosition, t);
-
-            if (_cinemachineConnected)
-            {
-                Transform target = EnsureFocusTargetTransform();
-                target.position = next;
-            }
-            else
-            {
-                Camera cam = ResolveRuntimeCamera();
-                if (cam != null)
-                {
-                    Vector3 pos = cam.transform.position;
-                    pos.x = next.x;
-                    pos.y = next.y;
-                    cam.transform.position = pos;
-                }
-            }
-
-            if (t >= 1f)
-                _focusMoveActive = false;
         }
 
         private Camera ResolveRuntimeCamera()
@@ -403,16 +318,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
                 runtimeCamera = cameras[0];
 
             return runtimeCamera;
-        }
-
-        private Vector3 ResolveFallbackCameraPosition()
-        {
-            Camera cam = ResolveRuntimeCamera();
-            if (cam != null)
-                return cam.transform.position;
-
-            EnsureStageReferenceMetrics();
-            return _stageReferenceCenter;
         }
 
         private void EnsureStageReferenceMetrics()
@@ -461,7 +366,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
 
             EnsureStageReferenceMetrics();
             focusTarget.position = _stageReferenceCenter;
-            _focusMoveActive = false;
 
             CinemachineCamera cm = ResolveTypedCinemachineCamera();
             if (cm != null)

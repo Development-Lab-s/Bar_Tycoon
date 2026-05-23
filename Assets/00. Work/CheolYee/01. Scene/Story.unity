@@ -164,6 +164,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &543301885
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 543301887}
+  - component: {fileID: 543301886}
+  m_Layer: 0
+  m_Name: StorySceneBootstrap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &543301886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 543301885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5a80d4103fa9664ead2a697920d5ee7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StorySceneBootstrap
+  storyCommandChannel: {fileID: 11400000, guid: 7a70a8d3ec8bb8d41a118846f8a5fd0f, type: 2}
+  launchRequestStore: {fileID: 11400000, guid: 2e1dfb691ac99b54fbefe81e47f19a7b, type: 2}
+  episodeCatalog: {fileID: 11400000, guid: 1fd91595a6c71664fa0cb65d41a1d2f9, type: 2}
+--- !u!4 &543301887
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 543301885}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &749650091
 GameObject:
   m_ObjectHideFlags: 0
@@ -579,6 +626,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1799910824
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1799910826}
+  - component: {fileID: 1799910825}
+  m_Layer: 0
+  m_Name: StorySceneReturnService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1799910825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1799910824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90461a19b690a134b9536ae02f74eb4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StorySceneReturnService
+  storyCommandChannel: {fileID: 11400000, guid: 7a70a8d3ec8bb8d41a118846f8a5fd0f, type: 2}
+  mainSceneName: Main_UI_Test
+--- !u!4 &1799910826
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1799910824}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1850367440
 GameObject:
   m_ObjectHideFlags: 0
@@ -609,12 +702,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07e5cb870216418cb39bca35b164d969, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StoryService
-  storyCommandChannel: {fileID: 11400000, guid: 6e583cc7bea7c1d4e8a5571c5c0dd38c, type: 2}
+  storyCommandChannel: {fileID: 11400000, guid: 7a70a8d3ec8bb8d41a118846f8a5fd0f, type: 2}
   storyCorePrefab: {fileID: 4541276489143467196, guid: 3cd95dce5b2f13544aba1498625395ab, type: 3}
   storyRoot: {fileID: 1475347733}
-  episodes:
-  - {fileID: 11400000, guid: d03becfe423aba0448c370686dbd9473, type: 2}
-  saveServiceSource: {fileID: 0}
 --- !u!4 &1850367442
 Transform:
   m_ObjectHideFlags: 0
@@ -643,7 +733,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StoryPrototypeStarter
   storyService: {fileID: 1850367441}
-  episode: {fileID: 11400000, guid: d03becfe423aba0448c370686dbd9473, type: 2}
+  episode: {fileID: 11400000, guid: dbc634e06691e2b47832345c44aef28c, type: 2}
   playOnStart: 1
 --- !u!1 &2115450657
 GameObject:
@@ -819,3 +909,5 @@ SceneRoots:
   - {fileID: 1617954433}
   - {fileID: 1850367442}
   - {fileID: 1475347733}
+  - {fileID: 543301887}
+  - {fileID: 1799910826}

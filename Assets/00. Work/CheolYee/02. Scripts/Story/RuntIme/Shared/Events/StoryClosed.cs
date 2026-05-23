@@ -7,14 +7,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events
     {
         public string EpisodeId { get; }
         public StoryCloseReason Reason { get; }
-        public bool HasResumePoint { get; }
 
-        public StoryClosed(string episodeId, StoryCloseReason reason, bool hasResumePoint)
+        public StoryClosed(string episodeId, StoryCloseReason reason)
         {
             EpisodeId = episodeId;
             Reason = reason;
-            HasResumePoint = hasResumePoint;
         }
     }
-
 }
