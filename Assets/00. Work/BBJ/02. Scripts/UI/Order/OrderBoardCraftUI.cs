@@ -1,6 +1,7 @@
 using _00._Work.Lusaload._02._Scripts.SO;
 using BBJ.EventSystem;
 using BBJ.Order;
+using BBJ.Scene;
 using Gamelib.EventSystem;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,51 +10,61 @@ using Systems;
 
 namespace BBJ.UI.Order
 {
-    public class OrderBoardCraftUI : MonoBehaviour
+    public class OrderBoardCraftUI : MonoBehaviour, IPopup
     {
         [SerializeField] private PlayerOrderHandle _handle;
-        [SerializeField] private FoodGroupCardUI _cardPrefab;
-        [SerializeField] private StealConfirmUI _confirmUI;
-        [SerializeField] private EventChannelSO _orderChannel;
-        [SerializeField] private EventChannelSO _uiChannel;
-        [SerializeField] private Transform _content;
-        [SerializeField] private Button _cancelButton;
-        [SerializeField] private PlayerInputSO playerInputSO;
+        [SerializeField] private FoodGroupCardUI   _cardPrefab;
+        [SerializeField] private StealConfirmUI    _confirmUI;
+        [SerializeField] private EventChannelSO    _orderChannel;
+        [SerializeField] private EventChannelSO    _uiChannel;
+        [SerializeField] private EventChannelSO    _sceneChannel;
+        [SerializeField] private Transform         _content;
+        [SerializeField] private Button            _cancelButton;
+        [SerializeField] private PlayerInputSO     playerInputSO;
 
-        private readonly Dictionary<CocktailRecipeSO, FoodGroupCardUI> _freeCards = new();
+        private readonly Dictionary<CocktailRecipeSO, FoodGroupCardUI> _freeCards     = new();
         private readonly Dictionary<CocktailRecipeSO, FoodGroupCardUI> _occupiedCards = new();
+
+        public bool IsAniming => false;
 
         private void Awake()
         {
             UtilDebugger.AssertAllAssigned(this);
-
-            _cancelButton.onClick.AddListener(Close);
+            _cancelButton.onClick.AddListener(OnClose);
             gameObject.SetActive(false);
         }
 
         private void OnDestroy()
         {
-            _cancelButton.onClick.RemoveListener(Close);
+            _cancelButton.onClick.RemoveListener(OnClose);
         }
 
-        public void Open()
+        private void OnEnable()
         {
-            playerInputSO.DownPopupClick += Close;
-
-            gameObject.SetActive(true);
+            playerInputSO.DownPopupClick += OnClose;
             SubscribeEvents();
             RebuildAllCards();
         }
 
-        public void Close()
+        private void OnDisable()
         {
-            playerInputSO.DownPopupClick -= Close;
-
+            playerInputSO.DownPopupClick -= OnClose;
             _confirmUI.Hide();
             UnsubscribeEvents();
             ClearAllCards();
-            gameObject.SetActive(false);
         }
+
+        public void Open()
+        {
+            UIManager.Instance.PushPopup(gameObject);
+        }
+
+        public void OnClose()
+        {
+            UIManager.Instance.ClosePopup();
+        }
+
+        public void OnClickClose() => OnClose();
 
         // --- 이벤트 구독 ---
 
@@ -91,7 +102,7 @@ namespace BBJ.UI.Order
         private void RefreshCardsForFood(CocktailRecipeSO food)
         {
             var tickets = _handle.GetPendingTickets(food);
-            int freeCount = 0;
+            int freeCount   = 0;
             bool hasOccupied = false;
 
             foreach (var t in tickets)
@@ -145,7 +156,8 @@ namespace BBJ.UI.Order
             if (_handle.TryOccupy(ticket))
             {
                 _orderChannel.RaiseEvent(new PlayerCraftStartEvent(ticket));
-                Close();
+                OnClose();
+                _sceneChannel.RaiseEvent(new SceneTransitionRequestEvent(SceneType.Cocktail));
             }
         }
 
@@ -159,12 +171,17 @@ namespace BBJ.UI.Order
             void onConfirm()
             {
                 if (_handle.TrySteal(ticket))
+                {
                     _orderChannel.RaiseEvent(new PlayerCraftStartEvent(ticket));
+                    OnClose();
+                    _sceneChannel.RaiseEvent(new SceneTransitionRequestEvent(SceneType.Cocktail));
+                }
                 else
+                {
                     _uiChannel.RaiseEvent(new MessageEvent($"[{ticket.Ordered?.cocktailName}] 작업이 이미 완료되어 빼앗을 수 없습니다."));
-
-                Close();
-            };
+                    OnClose();
+                }
+            }
         }
 
         private void HandleOrderRegistered(OrderRegisteredEvent e)
@@ -174,6 +191,6 @@ namespace BBJ.UI.Order
         }
 
         private void HandleOrderUnregistered(OrderUnregisteredEvent e) => RefreshCardsForFood(e.Ticket.Ordered);
-        private void HandleOrderStateChanged(OrderStateChangedEvent e) => RefreshCardsForFood(e.Ticket.Ordered);
+        private void HandleOrderStateChanged(OrderStateChangedEvent e)  => RefreshCardsForFood(e.Ticket.Ordered);
     }
 }

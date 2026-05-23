@@ -13,7 +13,9 @@ public enum MenuType
     Arbeit,
     Rename,
     LvUp,
-    Menu
+    Menu,
+    Order,
+    StealConfirm
 }
 
 [System.Serializable]

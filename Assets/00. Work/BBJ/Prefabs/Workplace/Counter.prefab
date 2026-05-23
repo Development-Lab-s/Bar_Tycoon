@@ -77,7 +77,7 @@ Transform:
   m_GameObject: {fileID: 230401305694965952}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.991, y: -0.133, z: 0}
+  m_LocalPosition: {x: -1.324, y: 0.459, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -108,7 +108,7 @@ Transform:
   m_GameObject: {fileID: 1539197542618008161}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.253, y: -0.21, z: 0}
+  m_LocalPosition: {x: -0.732, y: 0.097, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -165,11 +165,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.Workplace
   _tileSetData: {fileID: 11400000, guid: 2875742cbc14fb84d8ea58cb8d8fcba3, type: 2}
   _flipX: 0
-  _showGizmos: 1
-  _gizmoTileSize: 1
   _register: {fileID: 11400000, guid: 7acfe8c69b04ef14d96337478f8f61e6, type: 2}
   _workplaceType: {fileID: 11400000, guid: df989ce6387706f4cafe9ac62e1a2424, type: 2}
-  _interactPoints: []
+  _interactPoints:
+  - Offset: {x: -1, y: 2}
+    Role: {fileID: 11400000, guid: 7bae80aeb089edf4d8cd4624db2db84e, type: 2}
+  - Offset: {x: 1, y: 2}
+    Role: {fileID: 11400000, guid: 3667fd0fac539ba4aa80e633aa96b4a5, type: 2}
 --- !u!1 &5755182491612152217
 GameObject:
   m_ObjectHideFlags: 0
@@ -240,7 +242,7 @@ Transform:
   m_GameObject: {fileID: 6461117872120118446}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.673, y: -0.495, z: 0}
+  m_LocalPosition: {x: -1.023, y: 0.273, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -392,15 +394,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 562508160253626938, guid: 58e0593edff673f469df823211888139, type: 3}
       propertyPath: m_SortingOrder
-      value: -8
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 2707807788184617453, guid: 58e0593edff673f469df823211888139, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.057
+      value: -0.63218385
       objectReference: {fileID: 0}
     - target: {fileID: 2707807788184617453, guid: 58e0593edff673f469df823211888139, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.541
+      value: 0.84482753
       objectReference: {fileID: 0}
     - target: {fileID: 2707807788184617453, guid: 58e0593edff673f469df823211888139, type: 3}
       propertyPath: m_LocalPosition.z
@@ -440,17 +442,37 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7909515935800949434, guid: 58e0593edff673f469df823211888139, type: 3}
       propertyPath: m_SortingOrder
-      value: -17
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 8061218311886246240, guid: 58e0593edff673f469df823211888139, type: 3}
       propertyPath: m_SortingOrder
-      value: -12
+      value: 20
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5544769458898222497, guid: 58e0593edff673f469df823211888139, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1017886328170751617}
   m_SourcePrefab: {fileID: 100100000, guid: 58e0593edff673f469df823211888139, type: 3}
+--- !u!1 &616663098385454633 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5544769458898222497, guid: 58e0593edff673f469df823211888139, type: 3}
+  m_PrefabInstance: {fileID: 4934865059303877512}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1017886328170751617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 616663098385454633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34fb7e1cb3a09b74090ab67b9ac27098, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.TycoonVisualRoot
 --- !u!4 &7054951995992222309 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2707807788184617453, guid: 58e0593edff673f469df823211888139, type: 3}

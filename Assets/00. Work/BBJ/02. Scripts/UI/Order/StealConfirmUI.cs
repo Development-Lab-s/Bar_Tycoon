@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace BBJ.UI.Order
 {
-    public class StealConfirmUI : MonoBehaviour
+    public class StealConfirmUI : MonoBehaviour, IPopup
     {
         [SerializeField] private TMP_Text _messageLabel;
         [SerializeField] private Button   _confirmButton;
@@ -14,6 +14,8 @@ namespace BBJ.UI.Order
 
         private Action _onConfirm;
         private Action _onCancel;
+
+        public bool IsAniming => false;
 
         private void Awake()
         {
@@ -37,7 +39,7 @@ namespace BBJ.UI.Order
             _messageLabel.text = $"[{ticket.Ordered?.cocktailName}] 현재 제작 중입니다.\n작업을 빼앗겠습니까?";
             _onConfirm = onConfirm;
             _onCancel  = onCancel;
-            gameObject.SetActive(true);
+            UIManager.Instance.PushPopup(gameObject);
         }
 
         public void ShowFailed(string message)
@@ -48,25 +50,43 @@ namespace BBJ.UI.Order
 
         public void Hide()
         {
-            gameObject.SetActive(false);
-            if (_confirmButton != null)
-                _confirmButton.gameObject.SetActive(true);
-            _onConfirm = null;
-            _onCancel  = null;
+            if (!gameObject.activeSelf) return;
+            ResetState();
+            UIManager.Instance.ClosePopup();
         }
+
+        public void OnClose()
+        {
+            var cb = _onCancel;
+            ResetState();
+            UIManager.Instance.ClosePopup();
+            cb?.Invoke();
+        }
+
+        public void OnClickClose() => OnClose();
 
         private void OnConfirm()
         {
             var cb = _onConfirm;
-            Hide();
+            ResetState();
+            UIManager.Instance.ClosePopup();
             cb?.Invoke();
         }
 
         private void OnCancel()
         {
             var cb = _onCancel;
-            Hide();
+            ResetState();
+            UIManager.Instance.ClosePopup();
             cb?.Invoke();
+        }
+
+        private void ResetState()
+        {
+            if (_confirmButton != null)
+                _confirmButton.gameObject.SetActive(true);
+            _onConfirm = null;
+            _onCancel  = null;
         }
     }
 }

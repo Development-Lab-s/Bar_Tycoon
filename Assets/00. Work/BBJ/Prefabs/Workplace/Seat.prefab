@@ -51,11 +51,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.Workplace
   _tileSetData: {fileID: 11400000, guid: b3df5355e055fcd44af4790f49ef727d, type: 2}
   _flipX: 0
-  _showGizmos: 1
-  _gizmoTileSize: 1
   _register: {fileID: 11400000, guid: 7acfe8c69b04ef14d96337478f8f61e6, type: 2}
   _workplaceType: {fileID: 11400000, guid: 371d4ca4c9dcb184db4d2d5beba047ed, type: 2}
-  _interactPoints: []
+  _interactPoints:
+  - Offset: {x: 0, y: -1}
+    Role: {fileID: 11400000, guid: 7bae80aeb089edf4d8cd4624db2db84e, type: 2}
+  - Offset: {x: -1, y: 0}
+    Role: {fileID: 11400000, guid: 7bae80aeb089edf4d8cd4624db2db84e, type: 2}
+  - Offset: {x: 1, y: 0}
+    Role: {fileID: 11400000, guid: 7bae80aeb089edf4d8cd4624db2db84e, type: 2}
+  - Offset: {x: 0, y: 1}
+    Role: {fileID: 11400000, guid: 7bae80aeb089edf4d8cd4624db2db84e, type: 2}
+  - Offset: {x: 0, y: -1}
+    Role: {fileID: 11400000, guid: 3667fd0fac539ba4aa80e633aa96b4a5, type: 2}
+  - Offset: {x: -1, y: 0}
+    Role: {fileID: 11400000, guid: 3667fd0fac539ba4aa80e633aa96b4a5, type: 2}
+  - Offset: {x: 1, y: 0}
+    Role: {fileID: 11400000, guid: 3667fd0fac539ba4aa80e633aa96b4a5, type: 2}
+  - Offset: {x: 0, y: 1}
+    Role: {fileID: 11400000, guid: 3667fd0fac539ba4aa80e633aa96b4a5, type: 2}
 --- !u!1 &4173241295080930197
 GameObject:
   m_ObjectHideFlags: 0
@@ -129,8 +143,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 3002569075947164391}
+  m_Children: []
   m_Father: {fileID: 5732685687054345027}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6921238855882463816
@@ -145,38 +158,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8dd5f3dfb4b3424da8e9df16c4e5532, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.Modules.SeatModule
-  seatPos: {fileID: 3002569075947164391}
---- !u!1 &5531564258122594375
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3002569075947164391}
-  m_Layer: 0
-  m_Name: SeatPos
-  m_TagString: Untagged
-  m_Icon: {fileID: -5487077368411116049, guid: 0000000000000000d000000000000000, type: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3002569075947164391
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5531564258122594375}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.1, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2784835048326884042}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  seatPos: {fileID: 3345793307713229330}
 --- !u!1001 &2253042890057531487
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -253,15 +235,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 17772901701494338, guid: 5c600abd357705c4f87932ce76267460, type: 3}
       propertyPath: m_SortingOrder
-      value: -11
+      value: -20
       objectReference: {fileID: 0}
     - target: {fileID: 2573928200976801118, guid: 5c600abd357705c4f87932ce76267460, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -0.01461994
       objectReference: {fileID: 0}
     - target: {fileID: 2573928200976801118, guid: 5c600abd357705c4f87932ce76267460, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.1
+      value: 0.19064346
       objectReference: {fileID: 0}
     - target: {fileID: 2573928200976801118, guid: 5c600abd357705c4f87932ce76267460, type: 3}
       propertyPath: m_LocalPosition.z
@@ -301,18 +283,58 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8289530191043285211, guid: 5c600abd357705c4f87932ce76267460, type: 3}
       propertyPath: m_SortingOrder
-      value: -11
+      value: -20
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4967632408691100171, guid: 5c600abd357705c4f87932ce76267460, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2007863500298120635}
+    - targetCorrespondingSourceObject: {fileID: 4967632408691100171, guid: 5c600abd357705c4f87932ce76267460, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1414574494289711432}
   m_SourcePrefab: {fileID: 100100000, guid: 5c600abd357705c4f87932ce76267460, type: 3}
 --- !u!4 &2245780186526921710 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2573928200976801118, guid: 5c600abd357705c4f87932ce76267460, type: 3}
   m_PrefabInstance: {fileID: 4364818314436357808}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &3345793307713229330 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1368063394899917986, guid: 5c600abd357705c4f87932ce76267460, type: 3}
+  m_PrefabInstance: {fileID: 4364818314436357808}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8674601912388641979 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4967632408691100171, guid: 5c600abd357705c4f87932ce76267460, type: 3}
+  m_PrefabInstance: {fileID: 4364818314436357808}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2007863500298120635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8674601912388641979}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34fb7e1cb3a09b74090ab67b9ac27098, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.TycoonVisualRoot
+--- !u!114 &1414574494289711432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8674601912388641979}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34fb7e1cb3a09b74090ab67b9ac27098, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.TycoonVisualRoot
 --- !u!1001 &6235563895079023267
 PrefabInstance:
   m_ObjectHideFlags: 0
