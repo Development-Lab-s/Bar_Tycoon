@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebd9b505b32b51f4ebaf81951681d130, type: 3}
   m_Name: CostParticleConfig
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.Goat._02._Scripts.Coin.Particle.CostParticleConfigSO
-  costTypes: []
-  spriteAsset: {fileID: 11400000, guid: 682f3bda1294fce4fba3d57bdc55bb9c, type: 2}
-  poolManager: {fileID: 0}
-  particlePoolItem: {fileID: 0}
-  maxAtlasSize: 1024
+  costTypes:
+  - spriteAsset: {fileID: 11400000, guid: 682f3bda1294fce4fba3d57bdc55bb9c, type: 2}
+    spriteIndex: 0
+    gainColor: {r: 0, g: 0, b: 0, a: 0}
+    spendColor: {r: 0, g: 0, b: 0, a: 0}
+  particleChannel: {fileID: 11400000, guid: db4b3c01f31c3af43910e43142671cc4, type: 2}
+  poolManager: {fileID: 11400000, guid: 4f3b8e100efe0d248880695e7dfd73f5, type: 2}
+  particlePoolItem: {fileID: 11400000, guid: e24ffd955f36e5842b8a3d56c9808029, type: 2}

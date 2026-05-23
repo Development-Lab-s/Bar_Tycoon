@@ -1,6 +1,7 @@
 using BBJ.Actions;
 using BBJ.Modules;
 using BBJ.Order;
+using BBJ.Schedule;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using System;
@@ -22,6 +23,7 @@ namespace BBJ.Work
 
             if (!ticket.TryReserve(executor)) return WorkResult.Cancelled;
 
+            var role    = executor.GetModule<SchedulingModule>()?.InteractRole;
             var counter = _ctx.WorkplaceRegister?.GetFirst(_ctx.CounterType);
             if (counter == null)
             {
@@ -44,7 +46,7 @@ namespace BBJ.Work
             try
             {
                 await actions.Execute<MoveAction>(
-                    a => a.ExecuteAsync(counter.GetNearestPoint(executor.transform.position), linked.Token));
+                    a => a.ExecuteAsync(counter.GetNearestPoint(role, executor.transform.position), linked.Token));
                 ticket.TryStartProgress(executor);
                 var foodContext = executor.GetModule<FoodContextModule>();
                 foodContext?.SetFood(ticket.Ordered);
@@ -75,7 +77,6 @@ namespace BBJ.Work
             }
             finally
             {
-                // slot이 dequeue됐지만 NotifyProcessed 전에 중단된 경우 보장
                 if (!processed && slot.HasValue)
                     slot.Value.NotifyProcessed();
             }

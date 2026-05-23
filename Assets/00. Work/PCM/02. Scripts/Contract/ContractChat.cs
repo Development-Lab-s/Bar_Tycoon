@@ -5,21 +5,29 @@ using UnityEngine;
 
 namespace Assets._00._Work.PCM._02._Scripts.Contract
 {
-    public class ContractChat : AbstructContractPopUp, IAgentUI
+    public class ContractChat : AbstructContractPopUp, IAgentUI , IModule , IAfterInitModule
     {
-        [SerializeField] private ChatSO chat;
         private TextMeshPro _text;
+        private ModuleOwner _owner;
 
-        public override void Initialize(ModuleOwner owner)
+
+        public void Initialize(ModuleOwner owner)
         {
-            base.Initialize(owner);
+            _owner = owner;
             _text = GetComponentInChildren<TextMeshPro>();
         }
-
+        public void AfterInit()
+        {
+            _owner.GetModule<PlayerCharController>(); 
+        }
         public override void OnOpen()
         {
-            var a = chat.Line[Random.Range(0, chat.Line.Count)];
-            _text.text = a;
+
         }
+        public void Message(string message)
+        {
+            _text.text = message;
+        }
+
     }
 }

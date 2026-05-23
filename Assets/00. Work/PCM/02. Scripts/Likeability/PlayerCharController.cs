@@ -1,23 +1,46 @@
+using _00._Work._Resources._02._Scripts.Modules;
+using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-public class PlayerCharController : MonoBehaviour, IPlayerCharController
+public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModule , IPlayer
 {
     [Header("연동할 SO (인스펙터에서 할당)")]
     [field: SerializeField] public CharacterSO characterData { get; private set; }
     [field: SerializeField] public CharacterRegisterSO registerSO { get; private set; }
+    [field: SerializeField]public CharcterLikeSO CharlikeSo{ get; set; }
+    [field:SerializeField]public  UnityEvent<string> ChatOpen { get; set; }
 
     [Header("현재 실시간 상태 정보")]
 
 
     [Header("연동할 UI (선택 사항)")]
-    public Slider expSlider { get; private set; }
-
     public Image characterImage { get; private set; }
     public Action<int> levelTrigger { get; private set; }
+
+
+    private ModuleOwner _owner;
+    private int maxExp;
+
+    public void Initialize(ModuleOwner owner)
+    {
+        _owner = owner;
+    }
+    public void Awake()
+    {
+        //SaveManager.DeleteSave($"{characterData.id}.save", "Characters");
+        if (!SaveManager.IsSaveFile($"{characterData.id}.save","Characters"))return;
+        CharlikeabilitySave saveData =
+            (CharlikeabilitySave)SaveManager.Load(
+                typeof(CharlikeabilitySave),
+                $"{characterData.id}.save",
+                "Characters");
+        characterData.LoadSaveData(saveData);
+    }
 
     private void OnEnable()
     {
@@ -29,17 +52,10 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController
     {
         if (registerSO != null) registerSO.Unregister(this);
     }
-
-    private void Start()
-    {
-        UpdateUI();
-    }
-
     public float GetExpRatio()
     {
-        if (characterData.currentLevel >= characterData.maxLevel) return 1f;
-        int maxExp = characterData.GetMaxExpForLevel(characterData.currentLevel);
-        return (float)characterData.currentExp / maxExp;
+        float ratio = characterData.GetTotalProgressRatio();
+        return ratio ;
     }
     public void GiveItem(int expAmount)
     {
@@ -47,27 +63,26 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController
 
         characterData.currentExp += expAmount;
         Debug.Log($"{characterData.characterName} 호감도 경험치 +{expAmount}");
-
-        bool isLeveledUp = false;
-
+        int text = Random.Range(0, CharlikeSo.DialogueDataList.Count);
+        ChatOpen?.Invoke(CharlikeSo.DialogueDataList[text].context);
+        //bool isLeveledUp = false;
         // 레벨업 체크
         while (characterData.currentLevel < characterData.maxLevel && characterData.currentExp >= characterData.GetMaxExpForLevel(characterData.currentLevel))
         {
             characterData.currentExp -= characterData.GetMaxExpForLevel(characterData.currentLevel);
             characterData.currentLevel++;
-            isLeveledUp = true;
+            //isLeveledUp = true;
             Debug.Log($"레벨업! 현재 레벨: {characterData.currentLevel}");
         }
+        SaveManager.Save(characterData.GetSaveData(), $"{characterData.id}.save", "Characters");
 
-        if (isLeveledUp)
-        {
-            PlayLevelUpDialogue();
-        }
-
-        UpdateUI();
+        //if (isLeveledUp)
+        //{
+        //    PlayLevelUpDialogue();
+        //}
     }
 
-    private void PlayLevelUpDialogue()
+    public string PlayClickUpDialogue()
     {
         List<CharacterSO.DialogueData> availableDialogues = characterData.GetAvailableDialogues(characterData.currentLevel);
 
@@ -82,15 +97,8 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController
             //{
             //    characterImage.sprite = selectedDialogue.characterFace;
             //}
-
+            return selectedDialogue.context;
         }
-    }
-
-    private void UpdateUI()
-    {
-        if (expSlider != null)
-        {
-            expSlider.value = GetExpRatio();
-        }
+        return "";
     }
 }

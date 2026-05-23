@@ -20,7 +20,7 @@ namespace BBJ.Particle
         private const float FadeDelay = 0.4f;
         private const float FadeDuration = 0.4f;
 
-        public void Play(int amount, int spriteIndex, Color gainColor, Color spendColor,
+        public void Play(int amount, string spriteAssetName, int spriteIndex, Color gainColor, Color spendColor,
             Vector3 worldPos, Action onComplete)
         {
             _onComplete = onComplete;
@@ -30,7 +30,10 @@ namespace BBJ.Particle
             c.a = 1f;
             _text.color = c;
             string sign = amount >= 0 ? "+" : "";
-            _text.text = $"<sprite={spriteIndex}>{sign}{amount}";
+            string spriteTag = string.IsNullOrEmpty(spriteAssetName)
+                ? $"<sprite={spriteIndex}>"
+                : $"<sprite=\"{spriteAssetName}\" index={spriteIndex}>";
+            _text.text = $"{spriteTag}{sign}{amount}";
 
             if (_moveHandle.IsActive()) _moveHandle.Cancel();
             if (_alphaHandle.IsActive()) _alphaHandle.Cancel();

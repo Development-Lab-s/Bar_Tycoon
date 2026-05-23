@@ -1,3 +1,4 @@
+using System;
 using BBJ.EventSystem;
 using BBJ.Order;
 using BBJ.Schedule;
@@ -25,13 +26,27 @@ namespace BBJ.Customer
 
         public bool IsReadyForOrder => IsAwaitingOrder;
 
+        public event Action OnOrderStateChanged;
+
         public void StartCycle(CocktailRecipeSO food)
         {
             SelectedFood = food;
+            _orderChannel?.AddListener<OrderStateChangedEvent>(HandleOrderStateChanged);
+            ChangeState(CustomerState.Idle);
             _scheduleChannel?.RaiseEvent(new ScheduleTriggerEvent());
         }
 
-        public void SetAwaitingOrder(bool value) => IsAwaitingOrder = value;
+        public void SetAwaitingOrder(bool value)
+        {
+            IsAwaitingOrder = value;
+            OnOrderStateChanged?.Invoke();
+        }
+
+        private void HandleOrderStateChanged(OrderStateChangedEvent e)
+        {
+            if (e.Ticket == ActiveTicket)
+                OnOrderStateChanged?.Invoke();
+        }
 
         public void SetAssignedServer(ModuleOwner server) => AssignedServer = server;
 
@@ -40,6 +55,7 @@ namespace BBJ.Customer
             if (OrderPlaced) return null;
             ActiveTicket = new OrderTicket(SelectedFood, this, seat);
             OrderPlaced  = true;
+            OnOrderStateChanged?.Invoke();
             return ActiveTicket;
         }
 
@@ -47,6 +63,7 @@ namespace BBJ.Customer
         {
             if (!OrderPlaced || FoodServed) return;
             FoodServed = true;
+            OnOrderStateChanged?.Invoke();
         }
 
         public void OnPaymentDone()
@@ -57,8 +74,18 @@ namespace BBJ.Customer
             PaymentDone = true;
         }
 
+        internal void RestoreActiveTicket(OrderTicket ticket)
+        {
+            SelectedFood = ticket.Ordered;
+            ActiveTicket = ticket;
+            OrderPlaced  = true;
+            _orderChannel?.AddListener<OrderStateChangedEvent>(HandleOrderStateChanged);
+        }
+
         public override void ResetItem()
         {
+            _orderChannel?.RemoveListener<OrderStateChangedEvent>(HandleOrderStateChanged);
+
             // 활성 티켓이 있으면 OrderManager 흐름을 통해 취소 → CTS 전파로 진행 중인 워커도 중단
             if (ActiveTicket != null && !ActiveTicket.IsTerminal)
                 _orderChannel?.RaiseEvent(new OrderCancelRequestEvent(ActiveTicket, CancelReason.CustomerLeft));

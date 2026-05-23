@@ -18,6 +18,9 @@ public class UIPopup : MonoBehaviour, IPopup
 
     public async void OnClose()
     {
+        if (IsAniming)
+            return;
+
         IsAniming = true;
 
         var tween = LMotion.Create(
@@ -25,9 +28,11 @@ public class UIPopup : MonoBehaviour, IPopup
                 new Vector2(_target.anchoredPosition.x, -Screen.height * 2),
                 duration)
             .WithEase(Ease.OutCubic)
-            .BindToAnchoredPosition(_target);
+            .BindToAnchoredPosition(_target)
+            .AddTo(this);
 
         await tween;
+
         IsAniming = false;
         UIManager.Instance.ClosePopup();
     }

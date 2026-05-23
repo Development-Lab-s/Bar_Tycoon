@@ -1,5 +1,6 @@
 using _00._Work._Resources._02._Scripts.Agents;
 using _00._Work._Resources._02._Scripts.Systems.AnimationSystems;
+using Assets._00._Work.PCM._02._Scripts.Contract;
 using BBJ.Modules;
 using BBJ.Schedule;
 using BBJ.UI;
@@ -24,13 +25,13 @@ namespace BBJ.States
         public override void Enter()
         {
             base.Enter();
-            _uiModule.SetActiveUI<InteractDialogUI>(true);
+            _uiModule.SetActiveUI<ContractChat>(true);
         }
 
         public override void Exit()
         {
             base.Exit();
-            _uiModule.SetActiveUI<InteractDialogUI>(false);
+            _uiModule.SetActiveUI<ContractChat>(false);
             _scheduling?.Resume();
         }
     }

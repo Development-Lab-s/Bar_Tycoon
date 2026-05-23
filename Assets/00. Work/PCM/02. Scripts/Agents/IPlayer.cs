@@ -5,6 +5,6 @@ using UnityEngine.Events;
 
 public interface IPlayer
 {
-    public CharcterLikeSO charLike {get;}
-    public UnityEvent ChatOpen { get; }
+    public CharcterLikeSO CharlikeSo { get;}
+    public UnityEvent<string> ChatOpen { get; }
 }

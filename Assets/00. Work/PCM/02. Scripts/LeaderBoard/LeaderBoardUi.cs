@@ -5,12 +5,12 @@ using UnityEngine;
 
 public class LeaderBoardUi : MonoBehaviour , IModule
 {
-    [SerializeField]private EventChannelSO _eventChannel;
+    [field:SerializeField]public EventChannelSO _eventChannel { get; set; }
     private ModuleOwner _owner;
     public void Initialize(ModuleOwner owner)
     {
         _owner = owner;
-        _eventChannel.AddListener<LeaderBoardEvent>(UpdateLeaderBoardUI);
+        //_eventChannel.AddListener<LeaderBoardEvent>(UpdateLeaderBoardUI);
     }
     public void UpdateLeaderBoardUI(LeaderBoardEvent evt)
     {

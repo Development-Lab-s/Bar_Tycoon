@@ -20,6 +20,7 @@ public class SideLpController : MonoBehaviour , IModule
         _owner = owner;
         _LPchannel.AddListener<LpConncetEvent>(EventPlayLp);
         LPBOX[] lpBoxes = GetComponentsInChildren<LPBOX>();
+        Debug.Log(lpBoxes.Length);
         for (int i = 0; i < lpBoxes.Length; i++)
         {
             // ID 등록 및 데이터 세팅
@@ -39,6 +40,7 @@ public class SideLpController : MonoBehaviour , IModule
     }
     public void PlayLp(int id)
     {
+        Debug.Log("들어감");
         _myid = id;
         if (!_lpBoxDict.ContainsKey(id)) return;
         if (_currentActiveId == id) return;

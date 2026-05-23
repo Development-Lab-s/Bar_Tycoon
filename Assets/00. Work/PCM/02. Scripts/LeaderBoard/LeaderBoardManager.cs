@@ -1,20 +1,42 @@
-using UnityEngine;
-using Unity.Services.Core;
-using Unity.Services.Authentication;
-using Unity.Services.Leaderboards;
-using UnityEngine.SocialPlatforms.Impl;
+using _00._Work.Goat._02._Scripts.Coin.CoinDatas;
+using _00._Work.Goat._02._Scripts.Exp.ExpDatas;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+using Unity.Services.Leaderboards;
+using UnityEngine;
 using UnityEngine.InputSystem;
-using Gamelib.EventSystem;
-using UnityEngine.Rendering;
-using Random = UnityEngine.Random;
+
+[Serializable]
+public struct LeaderBoardData
+{
+    public string Name;
+    public double Gold;
+    public int Level;
+    public string FavoriteCharacter;
+}
 
 public class LeaderBoardManager : MonoBehaviour
 {
-    [SerializeField]private EventChannelSO _eventChannel;
+    [Serializable]
+    public class LeaderboardExtraData
+    {
+        public int playerLevel;
+        public string favoriteCharacter;
+    }
+
+    [SerializeField] private LikeitemListSo listSo;
+    [SerializeField] private ExpData expData;
+    [SerializeField] private CoinData coinData;
+
     private int limit = 50;
-    async void Start()
+
+    public List<LeaderBoardData> infoTuple = new();
+
+    private async void Start()
     {
         try
         {
@@ -22,57 +44,176 @@ public class LeaderBoardManager : MonoBehaviour
 
             if (!AuthenticationService.Instance.IsSignedIn)
             {
-                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                await AuthenticationService.Instance
+                    .SignInAnonymouslyAsync();
             }
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            Debug.LogError(e);
+            Debug.LogError($"초기화 실패 : {e}");
         }
     }
-    private async void Update()
+
+    private void Update()
     {
         if (Keyboard.current.sKey.wasPressedThisFrame)
         {
-            await GetMyLeaderboardInfo();
+            _ = GetMyLeaderboardInfo();
         }
     }
-    public void ScoreAdd(int level)
+
+    public void ScoreAdd()
     {
-        _ = ScoreAddAsync(level);
+        _ = ScoreAddAsync();
     }
+
     public void NameSet(string pyName)
     {
         _ = NameSetAsync(pyName);
     }
-    private async Task ScoreAddAsync(int level)
+
+    private async Task ScoreAddAsync()
     {
-        level = Random.Range(0, level);
-        Debug.Log($"님 랜덤 점수{level}");
-        await LeaderboardsService.Instance.AddPlayerScoreAsync("Bar_Tycoon",level);
-    }
-    private async Task NameSetAsync(string pyName)
-    {
-        await AuthenticationService.Instance.UpdatePlayerNameAsync(pyName);
-    }
-    public async Task GetMyLeaderboardInfo()
-    {
+        LeaderboardExtraData extraData =
+            new LeaderboardExtraData
+            {
+                playerLevel = expData.currentLevel,
+                favoriteCharacter = listSo.MostCharacter()
+            };
+
+        string jsonMetadata =
+            JsonConvert.SerializeObject(extraData);
+
+        var options = new AddPlayerScoreOptions
+        {
+            Metadata = new Dictionary<string, string>
+            {
+                { "extra_info", jsonMetadata }
+            }
+        };
+
         try
         {
-            string myid = AuthenticationService.Instance.PlayerId;
-            var scoresResponse = await LeaderboardsService.Instance.GetScoresAsync("Bar_Tycoon", new GetScoresOptions
-            {
-                Offset = 0,
-                Limit = limit
-            });
+            await LeaderboardsService.Instance
+                .AddPlayerScoreAsync(
+                    "Bar_Tycoon",
+                    coinData.coin,
+                    options);
 
-            _eventChannel.RaiseEvent(new LeaderBoardEvent(myid, scoresResponse.Results));
-            //가져온 리스트를 루프 돌며 처리하거나, 리스트 전용 이벤트를 발생시킵니다.
         }
         catch (Exception e)
         {
-            Debug.LogError($"점수 가져오기 실패: {e.Message}");
-            return;
+            Debug.LogError($"[리더보드] 제출 실패 : {e}");
+        }
+    }
+
+    private async Task NameSetAsync(string pyName)
+    {
+        try
+        {
+            await AuthenticationService.Instance
+                .UpdatePlayerNameAsync(pyName);
+
+            Debug.Log($"닉네임 변경 완료 : {pyName}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"닉네임 변경 실패 : {e}");
+        }
+    }
+
+    public async Task GetMyLeaderboardInfo()
+    {
+        await ScoreAddAsync();
+        try
+        {
+            string myId =
+                AuthenticationService.Instance.PlayerId;
+
+            infoTuple.Clear();
+
+            var scoresResponse =
+                await LeaderboardsService.Instance
+                    .GetScoresAsync(
+                        "Bar_Tycoon",
+                        new GetScoresOptions
+                        {
+                            Offset = 0,
+                            Limit = limit,
+                            IncludeMetadata = true
+                        });
+
+            foreach (var entry in scoresResponse.Results)
+            {
+                string playerName = entry.PlayerName;
+
+                if (!string.IsNullOrEmpty(playerName) &&
+                    playerName.Length >= 5)
+                {
+                    playerName =
+                        playerName.Substring(
+                            0,
+                            playerName.Length - 5);
+                }
+
+                double gold = entry.Score;
+
+                int level = 1;
+                string favoriteChar = "None";
+                if (!string.IsNullOrEmpty(entry.Metadata))
+                {
+                    try
+                    {
+                        Dictionary<string, string> metadata =
+                            JsonConvert.DeserializeObject
+                            <Dictionary<string, string>>(
+                                entry.Metadata);
+
+                        if (metadata != null &&
+                            metadata.TryGetValue(
+                                "extra_info",
+                                out string extraJson))
+                        {
+                            LeaderboardExtraData extraData =
+                                JsonConvert.DeserializeObject
+                                <LeaderboardExtraData>(
+                                    extraJson);
+
+                            if (extraData != null)
+                            {
+                                level = extraData.playerLevel;
+                                favoriteChar =
+                                    extraData.favoriteCharacter;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning(
+                            $"[{playerName}] 메타데이터 파싱 실패 : {ex}");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning(
+                        $"[{playerName}] Metadata 없음");
+                }
+
+                LeaderBoardData data =
+                    new LeaderBoardData
+                    {
+                        Name = playerName,
+                        Gold = gold,
+                        Level = level,
+                        FavoriteCharacter = favoriteChar
+                    };
+
+                infoTuple.Add(data);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"점수 가져오기 실패 : {e}");
         }
     }
 }

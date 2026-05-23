@@ -1,5 +1,11 @@
+using BBJ.EventSystem;
+using BBJ.Order;
+using BBJ.Register;
+using BBJ.Save;
 using BBJ.Schedule;
 using BBJ.Work;
+using BBJ.WorkplaceSystem;
+using BBJ.WorkplaceSystem.Modules;
 using Gamelib.EventSystem;
 using Gamelib.ObjectPool.Runtime;
 using System.Collections;
@@ -19,6 +25,9 @@ namespace BBJ.Customer
         [SerializeField] private PoolInitializer _poolInitializer;
         [SerializeField] private PoolItemSo      _customerPoolItem;
 
+        [Header("Scene")]
+        [SerializeField] private EventChannelSO _sceneChannel;
+
         [Header("Spawn Settings")]
         [SerializeField] private Transform _spawnPoint;
         [SerializeField] private float     _spawnInterval = 8f;
@@ -31,19 +40,30 @@ namespace BBJ.Customer
         [SerializeField] private CocktailRecipeDatabaseSO _database;
         [SerializeField] private int                       _currentStage = 1;
 
-        private int _activeCount;
+        [Header("Restore")]
+        [SerializeField] private WorkplaceRegisterSO _workplaceRegister;
+        [SerializeField] private WorkplaceTypeSO     _seatType;
+
+        private int  _activeCount;
+        private bool _isBackground;
 
         private void Awake()
         {
             UtilDebugger.AssertAllAssigned(this);
             _activeCount = 0;
             _customerChannel.AddListener<CustomerLeftEvent>(HandleCustomerLeft);
-            _poolInitializer.PoolManager.InitializePool(_poolInitializer.transform);
+            _sceneChannel?.AddListener<SceneTypeChangedEvent>(HandleSceneChanged);
         }
 
         private void OnDestroy()
         {
             _customerChannel.RemoveListener<CustomerLeftEvent>(HandleCustomerLeft);
+            _sceneChannel?.RemoveListener<SceneTypeChangedEvent>(HandleSceneChanged);
+        }
+
+        private void HandleSceneChanged(SceneTypeChangedEvent e)
+        {
+            _isBackground = e.Current != SceneType.Main;
         }
 
         private void Start()
@@ -65,6 +85,7 @@ namespace BBJ.Customer
             {
                 yield return new WaitForSeconds(_spawnInterval);
 
+                if (_isBackground) continue;
                 if (_activeCount >= _maxCustomers) continue;
                 if (_database == null || _cycleSequence == null) continue;
 
@@ -86,6 +107,44 @@ namespace BBJ.Customer
 
             customer.StartCycle(recipe);
             customer.GetModule<SchedulingModule>()?.AssignWork(_cycleSequence, null);
+        }
+
+        // ─── 복원 API ────────────────────────────────────
+
+        public List<CustomerAgent> RestoreCustomers(OrdersSaveData data, CocktailRecipeDatabaseSO database)
+        {
+            var customers = new List<CustomerAgent>(data.Tickets.Count);
+
+            var availableSeats = _workplaceRegister != null && _seatType != null
+                ? _workplaceRegister.GetAll(_seatType)
+                : new List<Workplace>();
+
+            int seatIndex = 0;
+            foreach (var save in data.Tickets)
+            {
+                if (seatIndex >= availableSeats.Count) break;
+
+                var recipe = database?.recipes.FirstOrDefault(r => r.name == save.RecipeId);
+                if (recipe == null) continue;
+
+                var seat     = availableSeats[seatIndex++];
+                var customer = _poolInitializer.Pop<CustomerAgent>(_customerPoolItem);
+                if (customer == null) continue;
+
+                var seatModule = seat.GetComponent<SeatModule>();
+                if (seatModule == null) continue;
+
+                seatModule.Seat(customer);
+                seatModule.AssignCustomer(customer);
+                customer.AssignedSeat = seat;
+
+                customer.transform.position = seat.transform.position;
+                _activeCount++;
+
+                customers.Add(customer);
+            }
+
+            return customers;
         }
 
         // r ∈ [1, 2^n - 1] 균일 샘플 → 비트 길이(r) = 스테이지

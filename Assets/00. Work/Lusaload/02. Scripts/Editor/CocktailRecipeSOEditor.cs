@@ -15,8 +15,10 @@ namespace _00._Work.Lusaload._02._Scripts.Editor
 
             EditorGUILayout.Space(10f);
             EditorGUILayout.LabelField("맛 프로필", EditorStyles.boldLabel);
+            
 
             CocktailRecipeSO recipe = (CocktailRecipeSO)target;
+            
             DrawTasteBar("쓴맛", recipe.bitterness, new Color(0.35f, 0.15f, 0.05f));
             DrawTasteBar("단맛", recipe.sweetness,  new Color(1f,    0.65f, 0.1f));
             DrawTasteBar("신맛", recipe.sourness,   new Color(0.55f, 0.85f, 0.1f));

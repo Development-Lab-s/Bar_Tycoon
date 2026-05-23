@@ -2,6 +2,7 @@ using BBJ.Actions;
 using BBJ.Customer;
 using BBJ.Modules;
 using BBJ.Order;
+using BBJ.Schedule;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using System.Linq;
@@ -32,7 +33,8 @@ namespace BBJ.Work
             customer.AssignedSeat = seat;
             seat.GetModule<OccupancyModule>()?.Occupy(executor);
 
-            var dest       = seat.GetNearestPoint(executor.transform.position);
+            var role       = executor.GetModule<SchedulingModule>()?.InteractRole;
+            var dest       = seat.GetNearestPoint(role, executor.transform.position);
             var seatModule = seat.GetModule<SeatModule>();
             seatModule?.AssignCustomer(executor);
 

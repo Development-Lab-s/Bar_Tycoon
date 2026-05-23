@@ -2,6 +2,7 @@ using BBJ.Actions;
 using BBJ.Customer;
 using BBJ.Modules;
 using BBJ.Order;
+using BBJ.Schedule;
 using BBJ.WorkplaceSystem;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
@@ -24,7 +25,9 @@ namespace BBJ.Work
             var counter = _ctx.WorkplaceRegister?.GetFirst(_ctx.CounterType);
             if (counter == null) return WorkResult.Cancelled;
 
-            await actions.Execute<MoveAction>(a => a.ExecuteAsync(counter.GetNearestPoint(executor.transform.position), ctx.Token));
+            var role = executor.GetModule<SchedulingModule>()?.InteractRole;
+            await actions.Execute<MoveAction>(
+                a => a.ExecuteAsync(counter.GetNearestPoint(role, executor.transform.position), ctx.Token));
 
             var payQueue = counter.GetModule<WorkplaceQueueModule>();
             if (payQueue == null) return WorkResult.Cancelled;

@@ -1,5 +1,6 @@
 using _00._Work.Lusaload._02._Scripts.SO;
 using BBJ.EventSystem;
+using BBJ.Player;
 using Gamelib.EventSystem;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,8 @@ namespace BBJ.Order
 {
     public class PlayerOrderHandle : ModuleOwner
     {
-        [SerializeField] private EventChannelSO _orderChannel;
+        [SerializeField] private EventChannelSO      _orderChannel;
+        [SerializeField] private PlayerOrderHandlerSO _handlerSO;
 
         private readonly Dictionary<CocktailRecipeSO, int>               _readyCount     = new();
         private readonly Dictionary<CocktailRecipeSO, List<OrderTicket>> _pendingTickets = new();
@@ -20,6 +22,7 @@ namespace BBJ.Order
             base.Awake();
 
             UtilDebugger.AssertAllAssigned(this);
+            _handlerSO?.RuntimeInit(this);
         }
 
         private void OnEnable()
@@ -60,9 +63,7 @@ namespace BBJ.Order
             return list;
         }
 
-        public IEnumerable<CocktailRecipeSO> GetAllPendingFoods() => _pendingTickets.Keys.ToList();
-
-        // --- 액션 ---
+        public IEnumerable<CocktailRecipeSO> GetAllPendingFoods() => _pendingTickets.Keys;
 
         public bool TryOccupy(OrderTicket ticket)
         {
@@ -99,8 +100,6 @@ namespace BBJ.Order
             return count;
         }
 
-        // --- 이벤트 핸들러 ---
-
         private void OnOrderRegistered(OrderRegisteredEvent e)
         {
             if (e.Ticket.WorkPhase != OrderWorkPhase.PendingCook) return;
@@ -118,6 +117,16 @@ namespace BBJ.Order
                 RemoveFromPending(e.Ticket);
             else
                 AddToPending(e.Ticket);
+        }
+
+        public void RebuildReadyCount(IEnumerable<OrderTicket> tickets)
+        {
+            _readyCount.Clear();
+            foreach (var ticket in tickets)
+            {
+                if (ticket.WorkPhase == OrderWorkPhase.ReadyForServe)
+                    AddReadyFood(ticket.Ordered);
+            }
         }
 
         private void AddToPending(OrderTicket ticket)
