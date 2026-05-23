@@ -50,11 +50,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.Workplace
   _tileSetData: {fileID: 11400000, guid: a35ea2ba9d1a16947a65ee61c8266719, type: 2}
   _flipX: 0
-  _showGizmos: 1
-  _gizmoTileSize: 1
   _register: {fileID: 11400000, guid: 7acfe8c69b04ef14d96337478f8f61e6, type: 2}
   _workplaceType: {fileID: 11400000, guid: 8d98acd3ae193a0499ffdddd12075cee, type: 2}
-  _interactPoints: []
+  _interactPoints:
+  - Offset: {x: 1, y: 1}
+    Role: {fileID: 11400000, guid: 3667fd0fac539ba4aa80e633aa96b4a5, type: 2}
+  - Offset: {x: 0, y: 0}
+    Role: {fileID: 11400000, guid: 7bae80aeb089edf4d8cd4624db2db84e, type: 2}
 --- !u!1001 &697306554750185001
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -193,6 +195,34 @@ PrefabInstance:
       propertyPath: OnClickEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 11400000, guid: fda5d82ec10ed1344931374ad274af81, type: 2}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OpenPopupEvent
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: BBJ.EventSystem.UIManagerSO, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -287,11 +317,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2047591734122274426, guid: 7ec6198bf8050884ab4c64dd1036b9b4, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.0055
+      value: -0.21661115
       objectReference: {fileID: 0}
     - target: {fileID: 2047591734122274426, guid: 7ec6198bf8050884ab4c64dd1036b9b4, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.04788
+      value: 0.10767559
       objectReference: {fileID: 0}
     - target: {fileID: 2047591734122274426, guid: 7ec6198bf8050884ab4c64dd1036b9b4, type: 3}
       propertyPath: m_LocalPosition.z
@@ -332,8 +362,28 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7066062539086433941, guid: 7ec6198bf8050884ab4c64dd1036b9b4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8629750651633604915}
   m_SourcePrefab: {fileID: 100100000, guid: 7ec6198bf8050884ab4c64dd1036b9b4, type: 3}
+--- !u!1 &3629929450084911036 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7066062539086433941, guid: 7ec6198bf8050884ab4c64dd1036b9b4, type: 3}
+  m_PrefabInstance: {fileID: 5796040272781199657}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8629750651633604915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3629929450084911036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34fb7e1cb3a09b74090ab67b9ac27098, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.TycoonVisualRoot
 --- !u!4 &5477830968609412947 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2047591734122274426, guid: 7ec6198bf8050884ab4c64dd1036b9b4, type: 3}

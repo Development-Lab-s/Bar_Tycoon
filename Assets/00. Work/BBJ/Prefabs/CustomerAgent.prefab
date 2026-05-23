@@ -14,7 +14,7 @@ GameObject:
   m_Layer: 19
   m_Name: CustomerAgent
   m_TagString: Untagged
-  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: 2488908585195742037, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -31,13 +31,13 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2730525668524118967}
   - {fileID: 1455246914006518346}
   - {fileID: 2840532260737851320}
   - {fileID: 4109019238246359774}
   - {fileID: 954775789324299464}
   - {fileID: 584577276412950762}
   - {fileID: 5329522365332033743}
-  - {fileID: 2730525668524118967}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8571343857732948807
@@ -590,6 +590,14 @@ PrefabInstance:
       value: SetActive
       objectReference: {fileID: 0}
     - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
       propertyPath: OnClickEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: BBJ.Player.PlayerOrderHandlerSO, Assembly-CSharp
       objectReference: {fileID: 0}
@@ -598,8 +606,16 @@ PrefabInstance:
       value: UnityEngine.GameObject, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 11400000, guid: 4245cd5d39747ac4197e0336dd5bdbd7, type: 2}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
       propertyPath: OnClickEvent.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_BoolArgument
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
       propertyPath: OnClickEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgument
@@ -610,12 +626,28 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OnCustomerClicked
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: BBJ.Player.PlayerOrderHandlerSO, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
       propertyPath: OnClickEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: BBJ.Customer.CustomerAgent, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
       propertyPath: OnClickEvent.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgument
+      value: 
+      objectReference: {fileID: 8571343857732948807}
+    - target: {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: BBJ.Customer.CustomerAgent, Assembly-CSharp
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -899,6 +931,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7709664820295616236}
     m_Modifications:
+    - target: {fileID: 3141871837046173729, guid: 0a392ec0e317cb046beea6b3982011c0, type: 3}
+      propertyPath: _interactRole
+      value: 
+      objectReference: {fileID: 11400000, guid: 7bae80aeb089edf4d8cd4624db2db84e, type: 2}
     - target: {fileID: 3141871837046173729, guid: 0a392ec0e317cb046beea6b3982011c0, type: 3}
       propertyPath: <Role>k__BackingField
       value: 1

@@ -13,7 +13,7 @@ GameObject:
   m_Layer: 0
   m_Name: LpPlayer
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 2488908585195742037, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -47,8 +47,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.TycoonObject
   _tileSetData: {fileID: 11400000, guid: 9290f689aa2a61f40a0023dc043cff4f, type: 2}
   _flipX: 0
-  _showGizmos: 1
-  _gizmoTileSize: 1
 --- !u!1001 &1109879658112316516
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -59,7 +57,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2245312950944503166, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
       propertyPath: m_SortingOrder
-      value: -58
+      value: -43
       objectReference: {fileID: 0}
     - target: {fileID: 3549193808183608796, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
       propertyPath: m_Name
@@ -67,11 +65,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9149606512500518925, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 0.24
       objectReference: {fileID: 0}
     - target: {fileID: 9149606512500518925, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.15
       objectReference: {fileID: 0}
     - target: {fileID: 9149606512500518925, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
       propertyPath: m_LocalPosition.z
@@ -108,8 +106,28 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3549193808183608796, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3464234451494014799}
   m_SourcePrefab: {fileID: 100100000, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
+--- !u!1 &4478356343148491192 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3549193808183608796, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
+  m_PrefabInstance: {fileID: 1109879658112316516}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3464234451494014799
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4478356343148491192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34fb7e1cb3a09b74090ab67b9ac27098, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.TycoonVisualRoot
 --- !u!4 &8187257211513652329 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9149606512500518925, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}

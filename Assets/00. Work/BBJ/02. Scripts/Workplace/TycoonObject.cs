@@ -14,9 +14,11 @@ namespace BBJ.WorkplaceSystem
         public bool        FlipX       => _flipX;
 
 
-        public virtual void Setup(Vector2Int cellIndex, Func<Vector2Int, Vector3> cellToWorld, bool flipX)
+        public virtual void Setup(Func<Vector2Int, Vector3> offsetToWorld, bool flipX)
         {
             _flipX = flipX;
+            if (flipX)
+                transform.rotation = Quaternion.Euler(0, 180, 0);
         }
     }
 }

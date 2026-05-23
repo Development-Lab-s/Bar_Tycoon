@@ -53,7 +53,7 @@ namespace BBJ.GridSystem
             return null;
         }
 
-        public void ApplyObstacleAt(TileSetData data, Vector2Int cellIndex, bool flipX = false)
+        public void ApplyObstacleAt(TileSetData data, Vector2Int cellIndex)
         {
             if (data == null) return;
 
@@ -63,10 +63,15 @@ namespace BBJ.GridSystem
             if (data.BlockedOffsets == null) return;
             foreach (var offset in data.BlockedOffsets)
             {
-                var applied = flipX ? new Vector2Int(-offset.x, offset.y) : offset;
-                if (TryGetCellToNode(cellIndex.x + applied.x, cellIndex.y + applied.y, out Node offsetNode))
-                    offsetNode.walkable = data.IsWalkable;
+                if (TryGetCellToNode(cellIndex.x + offset.x, cellIndex.y + offset.y, out Node node))
+                    node.walkable = data.IsWalkable;
             }
+        }
+
+        public void SetNodeWalkable(Vector2Int cell, bool walkable)
+        {
+            if (TryGetCellToNode(cell.x, cell.y, out Node node))
+                node.walkable = walkable;
         }
         public Vector3 CellToWorld(Vector2Int cellIndex)
         {

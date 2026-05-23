@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using BBJ.EventSystem;
 using Gamelib.EventSystem;
 using UnityEngine;
@@ -8,26 +10,32 @@ namespace BBJ.Scene
 {
     public class GameSceneManager : MonoBehaviour
     {
+        public static GameSceneManager Instance { get; private set; }
+
         [SerializeField] private EventChannelSO _sceneChannel;
         [SerializeField] private FadeUI         _fadeUI;
 
-        private SceneType  _current;
-        private SceneType? _additiveLoaded;
-        private bool       _sceneReady;
-        private bool       _isTransitioning;
+        private readonly Dictionary<SceneType, ISceneHost> _hosts        = new();
+        private readonly HashSet<SceneType>                _loadedScenes = new();
+
+        private SceneType _foreground;
+        private bool      _sceneReady;
+        private bool      _isTransitioning;
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
             DontDestroyOnLoad(gameObject);
             _sceneChannel.AddListener<SceneTransitionRequestEvent>(OnTransitionRequested);
             _sceneChannel.AddListener<SceneReadyEvent>(OnSceneReady);
         }
 
-        private void Start()
-        {
-            _sceneChannel.RaiseEvent(new SceneTypeChangedEvent(SceneType.Main));
-            //TransitionTo(SceneType.Title);
-        }
+        private void Start() => StartCoroutine(Init());
 
         private void OnDestroy()
         {
@@ -35,8 +43,9 @@ namespace BBJ.Scene
             _sceneChannel.RemoveListener<SceneReadyEvent>(OnSceneReady);
         }
 
-        private void OnTransitionRequested(SceneTransitionRequestEvent e) => TransitionTo(e.Target);
+        public void RegisterHost(ISceneHost host) => _hosts[host.SceneType] = host;
 
+        private void OnTransitionRequested(SceneTransitionRequestEvent e) => TransitionTo(e.Target);
         private void OnSceneReady(SceneReadyEvent _) => _sceneReady = true;
 
         private void TransitionTo(SceneType target)
@@ -45,39 +54,66 @@ namespace BBJ.Scene
             StartCoroutine(DoTransition(target));
         }
 
+        private IEnumerator Init()
+        {
+            _isTransitioning = true;
+
+            yield return SceneManager.LoadSceneAsync("Main", LoadSceneMode.Additive);
+            _loadedScenes.Add(SceneType.Main);
+            yield return new WaitUntil(() => _hosts.ContainsKey(SceneType.Main));
+
+            _foreground = SceneType.Main;
+            _sceneChannel.RaiseEvent(new SceneTypeChangedEvent(SceneType.Main));
+            _hosts[SceneType.Main].OnForeground();
+
+            yield return StartCoroutine(_fadeUI.FadeIn());
+
+            _isTransitioning = false;
+        }
+
         private IEnumerator DoTransition(SceneType target)
         {
             _isTransitioning = true;
 
+            // 새 씬 로드를 페이드 아웃과 동시에 시작
+            AsyncOperation loadOp = null;
+            if (!_loadedScenes.Contains(target))
+            {
+                loadOp = SceneManager.LoadSceneAsync(SceneName(target), LoadSceneMode.Additive);
+                loadOp.allowSceneActivation = false;
+            }
+
             yield return StartCoroutine(_fadeUI.FadeOut());
 
-            bool returnToMain = target == SceneType.Main && _additiveLoaded.HasValue;
+            if (_hosts.TryGetValue(_foreground, out var prev))
+                prev.OnBackground();
 
-            if (_additiveLoaded.HasValue)
+            // Cocktail / Story 씬은 복귀 시 언로드
+            if (_foreground != SceneType.Main && _loadedScenes.Contains(_foreground))
             {
-                yield return SceneManager.UnloadSceneAsync(SceneName(_additiveLoaded.Value));
-                _additiveLoaded = null;
+                yield return SceneManager.UnloadSceneAsync(SceneName(_foreground));
+                _loadedScenes.Remove(_foreground);
+                _hosts.Remove(_foreground);
             }
 
-            if (target == SceneType.Story || target == SceneType.Cocktail)
+            if (loadOp != null)
             {
-                yield return SceneManager.LoadSceneAsync(SceneName(target), LoadSceneMode.Additive);
-                _additiveLoaded = target;
-            }
-            else if (!returnToMain)
-            {
-                // Replace: Title→Main 또는 Bootstrap→Title
-                yield return SceneManager.LoadSceneAsync(SceneName(target), LoadSceneMode.Single);
+                while (loadOp.progress < 0.9f) yield return null;
+                loadOp.allowSceneActivation = true;
+                yield return loadOp;
+                _loadedScenes.Add(target);
             }
 
-            _current = target;
-            _sceneChannel.RaiseEvent(new SceneTypeChangedEvent(target));
+            // Host 등록 대기 (씬 Awake 완료 시점)
+            yield return new WaitUntil(() => _hosts.ContainsKey(target));
 
-            if (!returnToMain)
-            {
-                _sceneReady = false;
+            // Main 복귀 시 GameLoader 초기화 완료 대기 (_sceneReady는 GameLoader가 한 번만 발행하므로 영구적으로 true 유지)
+            if (target == SceneType.Main && !_sceneReady)
                 yield return new WaitUntil(() => _sceneReady);
-            }
+
+            _foreground = target;
+            _sceneChannel.RaiseEvent(new SceneTypeChangedEvent(target));
+            _hosts[target].OnForeground();
 
             yield return StartCoroutine(_fadeUI.FadeIn());
 
@@ -90,7 +126,7 @@ namespace BBJ.Scene
             SceneType.Main     => "Main",
             SceneType.Story    => "Story",
             SceneType.Cocktail => "Cocktail",
-            _                  => throw new System.ArgumentOutOfRangeException(nameof(t))
+            _ => throw new ArgumentOutOfRangeException(nameof(t))
         };
     }
 }
