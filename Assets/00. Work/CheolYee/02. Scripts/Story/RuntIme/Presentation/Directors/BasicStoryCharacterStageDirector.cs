@@ -4,7 +4,6 @@ using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.CameraSystems;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.Util;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using Cysharp.Threading.Tasks;
@@ -31,15 +30,52 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
         public UniTask EnsureSpeakerVisibleAsync(StoryLineSO line, CancellationToken ct)
         {
-            return ResolveActorRuntime().EnsureSpeakerVisibleAsync(
-                line,
-                ResolveStageReferenceMetrics(),
-                ct);
+            return ResolveActorRuntime().EnsureSpeakerVisibleAsync(line, ct);
         }
 
         public void ApplySpeakerFocus(StoryLineSO line)
         {
             ResolveActorRuntime().ApplySpeakerFocus(line);
+        }
+
+        public void ApplyBackgroundOnly(StoryStageLayoutModuleSO layout)
+        {
+            ResolveActorRuntime().ClearAll();
+            StoryBackgroundStateData state = layout != null && layout.HasBackground
+                ? layout.Background.ShallowClone()
+                : null;
+            ResolveBackgroundRuntime().ApplyState(state);
+        }
+
+        public void ApplyStageLayoutImmediate(StoryStageLayoutModuleSO layout)
+        {
+            if (layout == null)
+                return;
+
+            Dictionary<string, StoryActorStateData> targetMap = _transitionRuntime.BuildTargetMap(layout.Actors);
+            Dictionary<string, StoryActorTrackData> trackMap = _transitionRuntime.BuildTrackMap(layout.ActorTracks);
+            Dictionary<string, StoryActorStateData> sampledActors = _transitionRuntime.SampleActors(
+                targetMap,
+                targetMap,
+                trackMap,
+                0f);
+            ApplyActorSamples(sampledActors);
+
+            StoryBackgroundStateData fromBackground = ResolveBackgroundRuntime().BuildCurrentStateClone();
+            ApplyBackgroundState(_transitionRuntime.SampleBackground(
+                fromBackground,
+                layout.Background,
+                layout.BackgroundTrack,
+                0f));
+
+            bool useCameraTrack = _transitionRuntime.HasAuthoredCameraTrack(layout.CameraTrack);
+            ApplyCamera(layout, useCameraTrack, 0f, 0f);
+        }
+
+        public Vector3 GetCurrentCameraCenter()
+        {
+            StoryStageCameraRuntime runtime = ResolveCameraRuntime();
+            return runtime != null ? runtime.GetCurrentCameraCenter() : Vector3.zero;
         }
 
         public void ClearAll()
@@ -188,17 +224,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
         private void ApplyActorSamples(Dictionary<string, StoryActorStateData> targetMap)
         {
-            ResolveActorRuntime().ApplySamples(targetMap, ResolveStageReferenceMetrics());
+            ResolveActorRuntime().ApplySamples(targetMap);
         }
 
         private void ApplyBackgroundState(StoryBackgroundStateData state)
         {
             ResolveBackgroundRuntime().ApplyState(state);
-        }
-
-        private StoryStageCameraMetrics ResolveStageReferenceMetrics()
-        {
-            return ResolveCameraRuntime().ResolveStageReferenceMetrics();
         }
 
         private void ApplyCamera(StoryStageLayoutModuleSO layout, bool useCameraTrack, float previousTime, float currentTime)

@@ -1,6 +1,8 @@
 using System.Reflection;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Aspect;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Camera;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -28,6 +30,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
 
         [Header("Aspect Override")]
         [SerializeField] private StoryAspectRatioController aspectRatioController;
+        [Tooltip("Lightweight alternative to StoryAspectRatioController. Assign StoryAspectSettingsSO to enable StoryVisibleFrame-based actor positioning without the full controller MonoBehaviour.")]
+        [SerializeField] private StoryAspectSettingsSO aspectSettingsFallback;
+
+        [Header("Camera Init")]
+        [Tooltip("Optional. Assign StoryCameraInitSettingsSO to use a shared baseOrthographicSize for Preview and Runtime.")]
+        [SerializeField] private StoryCameraInitSettingsSO cameraInitSettings;
 
         [Header("Fallback Metrics")]
         [SerializeField] private float fallbackAspect = 9f / 16f;
@@ -64,7 +72,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
 
         private void Awake()
         {
+            // Domain reload 비활성화 시 이전 Play Mode의 _initialized / _stageReferenceInitialized 값이
+            // 남아 있어 Initialize()가 no-op이 된다. Awake마다 강제 초기화한다.
+            _stageReferenceInitialized = false;
+            _initialized = false;
+            _focusMoveActive = false;
+
             Initialize();
+
+            // focusTarget이 이전 Play Mode에서 actor-follow로 이동한 위치를 보유하고 있을 수 있다.
+            // 항상 controller.transform.position 기준으로 reset한다.
+            ResetFocusTargetToReferencePosition();
         }
 
         private void Update()
@@ -142,20 +160,35 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
             Camera cam = ResolveRuntimeCamera();
             EnsureStageReferenceMetrics();
 
-            if (aspectRatioController != null)
+            float storyAspect = ResolveStoryVisibleAspect(cam);
+            if (storyAspect > 0f)
             {
-                float storyAspect = aspectRatioController.StoryVisibleAspect;
                 float refHeight = _stageReferenceOrthoSize > 0f
                     ? _stageReferenceOrthoSize * 2f
                     : fallbackCameraWorldWidth / Mathf.Max(0.0001f, fallbackAspect);
                 return StoryStageCameraMetrics.FromCenteredFrame(_stageReferenceCenter, refHeight * storyAspect, storyAspect);
             }
 
+            // Physical camera fallback (no aspect override assigned)
             float aspect = cam != null ? cam.aspect : fallbackAspect;
             float refWidth = _stageReferenceWorldWidth > 0f
                 ? _stageReferenceWorldWidth
                 : fallbackCameraWorldWidth;
             return StoryStageCameraMetrics.FromCenteredFrame(_stageReferenceCenter, refWidth, aspect);
+        }
+
+        private float ResolveStoryVisibleAspect(Camera cam)
+        {
+            if (aspectRatioController != null)
+                return aspectRatioController.StoryVisibleAspect;
+
+            if (aspectSettingsFallback != null)
+            {
+                float physAspect = cam != null ? cam.aspect : fallbackAspect;
+                return physAspect * aspectSettingsFallback.VisibleWidthRatio;
+            }
+
+            return -1f; // no override available
         }
 
         public Vector3 GetCurrentCameraCenter()
@@ -179,6 +212,26 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
                 EnsureStageReferenceMetrics();
                 return _stageReferenceCenter;
             }
+        }
+
+        /// <summary>
+        /// Applies camera stageLocalPosition and zoom from a StoryCameraStateData.
+        /// stageLocalPosition (0,0) = StageRoot center (explicit move, not a no-op).
+        /// zoom formula: finalOrtho = baseOrtho / zoom.
+        /// </summary>
+        public void ApplyStageCamera(StoryCameraStateData state)
+        {
+            if (state == null)
+                return;
+
+            float safeZoom = Mathf.Max(0.01f, state.zoom);
+            if (!Mathf.Approximately(safeZoom, 1f))
+                ApplyZoom(safeZoom);
+
+            EnsureStageReferenceMetrics();
+            float worldX = _stageReferenceCenter.x + state.stageLocalPosition.x;
+            float worldY = _stageReferenceCenter.y + state.stageLocalPosition.y;
+            MoveToImmediate(worldX, worldY);
         }
 
         public void ApplyZoom(float zoomMultiplier)
@@ -270,26 +323,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
             MoveToSmooth(worldX, y, duration);
         }
 
-        public Vector2 ResolveParallaxOffset(StoryBackgroundStateData state)
+        /// <summary>
+        /// Computes parallaxBase in world space:
+        ///   parallaxBase = Lerp(stageRootCenter, cameraCenter, parallaxFactor)
+        /// Background final position = parallaxBase + backgroundState.stageLocalPosition.
+        /// </summary>
+        public Vector3 ResolveParallaxBase(StoryBackgroundStateData state)
         {
-            if (state?.background == null)
-                return Vector2.zero;
-
-            float parallaxFactor = state.background.ParallaxFactor;
-            if (parallaxFactor <= 0f)
-                return Vector2.zero;
-
             EnsureStageReferenceMetrics();
+            float parallaxFactor = state?.background != null
+                ? state.background.ParallaxFactor
+                : 0f;
 
-            StoryStageCameraMetrics stage = ResolveStageReferenceMetrics();
+            if (parallaxFactor <= 0f)
+                return _stageReferenceCenter;
+
             Vector3 camCenter = GetCurrentCameraCenter();
             camCenter.z = 0f;
-
-            Vector3 delta = camCenter - stage.Center;
-
-            return new Vector2(
-                -delta.x / Mathf.Max(0.0001f, stage.Width) * parallaxFactor,
-                0f);
+            return Vector3.Lerp(_stageReferenceCenter, camCenter, parallaxFactor);
         }
 
         private void TickFocusMove(float deltaTime)
@@ -370,18 +421,26 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
                 return;
 
             Camera cam = ResolveRuntimeCamera();
-            if (cam != null && cam.orthographic)
+
+            // Stage anchor = controller's own world position, NOT cam.transform.position.
+            // cam is driven by CinemachineBrain and may carry leftover position from a
+            // previous Play Mode session when domain reload is disabled.
+            _stageReferenceCenter = transform.position;
+            _stageReferenceCenter.z = 0f;
+
+            if (cameraInitSettings != null)
             {
-                StoryStageCameraMetrics metrics = StoryStageCameraMetrics.FromOrthographicCamera(cam);
-                _stageReferenceCenter = metrics.Center;
-                _stageReferenceCenter.z = 0f;
-                _stageReferenceWorldWidth = metrics.Width;
+                _stageReferenceOrthoSize = cameraInitSettings.BaseOrthographicSize;
+                float camAspect = cam != null ? cam.aspect : fallbackAspect;
+                _stageReferenceWorldWidth = _stageReferenceOrthoSize * 2f * camAspect;
+            }
+            else if (cam != null && cam.orthographic)
+            {
+                _stageReferenceWorldWidth = cam.orthographicSize * 2f * cam.aspect;
                 _stageReferenceOrthoSize = cam.orthographicSize;
             }
             else
             {
-                _stageReferenceCenter = transform.position;
-                _stageReferenceCenter.z = 0f;
                 _stageReferenceWorldWidth = fallbackCameraWorldWidth;
                 _stageReferenceOrthoSize = fallbackOrthographicSize;
             }
@@ -393,6 +452,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
         {
             _stageReferenceInitialized = false;
             EnsureStageReferenceMetrics();
+        }
+
+        private void ResetFocusTargetToReferencePosition()
+        {
+            if (focusTarget == null)
+                return;
+
+            EnsureStageReferenceMetrics();
+            focusTarget.position = _stageReferenceCenter;
+            _focusMoveActive = false;
+
+            CinemachineCamera cm = ResolveTypedCinemachineCamera();
+            if (cm != null)
+                cm.PreviousStateIsValid = false;
         }
 
         private Transform EnsureFocusTargetTransform()

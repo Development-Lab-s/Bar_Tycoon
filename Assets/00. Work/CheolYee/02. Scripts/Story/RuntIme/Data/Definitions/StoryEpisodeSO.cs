@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
@@ -34,6 +35,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         //각 대사는 스토리 진행 중 플레이어에게 표시되는 하나의 대사 한 줄을 나타냅니다.
         [SerializeField] private List<StoryLineSO> lines = new();
 
+        [Header("Sound Defaults")]
+        [SerializeField] private StorySoundSettingsData defaultSoundSettings = new();
+        [SerializeField] private bool hasExplicitDefaultSoundSettings;
+
         // 에디터 전용 — 런타임 미사용
         [HideInInspector]
         [SerializeField] private string editorLineSaveFolder = "";
@@ -43,7 +48,18 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         public string SkipSummary => skipSummary;
         public string EntryLineId => entryLineId;
         public IReadOnlyList<StoryLineSO> Lines => lines;
+        public StorySoundSettingsData DefaultSoundSettings => defaultSoundSettings ??= new StorySoundSettingsData();
+        public bool HasExplicitDefaultSoundSettings => hasExplicitDefaultSoundSettings;
         public string EditorLineSaveFolder => editorLineSaveFolder;
+
+#if UNITY_EDITOR
+        public StorySoundSettingsData DefaultSoundSettingsEditable => defaultSoundSettings ??= new StorySoundSettingsData();
+        public bool HasExplicitDefaultSoundSettingsEditable
+        {
+            get => hasExplicitDefaultSoundSettings;
+            set => hasExplicitDefaultSoundSettings = value;
+        }
+#endif
 
         //스토리 에피소드 내에서 특정 대사 ID에 해당하는 대사를 찾아 반환하는 메서드입니다.
         public bool TryGetLine(string lineId, out StoryLineSO line)
@@ -60,6 +76,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
 
             line = null;
             return false;
+        }
+
+        private void OnValidate()
+        {
+            defaultSoundSettings ??= new StorySoundSettingsData();
         }
     }
 }

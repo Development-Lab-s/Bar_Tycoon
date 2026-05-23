@@ -1,5 +1,7 @@
+using System;
 using System.Threading;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.RuntimeModules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Contracts;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
@@ -7,6 +9,7 @@ using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using Cysharp.Threading.Tasks;
 using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
 using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
@@ -41,6 +44,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         private bool _skipRequested;
         private bool _abortRequested;
         private StoryCloseReason _abortReason = StoryCloseReason.Aborted;
+        private EventChannelSO _activeStoryBgmChannel;
+        private float _activeStoryBgmFadeDuration;
+
+        private static readonly System.Collections.Generic.HashSet<string> MissingSoundChannelWarnings = new();
 
         public bool IsRunning          { get; private set; }
         public bool IsWaitingForAdvance { get; private set; }
@@ -68,6 +75,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
             ResetFlags();
             IsRunning = true;
+            bool isFirstPresentedLine = true;
 
             try
             {
@@ -84,80 +92,104 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                     if (!session.Episode.TryGetLine(session.CurrentLineId, out StoryLineSO line) || line == null)
                         return CreateResult(session, StoryCloseReason.Aborted, false);
 
-                    await ExecuteModulesAsync(line, StoryModuleTiming.BeforeDialogue, session, ct);
+                    StoryStageLayoutModuleSO stageLayout = FindStageLayout(line);
+                    CancellationTokenSource lineSoundCts = null;
+                    UniTask lineSoundTask = UniTask.CompletedTask;
 
-                    await _characterStage.EnsureSpeakerVisibleAsync(line, ct);
-                    _characterStage.ApplySpeakerFocus(line);
-
-                    UniTask withModulesTask = ExecuteModulesAsync(
-                        line,
-                        StoryModuleTiming.WithDialogue,
-                        session,
-                        ct);
-
-                    await _textDirector.PlayLineAsync(line, ct);
-                    await withModulesTask;
-
-                    if (_abortRequested)
-                        return CreateResult(session, _abortReason, false);
-
-                    if (_skipRequested)
-                        return CreateResult(session, StoryCloseReason.Skipped, true);
-
-                    await ExecuteModulesAsync(line, StoryModuleTiming.AfterDialogue, session, ct);
-
-                    if (line.LogVisible)
-                        AppendLineLog(session, line);
-
-                    // ── Choice 처리: SO / 인라인 모두 IStoryChoiceLikeModule 로 통일 ──
-                    bool hasChoice = false;
-                    StoryChoiceResult choiceResult = default;
-
-                    if (TryGetChoiceLikeModule(line, out IStoryChoiceLikeModule choiceLike))
+                    try
                     {
-                        hasChoice    = true;
-                        choiceResult = await _choicePanel.ShowChoicesAsync(choiceLike, ct);
-                    }
+                        if (ShouldPreapplyStageLayoutBeforeDialogue(line, stageLayout))
+                            _characterStage?.ApplyStageLayoutImmediate(stageLayout);
 
-                    if (hasChoice)
-                    {
-                        session.ChoiceResults[choiceResult.ChoiceId] = choiceResult.OptionId;
-                        AppendChoiceLog(session, line, choiceResult);
-                        RaiseSignal(new StoryChoiceCommitted(
-                            session.Episode.EpisodeId,
-                            choiceResult.ChoiceId,
-                            choiceResult.OptionId));
+                        await ExecuteModulesAsync(line, StoryModuleTiming.BeforeDialogue, session, ct);
 
-                        if (!string.IsNullOrWhiteSpace(choiceResult.NextLineId))
+                        await _characterStage.EnsureSpeakerVisibleAsync(line, ct);
+                        _characterStage.ApplySpeakerFocus(line);
+
+                        UniTask withModulesTask = ExecuteModulesAsync(
+                            line,
+                            StoryModuleTiming.WithDialogue,
+                            session,
+                            ct);
+
+                        if (isFirstPresentedLine && stageLayout != null)
                         {
-                            session.MoveTo(choiceResult.NextLineId);
-                            continue;
+                            // Let the first stage layout instantiate and render once before
+                            // audio/text start so startup hitch does not cause audio-first playback.
+                            await WarmupFirstPresentationFrameAsync(ct);
                         }
+
+                        lineSoundCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                        lineSoundTask = RunLineSoundTrackAsync(session.Episode, line, stageLayout, lineSoundCts.Token);
+
+                        await _textDirector.PlayLineAsync(line, ct);
+                        isFirstPresentedLine = false;
+                        await withModulesTask;
+
+                        if (_abortRequested)
+                            return CreateResult(session, _abortReason, false);
+
+                        if (_skipRequested)
+                            return CreateResult(session, StoryCloseReason.Skipped, true);
+
+                        if (line.LogVisible)
+                            AppendLineLog(session, line);
+
+                        bool hasChoice = false;
+                        StoryChoiceResult choiceResult = default;
+
+                        if (TryGetChoiceLikeModule(line, out IStoryChoiceLikeModule choiceLike))
+                        {
+                            hasChoice = true;
+                            choiceResult = await _choicePanel.ShowChoicesAsync(choiceLike, ct);
+                        }
+
+                        if (hasChoice)
+                        {
+                            session.ChoiceResults[choiceResult.ChoiceId] = choiceResult.OptionId;
+                            AppendChoiceLog(session, line, choiceResult);
+                            RaiseSignal(new StoryChoiceCommitted(
+                                session.Episode.EpisodeId,
+                                choiceResult.ChoiceId,
+                                choiceResult.OptionId));
+
+                            if (!string.IsNullOrWhiteSpace(choiceResult.NextLineId))
+                            {
+                                await ExecuteModulesAsync(line, StoryModuleTiming.AfterDialogue, session, ct);
+                                session.MoveTo(choiceResult.NextLineId);
+                                continue;
+                            }
+                        }
+
+                        if (string.IsNullOrWhiteSpace(line.NextLineId))
+                            return CreateResult(session, StoryCloseReason.Completed, false);
+
+                        if (ShouldAutoAdvance(session, line))
+                        {
+                            float delay = line.UseAutoAdvanceOverride
+                                ? line.AutoAdvanceDelay
+                                : defaultAutoAdvanceDelay;
+
+                            await WaitAutoAdvanceDelayAsync(delay, ct);
+                        }
+                        else
+                        {
+                            await WaitForAdvanceAsync(ct);
+                        }
+
+                        if (_abortRequested)
+                            return CreateResult(session, _abortReason, false);
+
+                        if (_skipRequested)
+                            return CreateResult(session, StoryCloseReason.Skipped, true);
+
+                        await ExecuteModulesAsync(line, StoryModuleTiming.AfterDialogue, session, ct);
+                        session.MoveTo(line.NextLineId);
                     }
-
-                    if (string.IsNullOrWhiteSpace(line.NextLineId))
-                        return CreateResult(session, StoryCloseReason.Completed, false);
-
-                    if (ShouldAutoAdvance(session, line))
+                    finally
                     {
-                        float delay = line.UseAutoAdvanceOverride
-                            ? line.AutoAdvanceDelay
-                            : defaultAutoAdvanceDelay;
-
-                        await WaitAutoAdvanceDelayAsync(delay, ct);
+                        await CleanupLineSoundAsync(session.Episode, stageLayout, lineSoundCts, lineSoundTask);
                     }
-                    else
-                    {
-                        await WaitForAdvanceAsync(ct);
-                    }
-
-                    if (_abortRequested)
-                        return CreateResult(session, _abortReason, false);
-
-                    if (_skipRequested)
-                        return CreateResult(session, StoryCloseReason.Skipped, true);
-
-                    session.MoveTo(line.NextLineId);
                 }
 
                 return CreateResult(session, StoryCloseReason.Aborted, false);
@@ -166,6 +198,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             {
                 IsRunning           = false;
                 IsWaitingForAdvance = false;
+                StopActiveStoryBgm();
                 _textDirector?.Clear();
                 _choicePanel?.CloseImmediate();
             }
@@ -194,6 +227,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             _choicePanel?.CloseImmediate();
         }
 
+        public void PreloadLineBackground(StoryLineSO line)
+        {
+            if (line == null || _characterStage == null)
+                return;
+
+            StoryStageLayoutModuleSO layout = FindStageLayout(line);
+            _characterStage.ApplyBackgroundOnly(layout);
+        }
+
         // ── 내부 헬퍼 ────────────────────────────────────────────────────────
 
         private bool TryGetChoiceLikeModule(StoryLineSO line, out IStoryChoiceLikeModule choiceModule)
@@ -208,6 +250,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             }
 
             choiceModule = null;
+            return false;
+        }
+
+        private static bool ShouldPreapplyStageLayoutBeforeDialogue(
+            StoryLineSO line,
+            StoryStageLayoutModuleSO stageLayout)
+        {
+            if (line == null || stageLayout == null || line.Modules == null)
+                return false;
+
+            foreach (StoryModuleSO module in line.Modules)
+            {
+                if (module is StoryFadeModuleSO fade
+                    && fade.Timing == StoryModuleTiming.BeforeDialogue
+                    && fade.Direction == StoryFadeDirection.FadeOut)
+                    return true;
+            }
+
             return false;
         }
 
@@ -327,6 +387,210 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         {
             if (storySignalChannel == null) return;
             storySignalChannel.RaiseEvent(evt);
+        }
+
+        private static StoryStageLayoutModuleSO FindStageLayout(StoryLineSO line)
+        {
+            if (line == null)
+                return null;
+
+            foreach (StoryModuleSO module in line.Modules)
+            {
+                if (module is StoryStageLayoutModuleSO layout)
+                    return layout;
+            }
+
+            return null;
+        }
+
+        private async UniTask RunLineSoundTrackAsync(
+            StoryEpisodeSO episode,
+            StoryLineSO line,
+            StoryStageLayoutModuleSO layout,
+            CancellationToken ct)
+        {
+            if (line == null || layout == null)
+                return;
+
+            StorySoundSettingsData settings = StorySoundSettingsUtility.ResolveEffectiveLineSettings(episode, layout);
+            StorySoundTrackData track = layout.SoundTrack;
+            if (settings == null || track == null)
+                return;
+
+            EventChannelSO channel = settings.soundChannel;
+            if (channel == null)
+            {
+                WarnMissingSoundChannel(line, layout);
+                return;
+            }
+
+            UniTask bgmTask = RunBgmTrackAsync(track, settings, ct);
+            UniTask sfxTask = RunSfxTrackAsync(track, settings, ct);
+            await UniTask.WhenAll(bgmTask, sfxTask);
+        }
+
+        private async UniTask RunBgmTrackAsync(StorySoundTrackData track, StorySoundSettingsData settings, CancellationToken ct)
+        {
+            if (track?.bgmKeyframes == null || track.bgmKeyframes.Count == 0)
+                return;
+
+            var ordered = new System.Collections.Generic.List<StoryBgmKeyframeData>(track.bgmKeyframes);
+            ordered.Sort((a, b) => a.timeSeconds.CompareTo(b.timeSeconds));
+
+            float elapsed = 0f;
+            foreach (StoryBgmKeyframeData keyframe in ordered)
+            {
+                if (keyframe == null)
+                    continue;
+
+                elapsed = await WaitForSoundKeyTimeAsync(keyframe.timeSeconds, elapsed, ct);
+                ct.ThrowIfCancellationRequested();
+
+                if (keyframe.operation == StoryBgmKeyOperation.Stop)
+                {
+                    StopStoryBgm(settings.soundChannel, settings.bgmFadeDuration);
+                    continue;
+                }
+
+                bool crossfade = keyframe.transitionMode == StoryBgmTransitionMode.Crossfade;
+                PlayStoryBgm(settings, keyframe.bgmSound, crossfade);
+            }
+        }
+
+        private async UniTask RunSfxTrackAsync(StorySoundTrackData track, StorySoundSettingsData settings, CancellationToken ct)
+        {
+            if (track?.sfxKeyframes == null || track.sfxKeyframes.Count == 0)
+                return;
+
+            var ordered = new System.Collections.Generic.List<StorySfxKeyframeData>(track.sfxKeyframes);
+            ordered.Sort((a, b) => a.timeSeconds.CompareTo(b.timeSeconds));
+
+            float elapsed = 0f;
+            foreach (StorySfxKeyframeData keyframe in ordered)
+            {
+                if (keyframe == null)
+                    continue;
+
+                elapsed = await WaitForSoundKeyTimeAsync(keyframe.timeSeconds, elapsed, ct);
+                ct.ThrowIfCancellationRequested();
+
+                Vector3 position = _characterStage != null ? _characterStage.GetCurrentCameraCenter() : Vector3.zero;
+                settings.soundChannel.RaiseEvent(new PlayManagedSoundEvent(
+                    keyframe.sfxSound,
+                    position,
+                    SoundChannelId.StorySfx,
+                    settings.sfxFadeDuration,
+                    settings.sfxFadeDuration));
+            }
+        }
+
+        private static async UniTask<float> WaitForSoundKeyTimeAsync(float targetTime, float elapsed, CancellationToken ct)
+        {
+            targetTime = Mathf.Max(0f, targetTime);
+            while (elapsed < targetTime)
+            {
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                elapsed += Time.unscaledDeltaTime;
+            }
+            return elapsed;
+        }
+
+        private static async UniTask WarmupFirstPresentationFrameAsync(CancellationToken ct)
+        {
+            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, ct);
+        }
+
+        private async UniTask CleanupLineSoundAsync(
+            StoryEpisodeSO episode,
+            StoryStageLayoutModuleSO layout,
+            CancellationTokenSource lineSoundCts,
+            UniTask lineSoundTask)
+        {
+            if (lineSoundCts != null && !lineSoundCts.IsCancellationRequested)
+                lineSoundCts.Cancel();
+
+            try
+            {
+                await lineSoundTask;
+            }
+            catch (OperationCanceledException)
+            {
+                // line lifetime ended before future sound keys fired
+            }
+            finally
+            {
+                lineSoundCts?.Dispose();
+            }
+
+            StorySoundSettingsData settings = StorySoundSettingsUtility.ResolveEffectiveLineSettings(episode, layout);
+            EventChannelSO soundChannel = settings?.soundChannel;
+            if (soundChannel != null)
+            {
+                float fadeDuration = settings.sfxFadeDuration;
+                soundChannel.RaiseEvent(new StopManagedSoundEvent(SoundChannelId.StorySfx, fadeDuration));
+            }
+        }
+
+        private void PlayStoryBgm(StorySoundSettingsData settings, BgmSounds bgmSound, bool crossfade)
+        {
+            if (settings?.soundChannel == null)
+                return;
+
+            if (_activeStoryBgmChannel != null && _activeStoryBgmChannel != settings.soundChannel)
+            {
+                float previousFade = crossfade ? _activeStoryBgmFadeDuration : 0f;
+                _activeStoryBgmChannel.RaiseEvent(new StopManagedSoundEvent(SoundChannelId.Bgm, previousFade));
+            }
+
+            Vector3 position = _characterStage != null ? _characterStage.GetCurrentCameraCenter() : Vector3.zero;
+            settings.soundChannel.RaiseEvent(new PlayManagedSoundEvent(
+                bgmSound,
+                position,
+                SoundChannelId.Bgm,
+                settings.bgmFadeDuration,
+                settings.bgmFadeDuration,
+                crossfade));
+
+            _activeStoryBgmChannel = settings.soundChannel;
+            _activeStoryBgmFadeDuration = settings.bgmFadeDuration;
+        }
+
+        private void StopStoryBgm(EventChannelSO soundChannel, float fadeDuration)
+        {
+            EventChannelSO targetChannel = _activeStoryBgmChannel ?? soundChannel;
+            if (targetChannel == null)
+                return;
+
+            targetChannel.RaiseEvent(new StopManagedSoundEvent(SoundChannelId.Bgm, fadeDuration));
+            if (targetChannel == _activeStoryBgmChannel)
+            {
+                _activeStoryBgmChannel = null;
+                _activeStoryBgmFadeDuration = 0f;
+            }
+        }
+
+        private void StopActiveStoryBgm()
+        {
+            if (_activeStoryBgmChannel == null)
+                return;
+
+            _activeStoryBgmChannel.RaiseEvent(new StopManagedSoundEvent(SoundChannelId.Bgm, _activeStoryBgmFadeDuration));
+            _activeStoryBgmChannel = null;
+            _activeStoryBgmFadeDuration = 0f;
+        }
+
+        private static void WarnMissingSoundChannel(StoryLineSO line, StoryStageLayoutModuleSO layout)
+        {
+            if (line == null || layout == null)
+                return;
+
+            string warningKey = $"{layout.GetInstanceID()}::{line.LineId}";
+            if (!MissingSoundChannelWarnings.Add(warningKey))
+                return;
+
+            Debug.LogWarning(
+                $"[{nameof(StoryRunner)}] Line '{line.LineId}' has sound keyframes but no EventChannelSO assigned in StorySoundSettingsData. Sound keys will be skipped.",
+                layout);
         }
     }
 }

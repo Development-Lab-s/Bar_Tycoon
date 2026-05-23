@@ -21,7 +21,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         [SerializeField] private float          inspectorWidth = 300f;
         [SerializeField] private bool           inspectorCollapsed;
 
-        private StoryLineSO _selectedLine;
+        [SerializeField] private StoryLineSO _selectedLine;
         private string      _saveFolder        = "";
         private List<StoryGraphNodeView> _currentSelectedNodes = new();
 
@@ -139,15 +139,31 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (episode == null || _episodeField == null) return;
 
             _episodeField.SetValueWithoutNotify(episode);
-            _selectedLine = null;
             _inspectorPanel?.SetLine(null, episode);
             StoryPreviewWindow.NotifyEpisodeChanged(episode);
             LoadFolderFromEpisode();
             RebuildCanvas();
-            RefreshStatusBar();
 
             var key = EpisodePrefsKey;
             if (key != null) _canvas?.LoadViewState(key);
+
+            RestoreSelectedLineAfterCanvasRebuild();
+            RefreshStatusBar();
+        }
+
+        private void RestoreSelectedLineAfterCanvasRebuild()
+        {
+            if (_canvas == null)
+                return;
+
+            if (IsRestorableSelectedLineValid())
+            {
+                _canvas.SelectNode(_selectedLine);
+                return;
+            }
+
+            _selectedLine = null;
+            _canvas.SelectNode(null);
         }
 
         // ── Splitter ─────────────────────────────────
@@ -778,6 +794,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             foreach (StoryLineSO epLine in ep.Lines)
                 if (epLine != null && epLine.LineId == lineId) return true;
+
+            return false;
+        }
+
+        private bool IsRestorableSelectedLineValid()
+        {
+            if (episode == null || _selectedLine == null)
+                return false;
+
+            foreach (StoryLineSO line in episode.Lines)
+            {
+                if (line == _selectedLine)
+                    return true;
+            }
 
             return false;
         }

@@ -12,9 +12,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 213ce22313033f64e83377bd5902ea1f, type: 3}
   m_Name: Yura
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSO
+  id: Yura
+  characterName: Yura
   currentLevel: 1
   currentExp: 0
   maxLevel: 10
-  characterName: 
   characterPortrait: {fileID: 0}
-  dialogueGroups: []
+  dialogueGroups:
+  - unlockLevel: 1
+    dialogues:
+    - context: 1
+  - unlockLevel: 2
+    dialogues:
+    - context: 2
+  - unlockLevel: 3
+    dialogues:
+    - context: 3
+  - unlockLevel: 4
+    dialogues:
+    - context: 4
+  - unlockLevel: 5
+    dialogues: []
+  - unlockLevel: 5
+    dialogues:
+    - context: 5

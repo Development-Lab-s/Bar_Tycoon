@@ -18,6 +18,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         CameraOffset,
         CameraZoom,
         CameraShake,
+        SoundBgm,
+        SoundSfx,
     }
 
     /// <summary>
@@ -40,8 +42,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         [Min(0f)]
         public float timeSeconds = 0f;
 
-        [Tooltip("Normalized stage position at this keyframe. X: 0=left, 1=right / Y: 0=bottom, 1=top.")]
-        public Vector2 normalizedPosition;
+        [Tooltip("Stage local world position at this keyframe. (0,0)=StageRoot center. (2,0)=2 world units right.")]
+        public Vector2 stageLocalPosition;
 
         [Tooltip("Scale multiplier at this keyframe.")]
         public Vector2 scale = Vector2.one;
@@ -52,8 +54,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         [Tooltip("Legacy visibility value. Hidden in the MVP timeline UI.")]
         public bool visible = true;
 
-        [Tooltip("Outgoing easing from this key to the next key in the same property row.")]
-        public StoryStageMoveMotionType easing = StoryStageMoveMotionType.EaseInOut;
+        [Tooltip("Easing for the segment arriving at this keyframe (from previous key or line start state). None = hold previous value, snap at key time.")]
+        public StoryStageMoveMotionType easing = StoryStageMoveMotionType.None;
 
         [Tooltip("Discrete full-body expression value used by Expression keys.")]
         public StoryExpressionType expression = StoryExpressionType.Neutral;
@@ -70,8 +72,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         [Tooltip("Camera follow mode used by Camera Target keys.")]
         public StoryCameraFollowMode cameraFollowMode = StoryCameraFollowMode.FollowActor;
 
-        [Tooltip("Camera offset used by Camera Offset keys.")]
-        public Vector2 cameraOffset = Vector2.zero;
+        [Tooltip("Camera stage local world position used by Camera Position keys. (0,0)=StageRoot center.")]
+        public Vector2 cameraStageLocalPosition = Vector2.zero;
 
         [Tooltip("Camera zoom multiplier used by Camera Zoom keys.")]
         [Min(0.01f)]

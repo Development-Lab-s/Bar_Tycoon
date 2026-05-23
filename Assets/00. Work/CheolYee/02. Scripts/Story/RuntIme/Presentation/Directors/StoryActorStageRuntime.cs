@@ -57,7 +57,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
         public UniTask EnsureSpeakerVisibleAsync(
             StoryLineSO line,
-            StoryStageCameraMetrics stageMetrics,
             CancellationToken ct)
         {
             if (line == null || line.Speaker == null)
@@ -79,12 +78,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                 actor = line.Speaker,
                 actorKey = characterId,
                 actorInstanceKey = characterId,
-                normalizedPosition = new Vector2(0.5f, 0f),
+                stageLocalPosition = Vector2.zero,
                 visible = true,
                 focused = false
             };
 
-            ApplyActorEntry(entry, state, stageMetrics);
+            ApplyActorEntry(entry, state);
             _actors[characterId] = entry;
 
             return UniTask.CompletedTask;
@@ -119,14 +118,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             return result;
         }
 
-        public void ApplySamples(
-            Dictionary<string, StoryActorStateData> targetMap,
-            StoryStageCameraMetrics stageMetrics)
+        public void ApplySamples(Dictionary<string, StoryActorStateData> targetMap)
         {
             targetMap ??= new Dictionary<string, StoryActorStateData>();
 
             RemoveMissingActors(targetMap);
-            ApplyTargetActors(targetMap, stageMetrics);
+            ApplyTargetActors(targetMap);
         }
 
         public void ClearAll()
@@ -162,9 +159,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             }
         }
 
-        private void ApplyTargetActors(
-            Dictionary<string, StoryActorStateData> targetMap,
-            StoryStageCameraMetrics stageMetrics)
+        private void ApplyTargetActors(Dictionary<string, StoryActorStateData> targetMap)
         {
             Transform parent = ResolveActorRoot();
 
@@ -185,7 +180,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                     _actors[actorKey] = entry;
                 }
 
-                ApplyActorEntry(entry, data, stageMetrics);
+                ApplyActorEntry(entry, data);
             }
         }
 
@@ -228,17 +223,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             return instance != null ? new ActorEntry(instance, view) : null;
         }
 
-        private void ApplyActorEntry(
-            ActorEntry actorEntry,
-            StoryActorStateData data,
-            StoryStageCameraMetrics stageMetrics)
+        private void ApplyActorEntry(ActorEntry actorEntry, StoryActorStateData data)
         {
             if (actorEntry == null || actorEntry.Instance == null || data == null)
                 return;
 
-            actorEntry.Instance.transform.position = stageMetrics.ActorPosition(
-                data.normalizedPosition,
-                data.EffectiveOffset,
+            Transform root = ResolveActorRoot();
+            Vector3 rootCenter = root != null ? root.position : Vector3.zero;
+            rootCenter.z = 0f;
+            actorEntry.Instance.transform.position = StoryActorStageTransformCalculator.WorldPosition(
+                data.stageLocalPosition,
+                rootCenter,
                 0f);
 
             float focusBlend = StoryTransitionSampler.ResolveFocusBlend(data.EffectiveFocusAlpha);

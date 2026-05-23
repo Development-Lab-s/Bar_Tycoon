@@ -38,37 +38,21 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
 
             if (!fromVisible && toVisible)
             {
-                float p = ResolveEnterProgress(to.enterMotion, to.enterDuration, elapsed);
                 StoryActorStateData sample = to.ShallowClone();
                 sample.EnsureActorInstanceKey(actorKey);
-                sample.normalizedPosition = Vector2.LerpUnclamped(EnterStartPosition(to), to.normalizedPosition, p);
-                sample.scale              = Vector2.LerpUnclamped(EnterStartScale(to), to.scale, p);
-                sample.visible            = true;
-                sample.focusVisualAlpha   = ResolveFocusAlpha(to.focused);
+                sample.visible          = true;
+                sample.focusVisualAlpha = ResolveFocusAlpha(to.focused);
                 return sample;
             }
 
             if (fromVisible && !toVisible)
-            {
-                float p = ResolveEnterProgress(from.exitMotion, from.exitDuration, elapsed);
-                StoryActorStateData sample = from.ShallowClone();
-                sample.EnsureActorInstanceKey(actorKey);
-                sample.normalizedPosition = Vector2.LerpUnclamped(from.normalizedPosition, ExitEndPosition(from), p);
-                sample.scale              = Vector2.LerpUnclamped(from.scale, ExitEndScale(from), p);
-                sample.visible            = p < 1f;
-                sample.focusVisualAlpha   = ResolveFocusAlpha(from.focused);
-                return sample.visible ? sample : null;
-            }
+                return null;
 
-            // Both visible — move transition
-            float moveP = ResolveMoveProgress(to.moveMotion, to.moveDuration, elapsed);
+            // Both visible — instant snap to target state
             StoryActorStateData moved = to.ShallowClone();
             moved.EnsureActorInstanceKey(actorKey);
-            moved.normalizedPosition = Vector2.LerpUnclamped(from.normalizedPosition, to.normalizedPosition, moveP);
-            moved.scale              = Vector2.LerpUnclamped(from.scale, to.scale, moveP);
-            moved.scaleX             = Mathf.LerpUnclamped(from.scaleX, to.scaleX, moveP);
-            moved.visible            = true;
-            moved.focusVisualAlpha   = SampleFocusAlpha(from, to, elapsed);
+            moved.visible          = true;
+            moved.focusVisualAlpha = SampleFocusAlpha(from, to, elapsed);
             return moved;
         }
 
@@ -93,14 +77,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
                 sample.focusVisualAlpha = ResolveFocusAlpha(sample.focused);
             float t = Mathf.Max(0f, timeSeconds);
 
-            if (TrySampleVector2(track, StoryActorKeyframeProperty.Position, t, k => k.normalizedPosition, out Vector2 position))
-                sample.normalizedPosition = position;
+            if (TrySampleVector2(track, StoryActorKeyframeProperty.Position, t,
+                    k => k.stageLocalPosition, baseState.stageLocalPosition, out Vector2 position))
+                sample.stageLocalPosition = position;
 
-            if (TrySampleVector2(track, StoryActorKeyframeProperty.Scale, t, k => k.scale, out Vector2 scale))
-                sample.scale = scale;
-
-            if (TrySampleFloat(track, StoryActorKeyframeProperty.Scale, t, k => k.scaleX, out float scaleX))
-                sample.scaleX = scaleX;
+            if (TrySampleFloat(track, StoryActorKeyframeProperty.Scale, t,
+                    k => k.scale.y, baseState.scaleMultiplier, out float scaleY))
+                sample.scaleMultiplier = Mathf.Max(0.001f, scaleY);
 
             if (TrySampleExpression(track, t, out var expression))
             {
@@ -162,20 +145,25 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             StoryActorKeyframeProperty property,
             float time,
             System.Func<StoryActorKeyframeData, Vector2> selector,
+            Vector2 baseValue,
             out Vector2 value)
         {
             value = default;
             if (!TryFindSegment(track, property, time, out var from, out var to, out float local))
                 return false;
 
-            if (to == null || from == to)
+            if (to == null) return false;
+
+            if (from == to)
             {
                 value = selector(from);
                 return true;
             }
 
-            local = ResolveMoveProgress(ResolveOutgoingEasing(track, from), 1f, local);
-            value = Vector2.LerpUnclamped(selector(from), selector(to), local);
+            StoryStageMoveMotionType easing = ResolveArrivingEasing(track, to);
+            float progress = ResolveMoveProgress(easing, 1f, local);
+            Vector2 fromValue = from != null ? selector(from) : baseValue;
+            value = Vector2.LerpUnclamped(fromValue, selector(to), progress);
             return true;
         }
 
@@ -184,20 +172,25 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             StoryActorKeyframeProperty property,
             float time,
             System.Func<StoryActorKeyframeData, float> selector,
+            float baseValue,
             out float value)
         {
             value = default;
             if (!TryFindSegment(track, property, time, out var from, out var to, out float local))
                 return false;
 
-            if (to == null || from == to)
+            if (to == null) return false;
+
+            if (from == to)
             {
                 value = selector(from);
                 return true;
             }
 
-            local = ResolveMoveProgress(ResolveOutgoingEasing(track, from), 1f, local);
-            value = Mathf.LerpUnclamped(selector(from), selector(to), local);
+            StoryStageMoveMotionType easing = ResolveArrivingEasing(track, to);
+            float progress = ResolveMoveProgress(easing, 1f, local);
+            float fromValue = from != null ? selector(from) : baseValue;
+            value = Mathf.LerpUnclamped(fromValue, selector(to), progress);
             return true;
         }
 
@@ -224,10 +217,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             if (keys.Count == 0)
                 return false;
 
-            if (time <= GetKeyTime(keys[0]))
+            float firstKeyTime = GetKeyTime(keys[0]);
+
+            if (time <= firstKeyTime)
             {
-                from = keys[0];
+                from = null;
                 to = keys[0];
+                local = firstKeyTime <= 0f ? 1f : Mathf.Clamp01(time / firstKeyTime);
                 return true;
             }
 
@@ -257,9 +253,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             return true;
         }
 
-        private static StoryStageMoveMotionType ResolveOutgoingEasing(StoryActorTrackData track, StoryActorKeyframeData from)
+        private static StoryStageMoveMotionType ResolveArrivingEasing(StoryActorTrackData track, StoryActorKeyframeData to)
         {
-            float time = GetKeyTime(from);
+            float time = GetKeyTime(to);
             foreach (StoryActorKeyframeData keyframe in track.keyframes)
             {
                 if (keyframe != null
@@ -268,7 +264,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
                     return keyframe.easing;
             }
 
-            return from.easing;
+            return to.easing;
         }
 
         private static bool TrySampleExpression(
@@ -300,45 +296,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
 
         // ── Background sampling ───────────────────────────────────────────────
 
+        /// <summary>
+        /// Returns the target background state as an instant cut.
+        /// Auto-transition (fade-in, slide) has been removed. All changes are immediate.
+        /// </summary>
         public static StoryBackgroundStateData SampleBackground(
             StoryBackgroundStateData from,
             StoryBackgroundStateData to,
             float elapsed)
         {
-            bool fromVisible = from != null && from.HasBackground && from.visible;
-            bool toVisible   = to   != null && to.HasBackground   && to.visible;
-
-            if (!fromVisible && !toVisible)
-                return null;
-
-            if (!fromVisible && toVisible)
-            {
-                float p = ResolveEnterProgress(to.transitionMotion, to.transitionDuration, elapsed);
-                StoryBackgroundStateData sample = to.ShallowClone();
-                sample.normalizedOffset = Vector2.LerpUnclamped(BgEnterOffset(to), to.normalizedOffset, p);
-                sample.scale            = Vector2.LerpUnclamped(BgEnterScale(to), to.scale, p);
-                sample.opacity          = Mathf.Lerp(0f, to.opacity, p);
-                return sample;
-            }
-
-            if (fromVisible && !toVisible)
-            {
-                float p = ResolveEnterProgress(from.exitMotion, from.exitDuration, elapsed);
-                StoryBackgroundStateData sample = from.ShallowClone();
-                sample.normalizedOffset = Vector2.LerpUnclamped(from.normalizedOffset, BgExitOffset(from), p);
-                sample.opacity          = Mathf.Lerp(from.opacity, 0f, p);
-                sample.visible          = p < 1f;
-                return sample.visible ? sample : null;
-            }
-
-            // Both visible — blend
-            float progress = ResolveEnterProgress(to.transitionMotion, to.transitionDuration, elapsed);
-            StoryBackgroundStateData blended = to.ShallowClone();
-            blended.normalizedOffset = Vector2.LerpUnclamped(from.normalizedOffset, to.normalizedOffset, progress);
-            blended.scale            = Vector2.LerpUnclamped(from.scale, to.scale, progress);
-            blended.opacity          = Mathf.Lerp(from.opacity, to.opacity, progress);
-            blended.tint             = Color.Lerp(from.tint, to.tint, progress);
-            return blended;
+            bool toVisible = to != null && to.HasBackground && to.visible;
+            return toVisible ? to.ShallowClone() : null;
         }
 
         public static StoryBackgroundStateData SampleBackgroundTrackAtTime(
@@ -363,11 +331,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
                 sample.visible = cut.background != null || !string.IsNullOrWhiteSpace(sample.backgroundKey);
             }
 
-            if (TrySampleBackgroundVector2(track, StoryActorKeyframeProperty.BackgroundPosition, t, k => k.normalizedPosition, out Vector2 offset))
-                sample.normalizedOffset = offset;
+            if (TrySampleBackgroundVector2(track, StoryActorKeyframeProperty.BackgroundPosition, t,
+                    k => k.stageLocalPosition, sample.stageLocalPosition, out Vector2 pos))
+                sample.stageLocalPosition = pos;
 
-            if (TrySampleBackgroundVector2(track, StoryActorKeyframeProperty.BackgroundScale, t, k => k.scale, out Vector2 scale))
-                sample.scale = scale;
+            if (TrySampleBackgroundFloat(track, StoryActorKeyframeProperty.BackgroundScale, t,
+                    k => k.scale.y, sample.scaleMultiplier, out float bgScale))
+                sample.scaleMultiplier = Mathf.Max(0.001f, bgScale);
 
             return sample;
         }
@@ -413,11 +383,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
                 sample.snapshotNormalizedPosition = targetKey.cameraSnapshotNormalizedPosition;
             }
 
-            if (TrySampleCameraVector2(track, StoryActorKeyframeProperty.CameraOffset, t, k => k.cameraOffset, out Vector2 offset))
-                sample.normalizedOffset = offset;
+            if (TrySampleCameraVector2(track, StoryActorKeyframeProperty.CameraOffset, t,
+                    k => k.cameraStageLocalPosition, sample.stageLocalPosition, out Vector2 camPos))
+                sample.stageLocalPosition = camPos;
 
-            if (TrySampleCameraFloat(track, StoryActorKeyframeProperty.CameraZoom, t, k => k.cameraZoom, out float zoom))
-                sample.zoomMultiplier = Mathf.Max(0.01f, zoom);
+            if (TrySampleCameraFloat(track, StoryActorKeyframeProperty.CameraZoom, t,
+                    k => k.cameraZoom, sample.zoom, out float zoom))
+                sample.zoom = Mathf.Max(0.01f, zoom);
 
             if (string.IsNullOrWhiteSpace(sample.targetActorInstanceKey))
                 sample.targetActorInstanceKey = fallbackTargetActorKey ?? string.Empty;
@@ -537,20 +509,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             StoryActorKeyframeProperty property,
             float time,
             System.Func<StoryActorKeyframeData, Vector2> selector,
+            Vector2 baseValue,
             out Vector2 value)
         {
             value = default;
             if (!TryFindCameraSegment(track, property, time, out var from, out var to, out float local))
                 return false;
 
-            if (to == null || from == to)
-            {
-                value = selector(from);
-                return true;
-            }
+            if (to == null) return false;
+            if (from == to) { value = selector(from); return true; }
 
-            local = ResolveMoveProgress(from.easing, 1f, local);
-            value = Vector2.LerpUnclamped(selector(from), selector(to), local);
+            float progress = ResolveMoveProgress(to.easing, 1f, local);
+            Vector2 fromValue = from != null ? selector(from) : baseValue;
+            value = Vector2.LerpUnclamped(fromValue, selector(to), progress);
             return true;
         }
 
@@ -559,20 +530,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             StoryActorKeyframeProperty property,
             float time,
             System.Func<StoryActorKeyframeData, float> selector,
+            float baseValue,
             out float value)
         {
             value = default;
             if (!TryFindCameraSegment(track, property, time, out var from, out var to, out float local))
                 return false;
 
-            if (to == null || from == to)
-            {
-                value = selector(from);
-                return true;
-            }
+            if (to == null) return false;
+            if (from == to) { value = selector(from); return true; }
 
-            local = ResolveMoveProgress(from.easing, 1f, local);
-            value = Mathf.LerpUnclamped(selector(from), selector(to), local);
+            float progress = ResolveMoveProgress(to.easing, 1f, local);
+            float fromValue = from != null ? selector(from) : baseValue;
+            value = Mathf.LerpUnclamped(fromValue, selector(to), progress);
             return true;
         }
 
@@ -602,10 +572,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             if (keys.Count == 0)
                 return false;
 
-            if (time <= GetKeyTime(keys[0]))
+            float firstKeyTime = GetKeyTime(keys[0]);
+
+            if (time <= firstKeyTime)
             {
-                from = keys[0];
+                from = null;
                 to = keys[0];
+                local = firstKeyTime <= 0f ? 1f : Mathf.Clamp01(time / firstKeyTime);
                 return true;
             }
 
@@ -641,20 +614,40 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             StoryActorKeyframeProperty property,
             float time,
             System.Func<StoryActorKeyframeData, Vector2> selector,
+            Vector2 baseValue,
             out Vector2 value)
         {
             value = default;
             if (!TryFindBackgroundSegment(track, property, time, out var from, out var to, out float local))
                 return false;
 
-            if (to == null || from == to)
-            {
-                value = selector(from);
-                return true;
-            }
+            if (to == null) return false;
+            if (from == to) { value = selector(from); return true; }
 
-            local = ResolveMoveProgress(from.easing, 1f, local);
-            value = Vector2.LerpUnclamped(selector(from), selector(to), local);
+            float progress = ResolveMoveProgress(to.easing, 1f, local);
+            Vector2 fromValue = from != null ? selector(from) : baseValue;
+            value = Vector2.LerpUnclamped(fromValue, selector(to), progress);
+            return true;
+        }
+
+        private static bool TrySampleBackgroundFloat(
+            StoryBackgroundTrackData track,
+            StoryActorKeyframeProperty property,
+            float time,
+            System.Func<StoryActorKeyframeData, float> selector,
+            float baseValue,
+            out float value)
+        {
+            value = default;
+            if (!TryFindBackgroundSegment(track, property, time, out var from, out var to, out float local))
+                return false;
+
+            if (to == null) return false;
+            if (from == to) { value = selector(from); return true; }
+
+            float progress = ResolveMoveProgress(to.easing, 1f, local);
+            float fromValue = from != null ? selector(from) : baseValue;
+            value = Mathf.LerpUnclamped(fromValue, selector(to), progress);
             return true;
         }
 
@@ -684,10 +677,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             if (keys.Count == 0)
                 return false;
 
-            if (time <= GetKeyTime(keys[0]))
+            float firstKeyTime = GetKeyTime(keys[0]);
+
+            if (time <= firstKeyTime)
             {
-                from = keys[0];
+                from = null;
                 to = keys[0];
+                local = firstKeyTime <= 0f ? 1f : Mathf.Clamp01(time / firstKeyTime);
                 return true;
             }
 
@@ -730,25 +726,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
 
         // ── Duration helpers ─────────────────────────────────────────────────
 
-        public static float ActorTransitionDuration(StoryActorStateData from, StoryActorStateData to)
-        {
-            bool fv = from is { visible: true };
-            bool tv = to   is { visible: true };
-
-            if (!fv && tv) return to.enterMotion  == StoryEnterMotionType.Instant ? 0.05f : Mathf.Max(0.05f, to.enterDuration);
-            if (fv && !tv) return from.exitMotion  == StoryEnterMotionType.Instant ? 0.05f : Mathf.Max(0.05f, from.exitDuration);
-            if (fv)        return to.moveMotion    == StoryStageMoveMotionType.Instant ? 0.05f : Mathf.Max(0.05f, to.moveDuration);
-            return 0.05f;
-        }
+        public static float ActorTransitionDuration(StoryActorStateData from, StoryActorStateData to) => 0.05f;
 
         public static float BackgroundTransitionDuration(StoryBackgroundStateData from, StoryBackgroundStateData to)
         {
-            bool fv = from != null && from.HasBackground && from.visible;
-            bool tv = to   != null && to.HasBackground   && to.visible;
-
-            if (!fv && tv) return to.transitionMotion == StoryEnterMotionType.Instant ? 0.05f : Mathf.Max(0.05f, to.transitionDuration);
-            if (fv && !tv) return from.exitMotion     == StoryEnterMotionType.Instant ? 0.05f : Mathf.Max(0.05f, from.exitDuration);
-            if (tv)        return to.transitionMotion == StoryEnterMotionType.Instant ? 0.05f : Mathf.Max(0.05f, to.transitionDuration);
             return 0.05f;
         }
 
@@ -779,59 +760,23 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared
             if (motion == StoryStageMoveMotionType.Instant || duration <= 0f)
                 return 1f;
 
-            float t = Mathf.Clamp01(elapsed / duration);
+            if (motion == StoryStageMoveMotionType.None)
+            {
+                float t = Mathf.Clamp01(elapsed / duration);
+                return t >= 1f ? 1f : 0f;
+            }
+
+            float tt = Mathf.Clamp01(elapsed / duration);
             return motion switch
             {
-                StoryStageMoveMotionType.EaseIn        => t * t * t,
-                StoryStageMoveMotionType.EaseOut       => 1f - Mathf.Pow(1f - t, 3f),
-                StoryStageMoveMotionType.EaseInOut     => Mathf.SmoothStep(0f, 1f, t),
-                StoryStageMoveMotionType.SmoothStep    => Mathf.SmoothStep(0f, 1f, t),
-                StoryStageMoveMotionType.SmootherStep  => t * t * t * (t * (6f * t - 15f) + 10f),
-                _                                      => t
+                StoryStageMoveMotionType.EaseIn        => tt * tt * tt,
+                StoryStageMoveMotionType.EaseOut       => 1f - Mathf.Pow(1f - tt, 3f),
+                StoryStageMoveMotionType.EaseInOut     => Mathf.SmoothStep(0f, 1f, tt),
+                StoryStageMoveMotionType.SmoothStep    => Mathf.SmoothStep(0f, 1f, tt),
+                StoryStageMoveMotionType.SmootherStep  => tt * tt * tt * (tt * (6f * tt - 15f) + 10f),
+                _                                      => tt
             };
         }
 
-        // ── Position / scale helpers ─────────────────────────────────────────
-
-        public static Vector2 EnterStartPosition(StoryActorStateData target) =>
-            target.enterMotion switch
-            {
-                StoryEnterMotionType.SlideFromLeft  => target.normalizedPosition + new Vector2(-0.45f, 0f),
-                StoryEnterMotionType.SlideFromRight => target.normalizedPosition + new Vector2( 0.45f, 0f),
-                _                                   => target.normalizedPosition
-            };
-
-        public static Vector2 ExitEndPosition(StoryActorStateData source) =>
-            source.exitMotion switch
-            {
-                StoryEnterMotionType.SlideFromLeft  => source.normalizedPosition + new Vector2(-0.45f, 0f),
-                StoryEnterMotionType.SlideFromRight => source.normalizedPosition + new Vector2( 0.45f, 0f),
-                _                                   => source.normalizedPosition
-            };
-
-        public static Vector2 EnterStartScale(StoryActorStateData target) =>
-            target.enterMotion == StoryEnterMotionType.ZoomIn ? Vector2.zero : target.scale;
-
-        public static Vector2 ExitEndScale(StoryActorStateData source) =>
-            source.exitMotion == StoryEnterMotionType.ZoomIn ? Vector2.zero : source.scale;
-
-        public static Vector2 BgEnterOffset(StoryBackgroundStateData target) =>
-            target.transitionMotion switch
-            {
-                StoryEnterMotionType.SlideFromLeft  => target.normalizedOffset + new Vector2(-1f, 0f),
-                StoryEnterMotionType.SlideFromRight => target.normalizedOffset + new Vector2( 1f, 0f),
-                _                                   => target.normalizedOffset
-            };
-
-        public static Vector2 BgExitOffset(StoryBackgroundStateData source) =>
-            source.exitMotion switch
-            {
-                StoryEnterMotionType.SlideFromLeft  => source.normalizedOffset + new Vector2(-1f, 0f),
-                StoryEnterMotionType.SlideFromRight => source.normalizedOffset + new Vector2( 1f, 0f),
-                _                                   => source.normalizedOffset
-            };
-
-        public static Vector2 BgEnterScale(StoryBackgroundStateData target) =>
-            target.transitionMotion == StoryEnterMotionType.ZoomIn ? Vector2.zero : target.scale;
     }
 }

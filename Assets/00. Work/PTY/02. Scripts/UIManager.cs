@@ -15,7 +15,8 @@ public enum MenuType
     LvUp,
     Menu,
     Order,
-    StealConfirm
+    StealConfirm,
+    LP
 }
 
 [System.Serializable]
