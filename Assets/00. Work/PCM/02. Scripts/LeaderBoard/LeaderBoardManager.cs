@@ -87,7 +87,7 @@ public class LeaderBoardManager : MonoBehaviour
                 playerLevel = expData.currentLevel,
                 favoriteCharacter = listSo.MostCharacter()
             };
-
+        Debug.Log(listSo.MostCharacter());
         string jsonMetadata =
             JsonConvert.SerializeObject(extraData);
 
