@@ -40,7 +40,6 @@ public class SideLpController : MonoBehaviour , IModule
     }
     public void PlayLp(int id)
     {
-        Debug.Log("µé¾î°¨");
         _myid = id;
         if (!_lpBoxDict.ContainsKey(id)) return;
         if (_currentActiveId == id) return;

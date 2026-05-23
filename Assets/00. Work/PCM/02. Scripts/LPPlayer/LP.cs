@@ -2,6 +2,7 @@ using _00._Work._Resources._02._Scripts.Modules;
 using Gamelib.EventSystem;
 using Gamelib.SoundSystem;
 using LitMotion;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -42,7 +43,13 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
         }
         public virtual void PlaySound(BgmSounds id) 
         {
+            StartCoroutine(RestTime(id));
+
+        }
+        public IEnumerator RestTime(BgmSounds id)
+        {
             SoundEventChannel.RaiseEvent(new StopSoundEvent(SoundChannelId.Bgm));
+            yield return new WaitForSeconds(1f);
             SoundEventChannel.RaiseEvent(new PlaySoundEvent(id, Vector3.zero, SoundChannelId.Bgm));
         }
         public virtual string NameChosing(int id)

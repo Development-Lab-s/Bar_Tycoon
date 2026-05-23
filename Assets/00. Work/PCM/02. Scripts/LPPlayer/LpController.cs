@@ -37,7 +37,6 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
             lp = GetComponentInChildren<ILP>();
             NameChange(0);
             lp.Active();
-            SoundChange(Id);
         }
         private void SoundChange(int id)
         {
