@@ -13,12 +13,4 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         public CocktailRecipeSO[] cockTails;
         public UnlockData unlockData;
     }
-
-    public class UnlockStoryData : AbstractUnlockSO
-    {
-        public override void LevelUpReward()
-        {
-            //이벤트 채널 실행
-        }
-    }
 }
