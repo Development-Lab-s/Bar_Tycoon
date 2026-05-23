@@ -577,8 +577,8 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 675217860}
         m_TargetAssemblyTypeName: LeaderBoardManager, Assembly-CSharp
-        m_MethodName: ScoreAdd
-        m_Mode: 3
+        m_MethodName: GetMyLeaderboardInfoNasync
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -848,7 +848,9 @@ MonoBehaviour:
   expData:
     currentLevel: 1
     currentExp: 0
-  RankList: []
+  coinData:
+    coin: 0
+  infoTuple: []
 --- !u!4 &675217861
 Transform:
   m_ObjectHideFlags: 0

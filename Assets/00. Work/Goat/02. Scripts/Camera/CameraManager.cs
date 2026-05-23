@@ -49,6 +49,8 @@ namespace _00._Work.Goat._02._Scripts.Camera
         
         private void HandleCameraEvent(CameraManagerEvent obj)
         {
+            if (obj.objectPositionList.Count < 1) return;
+            
             _objectPositionQueue.Enqueue(obj.objectPositionList);
 
             if (!_isPlaying)

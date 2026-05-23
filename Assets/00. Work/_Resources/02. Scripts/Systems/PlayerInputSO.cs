@@ -1,47 +1,97 @@
 ﻿using _00._Work.PCM._02._Scripts;
 using System;
-using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Systems
 {
-    [CreateAssetMenu(fileName = "Player Input", menuName = "SO/Core/PlayerInput", order = 5)]
-    public class PlayerInputSO : ScriptableObject, Controls.IPlayerActions
+    [CreateAssetMenu(fileName = "Player Input",menuName = "SO/Core/PlayerInput",order = 5)]
+    public class PlayerInputSO :ScriptableObject,Controls.IPlayerActions
     {
-        [SerializeField]private LayerMask whatisPlayer;
+        [Header("Hover Layer")]
+        [SerializeField]
+        private LayerMask whatisPlayer;
+        // 현재 Hover 중인 대상
+        private AbstructContractObject _currentHover;
+
         public Vector2 InputDirection { get; private set; }
+
         public event Action IsClick;
         public event Action CameraMoveClick;
         public event Action DownPopupClick;
         public event Action SettingPopupClick;
+
         private Controls _controls;
-
-        public Vector2 MousePosition { get; set; }
-        public Vector2 MouseWheel { get; set; }
-
-        public bool isMouseDown { get; set; }
+        public Vector2 MousePosition { get; private set; }
+        public Vector2 MouseWheel { get; private set; }
+        public bool isMouseDown { get; private set; }
 
         private Camera mainCam;
+
         public Camera MainCam
         {
             get
             {
                 if (mainCam == null)
                     mainCam = Camera.main;
+
                 return mainCam;
             }
         }
 
+        #region Input Actions
+
         public void OnPointer(InputAction.CallbackContext context)
         {
-            MousePosition = context.ReadValue<Vector2>();
+            MousePosition =
+                context.ReadValue<Vector2>();
         }
+
         public void OnContractClick(InputAction.CallbackContext context)
         {
             if (context.performed)
             {
+                // 현재 Hover 대상 클릭
+                _currentHover?.ExcuteClick();
+
                 IsClick?.Invoke();
+            }
+        }
+
+        public void OnIntractClick(
+            InputAction.CallbackContext context)
+        {
+            if (context.performed)
+            {
+                CameraMoveClick?.Invoke();
+
+                isMouseDown = true;
+            }
+
+            if (context.canceled)
+            {
+                isMouseDown = false;
+            }
+        }
+
+        public void OnScrollWheel(InputAction.CallbackContext context)
+        {
+            MouseWheel =
+                context.ReadValue<Vector2>();
+        }
+
+        public void OnEsc(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+            {
+                DownPopupClick?.Invoke();
+            }
+        }
+        public void OnSettingEsc(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+            {
+                SettingPopupClick?.Invoke();
             }
         }
         private void OnEnable()
@@ -49,8 +99,10 @@ namespace Systems
             if (_controls == null)
             {
                 _controls = new Controls();
+
                 _controls.Player.SetCallbacks(this);
             }
+
             _controls.Player.Enable();
         }
 
@@ -67,38 +119,6 @@ namespace Systems
                 OnDisable();
         }
 
-        public void OnScrollWheel(InputAction.CallbackContext context)
-        {
-           MouseWheel = context.ReadValue<Vector2>();
-        }
-
-        public void OnIntractClick(InputAction.CallbackContext context)
-        {
-            if (context.performed)
-            {
-                CameraMoveClick?.Invoke();
-                isMouseDown = true;
-            }
-            if (context.canceled)
-            {
-                isMouseDown = false;
-            }
-        }
-
-        public void OnEsc(InputAction.CallbackContext context)
-        {
-            if (context.performed)
-            {
-                DownPopupClick?.Invoke();
-            }
-        }
-
-        public void OnSettingEsc(InputAction.CallbackContext context)
-        {
-            if (context.performed)
-            {
-                SettingPopupClick?.Invoke();
-            }
-        }
+        #endregion
     }
 }

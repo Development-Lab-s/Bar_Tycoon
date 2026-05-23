@@ -1,37 +1,64 @@
 using _00._Work._Resources._02._Scripts.Modules;
 using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
+using System;
 using System.Collections.Generic;
-using System.Reflection;
 using TMPro;
 using UnityEngine;
 
-public class SideLpController : MonoBehaviour , IModule
+public class SideLpController : MonoBehaviour, IModule
 {
     [SerializeField] private EventChannelSO _LPchannel;
+
     [SerializeField] private TextMeshProUGUI text;
-    private Dictionary<int, LPBOX> _lpBoxDict = new();
+
+    [Header("LP 부모 프리팹")]
+    [SerializeField] private GameObject lpItemPrefab;
+
+    private Transform parentTrm;
+
+    private readonly Dictionary<int, LPBOX> _lpBoxDict = new();
+
     private int _currentActiveId = -1;
     private int _myid = 0;
+
     private ModuleOwner _owner;
 
-    // 1단계: 내 컴포넌트들을 찾고 기본적인 데이터 세팅
     public void Initialize(ModuleOwner owner)
     {
         _owner = owner;
         _LPchannel.AddListener<LpConncetEvent>(EventPlayLp);
-        LPBOX[] lpBoxes = GetComponentsInChildren<LPBOX>();
-        Debug.Log(lpBoxes.Length);
-        for (int i = 0; i < lpBoxes.Length; i++)
-        {
-            // ID 등록 및 데이터 세팅
-            lpBoxes[i].SetUp(i);
-            _lpBoxDict.Add(i, lpBoxes[i]);
-            if (i == _myid)
-                PlayLp(_myid);
+        parentTrm = transform;
+        CreateLPBoxes();
+        PlayLp(_myid);
+    }
 
-            // 이벤트 연결 (안전하게 기존 구독 해제 후 추가)
-            lpBoxes[i].OnLPClicked -= PlayLp;
-            lpBoxes[i].OnLPClicked += PlayLp;
+    private void CreateLPBoxes()
+    {
+        _lpBoxDict.Clear();
+
+        int count =
+            Enum.GetValues(typeof(BgmSounds)).Length;
+
+        for (int i = 0; i < count; i++)
+        {
+            GameObject lpObj =
+                Instantiate(lpItemPrefab, parentTrm);
+            LPBOX lpBox =
+                lpObj.GetComponentInChildren<LPBOX>();
+            if (lpBox == null)
+            {
+                Debug.LogError(
+                    $"LPBOX 없음 : {lpObj.name}");
+
+                continue;
+            }
+            lpBox.SetUp(i);
+
+            lpBox.OnLPClicked -= PlayLp;
+            lpBox.OnLPClicked += PlayLp;
+
+            _lpBoxDict.Add(i, lpBox);
         }
     }
     public void EventPlayLp(LpConncetEvent evt)
@@ -41,14 +68,17 @@ public class SideLpController : MonoBehaviour , IModule
     public void PlayLp(int id)
     {
         _myid = id;
-        if (!_lpBoxDict.ContainsKey(id)) return;
-        if (_currentActiveId == id) return;
-
+        if (!_lpBoxDict.ContainsKey(id))
+            return;
+        if (_currentActiveId == id)
+            return;
         if (_currentActiveId != -1)
+        {
             _lpBoxDict[_currentActiveId].StopLP();
-
+        }
         _lpBoxDict[id].Select();
-         text.text = _lpBoxDict[id].ChangeName();
+        text.text =
+            _lpBoxDict[id].ChangeName();
         _currentActiveId = id;
     }
 
@@ -57,7 +87,11 @@ public class SideLpController : MonoBehaviour , IModule
         foreach (var box in _lpBoxDict.Values)
         {
             if (box != null)
+            {
                 box.OnLPClicked -= PlayLp;
+            }
         }
+        _LPchannel.RemoveListener<LpConncetEvent>(
+            EventPlayLp);
     }
 }

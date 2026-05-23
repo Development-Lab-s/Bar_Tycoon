@@ -17,4 +17,15 @@ namespace BBJ.EventSystem
         public SceneType Current { get; }
         public SceneTypeChangedEvent(SceneType current) => Current = current;
     }
+
+    public class StoryResultEvent : GameEvent
+    {
+        public string   EpisodeId     { get; }
+        public string[] UnlockedItems { get; }
+        public StoryResultEvent(string episodeId, string[] unlockedItems)
+        {
+            EpisodeId     = episodeId;
+            UnlockedItems = unlockedItems;
+        }
+    }
 }

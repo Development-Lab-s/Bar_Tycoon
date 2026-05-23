@@ -14,6 +14,8 @@ public enum MenuType
     Rename,
     LvUp,
     Menu,
+    Order,
+    StealConfirm,
     LP
 }
 

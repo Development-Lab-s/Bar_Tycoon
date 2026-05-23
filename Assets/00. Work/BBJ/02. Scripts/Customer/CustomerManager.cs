@@ -22,48 +22,37 @@ namespace BBJ.Customer
         [SerializeField] private EventChannelSO _customerChannel;
 
         [Header("Pool")]
-        [SerializeField] private PoolInitializer _poolInitializer;
-        [SerializeField] private PoolItemSo      _customerPoolItem;
-
-        [Header("Scene")]
-        [SerializeField] private EventChannelSO _sceneChannel;
+        [SerializeField] private PoolManagerSo _poolManager;
+        [SerializeField] private PoolItemSo _customerPoolItem;
 
         [Header("Spawn Settings")]
         [SerializeField] private Transform _spawnPoint;
-        [SerializeField] private float     _spawnInterval = 8f;
-        [SerializeField] private int       _maxCustomers  = 6;
+        [SerializeField] private float _spawnInterval = 8f;
+        [SerializeField] private int _maxCustomers = 6;
 
         [Header("Cycle")]
         [SerializeField] private WorkSO _cycleSequence;
 
         [Header("Menu")]
         [SerializeField] private CocktailRecipeDatabaseSO _database;
-        [SerializeField] private int                       _currentStage = 1;
+        [SerializeField] private int _currentStage = 1;
 
         [Header("Restore")]
         [SerializeField] private WorkplaceRegisterSO _workplaceRegister;
-        [SerializeField] private WorkplaceTypeSO     _seatType;
+        [SerializeField] private WorkplaceTypeSO _seatType;
 
-        private int  _activeCount;
-        private bool _isBackground;
+        private int _activeCount;
 
         private void Awake()
         {
             UtilDebugger.AssertAllAssigned(this);
             _activeCount = 0;
             _customerChannel.AddListener<CustomerLeftEvent>(HandleCustomerLeft);
-            _sceneChannel?.AddListener<SceneTypeChangedEvent>(HandleSceneChanged);
         }
 
         private void OnDestroy()
         {
             _customerChannel.RemoveListener<CustomerLeftEvent>(HandleCustomerLeft);
-            _sceneChannel?.RemoveListener<SceneTypeChangedEvent>(HandleSceneChanged);
-        }
-
-        private void HandleSceneChanged(SceneTypeChangedEvent e)
-        {
-            _isBackground = e.Current != SceneType.Main;
         }
 
         private void Start()
@@ -76,18 +65,19 @@ namespace BBJ.Customer
         private void HandleCustomerLeft(CustomerLeftEvent evt)
         {
             _activeCount--;
-            _poolInitializer.Push(evt.Customer);
+            _poolManager.Push(evt.Customer);
         }
 
         private IEnumerator SpawnLoop()
         {
+            Debug.Log("싸이클 시작");
             while (true)
             {
                 yield return new WaitForSeconds(_spawnInterval);
 
-                if (_isBackground) continue;
                 if (_activeCount >= _maxCustomers) continue;
                 if (_database == null || _cycleSequence == null) continue;
+                Debug.Log("손님 소환");
 
                 try { SpawnCustomer(); }
                 catch (System.Exception e) { Debug.LogWarning("[CustomerManager] SpawnCustomer failed: " + e.Message); }
@@ -96,7 +86,7 @@ namespace BBJ.Customer
 
         private void SpawnCustomer()
         {
-            CustomerAgent customer = _poolInitializer.Pop<CustomerAgent>(_customerPoolItem);
+            CustomerAgent customer = _poolManager.Pop<CustomerAgent>(_customerPoolItem);
             if (customer == null) return;
 
             CocktailRecipeSO recipe = PickWeightedRandom(_currentStage);
@@ -127,8 +117,8 @@ namespace BBJ.Customer
                 var recipe = database?.recipes.FirstOrDefault(r => r.name == save.RecipeId);
                 if (recipe == null) continue;
 
-                var seat     = availableSeats[seatIndex++];
-                var customer = _poolInitializer.Pop<CustomerAgent>(_customerPoolItem);
+                var seat = availableSeats[seatIndex++];
+                var customer = _poolManager.Pop<CustomerAgent>(_customerPoolItem);
                 if (customer == null) continue;
 
                 var seatModule = seat.GetComponent<SeatModule>();

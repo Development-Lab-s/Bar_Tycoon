@@ -23,7 +23,7 @@ namespace BBJ.Work
 
             if (!ticket.TryReserve(executor)) return WorkResult.Cancelled;
 
-            var serveStation = _ctx.WorkplaceRegister?.GetFirst(_ctx.ServeStationType);
+            var serveStation = _ctx.WorkplaceRegister?.GetFirst(_ctx.KitchenType);
             if (serveStation == null)
             {
                 _ctx.OrderChannel?.RaiseEvent(new OrderNotifyReleasedEvent(ticket, executor));

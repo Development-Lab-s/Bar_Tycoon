@@ -6,12 +6,14 @@ using _00._Work.PCM._02._Scripts;
 using Systems;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField]private CharItemSO _itemSO; //Char은 매력이라는 뜻 ㅇㅇ
+    public UnityEvent errorMessage; 
     private TextMeshProUGUI _text;
     private Image _image;
     private GameObject dragInstance;
@@ -93,22 +95,24 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
     {
         if (_itemSO.CurrentCount == 0) return;
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(eventData.position);
-        Debug.Log(mousePos);
         RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
         if (hit.collider != null)
         {
             if (hit.collider.gameObject.TryGetComponent<IContractObject>(out IContractObject pychar))
             {
-                if(_itemSO.CharacterEnum != pychar.characterEnum)return;
+                if (_itemSO.CharacterEnum != pychar.characterEnum)
+                {
+                    errorMessage?.Invoke();
+                    Destroy(dragInstance);
+                    return;
+                }
                 _itemSO.RemoveCount();
                 pychar.OnLike.Invoke(_itemSO.LikePlus);
             }
         }
-        if (dragInstance != null)
-        {
+        if(dragInstance != null)
             Destroy(dragInstance);
-        }
     }
 
     // 마우스의 스크린 좌표를 Canvas 내부 로컬 좌표로 정확하게 변환해주는 함수

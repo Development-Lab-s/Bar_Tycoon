@@ -17,7 +17,6 @@ namespace BBJ.Work
         public WorkplaceTypeSO KitchenType;
         public WorkplaceTypeSO CounterType;
         public WorkplaceTypeSO ExitType;
-        public WorkplaceTypeSO ServeStationType;
 
         [Header("Channels")]
         public EventChannelSO OrderChannel;

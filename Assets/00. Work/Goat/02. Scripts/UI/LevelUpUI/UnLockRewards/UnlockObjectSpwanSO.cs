@@ -10,16 +10,48 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
     public class UnlockObjectSpwanSO : AbstractUnlockSO
     {
         [SerializeField] private  ObjectsBatchSO objectDataSO;
-        [SerializeField] private EventChannelSO cameraMoveEvent;
+        public readonly List<Vector2> spawnPositions = new List<Vector2>();
+        public readonly List<ObjectDataSO> objectDataSOs = new List<ObjectDataSO>();
         public override void LevelUpReward()
         {
+            spawnPositions.Clear();
+            objectDataSOs.Clear();
             ObjectSpawnEvent objSpawnEvt = new ObjectSpawnEvent();
-            List<Vector2> spawnPosition = new List<Vector2>();
+            
             foreach (PlacedObstacleEntry obstacle in objectDataSO.ObjectsLayout)
             {
-                eventChannelSo?.RaiseEvent(objSpawnEvt.Init(obstacle.obstacleData, obstacle.cellIndex, obstacle.flipX, (pos) => spawnPosition.Add(pos)));   
+                objectDataSOs.Add(obstacle.obstacleData);
+                eventChannelSo?.RaiseEvent(objSpawnEvt.Init(obstacle.obstacleData, obstacle.cellIndex, obstacle.flipX, (pos) => spawnPositions.Add(pos)));   
             }
-            cameraMoveEvent.RaiseEvent(new CameraManagerEvent().Init(spawnPosition));
+        }
+
+        public override List<Vector2> GetSpawnPositions()
+        {
+            return new List<Vector2>(spawnPositions);
+        }
+
+        public override List<Sprite> GetSprite()
+        {
+            List<Sprite> sprites = new();
+
+            foreach (ObjectDataSO obsData in objectDataSOs)
+            {
+                if (obsData == null)
+                {
+                    Debug.Log("obsDataSO is null");
+                    continue;
+                }
+
+                if (obsData.Icon == null)
+                {
+                    Debug.Log("obsData.Icon is null");
+                    continue;   
+                }
+
+                sprites.Add(obsData.Icon);
+            }
+            
+            return sprites;
         }
     }
 }

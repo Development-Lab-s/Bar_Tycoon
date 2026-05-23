@@ -319,6 +319,8 @@ namespace BBJ.GridSystem.Editor
                 var od = AssetDatabase.LoadAssetAtPath<ObjectDataSO>(p);
                 if (od != null) _palette.Add(od);
             }
+            _palette.Sort((a, b) =>
+                string.Compare(a.DisplayName, b.DisplayName, System.StringComparison.Ordinal));
             if (_selectedIdx >= _palette.Count) _selectedIdx = _palette.Count - 1;
         }
 
@@ -486,7 +488,7 @@ namespace BBJ.GridSystem.Editor
                 GUILayout.Space(6);
                 if (_paletteBoldStyle == null)
                     _paletteBoldStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 11 };
-                GUILayout.Label(od.name, _paletteBoldStyle);
+                GUILayout.Label(od.DisplayName ?? od.name, _paletteBoldStyle);
                 var tsd = GetTileSetData(od);
                 GUILayout.Label(
                     $"Blocked:{tsd?.BlockedOffsets?.Length ?? 0}  Walkable:{tsd?.IsWalkable}",
@@ -544,7 +546,7 @@ namespace BBJ.GridSystem.Editor
                     EditorGUILayout.BeginHorizontal();
                     GUILayout.Space(8);
                     GUILayout.Label(
-                        $"({e.cellIndex.x},{e.cellIndex.y})  {e.obstacleData?.name ?? "?"}",
+                        $"({e.cellIndex.x},{e.cellIndex.y})  {e.obstacleData?.DisplayName ?? e.obstacleData?.name ?? "?"}",
                         EditorStyles.miniLabel);
                     EditorGUILayout.EndHorizontal();
                 }
@@ -575,7 +577,7 @@ namespace BBJ.GridSystem.Editor
                 EditorGUILayout.BeginHorizontal();
                 GUI.color = alive ? Color.white : new Color(1f, 0.5f, 0.5f, 0.7f);
                 GUILayout.Label(
-                    $"  ({kv.Key.x},{kv.Key.y})  {kv.Value.data?.name ?? "?"}{(alive ? "" : " [GO없음]")}",
+                    $"  ({kv.Key.x},{kv.Key.y})  {kv.Value.data?.DisplayName ?? kv.Value.data?.name ?? "?"}{(alive ? "" : " [GO없음]")}",
                     EditorStyles.miniLabel, GUILayout.ExpandWidth(true));
                 GUI.color = Color.white;
 
@@ -742,7 +744,7 @@ namespace BBJ.GridSystem.Editor
                 }
 
             _hoverLabelStyle ??= new GUIStyle { normal = { textColor = Color.white }, fontSize = 9 };
-            Handles.Label(center + Vector3.up * (g.cellSize.y * 0.75f), SelectedOD.name, _hoverLabelStyle);
+            Handles.Label(center + Vector3.up * (g.cellSize.y * 0.75f), SelectedOD.DisplayName ?? SelectedOD.name, _hoverLabelStyle);
         }
 
         // ─────────────────────────────────────────────────────────────
