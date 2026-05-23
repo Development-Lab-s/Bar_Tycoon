@@ -5,6 +5,7 @@ using _00._Work.CheolYee._02._Scripts.Core.CameraSystems;
 using _00._Work.Goat._02._Scripts.Events;
 using Gamelib.EventSystem;
 using Unity.Cinemachine;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.Camera
@@ -25,6 +26,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
         [SerializeField] private int focusCameraUnActivePriority = 1;
         [SerializeField] private float waitDuration = 1;
         [SerializeField] private float zoomPercent = 0.7f;
+        [SerializeField] private float spacing = 0.6f;
         
         private Queue<List<Vector2>> _objectPositionQueue = new();
 
@@ -71,13 +73,15 @@ namespace _00._Work.Goat._02._Scripts.Camera
             while(_objectPositionQueue.Count > 0)
             {
                 List<Vector2> nowObjectPositions = _objectPositionQueue.Dequeue();
+                
+                yield return ZoomToBoundsContain(nowObjectPositions);
+                
                 yield return MovePositionCoroutine(nowObjectPositions);
                 
                 float zoomInTarget = focusCamera.Lens.OrthographicSize * zoomPercent;
                 yield return ZoomToCoroutine(zoomInTarget);
                 
                 yield return new WaitForSeconds(waitDuration);
-                
                 yield return ZoomToCoroutine(originZoom);
             }
             
@@ -106,8 +110,44 @@ namespace _00._Work.Goat._02._Scripts.Camera
                 
                 yield return null;
             }
+        }
+
+        private IEnumerator ZoomToBoundsContain(List<Vector2> vecList)
+        {
+            Bounds bounds = CalculateBounds(vecList);
             
-            focusCamera.transform.position = new Vector3(targetPos.x, targetPos.y, focusCamera.transform.position.z);
+            float boundsSizeX =  bounds.size.x + spacing;
+            float boundsSizeY =  bounds.size.y + spacing;
+            
+            float aspect = UnityEngine.Camera.main.aspect;
+            
+            float needSizeByX = boundsSizeX / (2f * aspect);
+            float needSizeByY = boundsSizeY / 2f;
+
+            float targetSize = Mathf.Max(needSizeByX, needSizeByY);
+            
+            if(zoomPercent > 0)
+                targetSize /= zoomPercent;
+
+            float startSize = focusCamera.Lens.OrthographicSize;
+            
+            if (startSize >= targetSize)
+                yield break;
+            
+            float time = 0f;
+
+            while (time < moveZoomDuration)
+            {
+                time += Time.deltaTime;
+                
+                float t = time / moveZoomDuration;
+                t = Mathf.SmoothStep(0f, 1f, t);
+                
+                focusCamera.Lens.OrthographicSize = Mathf.Lerp(startSize, targetSize, t);
+                
+                yield return null;
+                Debug.Log("실행중");
+            }
         }
         
         private IEnumerator ZoomToCoroutine(float targetLens)
@@ -132,14 +172,20 @@ namespace _00._Work.Goat._02._Scripts.Camera
 
         private Vector2 CalculateCameraPosition(List<Vector2> objectPositions)
         {
-            Vector2 cameraPosition = new Vector2();
-            foreach (Vector2 vec in objectPositions)
+            Bounds bounds = CalculateBounds(objectPositions);
+            return bounds.center;
+        }
+        
+        private Bounds CalculateBounds(List<Vector2> objectPositions)
+        {
+            Bounds bounds = new Bounds(objectPositions[0], Vector3.zero);
+
+            for (int i = 1; i < objectPositions.Count; i++)
             {
-                cameraPosition += vec;
+                bounds.Encapsulate(objectPositions[i]);
             }
-            cameraPosition /= objectPositions.Count;
-            
-            return cameraPosition;
+
+            return bounds;
         }
     }
 }
