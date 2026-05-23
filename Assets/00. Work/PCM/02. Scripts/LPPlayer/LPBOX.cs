@@ -13,7 +13,6 @@ public class LPBOX : MonoBehaviour
     private bool _isOpen = false;
     public void SetUp(int id)
     {
-        Debug.Log("adad");
         _myId = id;
         _button = GetComponent<Button>();
         _button.onClick.RemoveAllListeners();
