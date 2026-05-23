@@ -75,6 +75,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
             ResetFlags();
             IsRunning = true;
+            bool isFirstPresentedLine = true;
 
             try
             {
@@ -107,10 +108,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                             StoryModuleTiming.WithDialogue,
                             session,
                             ct);
+
+                        if (isFirstPresentedLine && stageLayout != null)
+                        {
+                            // Let the first stage layout instantiate and render once before
+                            // audio/text start so startup hitch does not cause audio-first playback.
+                            await WarmupFirstPresentationFrameAsync(ct);
+                        }
+
                         lineSoundCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                         lineSoundTask = RunLineSoundTrackAsync(session.Episode, line, stageLayout, lineSoundCts.Token);
 
                         await _textDirector.PlayLineAsync(line, ct);
+                        isFirstPresentedLine = false;
                         await withModulesTask;
 
                         if (_abortRequested)
@@ -453,6 +463,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                 elapsed += Time.unscaledDeltaTime;
             }
             return elapsed;
+        }
+
+        private static async UniTask WarmupFirstPresentationFrameAsync(CancellationToken ct)
+        {
+            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, ct);
         }
 
         private async UniTask CleanupLineSoundAsync(

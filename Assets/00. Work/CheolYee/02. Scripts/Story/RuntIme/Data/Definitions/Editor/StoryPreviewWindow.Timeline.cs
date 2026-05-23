@@ -95,6 +95,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     paddingRight = 6
                 }
             };
+            _timelineToolbar.RegisterCallback<PointerDownEvent>(_ => SetInteractionContext(InteractionContext.Timeline));
 
             _timelineTitleLabel = new Label("Keyframe Editor")
             {
@@ -461,6 +462,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 if (!IsStageAuthoringMode) return;
                 if (e.button == 1 && allowKeyContext && IsTimelineKeyProperty(property))
                 {
+                    SetInteractionContext(InteractionContext.Timeline);
                     _timelinePanel?.Focus();
                     _selectedTimelineProperty = property;
                     ClearTimelineSelection(refresh: false);
@@ -475,6 +477,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 }
 
                 if (e.button != 0) return;
+                SetInteractionContext(InteractionContext.Timeline);
                 _timelinePanel?.Focus();
                 _selectedTimelineProperty = property;
                 if (allowKeyContext && IsTimelineKeyProperty(property))
@@ -554,6 +557,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             marker.RegisterCallback<PointerDownEvent>(e =>
             {
                 if (e.button != 0) return;
+                SetInteractionContext(InteractionContext.Timeline);
                 _timelinePanel?.Focus();
 
                 if (e.ctrlKey || e.commandKey)
@@ -750,6 +754,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
 
             _timelinePanel?.Focus();
+            SetInteractionContext(InteractionContext.Timeline);
             if (from != null && ShouldStartTimelineGroupDragFromSegment(e, from, to))
             {
                 BeginTimelineGroupKeyDrag(e);
@@ -1041,6 +1046,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return result;
         }
 
+        private StoryActorKeyframeData GetPrimarySelectedTimelineKey(IReadOnlyList<StoryActorKeyframeData> keyframes)
+        {
+            List<StoryActorKeyframeData> selected = GetSelectedTimelineKeys(keyframes);
+            if (selected.Count > 0)
+                return selected[0];
+
+            if (keyframes != null
+                && _selectedTimelineKeyIndex >= 0
+                && _selectedTimelineKeyIndex < keyframes.Count)
+                return keyframes[_selectedTimelineKeyIndex];
+
+            return null;
+        }
+
         private static int IndexOfTimelineKey(IReadOnlyList<StoryActorKeyframeData> keyframes, StoryActorKeyframeData key)
         {
             if (keyframes == null || key == null)
@@ -1206,7 +1225,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, undoName);
+            RecordPreviewUndo(layout, InteractionContext.Timeline, undoName);
             _suppressTimelineUndoRecording = true;
             _timelineDragUndoActive = true;
         }
@@ -1331,13 +1350,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void OnTimelineKeyDown(KeyDownEvent e)
         {
-            if (IsFocusedOnTextInput(rootVisualElement))
-                return;
-
-            if (HandleTimelineShortcut(e.keyCode, e.ctrlKey || e.commandKey, e.shiftKey))
-            {
-                e.StopPropagation();
-            }
+            // Keyboard shortcut ownership is centralized in OnGUI.
         }
 
         private void OnTimelinePanelPointerDown(PointerDownEvent e)
@@ -1348,6 +1361,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (!IsTimelineNeutralClickTarget(e.target as VisualElement))
                 return;
 
+            SetInteractionContext(InteractionContext.Timeline);
             _timelinePanel?.Focus();
             ClearTimelineSelection(refresh: true);
             e.StopPropagation();
@@ -1440,6 +1454,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void OnTimelineWheel(WheelEvent e)
         {
             if (!e.ctrlKey) return;
+            SetInteractionContext(InteractionContext.Timeline);
             float delta = -e.delta.y * 8f;
             _timelinePixelsPerSecond = Mathf.Clamp(_timelinePixelsPerSecond + delta, MinTimelinePixelsPerSecond, MaxTimelinePixelsPerSecond);
             SavePreviewLayoutPrefs();
@@ -2494,6 +2509,18 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             ValidateTimelineSelectionSet(keyframes);
 
+            if (_selectedTimelineKeys.Count == 1)
+            {
+                StoryActorKeyframeData selectedKey = GetPrimarySelectedTimelineKey(keyframes);
+                _selectedTimelineKeyIndex = IndexOfTimelineKey(keyframes, selectedKey);
+                if (selectedKey != null)
+                    _selectedTimelineProperty = selectedKey.property;
+            }
+            else if (_selectedTimelineKeys.Count > 1)
+            {
+                _selectedTimelineKeyIndex = -1;
+            }
+
             if (_selectedTimelineKeyIndex >= 0
                 && (_selectedTimelineKeyIndex >= keyframes.Count
                     || keyframes[_selectedTimelineKeyIndex] == null
@@ -2640,6 +2667,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void CopySelectedTimelineKey()
         {
+            if (_selectionKind == StageSelectionKind.Sound)
+            {
+                CopySelectedSoundTimelineKeys();
+                return;
+            }
+
             var selected = GetSelectedTimelineKeys(GetCurrentTimelineKeyframes());
             if (selected.Count == 0) return;
 
@@ -2655,6 +2688,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void PasteTimelineKeyAtPlayhead()
         {
+            if (_selectionKind == StageSelectionKind.Sound)
+            {
+                PasteSoundTimelineKeysAtPlayhead();
+                return;
+            }
+
             if (_timelineClipboardKeys.Count == 0 || _timelineClipboardSelectionKind != _selectionKind) return;
             float firstTime = float.MaxValue;
             foreach (StoryActorKeyframeData key in _timelineClipboardKeys)
@@ -2696,17 +2735,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (control && keyCode == KeyCode.Z)
             {
-                if (shift)
-                    Undo.PerformRedo();
-                else
-                    Undo.PerformUndo();
-                return true;
+                return TryPerformContextUndo(InteractionContext.Timeline, redo: shift);
             }
 
             if (control && keyCode == KeyCode.Y)
             {
-                Undo.PerformRedo();
-                return true;
+                return TryPerformContextUndo(InteractionContext.Timeline, redo: true);
             }
 
             if (keyCode == KeyCode.Delete || keyCode == KeyCode.Backspace)
