@@ -3,24 +3,46 @@ using _00._Work._Resources._02._Scripts.Modules;
 using System;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
 
 namespace _00._Work.PCM._02._Scripts
 {
-    public abstract class AbstructContractObject : MonoBehaviour, IContractObject , IModule
+    public abstract class AbstructContractObject :MonoBehaviour,IContractObject,IModule
     {
-        private ModuleOwner _owner;
-        [field:SerializeField]public UnityEvent OnClickEvent { get; set; }
-        [field:SerializeField]public CharacterEnum characterEnum { get; }
-        [field:SerializeField]public UnityEvent<int> OnLike { get; set; }
 
+        private ModuleOwner _owner;
+        [field: SerializeField]public UnityEvent OnClickEvent { get; set; }
+        [field: SerializeField]public CharacterEnum characterEnum { get; }
+        [field: SerializeField]public UnityEvent<int> OnLike { get; set; }
+
+        [SerializeField]private SpriteRenderer spriteRenderer;
+        Material material;
+        protected bool isHover;
+        private void Start()
+        {
+            material = spriteRenderer.material;
+            material.SetFloat("_OuterOutlineFade", 0);
+        }
         public virtual void ExcuteClick()
         {
             OnClickEvent?.Invoke();
         }
+        public virtual void Hover()
+        {
+            isHover = true;
+            material = spriteRenderer.material;
+            material.SetFloat("_OuterOutlineFade", 1);
+        }
+
+        public virtual void UnHover()
+        {
+            isHover = false;
+            material = spriteRenderer.material;
+            material.SetFloat("_OuterOutlineFade", 0);
+        }
+
         public void Initialize(ModuleOwner owner)
         {
-           _owner = owner;
+            _owner = owner;
         }
     }
 }
