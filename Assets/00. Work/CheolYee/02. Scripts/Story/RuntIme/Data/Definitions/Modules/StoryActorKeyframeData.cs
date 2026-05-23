@@ -18,6 +18,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         CameraOffset,
         CameraZoom,
         CameraShake,
+        SoundBgm,
+        SoundSfx,
     }
 
     /// <summary>

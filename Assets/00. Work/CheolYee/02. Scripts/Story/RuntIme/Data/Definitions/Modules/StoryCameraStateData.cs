@@ -7,24 +7,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
     [Serializable]
     public sealed class StoryCameraStateData
     {
-        [Tooltip("Actor instance key the camera targets. Empty means keep current framing.")]
-        public string targetActorInstanceKey = "";
+        [Tooltip("Stage local world position. (0,0)=StageRoot center. (2,0)=2 world units right. Unclamped.")]
+        public Vector2 stageLocalPosition = Vector2.zero;
 
-        [Tooltip("How the camera resolves target movement after the key/default state is applied.")]
-        public StoryCameraFollowMode followMode = StoryCameraFollowMode.FollowActor;
-
-        [Tooltip("How the camera reaches the new target when Camera Target changes.")]
-        public StoryCameraMoveMode moveMode = StoryCameraMoveMode.Smooth;
-
-        [Tooltip("Normalized camera offset relative to its target/reference frame.")]
-        public Vector2 normalizedOffset = Vector2.zero;
-
-        [Tooltip("1 = default orthographic size. Higher zooms in by shrinking the world width.")]
+        [Tooltip("1 = 기본 orthographic size. 1.2 = 20% 확대 (finalOrtho = baseOrtho / zoom). 0 이하 불가.")]
         [Min(0.01f)]
-        public float zoomMultiplier = 1f;
+        public float zoom = 1f;
 
-        [Tooltip("Snapshot position used when followMode is SnapshotPosition.")]
-        public Vector2 snapshotNormalizedPosition = new Vector2(0.5f, 0.5f);
+        // ── Legacy fields: data preserved, not used in runtime path ──────────
+        [HideInInspector] public string targetActorInstanceKey = "";
+        [HideInInspector] public StoryCameraFollowMode followMode = StoryCameraFollowMode.FollowActor;
+        [HideInInspector] public StoryCameraMoveMode moveMode = StoryCameraMoveMode.Smooth;
+        [HideInInspector] public Vector2 normalizedOffset = Vector2.zero;
+        [HideInInspector] public float zoomMultiplier = 1f;
+        [HideInInspector] public Vector2 snapshotNormalizedPosition = new Vector2(0.5f, 0.5f);
 
         public StoryCameraStateData ShallowClone() => (StoryCameraStateData)MemberwiseClone();
     }

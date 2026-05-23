@@ -18,11 +18,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         public Sprite fullBodySprite;
     }
 
-    /// <summary>
-    /// 스토리 시스템에서 사용되는 캐릭터의 정의를 담는 ScriptableObject 클래스입니다.
-    /// 캐릭터의 ID, 이름, 아이콘, 기본 프리팹 등의 정보를 포함합니다.
-    /// </summary>
-    
     [CreateAssetMenu(fileName = "CharacterDefinition", menuName = "Story/Character Definition")]
     public sealed class CharacterDefinitionSO : ScriptableObject
     {
@@ -35,89 +30,62 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
             };
 
         private static readonly HashSet<string> MissingExpressionWarnings = new();
+        private static readonly HashSet<string> ConflictingExpressionWarnings = new();
 
         [Header("Identity")]
-        [SerializeField] private string characterId; 
-        //스토리 시스템 내에서 캐릭터를 고유하게 식별하는 ID입니다.
-        //대사나 이벤트에서 이 ID를 참조하여 캐릭터를 지정합니다.
+        [SerializeField] private string characterId;
         [SerializeField] private string displayName;
-        //스토리 진행 중 캐릭터의 이름을 표시할 때 사용하는 문자열입니다.
 
         [Header("Presentation")]
         [SerializeField] private Sprite logIcon;
         [HideInInspector]
         [SerializeField] private GameObject defaultActorPrefab;
-
         [HideInInspector]
-        [Tooltip("StoryPreviewWindow 에서 표시할 스프라이트. 없으면 LogIcon 사용.")]
         [SerializeField] private Sprite previewSprite;
 
         [Header("Shared Actor Visual")]
         [Tooltip("Default full-body sprite used by the shared actor view. Falls back to PreviewSprite/LogIcon.")]
         [SerializeField] private Sprite defaultFullBodySprite;
-        [Tooltip("Full-body sprite variants keyed by expression enum. Legacy string keys remain as fallback.")]
+        [Tooltip("Full-body sprite variants keyed by expression enum.")]
         [SerializeField] private List<CharacterExpressionSpriteData> expressionSprites = new();
         [Tooltip("Default expression used when a line state has no explicit expression override.")]
         [SerializeField] private StoryExpressionType defaultExpression = StoryExpressionType.Neutral;
-        [Tooltip("Target sprite height in story camera world units before line scale is applied.")]
-        [SerializeField] private float baseWorldHeight = 3f;
-        [Tooltip("Character-wide visual scale multiplier applied before line scale.")]
-        [SerializeField] private float defaultScaleMultiplier = 1f;
-        [Tooltip("Keep actor sprites from being stretched by non-uniform line scale.")]
-        [SerializeField] private bool preserveAspectRatio = true;
+        [Tooltip("Character-wide uniform scale multiplier. Final scale = BaseScaleMultiplier * StoryActorStateData.scaleMultiplier.")]
+        [SerializeField] private float baseScaleMultiplier = 1f;
 
-        [Header("Stage Defaults")]
-        [SerializeField] private Vector2 defaultStageScale = Vector2.one;
-        [SerializeField] private Vector2 defaultStageOffset = Vector2.zero;
-        [SerializeField] private Vector2 defaultStagePivot = new Vector2(0.5f, 0f);
-        [Tooltip("Camera focus offset in normalized stage space. XOnly camera focus currently uses the X value.")]
-        [SerializeField] private Vector2 cameraFocusOffset = Vector2.zero;
-        [HideInInspector]
-        [SerializeField] private StoryActorMotionProfileData defaultMotionProfile = new();
-
-        //캐릭터 정의의 각 필드에 대한 공개 읽기 전용 프로퍼티입니다.
         public string CharacterId => characterId;
         public string DisplayName => displayName;
         public Sprite LogIcon => logIcon;
         public GameObject DefaultActorPrefab => defaultActorPrefab;
-        public GameObject ActorPrefab => defaultActorPrefab;
         public Sprite PreviewSprite => previewSprite != null ? previewSprite : logIcon;
         public Sprite DefaultFullBodySprite => defaultFullBodySprite != null ? defaultFullBodySprite : PreviewSprite;
         public IReadOnlyList<CharacterExpressionSpriteData> ExpressionSprites => expressionSprites;
         public StoryExpressionType DefaultExpression => defaultExpression;
-        public float BaseWorldHeight => Mathf.Max(0.01f, baseWorldHeight);
-        public float DefaultScaleMultiplier => Mathf.Approximately(defaultScaleMultiplier, 0f) ? 1f : defaultScaleMultiplier;
-        public bool PreserveAspectRatio => preserveAspectRatio;
-        public Vector2 DefaultStageScale => defaultStageScale;
-        public Vector2 DefaultStageOffset => defaultStageOffset;
-        public Vector2 DefaultStagePivot => defaultStagePivot;
-        public Vector2 CameraFocusOffset => cameraFocusOffset;
-        public StoryActorMotionProfileData DefaultMotionProfile => defaultMotionProfile;
+        public float BaseScaleMultiplier => Mathf.Approximately(baseScaleMultiplier, 0f) ? 1f : baseScaleMultiplier;
 
         public Sprite ResolveExpressionSprite(StoryExpressionType expression) =>
             ResolveExpressionSprite(expression, string.Empty);
 
         public Sprite ResolveExpressionSprite(StoryExpressionType expression, string legacyExpressionKey)
         {
-            if (!string.IsNullOrWhiteSpace(legacyExpressionKey)
-                && expression == defaultExpression
-                && TryResolveLegacyExpressionSprite(legacyExpressionKey, out Sprite legacySprite))
-                return legacySprite;
+            if (expression == StoryExpressionType.Neutral)
+            {
+                if (TryGetExpressionSprite(StoryExpressionType.Neutral, out Sprite neutralSprite))
+                    return neutralSprite;
 
-            bool isNeutralDefaultFallback =
-                string.IsNullOrWhiteSpace(legacyExpressionKey)
-                && expression == StoryExpressionType.Neutral
-                && DefaultFullBodySprite != null;
-            if (isNeutralDefaultFallback)
                 return DefaultFullBodySprite;
+            }
 
             if (TryGetExpressionSprite(expression, out Sprite sprite))
                 return sprite;
 
+            if (TryResolveLegacyExpressionEnumSprite(legacyExpressionKey, out Sprite legacySprite))
+                return legacySprite;
+
             if (TryResolveLegacyExpressionSprite(legacyExpressionKey, out legacySprite))
                 return legacySprite;
 
-            WarnMissingExpressionMapping(expression, legacyExpressionKey, isNeutralDefaultFallback);
+            WarnMissingExpressionMapping(expression, legacyExpressionKey);
             return DefaultFullBodySprite;
         }
 
@@ -137,12 +105,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
             if (expressionSprites == null)
                 return false;
 
-            foreach (CharacterExpressionSpriteData entry in expressionSprites)
+            for (int i = 0; i < expressionSprites.Count; i++)
             {
+                CharacterExpressionSpriteData entry = expressionSprites[i];
                 if (entry == null || entry.fullBodySprite == null)
                     continue;
 
-                if (MatchesExpression(entry, expression))
+                WarnConflictingExpressionEntryIfNeeded(i, entry);
+                if (entry.expression == expression)
                 {
                     sprite = entry.fullBodySprite;
                     return true;
@@ -158,9 +128,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
             if (string.IsNullOrWhiteSpace(expressionKey) || expressionSprites == null)
                 return false;
 
-            foreach (CharacterExpressionSpriteData entry in expressionSprites)
+            for (int i = 0; i < expressionSprites.Count; i++)
             {
+                CharacterExpressionSpriteData entry = expressionSprites[i];
                 if (entry == null || entry.fullBodySprite == null)
+                    continue;
+
+                if (HasConflictingExpressionEntry(i, entry))
                     continue;
 
                 if (string.Equals(entry.expressionKey, expressionKey, StringComparison.Ordinal))
@@ -173,21 +147,48 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
             return false;
         }
 
-        private static bool MatchesExpression(CharacterExpressionSpriteData entry, StoryExpressionType expression)
+        private bool TryResolveLegacyExpressionEnumSprite(string expressionKey, out Sprite sprite)
         {
-            if (entry == null)
+            sprite = null;
+            if (string.IsNullOrWhiteSpace(expressionKey))
                 return false;
 
-            if (!string.IsNullOrWhiteSpace(entry.expressionKey))
-            {
-                if (TryParseExpression(entry.expressionKey, out StoryExpressionType parsed))
-                    return parsed == expression;
+            return TryParseExpression(expressionKey, out StoryExpressionType legacyExpression)
+                && TryGetExpressionSprite(legacyExpression, out sprite);
+        }
 
-                // Fall back to the serialized enum when the legacy string no longer parses.
-                return entry.expression == expression;
-            }
+        private bool HasConflictingExpressionEntry(int index, CharacterExpressionSpriteData entry)
+        {
+            if (entry == null || string.IsNullOrWhiteSpace(entry.expressionKey))
+                return false;
 
-            return entry.expression == expression;
+            if (!TryParseExpression(entry.expressionKey, out StoryExpressionType parsed))
+                return false;
+
+            if (parsed == entry.expression)
+                return false;
+
+            WarnConflictingExpressionEntry(index, entry, parsed);
+            return true;
+        }
+
+        private void WarnConflictingExpressionEntryIfNeeded(int index, CharacterExpressionSpriteData entry)
+        {
+            HasConflictingExpressionEntry(index, entry);
+        }
+
+        private void WarnConflictingExpressionEntry(int index, CharacterExpressionSpriteData entry, StoryExpressionType parsedExpression)
+        {
+            string warningKey = $"{GetInstanceID()}::conflict::{index}::{entry.expression}::{entry.expressionKey}";
+            if (!ConflictingExpressionWarnings.Add(warningKey))
+                return;
+
+            string spriteName = entry.fullBodySprite != null ? entry.fullBodySprite.name : "<null>";
+            Debug.LogWarning(
+                $"[{nameof(CharacterDefinitionSO)}] '{name}' has conflicting expression mapping at index {index}. " +
+                $"Enum='{entry.expression}' is the source of truth, legacy key='{entry.expressionKey}' parses to '{parsedExpression}', " +
+                $"sprite='{spriteName}'. The enum value will be used.",
+                this);
         }
 
         private static bool TryParseExpression(string value, out StoryExpressionType expression)
@@ -213,31 +214,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
             return value.Trim().Replace(" ", string.Empty).Replace("_", string.Empty).Replace("-", string.Empty);
         }
 
-        public void SetDefaultStagePivot(Vector2 value)
+        private void WarnMissingExpressionMapping(StoryExpressionType expression, string legacyExpressionKey)
         {
-            defaultStagePivot = new Vector2(Mathf.Clamp01(value.x), Mathf.Clamp01(value.y));
-        }
-
-        public void SetCameraFocusOffset(Vector2 value)
-        {
-            cameraFocusOffset = value;
-        }
-
-        private void WarnMissingExpressionMapping(StoryExpressionType expression, string legacyExpressionKey, bool isNeutralDefaultFallback)
-        {
-            if (isNeutralDefaultFallback)
-                return;
-
-            if (expression == StoryExpressionType.Neutral && DefaultFullBodySprite != null)
+            if (expression == StoryExpressionType.Neutral)
                 return;
 
             string warningKey = $"{GetInstanceID()}::{expression}::{legacyExpressionKey}";
             if (!MissingExpressionWarnings.Add(warningKey))
                 return;
 
+            string fallbackSpriteName = DefaultFullBodySprite != null ? DefaultFullBodySprite.name : "<null>";
             Debug.LogWarning(
                 $"[{nameof(CharacterDefinitionSO)}] '{name}' has no sprite mapped for expression '{expression}'. " +
-                $"Legacy key='{legacyExpressionKey}'. Falling back to DefaultFullBodySprite.",
+                $"Legacy key='{legacyExpressionKey}', fallback sprite='{fallbackSpriteName}'. Falling back to DefaultFullBodySprite.",
                 this);
         }
 
@@ -266,9 +255,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
                 }
 
                 StoryExpressionType resolvedExpression = entry.expression;
-                bool parsed = !string.IsNullOrWhiteSpace(entry.expressionKey)
-                    && TryParseExpression(entry.expressionKey, out resolvedExpression);
-
                 bool neutralEntry = resolvedExpression == StoryExpressionType.Neutral;
                 if (entry.fullBodySprite == null && !neutralEntry)
                 {
@@ -278,12 +264,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
                         this);
                 }
 
-                if (!parsed && !string.IsNullOrWhiteSpace(entry.expressionKey))
+                if (HasConflictingExpressionEntry(i, entry))
                 {
-                    Debug.LogWarning(
-                        $"[{nameof(CharacterDefinitionSO)}] '{name}' has an unparsed legacy expression key '{entry.expressionKey}' at index {i}. " +
-                        $"The serialized enum '{entry.expression}' will be used as fallback.",
-                        this);
+                    // Warning is emitted once by HasConflictingExpressionEntry.
                 }
 
                 if (seen.TryGetValue(resolvedExpression, out int previousIndex))

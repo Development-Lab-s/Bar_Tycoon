@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.Util;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 using UnityEngine;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.CameraSystems
@@ -18,13 +16,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
     {
         [Header("Runtime Dependencies")]
         [SerializeField] private StoryStageCameraController cameraController;
-        [SerializeField] private StoryActorStageRuntime actorRuntime;
-
-        private bool _loggedMissingActorRuntime;
 
         public StoryStageCameraMetrics ResolveStageReferenceMetrics()
         {
             return ResolveCameraController().ResolveStageReferenceMetrics();
+        }
+
+        public Vector3 GetCurrentCameraCenter()
+        {
+            StoryStageCameraController controller = ResolveCameraController();
+            return controller != null ? controller.GetCurrentCameraCenter() : Vector3.zero;
         }
 
         public void ApplyCamera(
@@ -38,35 +39,23 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
                 return;
 
             if (useCameraTrack)
-            {
                 ApplyCameraTrackSample(layout, currentTime, transitionRuntime);
-            }
             else
-            {
-                ApplyCameraFocusXOnly(layout);
-            }
+                ApplyCameraDefault(layout);
         }
 
-        private void ApplyCameraFocusXOnly(StoryStageLayoutModuleSO layout)
+        /// <summary>
+        /// Applies camera stageLocalPosition + zoom from defaultState.
+        /// Camera does NOT auto-move to actors or speakers — only explicit stageLocalPosition drives movement.
+        /// cameraFocusTarget on the layout is intentionally ignored here; actor tinting is handled separately.
+        /// </summary>
+        private void ApplyCameraDefault(StoryStageLayoutModuleSO layout)
         {
-            string focusKey = layout?.CameraFocusTarget;
-            if (string.IsNullOrWhiteSpace(focusKey))
+            StoryCameraStateData defaultState = layout.CameraTrack?.defaultState;
+            if (defaultState == null)
                 return;
 
-            StoryActorStageRuntime actor = ResolveActorRuntime();
-            if (actor == null)
-                return;
-
-            if (!actor.TryGetActorWorldPosition(focusKey, out Vector3 actorPosition))
-            {
-                Debug.LogWarning(
-                    $"[{nameof(StoryStageCameraRuntime)}] cameraFocusTarget '{focusKey}' not found in actor runtime.",
-                    this);
-
-                return;
-            }
-
-            ResolveCameraController().FocusXSmooth(actorPosition.x);
+            ResolveCameraController().ApplyStageCamera(defaultState);
         }
 
         private void ApplyCameraTrackSample(
@@ -85,41 +74,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
             if (sample == null)
                 return;
 
-            StoryStageCameraController controller = ResolveCameraController();
-            controller.ApplyZoom(sample.zoomMultiplier);
-
-            StoryStageCameraMetrics stage = controller.ResolveStageReferenceMetrics();
-
-            float desiredX;
-            if (sample.followMode == StoryCameraFollowMode.SnapshotPosition)
-            {
-                desiredX = stage.ActorPosition(sample.snapshotNormalizedPosition, Vector2.zero, 0f).x;
-            }
-            else if (!string.IsNullOrWhiteSpace(sample.targetActorInstanceKey)
-                     && TryGetActorWorldPosition(sample.targetActorInstanceKey, out Vector3 actorPosition))
-            {
-                desiredX = actorPosition.x;
-            }
-            else
-            {
-                desiredX = controller.GetCurrentCameraCenter().x;
-            }
-
-            float desiredY = controller.StageReferenceCenter.y + sample.normalizedOffset.y * stage.Height;
-            desiredX += sample.normalizedOffset.x * stage.Width;
-
-            if (sample.moveMode == StoryCameraMoveMode.Instant)
-                controller.MoveToImmediate(desiredX, desiredY);
-            else
-                controller.MoveToSmooth(desiredX, desiredY);
-        }
-
-        private bool TryGetActorWorldPosition(string actorInstanceKey, out Vector3 position)
-        {
-            position = default;
-
-            StoryActorStageRuntime actor = ResolveActorRuntime();
-            return actor != null && actor.TryGetActorWorldPosition(actorInstanceKey, out position);
+            // stageLocalPosition / zoom 기반 단일 경로. FollowMode는 다음 Phase에서 구현.
+            ResolveCameraController().ApplyStageCamera(sample);
         }
 
         private StoryStageCameraController ResolveCameraController()
@@ -131,13 +87,5 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
             return controller;
         }
 
-        private StoryActorStageRuntime ResolveActorRuntime()
-        {
-            return StoryRuntimeComponentResolver.GetInSelfOrParentWithWarning(
-                this,
-                ref actorRuntime,
-                ref _loggedMissingActorRuntime,
-                $"[{nameof(StoryStageCameraRuntime)}] {nameof(StoryActorStageRuntime)} is missing. Camera actor focus cannot be resolved.");
-        }
     }
 }

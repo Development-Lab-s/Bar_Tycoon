@@ -23,7 +23,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Views
             ValidateInitialPrefabScale();
         }
 
-        public void Apply(StoryBackgroundStateData state, StoryStageCameraMetrics camera, Vector2 extraNormalizedOffset)
+        /// <summary>
+        /// Applies background state.
+        /// parallaxBase: world position of the parallax anchor (Lerp of stageRoot and cameraCenter).
+        /// Final world position = parallaxBase + state.stageLocalPosition.
+        /// </summary>
+        public void Apply(StoryBackgroundStateData state, Vector3 parallaxBase)
         {
             if (state == null || !state.HasBackground || !state.visible)
             {
@@ -37,15 +42,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Views
             spriteRenderer.drawMode = SpriteDrawMode.Simple;
             spriteRenderer.sortingOrder = state.EffectiveSortOrder;
             Color tint = state.EffectiveTint;
-            tint.a *= state.EffectiveOpacity;
             spriteRenderer.color = tint;
 
-            transform.position = camera.BackgroundPosition(state.EffectiveOffset + extraNormalizedOffset, transform.position.z);
-            transform.localScale = StoryStageVisualSizing.CalculateBackgroundWorldScale(state, sprite, camera);
+            Vector3 worldPos = parallaxBase + new Vector3(state.stageLocalPosition.x, state.stageLocalPosition.y, 0f);
+            worldPos.z = transform.position.z;
+            transform.position = worldPos;
+            transform.localScale = StoryStageVisualSizing.CalculateBackgroundWorldScale(state);
 
-            Transform renderRoot = spriteRoot != null ? spriteRoot : spriteRenderer.transform;
-            if (renderRoot != transform)
-                renderRoot.localPosition = StoryStageVisualSizing.CalculatePivotLocalOffset(sprite, state.EffectivePivot);
+            if (spriteRoot != null && spriteRoot != transform)
+                spriteRoot.localPosition = Vector3.zero;
+
             gameObject.SetActive(true);
         }
 

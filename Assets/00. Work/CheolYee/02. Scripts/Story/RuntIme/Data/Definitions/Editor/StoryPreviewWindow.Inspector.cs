@@ -7,6 +7,7 @@ using UnityEngine.UIElements;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Aspect;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Camera;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Types;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
@@ -59,6 +60,23 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             });
             _inspectorScrollView.Add(_aspectSettingsField);
 
+            var cameraInitField = new ObjectField("Camera Init SO")
+            {
+                objectType = typeof(StoryCameraInitSettingsSO),
+                allowSceneObjects = false,
+                value = _previewCameraInitSettings,
+                style = { marginBottom = 4 }
+            };
+            cameraInitField.RegisterValueChangedCallback(e =>
+            {
+                _previewCameraInitSettings = e.newValue as StoryCameraInitSettingsSO;
+                SaveCameraInitGuid();
+                RebuildActorLayer();
+                RefreshBackgroundLayer();
+                Repaint();
+            });
+            _inspectorScrollView.Add(cameraInitField);
+
             _aspectMetricsInfoLabel = new Label("")
             {
                 style =
@@ -70,6 +88,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 }
             };
             _inspectorScrollView.Add(_aspectMetricsInfoLabel);
+            _inspectorScrollView.Add(MakeSeparator());
+
+            _inspectorScrollView.Add(BuildSoundSettingsPanels());
             _inspectorScrollView.Add(MakeSeparator());
 
             _inspectorScrollView.Add(BuildAuthoringTools());
@@ -85,6 +106,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _inspectorScrollView.Add(_inspectorRoot);
 
             RefreshAspectMetricsDisplay();
+            RefreshSoundSettingsPanels();
             return panel;
         }
 
@@ -268,6 +290,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _actorListRoot.Add(MakeBoldLabel("Camera"));
             _actorListRoot.Add(BuildCameraRow());
             _actorListRoot.Add(MakeSeparator());
+            _actorListRoot.Add(MakeBoldLabel("Sound"));
+            _actorListRoot.Add(BuildSoundRow());
+            _actorListRoot.Add(MakeSeparator());
 
             foreach (var kvp in _stageState)
             {
@@ -447,6 +472,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void RefreshActorInspector()
         {
             if (_inspectorRoot == null) return;
+            RefreshSoundSettingsPanels();
             _inspectorRoot.Clear();
 
             if (!IsStageAuthoringMode)
@@ -467,6 +493,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_selectionKind == StageSelectionKind.Camera)
             {
                 BuildCameraInspector();
+                return;
+            }
+
+            if (_selectionKind == StageSelectionKind.Sound)
+            {
+                BuildSoundInspector();
                 return;
             }
 
@@ -1575,7 +1607,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, "Edit Actor Timeline");
+            if (!_suppressTimelineUndoRecording)
+                Undo.RecordObject(layout, "Edit Actor Timeline");
             StoryActorTrackData track = GetOrCreateActorTrack(layout, actorInstanceKey);
             if (track == null)
                 return;
@@ -1622,7 +1655,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, "Edit Background Timeline");
+            if (!_suppressTimelineUndoRecording)
+                Undo.RecordObject(layout, "Edit Background Timeline");
             StoryBackgroundTrackData track = layout.BackgroundTrackEditable;
             if (track == null)
                 return;
@@ -1669,12 +1703,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, "Edit Camera Timeline");
+            if (!_suppressTimelineUndoRecording)
+                Undo.RecordObject(layout, "Edit Camera Timeline");
             StoryCameraTrackData track = layout.CameraTrackEditable;
             if (track == null)
                 return;
 
-            track.defaultState ??= new StoryCameraStateData();
+            track.defaultState ??= CreateDefaultCameraState();
             track.keyframes ??= new List<StoryActorKeyframeData>();
 
             StoryActorKeyframeData selectedKey = _selectedTimelineKeyIndex >= 0 && _selectedTimelineKeyIndex < track.keyframes.Count
@@ -1720,7 +1755,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             Undo.RecordObject(layout, "Edit Camera State");
             StoryCameraTrackData track = layout.CameraTrackEditable;
-            track.defaultState ??= new StoryCameraStateData();
+            track.defaultState ??= CreateDefaultCameraState();
+            ClearPreviewCameraSampleState();
             setter(track.defaultState);
             MarkLayoutDirty(layout, saveNow: false);
             RefreshActorList();
@@ -1731,6 +1767,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             MarkLayoutDirty(layout, saveNow);
 
+            ClearPreviewCameraSampleState();
             BuildStageStateAt(_currentLine);
             if (_selectionKind == StageSelectionKind.Actor && !_stageState.ContainsKey(_selectedActorKey))
                 ClearStageSelection();
@@ -1911,10 +1948,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             bool sameActor = _selectionKind == StageSelectionKind.Actor && _selectedActorKey == actorInstanceKey;
             _selectionKind = StageSelectionKind.Actor;
             _selectedActorKey = actorInstanceKey;
+            ClearSoundTimelineSelection();
             if (!sameActor)
                 ClearTimelineSelection(refresh: false);
             RefreshActorList();
             HighlightSelectedActor();
+            UpdateCameraGizmoVisual();
             if (refreshInspector)
                 RefreshActorInspector();
             RefreshAuthoringControls();
@@ -1929,11 +1968,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (IsBackgroundRecordSelectionLocked())
                 return;
 
+            bool wasAlreadyBackground = _selectionKind == StageSelectionKind.Background;
             _selectionKind = StageSelectionKind.Background;
             _selectedActorKey = null;
-            ClearTimelineSelection(refresh: false);
+            ClearSoundTimelineSelection();
+            if (!wasAlreadyBackground)
+                ClearTimelineSelection(refresh: false);
             RefreshActorList();
             HighlightSelectedActor();
+            UpdateCameraGizmoVisual();
             RefreshActorInspector();
             RefreshAuthoringControls();
             RefreshTimelinePanel();
@@ -1944,14 +1987,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (!IsStageAuthoringMode)
                 return;
 
-            if (_timelineRecordEnabled)
+            // Block camera selection only when a different track is recording
+            if (_timelineRecordEnabled && _timelineRecordSelectionKind != StageSelectionKind.Camera)
                 return;
 
+            bool wasAlreadyCamera = _selectionKind == StageSelectionKind.Camera;
             _selectionKind = StageSelectionKind.Camera;
             _selectedActorKey = null;
-            ClearTimelineSelection(refresh: false);
+            ClearSoundTimelineSelection();
+            if (!wasAlreadyCamera)
+                ClearTimelineSelection(refresh: false);
             RefreshActorList();
             HighlightSelectedActor();
+            UpdateCameraGizmoVisual();
             RefreshActorInspector();
             RefreshAuthoringControls();
             RefreshTimelinePanel();
@@ -1961,7 +2009,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             _selectionKind = StageSelectionKind.None;
             _selectedActorKey = null;
+            ClearSoundTimelineSelection();
+            ClearSoundTimelineProxyCache();
             ClearTimelineSelection(refresh: false);
+            UpdateCameraGizmoVisual();
             RefreshTimelinePanel();
         }
 

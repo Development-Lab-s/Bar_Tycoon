@@ -49,10 +49,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Views
             spriteRenderer.color = tint;
             Transform renderRoot = spriteRoot != null ? spriteRoot : spriteRenderer.transform;
             if (renderRoot != transform)
-                renderRoot.localPosition = StoryStageVisualSizing.CalculatePivotLocalOffset(sprite, state.EffectivePivot);
+                renderRoot.localPosition = Vector3.zero;
             if (_fadeRenderer != null)
-                _fadeRenderer.transform.localPosition = renderRoot.localPosition;
-            transform.localScale = StoryStageVisualSizing.CalculateActorWorldScale(state, sprite);
+                _fadeRenderer.transform.localPosition = Vector3.zero;
+            transform.localScale = StoryStageVisualSizing.CalculateActorWorldScale(state);
             gameObject.SetActive(state.visible);
         }
 

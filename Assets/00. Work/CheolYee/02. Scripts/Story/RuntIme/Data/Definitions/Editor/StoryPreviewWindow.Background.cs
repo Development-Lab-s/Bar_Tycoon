@@ -22,14 +22,75 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _backgroundLayer.Add(bg);
         }
 
-        private static VisualElement CreateBackgroundElement(StoryBackgroundStateData state)
+        private void RegisterBackgroundInteraction(VisualElement el)
         {
+            el.RegisterCallback<PointerDownEvent>(e =>
+            {
+                if (!IsStageAuthoringMode || e.button != 0) return;
+                if (IsBackgroundRecordSelectionLocked()) return;
+                if (_bgState == null || !_bgState.HasBackground) return;
+                if (_timelineIsPlaying) StopTimelinePlayback();
+                SelectBackground();
+                _isDraggingBackground = true;
+                _bgDragStartPanelPos  = e.position;
+                _bgDragStartStagePos  = _bgState.stageLocalPosition;
+                el.CapturePointer(e.pointerId);
+                e.StopPropagation();
+            });
+
+            el.RegisterCallback<PointerMoveEvent>(e =>
+            {
+                if (!_isDraggingBackground) return;
+
+                Vector2 panelDelta      = ((Vector2)e.position - _bgDragStartPanelPos) / _stageZoom;
+                float   worldUnitsPerPx = ResolvePreviewCameraWorldWidth() / DefaultUnitPixels;
+                _bgState.stageLocalPosition = new Vector2(
+                    _bgDragStartStagePos.x + panelDelta.x * worldUnitsPerPx,
+                    _bgDragStartStagePos.y - panelDelta.y * worldUnitsPerPx); // Y 반전
+
+                PositionBackgroundElement(el, _bgState);
+                e.StopPropagation();
+            });
+
+            el.RegisterCallback<PointerUpEvent>(e =>
+            {
+                if (!_isDraggingBackground) return;
+                _isDraggingBackground = false;
+                el.ReleasePointer(e.pointerId);
+
+                Vector2 panelDelta      = ((Vector2)e.position - _bgDragStartPanelPos) / _stageZoom;
+                float   worldUnitsPerPx = ResolvePreviewCameraWorldWidth() / DefaultUnitPixels;
+                Vector2 finalPos = new Vector2(
+                    _bgDragStartStagePos.x + panelDelta.x * worldUnitsPerPx,
+                    _bgDragStartStagePos.y - panelDelta.y * worldUnitsPerPx);
+
+                if (_timelineRecordEnabled && _selectionKind == StageSelectionKind.Background)
+                {
+                    var recordState = new StoryBackgroundStateData { stageLocalPosition = finalPos };
+                    AddOrUpdateBackgroundKey(recordState, StoryActorKeyframeProperty.BackgroundPosition,
+                        _timelinePlayheadTime, createIfMissing: true, selectKey: false, refreshInspector: false);
+                    ApplyTimelinePlayheadSample();
+                }
+                else if (!TryApplySelectedTimelineKeyFromBackground(finalPos))
+                {
+                    SaveBackgroundStateToCurrent(bg => bg.stageLocalPosition = finalPos);
+                }
+
+                RefreshActorInspector();
+                e.StopPropagation();
+            });
+        }
+
+        private VisualElement CreateBackgroundElement(StoryBackgroundStateData state)
+        {
+            var pickMode = PickingMode.Ignore;
+
             var sprite = StoryStageVisualSizing.ResolveBackgroundSprite(state);
             if (sprite != null)
             {
                 return new VisualElement
                 {
-                    pickingMode = PickingMode.Ignore,
+                    pickingMode = pickMode,
                     style =
                     {
                         position = Position.Absolute,
@@ -37,15 +98,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                         backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Cover)),
                         backgroundPositionX = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center)),
                         backgroundPositionY = new StyleBackgroundPosition(new BackgroundPosition(BackgroundPositionKeyword.Center)),
-                        unityBackgroundImageTintColor = new StyleColor(state.EffectiveTint),
-                        opacity = state.EffectiveOpacity
+                        unityBackgroundImageTintColor = new StyleColor(state.EffectiveTint)
                     }
                 };
             }
 
             var placeholder = new VisualElement
             {
-                pickingMode = PickingMode.Ignore,
+                pickingMode = pickMode,
                 style =
                 {
                     position = Position.Absolute,
@@ -57,8 +117,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     borderTopColor = new StyleColor(new Color(0.54f, 0.62f, 0.72f, 0.45f)),
                     borderRightColor = new StyleColor(new Color(0.54f, 0.62f, 0.72f, 0.45f)),
                     borderBottomColor = new StyleColor(new Color(0.54f, 0.62f, 0.72f, 0.45f)),
-                    borderLeftColor = new StyleColor(new Color(0.54f, 0.62f, 0.72f, 0.45f)),
-                    opacity = state.EffectiveOpacity
+                    borderLeftColor = new StyleColor(new Color(0.54f, 0.62f, 0.72f, 0.45f))
                 }
             };
 
@@ -85,33 +144,30 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             float camW = DefaultUnitPixels;
             float camH = DefaultUnitPixels / GetStoryVisibleAspect();
-            StoryBackgroundStateData sample = state.ShallowClone();
-            sample.normalizedOffset += ResolvePreviewBackgroundParallaxOffset(state);
+            float pixelsPerWorld = camW / ResolvePreviewCameraWorldWidth();
+
+            Vector2 panelCenter = new Vector2(camW * 0.5f, camH * 0.5f);
+            Vector2 parallaxBasePixel = panelCenter;
+
+            if (state?.background != null)
+            {
+                StoryCameraStateData cameraState = ResolveCurrentPreviewCameraState();
+                Vector2 cameraPixel = new Vector2(
+                    camW * 0.5f + cameraState.stageLocalPosition.x * pixelsPerWorld,
+                    camH * 0.5f - cameraState.stageLocalPosition.y * pixelsPerWorld);
+                parallaxBasePixel = Vector2.Lerp(panelCenter, cameraPixel, state.background.ParallaxFactor);
+            }
+
             Rect rect = StoryStageVisualSizing.CalculateBackgroundPreviewRect(
-                sample,
-                StoryStageVisualSizing.ResolveBackgroundSprite(sample),
-                new Vector2(camW, camH),
-                ResolvePreviewCameraWorldWidth());
+                state,
+                StoryStageVisualSizing.ResolveBackgroundSprite(state),
+                parallaxBasePixel,
+                pixelsPerWorld);
 
             el.style.width = rect.width;
             el.style.height = rect.height;
             el.style.left = rect.x;
             el.style.top = rect.y;
-        }
-
-        private Vector2 ResolvePreviewBackgroundParallaxOffset(StoryBackgroundStateData state)
-        {
-            if (!ShouldApplyCameraFocusToRenderedPreview())
-                return Vector2.zero;
-
-            if (state?.background == null)
-                return Vector2.zero;
-
-            Vector2 cameraOffset = ResolvePreviewCameraFocusOffset();
-            if (cameraOffset == Vector2.zero)
-                return Vector2.zero;
-
-            return -cameraOffset * state.background.ParallaxFactor;
         }
 
         private static Vector2 ResolveNonZeroScale(Vector2 scale) =>
