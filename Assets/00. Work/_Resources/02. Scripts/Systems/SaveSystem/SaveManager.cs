@@ -86,7 +86,7 @@ namespace _00._Work._Resources._02._Scripts.Systems.SaveSystem
             {
                 return File.ReadAllText(savePath + fileName);
             }
-
+            Debug.Log($"<color=green>[SaveManager] 파일 불러오기 성공!</color>\n경로: {savePath}");
             Debug.LogError("SaveManager: Save file not found at: " + savePath + fileName);
             return string.Empty;
         }
