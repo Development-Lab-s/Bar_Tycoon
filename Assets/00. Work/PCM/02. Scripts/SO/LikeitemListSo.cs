@@ -9,7 +9,7 @@ public class LikeitemListSo : ScriptableObject
 
     public string MostCharacter()
     {
-        character = character.OrderBy(x => x.currentExp).ToList();
+        character = character.OrderByDescending(x => x.currentExp).ToList();
         return character[0].characterName;
     }
 }
