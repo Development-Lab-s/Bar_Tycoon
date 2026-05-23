@@ -10,7 +10,7 @@ public class LeaderBoardUi : MonoBehaviour , IModule
     public void Initialize(ModuleOwner owner)
     {
         _owner = owner;
-        _eventChannel.AddListener<LeaderBoardEvent>(UpdateLeaderBoardUI);
+        //_eventChannel.AddListener<LeaderBoardEvent>(UpdateLeaderBoardUI);
     }
     public void UpdateLeaderBoardUI(LeaderBoardEvent evt)
     {
