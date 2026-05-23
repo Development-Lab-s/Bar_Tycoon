@@ -84,10 +84,6 @@ namespace _00._Work.Goat._02._Scripts.Camera
             Vector3 finalPosition = focusCamera.transform.position;
             _cameraPanController.MoveTo(finalPosition);
             
-            var playLens = playCamera.Lens;
-            playLens.OrthographicSize = originZoom;
-            playCamera.Lens = playLens;
-            
             _freeZoomController.SetZoom(originZoom, true);
             
             _cameraPanController.SetInputEnabled(true);
@@ -125,17 +121,13 @@ namespace _00._Work.Goat._02._Scripts.Camera
                 t = Mathf.SmoothStep(0f, 1f, t);
 
                 float nextLens = Mathf.Lerp(startLens, targetLens, t);
-
-                var focusLens = focusCamera.Lens;
-                focusLens.OrthographicSize = nextLens;
-                focusCamera.Lens = focusLens;
+                
+                focusCamera.Lens.OrthographicSize = nextLens;
 
                 yield return null;
             }
-
-            var finalLens = focusCamera.Lens;
-            finalLens.OrthographicSize = targetLens;
-            focusCamera.Lens = finalLens;
+            
+            focusCamera.Lens.OrthographicSize = targetLens;
         }
 
         private Vector2 CalculateCameraPosition(List<Vector2> objectPositions)
