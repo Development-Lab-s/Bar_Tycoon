@@ -58,7 +58,6 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     public float GetExpRatio()
     {
         float ratio = characterData.GetTotalProgressRatio();
-        Debug.Log(ratio);
         return ratio ;
     }
     public void GiveItem(int expAmount)

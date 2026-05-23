@@ -13,7 +13,7 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
         [SerializeField] protected EventChannelSO SoundEventChannel;
         [SerializeField] protected Ease easeType;
         [SerializeField] protected SoundListSo SoundList;
-        protected RectTransform rect;
+        public RectTransform rect;
         protected MotionHandle moveMotion;
         protected MotionHandle rotateMotion;
         public virtual void Awake()
