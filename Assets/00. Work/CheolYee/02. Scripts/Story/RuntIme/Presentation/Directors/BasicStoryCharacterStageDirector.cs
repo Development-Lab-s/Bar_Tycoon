@@ -38,6 +38,40 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             ResolveActorRuntime().ApplySpeakerFocus(line);
         }
 
+        public void ApplyBackgroundOnly(StoryStageLayoutModuleSO layout)
+        {
+            ResolveActorRuntime().ClearAll();
+            StoryBackgroundStateData state = layout != null && layout.HasBackground
+                ? layout.Background.ShallowClone()
+                : null;
+            ResolveBackgroundRuntime().ApplyState(state);
+        }
+
+        public void ApplyStageLayoutImmediate(StoryStageLayoutModuleSO layout)
+        {
+            if (layout == null)
+                return;
+
+            Dictionary<string, StoryActorStateData> targetMap = _transitionRuntime.BuildTargetMap(layout.Actors);
+            Dictionary<string, StoryActorTrackData> trackMap = _transitionRuntime.BuildTrackMap(layout.ActorTracks);
+            Dictionary<string, StoryActorStateData> sampledActors = _transitionRuntime.SampleActors(
+                targetMap,
+                targetMap,
+                trackMap,
+                0f);
+            ApplyActorSamples(sampledActors);
+
+            StoryBackgroundStateData fromBackground = ResolveBackgroundRuntime().BuildCurrentStateClone();
+            ApplyBackgroundState(_transitionRuntime.SampleBackground(
+                fromBackground,
+                layout.Background,
+                layout.BackgroundTrack,
+                0f));
+
+            bool useCameraTrack = _transitionRuntime.HasAuthoredCameraTrack(layout.CameraTrack);
+            ApplyCamera(layout, useCameraTrack, 0f, 0f);
+        }
+
         public Vector3 GetCurrentCameraCenter()
         {
             StoryStageCameraRuntime runtime = ResolveCameraRuntime();

@@ -4,6 +4,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 {
@@ -125,6 +126,18 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         /// <summary>moduleType 인스턴스를 sub-asset으로 생성 후 line.modules에 추가합니다.</summary>
         public static StoryModuleSO AddModule(StoryLineSO line, Type moduleType)
         {
+            if (moduleType == typeof(StoryFadeModuleSO) && line != null)
+            {
+                foreach (StoryModuleSO existing in line.Modules)
+                {
+                    if (existing is StoryFadeModuleSO fadeModule)
+                    {
+                        Debug.LogWarning("[StoryEditorUtility] Fade module is limited to one per line. Reusing existing module.", fadeModule);
+                        return fadeModule;
+                    }
+                }
+            }
+
             var module = (StoryModuleSO)ScriptableObject.CreateInstance(moduleType);
             module.name = moduleType.Name;
 

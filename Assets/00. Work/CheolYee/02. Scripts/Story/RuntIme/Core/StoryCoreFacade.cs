@@ -1,7 +1,8 @@
 using System;
 using System.Threading;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Skip;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Visibility;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Skip;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Contracts;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
@@ -40,6 +41,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         [SerializeField] private StorySkipSummaryPanelController skipSummaryPanel;
         // TopBar / DialogueArea / ChoiceArea 시각적 숨김 제어 컨트롤러입니다.
         [SerializeField] private StoryUiVisibilityController uiVisibilityController;
+        [SerializeField] private StoryRuntimeFadeController runtimeFadeController;
+        [SerializeField] private StoryEpisodeIntroController episodeIntroController;
 
 
         private IStorySaveService _saveService;
@@ -274,6 +277,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
             try
             {
+                await PlayStartupPresentationAsync(request, hasExplicitResumePoint, linkedToken);
                 result = await runner.RunAsync(Session, linkedToken);
                 hasResult = true;
 
@@ -391,6 +395,53 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             _playCts.Cancel();
             _playCts.Dispose();
             _playCts = null;
+        }
+
+        private async UniTask PlayStartupPresentationAsync(
+            StoryPlayRequest request,
+            bool hasExplicitResumePoint,
+            CancellationToken ct)
+        {
+            if (!ShouldPlayStartupPresentation(request, hasExplicitResumePoint))
+            {
+                uiVisibilityController?.ApplyShownImmediate();
+                return;
+            }
+
+            uiVisibilityController?.ApplyHiddenImmediate();
+            episodeIntroController?.ApplyHiddenImmediate();
+
+            StoryLineSO firstLine = ResolveCurrentLine();
+            if (firstLine != null)
+                runner.PreloadLineBackground(firstLine);
+
+            if (runtimeFadeController != null)
+            {
+                runtimeFadeController.ApplyBlackImmediate();
+                await runtimeFadeController.PlayFadeAsync(Data.Definitions.Modules.StoryFadeDirection.FadeOut, ct);
+            }
+
+            if (episodeIntroController != null)
+                await episodeIntroController.PlayAsync(Session.Episode, ct);
+
+            uiVisibilityController?.ApplyShownImmediate();
+        }
+
+        private bool ShouldPlayStartupPresentation(StoryPlayRequest request, bool hasExplicitResumePoint)
+        {
+            if (hasExplicitResumePoint || request.Episode == null || Session.Episode == null)
+                return false;
+
+            return Session.CurrentLineId == request.Episode.EntryLineId;
+        }
+
+        private StoryLineSO ResolveCurrentLine()
+        {
+            if (Session?.Episode == null || string.IsNullOrWhiteSpace(Session.CurrentLineId))
+                return null;
+
+            Session.Episode.TryGetLine(Session.CurrentLineId, out StoryLineSO line);
+            return line;
         }
     }
 }

@@ -98,6 +98,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
                     try
                     {
+                        if (ShouldPreapplyStageLayoutBeforeDialogue(line, stageLayout))
+                            _characterStage?.ApplyStageLayoutImmediate(stageLayout);
+
                         await ExecuteModulesAsync(line, StoryModuleTiming.BeforeDialogue, session, ct);
 
                         await _characterStage.EnsureSpeakerVisibleAsync(line, ct);
@@ -129,8 +132,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                         if (_skipRequested)
                             return CreateResult(session, StoryCloseReason.Skipped, true);
 
-                        await ExecuteModulesAsync(line, StoryModuleTiming.AfterDialogue, session, ct);
-
                         if (line.LogVisible)
                             AppendLineLog(session, line);
 
@@ -154,6 +155,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
                             if (!string.IsNullOrWhiteSpace(choiceResult.NextLineId))
                             {
+                                await ExecuteModulesAsync(line, StoryModuleTiming.AfterDialogue, session, ct);
                                 session.MoveTo(choiceResult.NextLineId);
                                 continue;
                             }
@@ -181,6 +183,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                         if (_skipRequested)
                             return CreateResult(session, StoryCloseReason.Skipped, true);
 
+                        await ExecuteModulesAsync(line, StoryModuleTiming.AfterDialogue, session, ct);
                         session.MoveTo(line.NextLineId);
                     }
                     finally
@@ -224,6 +227,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             _choicePanel?.CloseImmediate();
         }
 
+        public void PreloadLineBackground(StoryLineSO line)
+        {
+            if (line == null || _characterStage == null)
+                return;
+
+            StoryStageLayoutModuleSO layout = FindStageLayout(line);
+            _characterStage.ApplyBackgroundOnly(layout);
+        }
+
         // ── 내부 헬퍼 ────────────────────────────────────────────────────────
 
         private bool TryGetChoiceLikeModule(StoryLineSO line, out IStoryChoiceLikeModule choiceModule)
@@ -238,6 +250,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             }
 
             choiceModule = null;
+            return false;
+        }
+
+        private static bool ShouldPreapplyStageLayoutBeforeDialogue(
+            StoryLineSO line,
+            StoryStageLayoutModuleSO stageLayout)
+        {
+            if (line == null || stageLayout == null || line.Modules == null)
+                return false;
+
+            foreach (StoryModuleSO module in line.Modules)
+            {
+                if (module is StoryFadeModuleSO fade
+                    && fade.Timing == StoryModuleTiming.BeforeDialogue
+                    && fade.Direction == StoryFadeDirection.FadeOut)
+                    return true;
+            }
+
             return false;
         }
 
