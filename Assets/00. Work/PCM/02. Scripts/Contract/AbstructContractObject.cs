@@ -11,9 +11,8 @@ namespace _00._Work.PCM._02._Scripts
     {
         private ModuleOwner _owner;
         [field:SerializeField]public UnityEvent OnClickEvent { get; set; }
-        [field: SerializeField]public UnityEvent<int> OnLike { get; set; }
-
         [field:SerializeField]public CharacterEnum characterEnum { get; }
+        [field:SerializeField]public UnityEvent<int> OnLike { get; set; }
 
         public virtual void ExcuteClick()
         {
