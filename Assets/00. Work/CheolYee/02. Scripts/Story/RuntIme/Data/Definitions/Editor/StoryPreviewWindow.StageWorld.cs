@@ -190,6 +190,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (IsPointerTargetWithinActor(e.target) || !IsCameraGizmoHandleHit(e.position))
                 return;
 
+            SetInteractionContext(InteractionContext.Stage);
+            FocusStageWorkspace();
             if (TryBeginCameraGizmoDrag(_stageWrapper, e.pointerId, e.position))
                 e.StopPropagation();
         }
@@ -223,6 +225,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void OnStageEmptyClick(PointerDownEvent e)
         {
             if (previewMode != PreviewMode.StageAuthoring || e.button != 0) return;
+            SetInteractionContext(InteractionContext.Stage);
+            FocusStageWorkspace();
             ClearStageSelection();
             HighlightSelectedActor();
             RefreshActorInspector();
@@ -232,6 +236,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private void OnStageWheel(WheelEvent e)
         {
             if (previewMode != PreviewMode.StageAuthoring) return;
+            SetInteractionContext(InteractionContext.Stage);
 
             if (e.ctrlKey)
             {
@@ -256,6 +261,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (previewMode != PreviewMode.StageAuthoring) return;
             if (e.button != 2) return;
 
+            SetInteractionContext(InteractionContext.Stage);
+            FocusStageWorkspace();
             _isPanDragging      = true;
             _panDragStartMouse  = e.localPosition;
             _panDragStartOffset = _stagePanOffset;

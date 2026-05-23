@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared;
 using UnityEditor.UIElements;
 
 namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
@@ -21,6 +22,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private SoundTimelineRowKind _selectedSoundRowKind = SoundTimelineRowKind.Bgm;
         private StoryBgmKeyframeData _selectedBgmKey;
         private StorySfxKeyframeData _selectedSfxKey;
+        private readonly List<SoundClipboardEntry> _soundClipboardEntries = new();
+
+        private sealed class SoundClipboardEntry
+        {
+            public SoundTimelineRowKind rowKind;
+            public StoryBgmKeyframeData bgmKey;
+            public StorySfxKeyframeData sfxKey;
+            public float timeSeconds;
+        }
 
         private static bool HasEnumOptions<TEnum>() where TEnum : Enum =>
             Enum.GetValues(typeof(TEnum)).Length > 0;
@@ -31,6 +41,127 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _sfxTimelineKeyProxies.Clear();
             _timelineProxyToBgmKeys.Clear();
             _timelineProxyToSfxKeys.Clear();
+        }
+
+        private void CopySelectedSoundTimelineKeys()
+        {
+            IReadOnlyList<StoryActorKeyframeData> soundKeys = GetCurrentSoundTimelineKeyframes();
+            List<StoryActorKeyframeData> selected = GetSelectedTimelineKeys(soundKeys);
+            if (selected.Count == 0)
+                return;
+
+            selected.Sort((a, b) => StoryTransitionSampler.GetKeyTime(a).CompareTo(StoryTransitionSampler.GetKeyTime(b)));
+            _soundClipboardEntries.Clear();
+            foreach (StoryActorKeyframeData proxy in selected)
+            {
+                StoryBgmKeyframeData bgmKey = ResolveBgmKeyFromProxy(proxy);
+                if (bgmKey != null)
+                {
+                    _soundClipboardEntries.Add(new SoundClipboardEntry
+                    {
+                        rowKind = SoundTimelineRowKind.Bgm,
+                        bgmKey = bgmKey.ShallowClone(),
+                        timeSeconds = bgmKey.timeSeconds
+                    });
+                    continue;
+                }
+
+                StorySfxKeyframeData sfxKey = ResolveSfxKeyFromProxy(proxy);
+                if (sfxKey == null)
+                    continue;
+
+                _soundClipboardEntries.Add(new SoundClipboardEntry
+                {
+                    rowKind = SoundTimelineRowKind.Sfx,
+                    sfxKey = sfxKey.ShallowClone(),
+                    timeSeconds = sfxKey.timeSeconds
+                });
+            }
+
+            _timelineClipboardSelectionKind = StageSelectionKind.Sound;
+        }
+
+        private void PasteSoundTimelineKeysAtPlayhead()
+        {
+            if (_soundClipboardEntries.Count == 0 || _timelineClipboardSelectionKind != StageSelectionKind.Sound)
+                return;
+
+            float firstTime = float.MaxValue;
+            foreach (SoundClipboardEntry entry in _soundClipboardEntries)
+                firstTime = Mathf.Min(firstTime, entry.timeSeconds);
+
+            SaveSoundTrackToCurrent(track =>
+            {
+                _selectedTimelineKeys.Clear();
+                foreach (SoundClipboardEntry entry in _soundClipboardEntries)
+                {
+                    float targetTime = _timelinePlayheadTime + Mathf.Max(0f, entry.timeSeconds - firstTime);
+                    if (entry.rowKind == SoundTimelineRowKind.Bgm)
+                    {
+                        StoryBgmKeyframeData target = FindBgmKeyAtTime(track, targetTime);
+                        StoryBgmKeyframeData source = entry.bgmKey;
+                        if (source == null)
+                            continue;
+
+                        if (target == null)
+                        {
+                            target = source.ShallowClone();
+                            track.bgmKeyframes.Add(target);
+                        }
+                        else
+                        {
+                            target.operation = source.operation;
+                            target.bgmSound = source.bgmSound;
+                            target.transitionMode = source.transitionMode;
+                        }
+
+                        target.timeSeconds = targetTime;
+                        target.normalizedTime = Mathf.Clamp01(targetTime / Mathf.Max(1f, GetTimelineDuration()));
+                        StoryActorKeyframeData proxy = GetOrCreateSoundKeyProxy(target);
+                        if (proxy != null)
+                            _selectedTimelineKeys.Add(proxy);
+                        continue;
+                    }
+
+                    StorySfxKeyframeData sfxTarget = FindSfxKeyAtTime(track, targetTime);
+                    StorySfxKeyframeData sfxSource = entry.sfxKey;
+                    if (sfxSource == null)
+                        continue;
+
+                    if (sfxTarget == null)
+                    {
+                        sfxTarget = sfxSource.ShallowClone();
+                        track.sfxKeyframes.Add(sfxTarget);
+                    }
+                    else
+                    {
+                        sfxTarget.sfxSound = sfxSource.sfxSound;
+                    }
+
+                    sfxTarget.timeSeconds = targetTime;
+                    sfxTarget.normalizedTime = Mathf.Clamp01(targetTime / Mathf.Max(1f, GetTimelineDuration()));
+                    StoryActorKeyframeData sfxProxy = GetOrCreateSoundKeyProxy(sfxTarget);
+                    if (sfxProxy != null)
+                        _selectedTimelineKeys.Add(sfxProxy);
+                }
+
+                StoryActorKeyframeData primarySelection = null;
+                foreach (StoryActorKeyframeData key in _selectedTimelineKeys)
+                {
+                    primarySelection = key;
+                    break;
+                }
+
+                _selectedTimelineProperty = primarySelection != null
+                    ? primarySelection.property
+                    : ResolveDefaultSoundTimelineProperty();
+                _selectedTimelineKeyIndex = -1;
+                _selectedTimelineSegmentKeyIndex = -1;
+            }, refresh: true);
+
+            NormalizeTimelineSelectionFromSet(_selectedTimelineProperty);
+            UpdateSelectedSoundKeysFromTimelineSelection();
+            RefreshTimelinePanel();
         }
 
         private void CleanupSoundTimelineProxies(StorySoundTrackData track)
@@ -377,7 +508,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
 
             StoryStageLayoutModuleSO layout = enabled
-                ? GetOrCreateCurrentStageLayout("Edit Line Sound Override")
+                ? GetOrCreateCurrentStageLayout("Edit Line Sound Override", InteractionContext.Stage)
                 : FindCurrentStageLayout();
             if (layout == null)
             {
@@ -385,7 +516,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
             }
 
-            Undo.RecordObject(layout, "Edit Line Sound Override");
+            RecordStageUndo(layout, "Edit Line Sound Override");
             if (enabled && IsUninitializedLineSoundSettings(layout))
                 layout.SoundSettingsEditable.CopyFrom(ResolveEpisodeSoundDefaultsForDisplay());
 
@@ -402,7 +533,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (episode == null)
                 return;
 
-            Undo.RecordObject(episode, "Edit Episode Sound Defaults");
+            RecordStageUndo(episode, "Edit Episode Sound Defaults");
             if (!episode.HasExplicitDefaultSoundSettingsEditable)
                 episode.DefaultSoundSettingsEditable.CopyFrom(ResolveEpisodeSoundDefaultsForDisplay());
 
@@ -835,6 +966,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (e.button != 0)
                 return;
 
+            SetInteractionContext(InteractionContext.Timeline);
             _timelinePanel?.Focus();
             _selectedSoundRowKind = rowKind;
 
@@ -880,11 +1012,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (!IsStageAuthoringMode || _currentLine == null)
                 return;
 
-            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Line Sound Settings");
+            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Line Sound Settings", InteractionContext.Stage);
             if (layout == null)
                 return;
 
-            Undo.RecordObject(layout, "Edit Line Sound Settings");
+            RecordStageUndo(layout, "Edit Line Sound Settings");
             if (IsUninitializedLineSoundSettings(layout))
                 layout.SoundSettingsEditable.CopyFrom(ResolveEpisodeSoundDefaultsForDisplay());
 
@@ -906,13 +1038,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (!IsStageAuthoringMode || _currentLine == null)
                 return;
 
-            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Sound Timeline");
+            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Sound Timeline", InteractionContext.Timeline);
             if (layout == null)
                 return;
 
             EnsureResolvedSoundOverrideState(layout);
             if (!_suppressTimelineUndoRecording)
-                Undo.RecordObject(layout, "Edit Sound Timeline");
+                RecordTimelineUndo(layout, "Edit Sound Timeline");
             StorySoundTrackData track = layout.SoundTrackEditable;
             track.bgmKeyframes ??= new System.Collections.Generic.List<StoryBgmKeyframeData>();
             track.sfxKeyframes ??= new System.Collections.Generic.List<StorySfxKeyframeData>();
@@ -921,6 +1053,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             track.sfxKeyframes.RemoveAll(k => k == null);
             track.bgmKeyframes.Sort((a, b) => a.timeSeconds.CompareTo(b.timeSeconds));
             track.sfxKeyframes.Sort((a, b) => a.timeSeconds.CompareTo(b.timeSeconds));
+            ClearSoundTimelineProxyCache();
             MarkLayoutDirty(layout, saveNow: false);
 
             if (_selectedBgmKey != null && !track.bgmKeyframes.Contains(_selectedBgmKey))
@@ -940,10 +1073,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     _selectedTimelineKeyIndex = IndexOfTimelineKey(soundKeys, selectedProxy);
                     if (_selectedTimelineKeyIndex >= 0 && selectedProxy != null)
                     {
-                        _selectedTimelineProperty = selectedProxy.property;
-                        _selectedTimelineKeys.Add(selectedProxy);
-                    }
-                }
+                _selectedTimelineProperty = selectedProxy.property;
+                _selectedTimelineKeys.Add(selectedProxy);
+            }
+        }
                 else
                 {
                     NormalizeTimelineSelectionFromSet(_selectedTimelineProperty);
@@ -1163,6 +1296,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _selectedTimelineSegmentKeyIndex = -1;
                 _selectedTimelineKeys.Clear();
             }, refresh: removed);
+
+            if (removed)
+            {
+                ClearSoundTimelineProxyCache();
+                RefreshTimelinePanel();
+            }
 
             return removed;
         }

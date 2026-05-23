@@ -192,6 +192,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 style = { flexGrow = 1, overflow = Overflow.Hidden, backgroundColor = new StyleColor(new Color(0.04f, 0.04f, 0.05f)) }
             };
+            _stageWrapper.focusable = true;
             BuildStoryRenderingRoot();
             _stageWrapper.Add(_stageWorld);
             BuildLetterboxOverlays();

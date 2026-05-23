@@ -268,9 +268,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 if (!IsStageAuthoringMode || e.button != 0)
                     return;
 
+                SetInteractionContext(InteractionContext.Stage);
+                FocusStageWorkspace();
                 dragging = true;
                 pointerId = e.pointerId;
-                Undo.RecordObject(actor, undoName);
+                RecordStageUndo(actor, undoName);
                 handle.CapturePointer(pointerId);
                 e.StopPropagation();
             });
@@ -711,6 +713,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_timelineIsPlaying)
                 StopTimelinePlayback();
 
+            SetInteractionContext(InteractionContext.Stage);
+            FocusStageWorkspace();
             bool wasAlreadyCamera = _selectionKind == StageSelectionKind.Camera;
             SelectCamera();
             if (_selectionKind != StageSelectionKind.Camera)
@@ -841,6 +845,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     return;
                 if (BlocksActorManipulationBySelectedKey(actorKey, StoryActorKeyframeProperty.Position))
                     return;
+                SetInteractionContext(InteractionContext.Stage);
+                FocusStageWorkspace();
                 if (_timelineIsPlaying) StopTimelinePlayback();
                 if (_stageState.TryGetValue(actorKey, out StoryActorStateData currentData))
                     data = currentData;
@@ -953,6 +959,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     return;
                 if (BlocksActorManipulationBySelectedKey(actorKey, StoryActorKeyframeProperty.Scale))
                     return;
+                SetInteractionContext(InteractionContext.Stage);
+                FocusStageWorkspace();
                 if (_timelineIsPlaying) StopTimelinePlayback();
                 if (_stageState.TryGetValue(actorKey, out StoryActorStateData currentData))
                     data = currentData;
