@@ -36,6 +36,18 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
 
             foreach (ObjectDataSO obsData in objectDataSOs)
             {
+                if (obsData == null)
+                {
+                    Debug.Log("obsDataSO is null");
+                    continue;
+                }
+
+                if (obsData.Icon == null)
+                {
+                    Debug.Log("obsData.Icon is null");
+                    continue;   
+                }
+
                 sprites.Add(obsData.Icon);
             }
             
