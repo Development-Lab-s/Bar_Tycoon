@@ -8,19 +8,20 @@ namespace _00._Work.PCM._02._Scripts
 {
     public abstract class AbstructContractObject :MonoBehaviour,IContractObject,IModule
     {
-
         private ModuleOwner _owner;
         [field: SerializeField]public UnityEvent OnClickEvent { get; set; }
-        [field: SerializeField]public CharacterEnum characterEnum { get; }
+        [field: SerializeField]public CharacterEnum characterEnum { get; set; }
         [field: SerializeField]public UnityEvent<int> OnLike { get; set; }
 
         [SerializeField]private SpriteRenderer spriteRenderer;
         Material material;
         protected bool isHover;
+        private float tintValue = 0.21f;
         private void Start()
         {
             material = spriteRenderer.material;
             material.SetFloat("_OuterOutlineFade", 0);
+            material.SetFloat("_StrongTintFade", 0);
         }
         public virtual void ExcuteClick()
         {
@@ -31,6 +32,7 @@ namespace _00._Work.PCM._02._Scripts
             isHover = true;
             material = spriteRenderer.material;
             material.SetFloat("_OuterOutlineFade", 1);
+            material.SetFloat("_StrongTintFade", tintValue);
         }
 
         public virtual void UnHover()
@@ -38,6 +40,7 @@ namespace _00._Work.PCM._02._Scripts
             isHover = false;
             material = spriteRenderer.material;
             material.SetFloat("_OuterOutlineFade", 0);
+            material.SetFloat("_StrongTintFade", 0);
         }
 
         public void Initialize(ModuleOwner owner)

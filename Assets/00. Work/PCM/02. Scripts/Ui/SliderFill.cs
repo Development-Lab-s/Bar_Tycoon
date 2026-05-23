@@ -1,16 +1,27 @@
-using Gamelib.EventSystem;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class SliderFill : MonoBehaviour
 {
-    [SerializeField]private PlayerCharController[] charController;
-    [SerializeField]private int choseCharacter; 
-    private Image Slider;
-    private void Awake()
+    [SerializeField]
+    private PlayerCharController[] charController;
+
+    private int _choseCharacter;
+
+    public int ChoseCharacter
     {
-        Slider = GetComponent<Image>();
+        get
+        {
+            return _choseCharacter;
+        }
+        set
+        {
+            _choseCharacter = value;
+
+            SliderAmount();
+        }
     }
+    [SerializeField]private Image _slider;
     private void OnEnable()
     {
         SliderAmount();
@@ -18,6 +29,16 @@ public class SliderFill : MonoBehaviour
 
     private void SliderAmount()
     {
-        Slider.fillAmount = charController[choseCharacter].GetExpRatio();
+        if (charController == null ||
+            charController.Length == 0)
+            return;
+
+        if (_choseCharacter < 0 ||
+            _choseCharacter >= charController.Length)
+            return;
+
+        _slider.fillAmount =
+            charController[_choseCharacter]
+            .GetExpRatio();
     }
 }

@@ -128,7 +128,10 @@ public class LeaderBoardManager : MonoBehaviour
             Debug.LogError($"닉네임 변경 실패 : {e}");
         }
     }
-
+    public async void GetMyLeaderboardInfoNasync()
+    {
+        await GetMyLeaderboardInfo();
+    }
     public async Task GetMyLeaderboardInfo()
     {
         await ScoreAddAsync();
