@@ -3,7 +3,6 @@ using Agents.StatSystem;
 using BBJ.Movement;
 using BBJ.States;
 using System;
-using UnityEditorInternal;
 using UnityEngine;
 
 namespace BBJ
