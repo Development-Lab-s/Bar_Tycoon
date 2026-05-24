@@ -13,7 +13,7 @@ namespace _00._Work.PCM._02._Scripts
         [field: SerializeField]public CharacterEnum characterEnum { get; set; }
         [field: SerializeField]public UnityEvent<int> OnLike { get; set; }
 
-        [SerializeField]private SpriteRenderer spriteRenderer;
+        [SerializeField]private Renderer spriteRenderer;
         Material material;
         protected bool isHover;
         private float tintValue = 0.21f;

@@ -4,6 +4,7 @@ using Gamelib.EventSystem;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace BBJ.GridSystem.Objects
 {
@@ -105,6 +106,7 @@ namespace BBJ.GridSystem.Objects
             if (data?.WorkplacePrefab != null)
             {
                 var go = Instantiate(data.WorkplacePrefab, worldPos, Quaternion.identity);
+                SceneManager.MoveGameObjectToScene(go.gameObject, gameObject.scene);
                 tycoonObject = go.GetComponent<TycoonObject>();
 
                 Func<Vector2Int, Vector3> offsetToWorld = off => _gridManager.CellToWorld(cellIndex + off);
