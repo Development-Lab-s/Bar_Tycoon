@@ -55,6 +55,7 @@ namespace Systems
         { 
             if (context.performed)
             {
+                soundChannel.RaiseEvent(new PlaySoundEvent((SfxSounds)13,Vector3.zero,SoundChannelId.None));
                 if (EventSystem.current.IsPointerOverGameObject())
                     return;
                 // 현재 Hover 대상 클릭

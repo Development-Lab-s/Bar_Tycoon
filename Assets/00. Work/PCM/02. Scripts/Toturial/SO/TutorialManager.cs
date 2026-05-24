@@ -39,6 +39,7 @@ public class TutorialManager : MonoBehaviour
                 currentPages = tutorialDatas[i].data;
                 pageIndex = 0;
                 parents.SetActive(true);
+                tutorialDatas[i].isEnd = true;
                 ShowTutorial(pageIndex);
                 SaveTutorial();
                 return;
@@ -58,8 +59,6 @@ public class TutorialManager : MonoBehaviour
         // 마지막 페이지 도달
         if (pageIndex >= currentPages.Length)
         {
-            tutorialDatas[currentTutorialIndex].isEnd = true;
-
             parents.SetActive(false);
 
             Debug.Log(
