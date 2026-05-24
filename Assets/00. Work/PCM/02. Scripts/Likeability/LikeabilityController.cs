@@ -4,6 +4,9 @@ using _00._Work._Resources._02._Scripts.Systems;
 using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
 using _00._Work.Goat._02._Scripts.Coin.CoinDatas;
 using _00._Work.PCM._02._Scripts;
+using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
+using System.Diagnostics.Tracing;
 using Systems;
 using TMPro;
 using UnityEngine;
@@ -15,6 +18,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 {
     [SerializeField]private CharItemSO _itemSO; //Char은 매력이라는 뜻 ㅇㅇ
     [SerializeField]private CoinData _coinData;
+    [SerializeField] private EventChannelSO soundChannel;
     public UnityEvent errorMessage;
     public UnityEvent targetMessage;
     private Image _image;

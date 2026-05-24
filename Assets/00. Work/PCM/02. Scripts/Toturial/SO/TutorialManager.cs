@@ -40,7 +40,7 @@ public class TutorialManager : MonoBehaviour
                 pageIndex = 0;
                 parents.SetActive(true);
                 ShowTutorial(pageIndex);
-                //SaveTutorial();
+                SaveTutorial();
                 return;
             }
         }
