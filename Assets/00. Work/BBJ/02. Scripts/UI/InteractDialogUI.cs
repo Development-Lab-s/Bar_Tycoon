@@ -1,9 +1,26 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
-using BBJ.UI;
 
-public class InteractDialogUI : MonoBehaviour, IAgentUI
+namespace BBJ.UI
 {
-    private void Awake() { gameObject.SetActive(false); }
-    public void OnOpen() { gameObject.SetActive(true); }
-    public void OnClose() { gameObject.SetActive(false); }
+    public class InteractDialogUI : MonoBehaviour, IAgentUI
+    {
+        public bool IsOpen { get; private set; }
+
+        private void Awake() { gameObject.SetActive(false); }
+
+        public UniTask OpenAsync()
+        {
+            gameObject.SetActive(true);
+            IsOpen = true;
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask CloseAsync()
+        {
+            gameObject.SetActive(false);
+            IsOpen = false;
+            return UniTask.CompletedTask;
+        }
+    }
 }

@@ -119,6 +119,10 @@ namespace BBJ.Order
                 AddToPending(e.Ticket);
         }
 
+        public bool IsProcessing { get; private set; }
+        public void SetProcessing()   => IsProcessing = true;
+        public void ClearProcessing() => IsProcessing = false;
+
         public void RebuildReadyCount(IEnumerable<OrderTicket> tickets)
         {
             _readyCount.Clear();

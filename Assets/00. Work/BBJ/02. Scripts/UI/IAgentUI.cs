@@ -1,8 +1,11 @@
+using Cysharp.Threading.Tasks;
+
 namespace BBJ.UI
 {
     public interface IAgentUI
     {
-        void OnOpen();
-        void OnClose();
+        bool IsOpen { get; }
+        UniTask OpenAsync();
+        UniTask CloseAsync();
     }
 }

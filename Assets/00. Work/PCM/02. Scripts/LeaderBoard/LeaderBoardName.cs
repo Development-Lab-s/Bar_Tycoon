@@ -41,7 +41,6 @@ public class LeaderBoardName : MonoBehaviour
             await AuthenticationService.Instance
                 .UpdatePlayerNameAsync(pyName);
 
-            Debug.Log($"닉네임 변경 완료 : {pyName}");
         }
         catch (Exception e)
         {

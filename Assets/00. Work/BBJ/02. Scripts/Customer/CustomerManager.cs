@@ -112,29 +112,62 @@ namespace BBJ.Customer
             int seatIndex = 0;
             foreach (var save in data.Tickets)
             {
-                if (seatIndex >= availableSeats.Count) break;
-
                 var recipe = database?.recipes.FirstOrDefault(r => r.name == save.RecipeId);
                 if (recipe == null) continue;
 
-                var seat = availableSeats[seatIndex++];
                 var customer = _poolManager.Pop<CustomerAgent>(_customerPoolItem);
                 if (customer == null) continue;
 
-                var seatModule = seat.GetComponent<SeatModule>();
-                if (seatModule == null) continue;
+                if (save.WorkPhase != OrderWorkPhase.ReadyForCashier)
+                {
+                    if (seatIndex >= availableSeats.Count) { _poolManager.Push(customer); continue; }
 
-                seatModule.Seat(customer);
-                seatModule.AssignCustomer(customer);
-                customer.AssignedSeat = seat;
+                    var seat      = availableSeats[seatIndex++];
+                    var seatModule = seat.GetModule<SeatModule>();
+                    var occupancy  = seat.GetModule<OccupancyModule>();
+                    if (seatModule == null || occupancy == null) { _poolManager.Push(customer); continue; }
 
-                customer.transform.position = seat.transform.position;
+                    occupancy.TryReserve(customer, null);
+                    occupancy.Occupy(customer);
+                    seatModule.AssignCustomer(customer);
+
+                    var role = customer.GetModule<SchedulingModule>()?.InteractRole;
+                    customer.transform.position = seat.GetNearestPoint(role, _spawnPoint.position);
+                    seatModule.Seat(customer);
+                    customer.AssignedSeat = seat;
+
+                    if (save.WorkPhase == OrderWorkPhase.Eating)
+                        customer.SetFoodServedForRestore();
+                }
+                else
+                {
+                    customer.transform.position = _spawnPoint.position;
+                    customer.SetFoodServedForRestore();
+                }
+
+                customer.RestoreCycleStep = save.WorkPhase switch
+                {
+                    OrderWorkPhase.ReadyForServer  => 1,
+                    OrderWorkPhase.ReadyForServe   => 2,
+                    OrderWorkPhase.Eating          => 3,
+                    OrderWorkPhase.ReadyForCashier => 4,
+                    _                              => 1,
+                };
+
                 _activeCount++;
-
                 customers.Add(customer);
             }
 
             return customers;
+        }
+
+        public void StartRestoredCycles(List<CustomerAgent> customers)
+        {
+            foreach (var customer in customers)
+            {
+                customer.ChangeState(CustomerState.Idle);
+                customer.GetModule<SchedulingModule>()?.AssignWork(_cycleSequence, null);
+            }
         }
 
         // r ∈ [1, 2^n - 1] 균일 샘플 → 비트 길이(r) = 스테이지

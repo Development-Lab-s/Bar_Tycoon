@@ -103,7 +103,6 @@ namespace BBJ.Order
             _orderChannel.AddListener<OrderNotifyCompleteEvent>(HandleOrderNotifyComplete);
             _orderChannel.AddListener<OrderNotifyReleasedEvent>(HandleOrderNotifyReleased);
             _orderChannel.AddListener<OrderReadyForServerEvent>(HandleReadyForServer);
-            _orderChannel.AddListener<PlayerOrderTakeEvent>(HandlePlayerOrderTake);
             _orderChannel.AddListener<CustomerEatCompleteEvent>(HandleCustomerEatComplete);
         }
         private void UnsubEventChannel()
@@ -114,7 +113,6 @@ namespace BBJ.Order
             _orderChannel.RemoveListener<OrderNotifyCompleteEvent>(HandleOrderNotifyComplete);
             _orderChannel.RemoveListener<OrderNotifyReleasedEvent>(HandleOrderNotifyReleased);
             _orderChannel.RemoveListener<OrderReadyForServerEvent>(HandleReadyForServer);
-            _orderChannel.RemoveListener<PlayerOrderTakeEvent>(HandlePlayerOrderTake);
             _orderChannel.RemoveListener<CustomerEatCompleteEvent>(HandleCustomerEatComplete);
         }
         private void RegisterClear()
@@ -130,20 +128,6 @@ namespace BBJ.Order
         private void HandleOrderNotifyComplete(OrderNotifyCompleteEvent e) => NotifyComplete(e.Ticket, e.Actor);
         private void HandleOrderNotifyReleased(OrderNotifyReleasedEvent e) => NotifyReleased(e.Ticket, e.Actor);
         private void HandleReadyForServer(OrderReadyForServerEvent e) => Register(e.Ticket);
-        private void HandlePlayerOrderTake(PlayerOrderTakeEvent e)
-        {
-            var ticket = e.Ticket;
-            if (ticket == null || ticket.IsTerminal) return;
-            if (ticket.WorkPhase != OrderWorkPhase.ReadyForServer) return;
-
-            var entry = _dispatchTable?.FindEntry(ticket.WorkPhase);
-            if (entry == null) return;
-
-            ticket.Release();
-            ticket.WorkPhase = entry.Value.NextPhase;
-            _orderChannel?.RaiseEvent(new OrderStateChangedEvent(ticket));
-            _dispatchTable?.Dispatch(ticket.WorkPhase, ticket);
-        }
 
         private void HandleCustomerEatComplete(CustomerEatCompleteEvent e)
         {

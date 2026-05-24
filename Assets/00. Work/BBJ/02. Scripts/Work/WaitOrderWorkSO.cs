@@ -22,11 +22,20 @@ namespace BBJ.Work
             var seat     = customer?.AssignedSeat;
             if (customer == null || actions == null || seat == null) return WorkResult.Cancelled;
 
-            var orderTicket = customer.PlaceOrder(seat);
-            if (orderTicket == null) return WorkResult.Cancelled;
+            OrderTicket orderTicket;
+            if (customer.OrderPlaced)
+            {
+                orderTicket = customer.ActiveTicket;
+                if (orderTicket == null) return WorkResult.Cancelled;
+            }
+            else
+            {
+                orderTicket = customer.PlaceOrder(seat);
+                if (orderTicket == null) return WorkResult.Cancelled;
+                _ctx.OrderChannel?.RaiseEvent(new OrderReadyForServerEvent(orderTicket));
+            }
 
             customer.SetAwaitingOrder(true);
-            _ctx.OrderChannel?.RaiseEvent(new OrderReadyForServerEvent(orderTicket));
             float deadline = Time.time + _patienceLimit;
 
             try
