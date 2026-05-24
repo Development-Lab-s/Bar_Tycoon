@@ -13,8 +13,7 @@ public class CharItemSO : ScriptableObject
     [field: SerializeField] public int MaxCount { get; private set; } = 99;
     [field: SerializeField]public int CurrentCount { get; set; }
     [field: SerializeField] public int LikePlus { get; private set; }
-
-    public UnityEvent OnChangedCount { get; set; }
+    public UnityEvent OnChangedCount = new();
 
         public void SetCount(int value)
         {
@@ -25,7 +24,7 @@ public class CharItemSO : ScriptableObject
                 GetSaveData(),
                 $"{ItemName}.save",
                 "Items");
-    }
+        }
     public void AddCount(int amount = 1)
     {
         SetCount(CurrentCount + amount);
