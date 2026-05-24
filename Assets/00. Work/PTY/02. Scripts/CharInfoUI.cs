@@ -20,6 +20,7 @@ public class CharInfoUI : MonoBehaviour
     [SerializeField] private Image characterImage;
     [SerializeField] private Image characterTinyImage;
     [SerializeField] private Image characterSDImage;
+    [SerializeField] private Image[] Unlock;
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private TextMeshProUGUI jobText;
@@ -80,6 +81,7 @@ public class CharInfoUI : MonoBehaviour
 
         CenterToCurrentIndex();
         UpdateDetailUI(charList.charList[currentIndex]);
+        Unlocker();
 
         leftArrow.interactable = currentIndex > 0;
         rightArrow.interactable = currentIndex < spawnedIcons.Count - 1;
@@ -113,7 +115,18 @@ public class CharInfoUI : MonoBehaviour
         sliderFill.ChoseCharacter = currentIndex;
         UpdateView();
     }
-
+    private void Unlocker()
+    {
+        for (int i = 0; i < Unlock.Length; i++)
+        {
+            Debug.Log(charList.charList[currentIndex]
+                .charLevel.currentLevel);
+            bool isUnlocked =
+                charList.charList[currentIndex]
+                .charLevel.currentLevel >= 2*(i+1);
+            Unlock[i].gameObject.SetActive(!isUnlocked);
+        }
+    }
     private void OnClickRight()
     {
         currentIndex = Mathf.Min(spawnedIcons.Count - 1, currentIndex + moveStep);

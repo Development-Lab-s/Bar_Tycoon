@@ -11,4 +11,5 @@ public class CharacterDataSO : ScriptableObject
     public string specialty;
     public string hobby;
     public string favoriteCocktail;
+    public CharacterSO charLevel;
 }
