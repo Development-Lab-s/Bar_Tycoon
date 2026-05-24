@@ -450,9 +450,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 }
             });
 
-            string target = !string.IsNullOrWhiteSpace(state.targetActorInstanceKey)
-                ? state.targetActorInstanceKey
-                : layout?.CameraFocusTarget ?? "";
+            string target = state.targetActorInstanceKey ?? "";
             string label = string.IsNullOrWhiteSpace(target) ? "Camera" : $"Camera ({target})";
             row.Add(new Label(label)
             {
@@ -843,6 +841,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
             else if (key.property == StoryActorKeyframeProperty.CameraTarget)
             {
+                StoryStageLayoutModuleSO currentLayout = FindCurrentStageLayout();
+
                 var targetField = new TextField("Target Actor")
                 {
                     value = key.cameraTargetActorKey,
@@ -870,41 +870,29 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     SaveCurrentTimelineKeyframes(currentKeys =>
                     {
                         int index = currentKeys.IndexOf(selectedKeyRef);
-                        if (index >= 0)
-                            currentKeys[index].cameraFollowMode = (StoryCameraFollowMode)e.newValue;
+                        if (index < 0) return;
+                        currentKeys[index].cameraFollowMode = (StoryCameraFollowMode)e.newValue;
+                        if ((StoryCameraFollowMode)e.newValue == StoryCameraFollowMode.SnapshotPosition
+                            && !string.IsNullOrWhiteSpace(currentKeys[index].cameraTargetActorKey)
+                            && TryResolveCurrentFrameActorStagePosition(currentKeys[index].cameraTargetActorKey, out Vector2 snapPosition))
+                        {
+                            currentKeys[index].cameraSnapshotNormalizedPosition = snapPosition;
+                        }
                     }, refresh: false);
                     ApplyTimelinePlayheadSample();
+                    RefreshActorInspector();
                     RefreshTimelinePanel();
                 });
                 _inspectorRoot.Add(followModeField);
-
-                var moveModeField = new EnumField("Move Mode", key.cameraMoveMode)
-                {
-                    style = { marginBottom = 3 }
-                };
-                moveModeField.RegisterValueChangedCallback(e =>
-                {
-                    SaveCurrentTimelineKeyframes(currentKeys =>
-                    {
-                        int index = currentKeys.IndexOf(selectedKeyRef);
-                        if (index >= 0)
-                            currentKeys[index].cameraMoveMode = (StoryCameraMoveMode)e.newValue;
-                    }, refresh: false);
-                    ApplyTimelinePlayheadSample();
-                    RefreshTimelinePanel();
-                });
-                _inspectorRoot.Add(moveModeField);
 
                 var actorKeysRow = new VisualElement
                 {
                     style = { flexDirection = FlexDirection.Row, flexWrap = Wrap.Wrap, marginBottom = 4 }
                 };
-                foreach (var kvp in _stageState)
-                {
-                    if (kvp.Value == null || !kvp.Value.visible)
-                        continue;
 
-                    string captured = kvp.Key;
+                foreach (StoryActorStateData actorEntry in EnumerateCurrentLineCameraTargetActors(currentLayout))
+                {
+                    string captured = actorEntry.ResolvedActorKey;
                     actorKeysRow.Add(MakeBtn(captured, new Color(0.22f, 0.28f, 0.22f), () =>
                     {
                         SaveCurrentTimelineKeyframes(currentKeys =>
@@ -913,7 +901,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                             if (index >= 0)
                             {
                                 currentKeys[index].cameraTargetActorKey = captured;
-                                currentKeys[index].cameraSnapshotNormalizedPosition = kvp.Value.stageLocalPosition;
+                                if (currentKeys[index].cameraFollowMode == StoryCameraFollowMode.SnapshotPosition
+                                    && TryResolveCurrentFrameActorStagePosition(captured, out Vector2 snapPosition))
+                                {
+                                    currentKeys[index].cameraSnapshotNormalizedPosition = snapPosition;
+                                }
                             }
                         }, refresh: false);
                         ApplyTimelinePlayheadSample();
@@ -921,6 +913,18 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                         RefreshTimelinePanel();
                     }));
                 }
+                actorKeysRow.Add(MakeBtn("Clear", new Color(0.30f, 0.20f, 0.20f), () =>
+                {
+                    SaveCurrentTimelineKeyframes(currentKeys =>
+                    {
+                        int index = currentKeys.IndexOf(selectedKeyRef);
+                        if (index >= 0)
+                            currentKeys[index].cameraTargetActorKey = "";
+                    }, refresh: false);
+                    ApplyTimelinePlayheadSample();
+                    RefreshActorInspector();
+                    RefreshTimelinePanel();
+                }));
                 _inspectorRoot.Add(actorKeysRow);
             }
             else if (key.property == StoryActorKeyframeProperty.CameraOffset)
@@ -968,6 +972,46 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 _inspectorRoot.Add(new HelpBox("Camera Shake keys are no longer supported.", HelpBoxMessageType.Info));
             }
 
+        }
+
+        private IEnumerable<StoryActorStateData> EnumerateCurrentLineCameraTargetActors(StoryStageLayoutModuleSO layout)
+        {
+            if (layout?.ActorsEditable == null)
+                yield break;
+
+            var emitted = new HashSet<string>();
+            foreach (StoryActorStateData entry in layout.ActorsEditable)
+            {
+                if (entry == null || !entry.visible)
+                    continue;
+
+                string key = entry.ResolvedActorKey;
+                if (string.IsNullOrWhiteSpace(key) || !emitted.Add(key))
+                    continue;
+
+                yield return entry;
+            }
+        }
+
+        private bool TryResolveCurrentFrameActorStagePosition(string actorInstanceKey, out Vector2 stagePosition)
+        {
+            if (!string.IsNullOrWhiteSpace(actorInstanceKey)
+                && _stageState.TryGetValue(actorInstanceKey, out StoryActorStateData currentState)
+                && currentState != null)
+            {
+                stagePosition = currentState.stageLocalPosition;
+                return true;
+            }
+
+            StoryActorStateData authoredEntry = FindActorEntry(FindCurrentStageLayout(), actorInstanceKey);
+            if (authoredEntry != null)
+            {
+                stagePosition = authoredEntry.stageLocalPosition;
+                return true;
+            }
+
+            stagePosition = default;
+            return false;
         }
 
         private void BuildSelectedTimelineGroupInspector()
@@ -1344,7 +1388,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             CopyBackgroundState(previousBackground, layout.BackgroundEditable);
             CopyCameraState(previousCamera, layout.CameraTrackEditable.defaultState);
-            layout.CameraFocusTargetEditable = previousCamera?.targetActorInstanceKey ?? "";
             SaveLayoutAndRefresh(layout);
         }
 
@@ -1847,7 +1890,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             camera = StoryTransitionSampler.SampleCameraTrackAtTime(
                 layout.CameraTrack,
-                layout.CameraFocusTarget,
+                "",
                 StoryTransitionSampler.GetCameraTrackDuration(layout.CameraTrack));
             return actors.Count > 0 || background != null || !IsDefaultCameraState(camera);
         }
@@ -1875,23 +1918,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 target.stageLocalPosition = Vector2.zero;
                 target.zoom = 1f;
-                target.targetActorInstanceKey = "";
-                target.followMode = StoryCameraFollowMode.FollowActor;
-                target.moveMode = StoryCameraMoveMode.Smooth;
-                target.normalizedOffset = Vector2.zero;
-                target.zoomMultiplier = 1f;
-                target.snapshotNormalizedPosition = new Vector2(0.5f, 0.5f);
                 return;
             }
 
             target.stageLocalPosition = source.stageLocalPosition;
             target.zoom = source.zoom;
-            target.targetActorInstanceKey = source.targetActorInstanceKey ?? "";
-            target.followMode = source.followMode;
-            target.moveMode = source.moveMode;
-            target.normalizedOffset = source.normalizedOffset;
-            target.zoomMultiplier = source.zoomMultiplier;
-            target.snapshotNormalizedPosition = source.snapshotNormalizedPosition;
         }
 
         private static bool IsDefaultCameraState(StoryCameraStateData state)
@@ -1900,13 +1931,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return true;
 
             return state.stageLocalPosition == Vector2.zero
-                && Mathf.Approximately(state.zoom, 1f)
-                && string.IsNullOrWhiteSpace(state.targetActorInstanceKey)
-                && state.followMode == StoryCameraFollowMode.FollowActor
-                && state.moveMode == StoryCameraMoveMode.Smooth
-                && state.normalizedOffset == Vector2.zero
-                && Mathf.Approximately(state.zoomMultiplier, 1f)
-                && state.snapshotNormalizedPosition == new Vector2(0.5f, 0.5f);
+                && Mathf.Approximately(state.zoom, 1f);
         }
 
         private void SaveBackgroundStateToCurrent(Action<StoryBackgroundStateData> setter)

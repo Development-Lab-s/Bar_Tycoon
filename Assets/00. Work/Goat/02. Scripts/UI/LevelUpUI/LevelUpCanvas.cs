@@ -1,4 +1,7 @@
-﻿using _00._Work.Lusaload._02._Scripts.SO;
+﻿using System.Collections.Generic;
+using _00._Work.Goat._02._Scripts.Events;
+using _00._Work.Lusaload._02._Scripts.SO;
+using Gamelib.EventSystem;
 using TMPro;
 using UnityEngine;
 
@@ -6,35 +9,47 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
 {
     public class LevelUpCanvas : MonoBehaviour
     {
-        [Header("SO")]
+        [Header("RewardSO")]
         [SerializeField] private LevelUpRewardSOs levelUpRewardSOs;
+
+        [Header("eventChannel")] 
+        [SerializeField] private EventChannelSO levelUpRewardeExitBtnClickEvent;
         
         [Header("Reference")]
         [SerializeField] private LevelUpRewardManager levelUpRewardManager;
-        [SerializeField] private LevelUpContainer levelUpContainer;
+        [SerializeField] private LevelUpContainer levelUpCocktailContainer;
+        [SerializeField] private LevelUpContainer levelUpFunctionContainer;
         [SerializeField] private GameObject levelUpObject;
         [SerializeField] private TextMeshProUGUI levelText;
 
         private void Awake()
         {
             levelUpRewardManager.OnCockTailAdd += HandleCockTailAdd;
+            levelUpRewardManager.OnFuncAdd += HandleFuncAdd;
         }
 
         private void OnDestroy()
         {
             levelUpRewardManager.OnCockTailAdd -= HandleCockTailAdd;
+            levelUpRewardManager.OnFuncAdd -= HandleFuncAdd;
         }
 
+        private void HandleFuncAdd(Sprite obj)
+        {
+            ShowUI();
+            levelUpFunctionContainer.SpawnSlotSprite(obj);
+        }
         private void HandleCockTailAdd(int level, CocktailRecipeSO cockTailSo)
         {
             ShowUI();
             levelText.text = level.ToString();
-            levelUpContainer.SpawnSlot(cockTailSo);
+            levelUpCocktailContainer.SpawnSlotCockTail(cockTailSo);
         }
 
         public void ExitBtn()
         {
             levelUpObject.SetActive(false);
+            levelUpRewardeExitBtnClickEvent.RaiseEvent(new LevelUpRewardeExitBtnClickEvent());
         }
 
         [ContextMenu("Show UI")]

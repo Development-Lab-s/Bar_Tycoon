@@ -33,11 +33,13 @@ public class CharInfoUI : MonoBehaviour
     private List<CharListIcon> spawnedIcons = new();
     private int currentIndex = 0;
 
+    [SerializeField]private SliderFill sliderFill;
     private void OnEnable()
     {
         SpawnIcons();
         currentIndex = 0;
         StartCoroutine(InitAfterLayout());
+        sliderFill.ChoseCharacter = currentIndex;
     }
 
     private IEnumerator InitAfterLayout()
@@ -108,12 +110,14 @@ public class CharInfoUI : MonoBehaviour
     private void OnClickLeft()
     {
         currentIndex = Mathf.Max(0, currentIndex - moveStep);
+        sliderFill.ChoseCharacter = currentIndex;
         UpdateView();
     }
 
     private void OnClickRight()
     {
         currentIndex = Mathf.Min(spawnedIcons.Count - 1, currentIndex + moveStep);
+        sliderFill.ChoseCharacter = currentIndex;
         UpdateView();
     }
 }

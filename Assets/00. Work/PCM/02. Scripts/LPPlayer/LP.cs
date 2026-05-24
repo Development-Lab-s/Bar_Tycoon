@@ -13,7 +13,7 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
         [SerializeField] protected EventChannelSO SoundEventChannel;
         [SerializeField] protected Ease easeType;
         [SerializeField] protected SoundListSo SoundList;
-        protected RectTransform rect;
+        public RectTransform rect;
         protected MotionHandle moveMotion;
         protected MotionHandle rotateMotion;
         public virtual void Awake()
@@ -27,6 +27,7 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
         }
         public virtual void Active()
         {
+            Debug.Log("선 실행");
             // 기존에 실행 중인 동작이 있다면 안전하게 취소
             StopExistingMotions();
             //rect.localRotation = Quaternion.identity;

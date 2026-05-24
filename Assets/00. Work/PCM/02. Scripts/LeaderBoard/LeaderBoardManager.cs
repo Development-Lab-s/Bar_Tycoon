@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using TMPro;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Leaderboards;
@@ -32,7 +33,7 @@ public class LeaderBoardManager : MonoBehaviour
     [SerializeField] private LikeitemListSo listSo;
     [SerializeField] private ExpData expData;
     [SerializeField] private CoinData coinData;
-
+    [SerializeField]private TextMeshProUGUI nicknameSetting;
     private int limit = 50;
 
     public List<LeaderBoardData> infoTuple = new();
@@ -49,8 +50,8 @@ public class LeaderBoardManager : MonoBehaviour
                 await AuthenticationService.Instance
                     .SignInAnonymouslyAsync();
             }
-
             _isInitialized = true;
+            nicknameSetting.text = GetMyNickName();
         }
         catch (Exception e)
         {
@@ -87,7 +88,7 @@ public class LeaderBoardManager : MonoBehaviour
                 playerLevel = expData.currentLevel,
                 favoriteCharacter = listSo.MostCharacter()
             };
-
+        Debug.Log(listSo.MostCharacter());
         string jsonMetadata =
             JsonConvert.SerializeObject(extraData);
 
@@ -122,13 +123,17 @@ public class LeaderBoardManager : MonoBehaviour
                 .UpdatePlayerNameAsync(pyName);
 
             Debug.Log($"닉네임 변경 완료 : {pyName}");
+            //nicknameSetting.text = GetMyNickName();
         }
         catch (Exception e)
         {
             Debug.LogError($"닉네임 변경 실패 : {e}");
         }
     }
-
+    public async void GetMyLeaderboardInfoNasync()
+    {
+        await GetMyLeaderboardInfo();
+    }
     public async Task GetMyLeaderboardInfo()
     {
         await ScoreAddAsync();
@@ -219,5 +224,21 @@ public class LeaderBoardManager : MonoBehaviour
         {
             Debug.LogError($"점수 가져오기 실패 : {e}");
         }
+    }
+    public string GetMyNickName()
+    {
+        if (!_isInitialized)
+            return string.Empty;
+
+        string playerName =
+            AuthenticationService.Instance.PlayerName;
+
+        if (Regex.IsMatch(playerName, @"#\d{4}$"))
+        {
+            playerName =
+                playerName.Substring(0, playerName.Length - 5);
+        }
+
+        return playerName;
     }
 }

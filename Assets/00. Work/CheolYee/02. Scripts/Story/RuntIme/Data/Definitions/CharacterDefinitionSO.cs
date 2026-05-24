@@ -38,6 +38,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
 
         [Header("Presentation")]
         [SerializeField] private Sprite logIcon;
+        [SerializeField] private Color personalColor = Color.white;
         [HideInInspector]
         [SerializeField] private GameObject defaultActorPrefab;
         [HideInInspector]
@@ -56,6 +57,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions
         public string CharacterId => characterId;
         public string DisplayName => displayName;
         public Sprite LogIcon => logIcon;
+        public Color PersonalColor => personalColor;
         public GameObject DefaultActorPrefab => defaultActorPrefab;
         public Sprite PreviewSprite => previewSprite != null ? previewSprite : logIcon;
         public Sprite DefaultFullBodySprite => defaultFullBodySprite != null ? defaultFullBodySprite : PreviewSprite;

@@ -13,14 +13,11 @@ public class LPBOX : MonoBehaviour
     private bool _isOpen = false;
     public void SetUp(int id)
     {
-        Debug.Log("adad");
         _myId = id;
         _button = GetComponent<Button>();
         _button.onClick.RemoveAllListeners();
         _button.onClick.AddListener(() => OnLPClicked?.Invoke(_myId));
-
-        // LP 스크립트에 사운드 ID 미리 전달
-        //if (_lpScript != null) _lpScript.sound = (BgmSounds)id;
+        _lpScript.rect = _lpScript.GetComponent<RectTransform>();
     }
     public void Select()
     {

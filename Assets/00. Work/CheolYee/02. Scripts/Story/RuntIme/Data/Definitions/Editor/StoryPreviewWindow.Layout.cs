@@ -282,24 +282,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             _cameraGizmoLayer = BuildCameraGizmoLayer();
 
-            _focusPreviewFrameGuide = new VisualElement
-            {
-                name = "FocusPreviewFrameGuide",
-                pickingMode = PickingMode.Ignore,
-                style =
-                {
-                    position = Position.Absolute, left = 0, top = 0,
-                    width = DefaultUnitPixels, height = DefaultUnitPixels,
-                    borderTopWidth = 2f, borderRightWidth = 2f, borderBottomWidth = 2f, borderLeftWidth = 2f,
-                    borderTopColor    = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
-                    borderRightColor  = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
-                    borderBottomColor = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
-                    borderLeftColor   = new StyleColor(new Color(1f, 0.74f, 0.32f, 0.84f)),
-                    overflow = Overflow.Visible
-                }
-            };
-            _focusPreviewFrameGuide.Add(BuildFocusPreviewGizmoLayer());
-
             // 대화 오버레이 (카메라 프레임 내부 하단)
             _renderDialoguePanel = new VisualElement
             {
@@ -351,7 +333,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _stageWorld.Add(_backgroundLayer);
             _stageWorld.Add(_cameraGizmoLayer);
             _stageWorld.Add(_actorLayer);
-            _stageWorld.Add(_focusPreviewFrameGuide);
             _stageWorld.Add(_cameraFrameGuide);
         }
 
@@ -498,30 +479,5 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
         }
 
-        private static VisualElement BuildFocusPreviewGizmoLayer()
-        {
-            var layer = new VisualElement
-            {
-                name = "FocusPreviewOverlay",
-                pickingMode = PickingMode.Ignore,
-                style = { position = Position.Absolute, left = 0, top = 0, right = 0, bottom = 0 }
-            };
-
-            layer.Add(new Label("FOCUS PREVIEW")
-            {
-                pickingMode = PickingMode.Ignore,
-                style =
-                {
-                    position = Position.Absolute,
-                    left = 8,
-                    top = 18,
-                    fontSize = 9,
-                    color = new StyleColor(new Color(1f, 0.78f, 0.38f, 0.92f)),
-                    unityFontStyleAndWeight = FontStyle.Bold
-                }
-            });
-
-            return layer;
-        }
     }
 }

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using _00._Work.Goat._02._Scripts.SaveCode;
-using _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas.ButtonDatas;
-using _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot;
+using LitMotion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,9 +15,15 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
         [SerializeField] private Sprite activeSprite;
         [SerializeField] private Sprite noActiveSprite;
         [SerializeField] private Image lockImage;
-        [SerializeField] private float activePosYUp = 20;
-        [SerializeField] private float activeFontSizeAdd = 10;
-        [SerializeField] private float activeWidthSizeUp = 50;
+        
+        [Header("Active Setting")]
+        [SerializeField] private float activePosYUp = 20f;
+        [SerializeField] private float activeFontSizeAdd = 10f;
+        [SerializeField] private float activeWidthSizeUp = 50f;
+
+        [Header("Motion")]
+        [SerializeField] private float moveDuration = 0.2f;
+        [SerializeField] private Ease ease = Ease.OutCubic;
         
         public bool canOpen { get; private set; }
         
@@ -69,9 +72,9 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
             this.canOpen = canOpen;
 
             if (canOpen)
-                NoActive();
+                NoActive(false);
             else
-                Lock();
+                Lock(false);
         }
 
         public void Active()
@@ -81,9 +84,11 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
                 Lock();
                 return;
             }
-            Setting(activePosYUp,activeWidthSizeUp, activeSprite, activeFontSizeAdd, true);
-        }
 
+            SetVisual(activeSprite, true, false);
+            AnimateSetting(activePosYUp, activeWidthSizeUp, activeFontSizeAdd);
+        }
+        
         public void NoActive()
         {
             if (!canOpen)
@@ -91,22 +96,87 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
                 Lock();
                 return;
             }
-            Setting(0,0,noActiveSprite,0, true);
+
+            SetVisual(noActiveSprite, true, false);
+            AnimateSetting(0f, 0f, 0f);
         }
 
+        public void NoActive(bool useMotion)
+        {
+            if (!canOpen)
+            {
+                Lock(useMotion);
+                return;
+            }
+
+            SetVisual(noActiveSprite, true, false);
+
+            if (useMotion)
+                AnimateSetting(0f, 0f, 0f);
+            else
+                SetSettingImmediately(0f, 0f, 0f);
+
+        }
+        
         private void Lock()
         {
-            Setting(0,0,noActiveSprite,0,  false, true);
+            Lock(true);
         }
 
-        private void Setting(float posYUp, float widthSizeUp, Sprite imageSprite, float fontSizeAdd, bool buttonInteract, bool lockImageSetting = false)
+        private void Lock(bool useMotion)
+        {
+            SetVisual(noActiveSprite, false, true);
+
+            if (useMotion)
+                AnimateSetting(0f, 0f, 0f);
+            else
+                SetSettingImmediately(0f, 0f, 0f);
+        }
+
+        private void SetVisual(Sprite sprite, bool buttonInteract, bool lockImageSetting)
+        {
+            if (_image != null)
+                _image.sprite = sprite;
+
+            if (_button != null)
+                _button.interactable = buttonInteract;
+
+            if (lockImage != null)
+                lockImage.gameObject.SetActive(lockImageSetting);
+        }
+
+        private void AnimateSetting(float posYUp, float widthSizeUp, float fontSizeAdd)
+        {
+            Vector2 targetPos = new Vector2(_originPos.x, _originPos.y + posYUp);
+            Vector2 targetSize = new Vector2(_originWidth.x + widthSizeUp, _originWidth.y);
+            float targetFontSize = _originFontSize + fontSizeAdd;
+
+            LMotion.Create(_rectTransform.anchoredPosition, targetPos, moveDuration)
+                .WithEase(ease)
+                .Bind(value => _rectTransform.anchoredPosition = value)
+                .AddTo(this);
+
+            LMotion.Create(_rectTransform.sizeDelta, targetSize, moveDuration)
+                .WithEase(ease)
+                .Bind(value => _rectTransform.sizeDelta = value)
+                .AddTo(this);
+
+            if (_text != null)
+            {
+                LMotion.Create(_text.fontSize, targetFontSize, moveDuration)
+                    .WithEase(ease)
+                    .Bind(value => _text.fontSize = value)
+                    .AddTo(this);
+            }
+        }
+
+        private void SetSettingImmediately(float posYUp, float widthSizeUp, float fontSizeAdd)
         {
             _rectTransform.anchoredPosition = new Vector2(_originPos.x, _originPos.y + posYUp);
-            _rectTransform.sizeDelta = new  Vector2(_originWidth.x + widthSizeUp, _originWidth.y);
-            _image.sprite = imageSprite;
-            _text.fontSize = _originFontSize + fontSizeAdd;
-            _button.interactable = buttonInteract;
-            lockImage.gameObject.SetActive(lockImageSetting);
+            _rectTransform.sizeDelta = new Vector2(_originWidth.x + widthSizeUp, _originWidth.y);
+
+            if (_text != null)
+                _text.fontSize = _originFontSize + fontSizeAdd;
         }
     }
 }

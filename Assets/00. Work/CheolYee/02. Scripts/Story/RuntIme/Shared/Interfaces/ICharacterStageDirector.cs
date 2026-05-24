@@ -13,6 +13,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces
         void ApplySpeakerFocus(StoryLineSO line);
         void ApplyBackgroundOnly(StoryStageLayoutModuleSO layout);
         void ApplyStageLayoutImmediate(StoryStageLayoutModuleSO layout);
+        UniTask PrewarmLinePresentationAsync(StoryLineSO line, CancellationToken ct);
         Vector3 GetCurrentCameraCenter();
         void ClearAll();
     }

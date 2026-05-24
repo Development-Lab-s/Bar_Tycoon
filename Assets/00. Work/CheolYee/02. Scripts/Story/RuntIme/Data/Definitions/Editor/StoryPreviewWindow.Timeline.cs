@@ -1578,7 +1578,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             StoryCameraStateData cameraSample = StoryTransitionSampler.SampleCameraTrackAtTime(
                 layout?.CameraTrackEditable,
-                layout?.CameraFocusTarget,
+                "",
                 _timelinePlayheadTime);
             SetPreviewCameraSampleState(cameraSample);
 
@@ -1730,8 +1730,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 StoryCameraTrackData track = layout.CameraTrackEditable;
                 track.defaultState ??= new StoryCameraStateData();
                 cameraState = track.defaultState.ShallowClone();
-                if (string.IsNullOrWhiteSpace(cameraState.targetActorInstanceKey))
-                    cameraState.targetActorInstanceKey = layout.CameraFocusTarget;
                 return true;
             }
 
@@ -2063,6 +2061,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
                 key.timeSeconds = targetTime;
                 key.normalizedTime = Mathf.Clamp01(targetTime / Mathf.Max(1f, GetTimelineDuration()));
+                if (key.property == StoryActorKeyframeProperty.CameraTarget
+                    && key.cameraFollowMode == StoryCameraFollowMode.SnapshotPosition
+                    && !string.IsNullOrWhiteSpace(key.cameraTargetActorKey)
+                    && TryResolveCurrentFrameActorStagePosition(key.cameraTargetActorKey, out Vector2 snapPosition))
+                {
+                    key.cameraSnapshotNormalizedPosition = snapPosition;
+                }
             }, refresh);
         }
 
@@ -2429,9 +2434,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     key.cameraTargetActorKey = state.targetActorInstanceKey ?? string.Empty;
                     key.cameraFollowMode = state.followMode;
                     if (!string.IsNullOrWhiteSpace(key.cameraTargetActorKey)
-                        && _stageState.TryGetValue(key.cameraTargetActorKey, out StoryActorStateData actorState))
+                        && TryResolveCurrentFrameActorStagePosition(key.cameraTargetActorKey, out Vector2 actorStagePosition))
                     {
-                        key.cameraSnapshotNormalizedPosition = actorState.stageLocalPosition;
+                        key.cameraSnapshotNormalizedPosition = actorStagePosition;
                     }
                     else
                     {
@@ -2569,6 +2574,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private static bool SupportsTimelineSegment(StoryActorKeyframeProperty property) =>
             property == StoryActorKeyframeProperty.Position
             || property == StoryActorKeyframeProperty.Scale
+            || property == StoryActorKeyframeProperty.CameraTarget
             || property == StoryActorKeyframeProperty.CameraOffset
             || property == StoryActorKeyframeProperty.CameraZoom
             || property == StoryActorKeyframeProperty.BackgroundPosition

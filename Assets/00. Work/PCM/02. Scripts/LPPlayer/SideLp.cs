@@ -10,8 +10,7 @@ namespace Assets._00._Work.PCM._02._Scripts.LPPlayer
     {
         public override void Awake()
         {
-            rect = GetComponent<RectTransform>();
-            ApplyPosition();
+            //ApplyPosition();
         }
         public override void ApplyPosition()
         {

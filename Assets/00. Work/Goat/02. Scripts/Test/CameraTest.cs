@@ -14,8 +14,8 @@ namespace _00._Work.Goat._02._Scripts.Test
         [ContextMenu("Test")]
         public void Test()
         {
-            cameraEventChannelSO.RaiseEvent(new CameraManagerEvent().Init(vec));
-            cameraEventChannelSO.RaiseEvent(new CameraManagerEvent().Init(vec2));
+            cameraEventChannelSO.RaiseEvent(new CameraManagerEvent().Init(vec, true));
+            cameraEventChannelSO.RaiseEvent(new CameraManagerEvent().Init(vec2, true));
         }
     }
 }

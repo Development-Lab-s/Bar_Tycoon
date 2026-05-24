@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7097679162094869448
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6418051900588765621}
+  - component: {fileID: 7373272252974805525}
+  - component: {fileID: 3137801572465392058}
+  m_Layer: 0
+  m_Name: StoryProgressService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6418051900588765621
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7097679162094869448}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7373272252974805525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7097679162094869448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29c195b287e7f64498e5bfa1ae24c0ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StoryProgressService
+  storyCommandChannel: {fileID: 11400000, guid: 7a70a8d3ec8bb8d41a118846f8a5fd0f, type: 2}
+  episodeCatalog: {fileID: 11400000, guid: 1fd91595a6c71664fa0cb65d41a1d2f9, type: 2}
+  debugTargetEpisode: {fileID: 11400000, guid: d03becfe423aba0448c370686dbd9473, type: 2}
+  debugTargetEpisodeId: 
+--- !u!114 &3137801572465392058
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7097679162094869448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22bcced5852d6694ba19907475b4919c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StoryEpisodeLoaderService
+  storyCommandChannel: {fileID: 11400000, guid: 7a70a8d3ec8bb8d41a118846f8a5fd0f, type: 2}
+  progressService: {fileID: 7373272252974805525}
+  episodeCatalog: {fileID: 11400000, guid: 1fd91595a6c71664fa0cb65d41a1d2f9, type: 2}
+  launchRequestStore: {fileID: 11400000, guid: 2e1dfb691ac99b54fbefe81e47f19a7b, type: 2}
+  storySceneName: Story

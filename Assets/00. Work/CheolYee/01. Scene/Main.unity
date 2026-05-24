@@ -352,6 +352,88 @@ MonoBehaviour:
     MaxWindowSize: 0
     Padding: 0
   m_LegacyMaxWindowSize: -2
+--- !u!1 &544345101
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 544345104}
+  - component: {fileID: 544345103}
+  - component: {fileID: 544345102}
+  - component: {fileID: 544345105}
+  m_Layer: 0
+  m_Name: StoryProgressService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &544345102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544345101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22bcced5852d6694ba19907475b4919c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StoryEpisodeLoaderService
+  storyCommandChannel: {fileID: 11400000, guid: 7a70a8d3ec8bb8d41a118846f8a5fd0f, type: 2}
+  progressService: {fileID: 544345103}
+  episodeCatalog: {fileID: 11400000, guid: 1fd91595a6c71664fa0cb65d41a1d2f9, type: 2}
+  launchRequestStore: {fileID: 11400000, guid: 2e1dfb691ac99b54fbefe81e47f19a7b, type: 2}
+  storySceneName: Story
+--- !u!114 &544345103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544345101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29c195b287e7f64498e5bfa1ae24c0ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StoryProgressService
+  storyCommandChannel: {fileID: 11400000, guid: 7a70a8d3ec8bb8d41a118846f8a5fd0f, type: 2}
+  episodeCatalog: {fileID: 11400000, guid: 1fd91595a6c71664fa0cb65d41a1d2f9, type: 2}
+  debugTargetEpisode: {fileID: 11400000, guid: d03becfe423aba0448c370686dbd9473, type: 2}
+  debugTargetEpisodeId: 
+--- !u!4 &544345104
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544345101}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &544345105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544345101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07e5cb870216418cb39bca35b164d969, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StoryService
+  storyCommandChannel: {fileID: 11400000, guid: 7a70a8d3ec8bb8d41a118846f8a5fd0f, type: 2}
+  storyCorePrefab: {fileID: 4541276489143467196, guid: 3cd95dce5b2f13544aba1498625395ab, type: 3}
+  storyRoot: {fileID: 1475347733}
 --- !u!1 &749650091
 GameObject:
   m_ObjectHideFlags: 0
@@ -845,72 +927,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1850367440
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1850367442}
-  - component: {fileID: 1850367441}
-  - component: {fileID: 1850367443}
-  m_Layer: 0
-  m_Name: StoryService
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &1850367441
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1850367440}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07e5cb870216418cb39bca35b164d969, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StoryService
-  storyCommandChannel: {fileID: 11400000, guid: 6e583cc7bea7c1d4e8a5571c5c0dd38c, type: 2}
-  storyCorePrefab: {fileID: 4541276489143467196, guid: 3cd95dce5b2f13544aba1498625395ab, type: 3}
-  storyRoot: {fileID: 1475347733}
-  episodes:
-  - {fileID: 11400000, guid: d03becfe423aba0448c370686dbd9473, type: 2}
-  saveServiceSource: {fileID: 0}
---- !u!4 &1850367442
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1850367440}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1850367443
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1850367440}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51acd0ade10c4a58854944bc10259aac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Core.StoryPrototypeStarter
-  storyService: {fileID: 1850367441}
-  episode: {fileID: 11400000, guid: d03becfe423aba0448c370686dbd9473, type: 2}
-  playOnStart: 1
 --- !u!1 &2115450657
 GameObject:
   m_ObjectHideFlags: 0
@@ -1132,7 +1148,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7777991056805314489, guid: c6cccd3a0df09dd46a02543114f69de8, type: 3}
       propertyPath: m_SortingOrder
-      value: -44
+      value: -221
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1272,8 +1288,8 @@ SceneRoots:
   - {fileID: 117323334}
   - {fileID: 1560015417}
   - {fileID: 1617954433}
-  - {fileID: 1850367442}
-  - {fileID: 1475347733}
   - {fileID: 8711606661233272761}
   - {fileID: 4850439961125039960}
   - {fileID: 3928392374305229249}
+  - {fileID: 544345104}
+  - {fileID: 1475347733}

@@ -130,7 +130,6 @@ namespace _00._Work.Lusaload._02._Scripts.UI
             EditorUtility.SetDirty(nameSO);
             AssetDatabase.SaveAssets();
 #endif
-            Debug.Log($"이름 저장 완료: {finalName}");
         }
     }
 }
