@@ -13,7 +13,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         [SerializeField] private LevelUpRewardSOs levelUpRewardSOs;
 
         [Header("eventChannel")] 
-        [SerializeField] private EventChannelSO cameraManagerSO;
+        [SerializeField] private EventChannelSO levelUpRewardeExitBtnClickEvent;
         
         [Header("Reference")]
         [SerializeField] private LevelUpRewardManager levelUpRewardManager;
@@ -21,20 +21,16 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         [SerializeField] private LevelUpContainer levelUpFunctionContainer;
         [SerializeField] private GameObject levelUpObject;
         [SerializeField] private TextMeshProUGUI levelText;
-        
-        private readonly List<List<Vector2>> _objectPositionGroups = new();
 
         private void Awake()
         {
             levelUpRewardManager.OnCockTailAdd += HandleCockTailAdd;
-            levelUpRewardManager.OnObjectAddCameraMove += HandleObjectAddCameraMove;
             levelUpRewardManager.OnFuncAdd += HandleFuncAdd;
         }
 
         private void OnDestroy()
         {
             levelUpRewardManager.OnCockTailAdd -= HandleCockTailAdd;
-            levelUpRewardManager.OnObjectAddCameraMove -= HandleObjectAddCameraMove;
             levelUpRewardManager.OnFuncAdd -= HandleFuncAdd;
         }
 
@@ -43,15 +39,6 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
             ShowUI();
             levelUpFunctionContainer.SpawnSlotSprite(obj);
         }
-
-        private void HandleObjectAddCameraMove(List<Vector2> objectPositions)
-        {
-            if (objectPositions == null || objectPositions.Count <= 0)
-                return;
-            
-            _objectPositionGroups.Add(new List<Vector2>(objectPositions));
-        }
-
         private void HandleCockTailAdd(int level, CocktailRecipeSO cockTailSo)
         {
             ShowUI();
@@ -62,15 +49,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         public void ExitBtn()
         {
             levelUpObject.SetActive(false);
-            
-            foreach (List<Vector2> objectPositions in _objectPositionGroups)
-            {
-                cameraManagerSO.RaiseEvent(
-                    new CameraManagerEvent().Init(new List<Vector2>(objectPositions))
-                );
-            }
-
-            _objectPositionGroups.Clear();
+            levelUpRewardeExitBtnClickEvent.RaiseEvent(new LevelUpRewardeExitBtnClickEvent());
         }
 
         [ContextMenu("Show UI")]

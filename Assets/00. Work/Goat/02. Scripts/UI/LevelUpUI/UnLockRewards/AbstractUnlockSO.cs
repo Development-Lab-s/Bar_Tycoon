@@ -8,11 +8,6 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
     {
             [SerializeField] protected EventChannelSO eventChannelSo;
             public abstract void LevelUpReward();
-            public virtual List<Vector2> GetSpawnPositions()
-            {
-                return new List<Vector2>();
-            }
-
             public abstract List<Sprite> GetSprite();
     }
 }

@@ -10,6 +10,8 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
     public class UnlockObjectSpwanSO : AbstractUnlockSO
     {
         [SerializeField] private  ObjectsBatchSO objectDataSO;
+        [SerializeField] private EventChannelSO cameraManagerEvent;
+        
         public readonly List<Vector2> spawnPositions = new List<Vector2>();
         public readonly List<ObjectDataSO> objectDataSOs = new List<ObjectDataSO>();
         public override void LevelUpReward()
@@ -23,11 +25,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
                 objectDataSOs.Add(obstacle.obstacleData);
                 eventChannelSo?.RaiseEvent(objSpawnEvt.Init(obstacle.obstacleData, obstacle.cellIndex, obstacle.flipX, (pos) => spawnPositions.Add(pos)));   
             }
-        }
-
-        public override List<Vector2> GetSpawnPositions()
-        {
-            return new List<Vector2>(spawnPositions);
+            cameraManagerEvent.RaiseEvent(new CameraManagerEvent().Init(spawnPositions, false));
         }
 
         public override List<Sprite> GetSprite()

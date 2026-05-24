@@ -22,7 +22,6 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
 
         public event Action<int, CocktailRecipeSO> OnCockTailAdd;
         public event Action<Sprite> OnFuncAdd; 
-        public event Action<List<Vector2>> OnObjectAddCameraMove; 
         private void Awake()
         {
             expManager.OnLevelChanged += HandleLevelChange;
@@ -60,13 +59,6 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
                 }
                 
                 rewardGroup.unlockData.LevelUpReward();
-                
-                List<Vector2> objectPositions = rewardGroup.unlockData.GetSpawnPositions();
-
-                if (objectPositions.Count > 0)
-                {
-                    OnObjectAddCameraMove?.Invoke(objectPositions);
-                }
 
                 foreach (AbstractUnlockSO unlockData in rewardGroup.unlockData.unlockDatas)
                 {
