@@ -1,20 +1,26 @@
 using System;
 using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work._Resources._02._Scripts.Systems.AnimationSystems;
-using BBJ.Movement;
 using UnityEngine;
 
 namespace BBJ.Modules
 {
-    public class SpineAgentRenderer : MonoBehaviour, IModule, IRenderer, IAnimatorTrigger
+    public class SpineAgentRenderer : MonoBehaviour, IModule, IRenderer, IAnimatorTrigger, IHoverRenderer
     {
         [SerializeField] private GameObject[] _spineObjects;
-
+        [SerializeField] private Renderer[] _skeletonMimics;
         [field: SerializeField] public float FacingDirection { get; private set; } = 1f;
 
-        private IPathMovement _movement;
         private Animator[] _animators;
         private int _currentLayer;
+
+        private MaterialPropertyBlock _mpb;
+        private static readonly int OuterOutlineFadeID = Shader.PropertyToID("_OuterOutlineFade");
+        private static readonly int StrongTintFadeID = Shader.PropertyToID("_StrongTintFade");
+
+        private float _currentOutlineFade = 0f;
+        private float _currentTintFade = 0f;
+        private float _tintValue = 0.21f;
 
         public event Action OnAnimationEnd;
         public event Action OnAttackTrigger;
@@ -22,40 +28,77 @@ namespace BBJ.Modules
 
         public void Initialize(ModuleOwner owner)
         {
-            _movement = owner.GetModule<IPathMovement>();
+            _mpb = new MaterialPropertyBlock();
+            DisableHoverEffect();
 
+            // [복구 완료] 애니메이터 캐싱 및 초기 레이어 설정 로직
             _animators = new Animator[_spineObjects.Length];
             for (int i = 0; i < _spineObjects.Length; i++)
+            {
                 _animators[i] = _spineObjects[i].GetComponent<Animator>();
+            }
 
             _currentLayer = 0;
             for (int i = 0; i < _spineObjects.Length; i++)
-                _spineObjects[i].SetActive(i == 0);
+            {
+                _spineObjects[i].gameObject.SetActive(i == 0);
 
-            var forwarder = _spineObjects[0].GetComponent<AnimationEventForwarder>()
-                            ?? _spineObjects[0].AddComponent<AnimationEventForwarder>();
-            forwarder.Initialize(this);
+                if (_skeletonMimics != null && i < _skeletonMimics.Length)
+                {
+                    _skeletonMimics[i].gameObject.SetActive(i == 0);
+                }
+            }
+
+            // [복구 완료] 애니메이션 이벤트 포워더 연결
+            if (_spineObjects.Length > 0 && _spineObjects[0] != null)
+            {
+                var forwarder = _spineObjects[0].GetComponent<AnimationEventForwarder>()
+                                ?? _spineObjects[0].gameObject.AddComponent<AnimationEventForwarder>();
+                forwarder.Initialize(this);
+            }
         }
 
-        private void Update()
+        public void EnableHoverEffect()
         {
-            FlipController(_movement.Velocity.x);
+            _currentOutlineFade = 1f;
+            _currentTintFade = _tintValue;
+            ApplySSUToCurrentMimic();
         }
 
-        public void SetAnimator(RuntimeAnimatorController animator)
+        public void DisableHoverEffect()
         {
-            _animators[0].runtimeAnimatorController = animator;
+            _currentOutlineFade = 0f;
+            _currentTintFade = 0f;
+            ApplySSUToCurrentMimic();
+        }
+
+        private void ApplySSUToCurrentMimic()
+        {
+            if (_skeletonMimics == null || _skeletonMimics.Length <= _currentLayer) return;
+
+            Renderer targetMimic = _skeletonMimics[_currentLayer];
+            if (targetMimic != null && _mpb != null)
+            {
+                targetMimic.GetPropertyBlock(_mpb);
+                _mpb.SetFloat(OuterOutlineFadeID, _currentOutlineFade);
+                _mpb.SetFloat(StrongTintFadeID, _currentTintFade);
+                targetMimic.SetPropertyBlock(_mpb);
+            }
         }
 
         public void PlayClip(int clipHash, int layer = -1, float normalizedTime = 0)
         {
             if (layer >= 0 && layer != _currentLayer)
             {
-                _spineObjects[_currentLayer].SetActive(false);
-                _spineObjects[layer].SetActive(true);
-                _currentLayer = layer;
-            }
+                _spineObjects[_currentLayer].gameObject.SetActive(false);
+                if (_skeletonMimics.Length > _currentLayer) _skeletonMimics[_currentLayer].gameObject.SetActive(false);
 
+                _spineObjects[layer].gameObject.SetActive(true);
+                if (_skeletonMimics.Length > layer) _skeletonMimics[layer].gameObject.SetActive(true);
+
+                _currentLayer = layer;
+                ApplySSUToCurrentMimic();
+            }
             _animators[_currentLayer].Play(clipHash, -1, normalizedTime);
         }
 
@@ -95,5 +138,13 @@ namespace BBJ.Modules
         internal void AttackTrigger() => OnAttackTrigger?.Invoke();
         internal void OpenCounterTrigger() => OnCounterStateChange?.Invoke(true);
         internal void CloseCounterTrigger() => OnCounterStateChange?.Invoke(false);
+
+        public void SetAnimator(RuntimeAnimatorController animator)
+        {
+            if (_animators != null && _animators.Length > 0 && _animators[0] != null)
+            {
+                _animators[0].runtimeAnimatorController = animator;
+            }
+        }
     }
 }

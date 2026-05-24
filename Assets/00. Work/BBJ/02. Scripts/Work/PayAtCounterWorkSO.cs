@@ -22,7 +22,8 @@ namespace BBJ.Work
             if (customer == null || actions == null) return WorkResult.Cancelled;
 
             customer.AssignedSeat?.GetModule<SeatModule>()?.UnSeat();
-            var counter = _ctx.WorkplaceRegister?.GetFirst(_ctx.CounterType);
+
+           var counter = _ctx.WorkplaceRegister?.GetFirst(_ctx.CounterType);
             if (counter == null) return WorkResult.Cancelled;
 
             var role = executor.GetModule<SchedulingModule>()?.InteractRole;
