@@ -102,106 +102,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
     {
         private static readonly StorySoundSettingsData DefaultSettings = new();
 
-        public static StorySoundSettingsData Clone(StorySoundSettingsData source)
-        {
-            var clone = new StorySoundSettingsData();
-            clone.CopyFrom(source);
-            return clone;
-        }
-
-        public static bool AreEquivalent(StorySoundSettingsData left, StorySoundSettingsData right)
-        {
-            StorySoundSettingsData a = left ?? DefaultSettings;
-            StorySoundSettingsData b = right ?? DefaultSettings;
-            return a.soundChannel == b.soundChannel
-                && Mathf.Approximately(a.bgmFadeDuration, b.bgmFadeDuration)
-                && Mathf.Approximately(a.sfxFadeDuration, b.sfxFadeDuration);
-        }
-
-        public static bool IsStructDefault(StorySoundSettingsData settings) =>
-            AreEquivalent(settings, DefaultSettings);
-
-        public static bool HasAnyLegacySoundContent(StoryStageLayoutModuleSO layout)
-        {
-            if (layout == null)
-                return false;
-
-            if (layout.SoundTrack?.HasAnyKeyframes == true)
-                return true;
-
-            StorySoundSettingsData settings = layout.SoundSettings;
-            return settings != null && !IsStructDefault(settings);
-        }
-
         public static StorySoundSettingsData ResolveEpisodeDefaults(StoryEpisodeSO episode)
         {
             if (episode == null)
                 return DefaultSettings;
 
-            if (episode.HasExplicitDefaultSoundSettings)
-                return episode.DefaultSoundSettings ?? DefaultSettings;
-
-            StorySoundSettingsData legacySeed = FindFirstLegacySoundSettings(episode);
-            return legacySeed ?? episode.DefaultSoundSettings ?? DefaultSettings;
-        }
-
-        public static bool ResolveLegacyLineOverride(StoryEpisodeSO episode, StoryStageLayoutModuleSO layout)
-        {
-            if (layout == null)
-                return false;
-
-            if (layout.SoundTrack?.HasAnyKeyframes == true)
-                return true;
-
-            return !AreEquivalent(layout.SoundSettings, ResolveEpisodeDefaults(episode));
-        }
-
-        public static bool ShouldUseLineOverride(StoryEpisodeSO episode, StoryStageLayoutModuleSO layout)
-        {
-            if (layout == null)
-                return false;
-
-            if (layout.HasExplicitSoundSettingsOverrideState)
-                return layout.UseSoundSettingsOverride;
-
-            return ResolveLegacyLineOverride(episode, layout);
+            return episode.DefaultSoundSettings ?? DefaultSettings;
         }
 
         public static StorySoundSettingsData ResolveEffectiveLineSettings(StoryEpisodeSO episode, StoryStageLayoutModuleSO layout)
         {
-            if (ShouldUseLineOverride(episode, layout))
-                return layout?.SoundSettings ?? DefaultSettings;
-
             return ResolveEpisodeDefaults(episode);
-        }
-
-        private static StorySoundSettingsData FindFirstLegacySoundSettings(StoryEpisodeSO episode)
-        {
-            if (episode?.Lines == null)
-                return null;
-
-            foreach (StoryLineSO line in episode.Lines)
-            {
-                StoryStageLayoutModuleSO layout = FindStageLayout(line);
-                if (HasAnyLegacySoundContent(layout))
-                    return layout.SoundSettings;
-            }
-
-            return null;
-        }
-
-        private static StoryStageLayoutModuleSO FindStageLayout(StoryLineSO line)
-        {
-            if (line?.Modules == null)
-                return null;
-
-            foreach (StoryModuleSO module in line.Modules)
-            {
-                if (module is StoryStageLayoutModuleSO layout)
-                    return layout;
-            }
-
-            return null;
         }
     }
 }

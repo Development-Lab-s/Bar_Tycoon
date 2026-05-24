@@ -281,9 +281,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
         public Vector3 ResolveParallaxBase(StoryBackgroundStateData state)
         {
             EnsureStageReferenceMetrics();
-            float parallaxFactor = state?.background != null
-                ? state.background.ParallaxFactor
-                : 0f;
+            float parallaxFactor = state?.EffectiveParallaxFactor ?? 0f;
 
             if (parallaxFactor <= 0f)
                 return _stageReferenceCenter;

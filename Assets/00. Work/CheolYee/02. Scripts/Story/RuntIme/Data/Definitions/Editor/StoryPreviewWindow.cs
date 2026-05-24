@@ -228,12 +228,16 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private Label         _dialogueLabel;
         private VisualElement _choiceArea;
 
+        // ── UI 참조: 라인 정보 라벨 ──────────────────
+
+        private Label _lineInfoSpeakerLabel;
+        private Label _lineInfoDialogueLabel;
+
         // ── UI 참조: Aspect Settings ──────────────────
 
         private ObjectField _aspectSettingsField;
         private VisualElement _soundSettingsPanelRoot;
         private VisualElement _episodeSoundDefaultsRoot;
-        private VisualElement _lineSoundOverrideRoot;
 
         // ── UI 참조: 우측 인스펙터 ────────────────────
 
@@ -261,10 +265,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private Button _timelinePlayBtn;
         private Button _timelineRecordBtn;
         private FloatField _timelineSpeedField;
+        private Button     _timelineSnapBtn;
+        private FloatField _timelineSnapField;
         private float _timelineHeight = DefaultTimelineHeight;
         private float _timelinePixelsPerSecond = DefaultTimelinePixelsPerSecond;
         private float _timelinePlayheadTime;
         private float _timelinePlaybackSpeed = 1f;
+        private float _timelineSnapInterval  = 0.1f;
+        private bool  _timelineSnapEnabled;
         private bool _timelineRecordEnabled;
         private bool _timelineIsPlaying;
         private string _timelineRecordActorKey;

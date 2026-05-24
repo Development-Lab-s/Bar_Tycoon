@@ -512,6 +512,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (needsRebuild)
             {
                 RebuildActorLayer(refreshInspectorLists: false);
+                UpdateLetterboxOverlay();
                 return;
             }
 
@@ -535,6 +536,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             SetEmptyStageVisible(_actorElements.Count == 0);
             UpdateCameraGizmoVisual();
+            UpdateLetterboxOverlay();
         }
 
         // ── 카메라 Gizmo fast-path 업데이트 ──────────

@@ -47,10 +47,28 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Visibility
                 overlayRoot.SetActive(false);
         }
 
-        public async UniTask PlayFadeAsync(StoryFadeDirection direction, CancellationToken ct)
+        public async UniTask PlayFadeAsync(StoryFadeDirection direction, float holdDuration, CancellationToken ct)
         {
             float target = direction == StoryFadeDirection.FadeIn ? 1f : 0f;
-            await FadeToAlphaAsync(target, ResolveFadeDuration(), ct);
+            try
+            {
+                await FadeToAlphaAsync(target, ResolveFadeDuration(), ct);
+                if (holdDuration > 0f)
+                {
+                    float elapsed = 0f;
+                    while (elapsed < holdDuration)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                        elapsed += Time.unscaledDeltaTime;
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                ApplyClearImmediate();
+                throw;
+            }
         }
 
         private async UniTask FadeToAlphaAsync(float targetAlpha, float duration, CancellationToken ct)

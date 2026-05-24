@@ -18,6 +18,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         [Tooltip("Stage local world position offset added on top of parallaxBase. (0,0)=parallaxBase center.")]
         public Vector2 stageLocalPosition = Vector2.zero;
 
+        [Tooltip("라인 단위 패럴렉스 오버라이드. true 이면 parallaxFactorOverride 값을 사용하고, false 이면 BackgroundDefinitionSO.ParallaxFactor 를 사용한다.")]
+        public bool overrideParallax = false;
+
+        [Range(0f, 1f)]
+        [Tooltip("0=고정, 1=카메라 완전 추종. overrideParallax 가 true 일 때만 적용된다.")]
+        public float parallaxFactorOverride = 0f;
+
+        public float EffectiveParallaxFactor => overrideParallax
+            ? Mathf.Clamp01(parallaxFactorOverride)
+            : (background?.ParallaxFactor ?? 0f);
+
         [Tooltip("Uniform scale multiplier. finalScale = BackgroundDefinitionSO.BaseScaleMultiplier * scaleMultiplier.")]
         public float scaleMultiplier = 1f;
 

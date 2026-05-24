@@ -38,6 +38,31 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             };
             panel.Add(_inspectorScrollView);
 
+            _lineInfoSpeakerLabel = new Label("")
+            {
+                style =
+                {
+                    fontSize = 10,
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    color = new StyleColor(new Color(0.85f, 0.88f, 0.95f)),
+                    whiteSpace = WhiteSpace.Normal,
+                    marginBottom = 2
+                }
+            };
+            _lineInfoDialogueLabel = new Label("")
+            {
+                style =
+                {
+                    fontSize = 10,
+                    whiteSpace = WhiteSpace.Normal,
+                    color = new StyleColor(new Color(0.70f, 0.72f, 0.76f)),
+                    marginBottom = 4
+                }
+            };
+            _inspectorScrollView.Add(_lineInfoSpeakerLabel);
+            _inspectorScrollView.Add(_lineInfoDialogueLabel);
+            _inspectorScrollView.Add(MakeSeparator());
+
             _inspectorScrollView.Add(MakeBoldLabel("Aspect Settings"));
             _aspectSettingsField = new ObjectField("Aspect SO")
             {
@@ -105,6 +130,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _inspectorRoot = new VisualElement { style = { flexDirection = FlexDirection.Column, flexGrow = 1 } };
             _inspectorScrollView.Add(_inspectorRoot);
 
+            RefreshLineInfoLabel();
             RefreshAspectMetricsDisplay();
             RefreshSoundSettingsPanels();
             return panel;
@@ -467,9 +493,26 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         }
 
 
+        private void RefreshLineInfoLabel()
+        {
+            if (_lineInfoSpeakerLabel == null || _lineInfoDialogueLabel == null) return;
+
+            if (_currentLine == null)
+            {
+                _lineInfoSpeakerLabel.text  = "";
+                _lineInfoDialogueLabel.text = "";
+                return;
+            }
+
+            string speaker = _currentLine.GetResolvedSpeakerName();
+            _lineInfoSpeakerLabel.text  = string.IsNullOrEmpty(speaker) ? "(Narration)" : speaker;
+            _lineInfoDialogueLabel.text = _currentLine.DialogueText ?? "";
+        }
+
         private void RefreshActorInspector()
         {
             if (_inspectorRoot == null) return;
+            RefreshLineInfoLabel();
             RefreshSoundSettingsPanels();
             _inspectorRoot.Clear();
 
@@ -601,9 +644,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             visToggle.RegisterValueChangedCallback(e =>
             {
                 if (!IsStageAuthoringMode) return;
-                data.visible = e.newValue;
-                RebuildActorLayer();
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.visible = e.newValue);
+                RebuildActorLayer();
             });
             _inspectorRoot.Add(visToggle);
 
@@ -618,7 +660,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             focToggle.RegisterValueChangedCallback(e =>
             {
                 if (!IsStageAuthoringMode) return;
-                data.focused = e.newValue;
                 SaveActorStateToCurrent(_selectedActorKey, entry => entry.focused = e.newValue);
                 RebuildActorLayer();
                 RefreshActorInspector();
@@ -1216,6 +1257,40 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             });
             _inspectorRoot.Add(sortField);
 
+            var overrideParallaxToggle = new Toggle("Override Parallax")
+            {
+                value = data.overrideParallax,
+                style = { marginBottom = 3 }
+            };
+            var parallaxSlider = new Slider("Parallax Factor", 0f, 1f)
+            {
+                value = data.parallaxFactorOverride,
+                style = { marginBottom = 3 }
+            };
+            parallaxSlider.SetEnabled(data.overrideParallax);
+            overrideParallaxToggle.RegisterValueChangedCallback(e =>
+            {
+                if (!IsStageAuthoringMode) return;
+                data.overrideParallax = e.newValue;
+                if (e.newValue)
+                    data.parallaxFactorOverride = data.background?.ParallaxFactor ?? 0f;
+                parallaxSlider.SetValueWithoutNotify(data.parallaxFactorOverride);
+                parallaxSlider.SetEnabled(e.newValue);
+                SaveBackgroundStateToCurrent(entry =>
+                {
+                    entry.overrideParallax = e.newValue;
+                    entry.parallaxFactorOverride = data.parallaxFactorOverride;
+                });
+            });
+            parallaxSlider.RegisterValueChangedCallback(e =>
+            {
+                if (!IsStageAuthoringMode) return;
+                data.parallaxFactorOverride = e.newValue;
+                SaveBackgroundStateToCurrent(entry => entry.parallaxFactorOverride = e.newValue);
+            });
+            _inspectorRoot.Add(overrideParallaxToggle);
+            _inspectorRoot.Add(parallaxSlider);
+
             _inspectorRoot.Add(MakeSeparator());
 
             if (HasTimelineMultiSelection)
@@ -1344,6 +1419,41 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return candidates;
         }
 
+        private static readonly StoryActorKeyframeProperty[] _importableKeyProperties =
+        {
+            StoryActorKeyframeProperty.Position,
+            StoryActorKeyframeProperty.Scale,
+            StoryActorKeyframeProperty.Expression,
+            StoryActorKeyframeProperty.BackgroundCut,
+            StoryActorKeyframeProperty.BackgroundPosition,
+            StoryActorKeyframeProperty.BackgroundScale,
+            StoryActorKeyframeProperty.CameraTarget,
+            StoryActorKeyframeProperty.CameraOffset,
+            StoryActorKeyframeProperty.CameraZoom,
+        };
+
+        private static void ImportLastKeysAtZero(
+            List<StoryActorKeyframeData> source,
+            List<StoryActorKeyframeData> dest)
+        {
+            foreach (var prop in _importableKeyProperties)
+            {
+                StoryActorKeyframeData last = null;
+                foreach (var k in source)
+                {
+                    if (k.property != prop) continue;
+                    if (last == null || k.timeSeconds > last.timeSeconds)
+                        last = k;
+                }
+                if (last == null) continue;
+
+                var clone = last.ShallowClone();
+                clone.timeSeconds    = 0f;
+                clone.normalizedTime = 0f;
+                dest.Add(clone);
+            }
+        }
+
         private void ApplyImportPreviousStage(StoryLineSO previousLine)
         {
             if (!TryBuildFinalStageStateAtLine(previousLine, out var previousActors, out var previousBackground, out var previousCamera))
@@ -1351,6 +1461,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (previousActors.Count == 0 && previousBackground == null && IsDefaultCameraState(previousCamera))
                 return;
+
+            StoryStageLayoutModuleSO prevLayout = FindStageLayout(previousLine);
 
             StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Import Previous Stage");
             if (layout == null)
@@ -1365,8 +1477,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 bool overwrite = EditorUtility.DisplayDialog(
                     "Import Previous Stage",
-                    "Overwrite the current line snapshot with the previous line's final static result and clear current actor/background/camera tracks?",
-                    "Overwrite",
+                    "Clear current actor/background/camera tracks and insert the previous line's last keyframe values at t=0?",
+                    "Import",
                     "Cancel");
                 if (!overwrite)
                     return;
@@ -1388,6 +1500,23 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             CopyBackgroundState(previousBackground, layout.BackgroundEditable);
             CopyCameraState(previousCamera, layout.CameraTrackEditable.defaultState);
+
+            if (prevLayout != null)
+            {
+                ImportLastKeysAtZero(prevLayout.BackgroundTrack.keyframes, layout.BackgroundTrackEditable.keyframes);
+                ImportLastKeysAtZero(prevLayout.CameraTrack.keyframes,     layout.CameraTrackEditable.keyframes);
+
+                foreach (StoryActorTrackData prevTrack in prevLayout.ActorTracks)
+                {
+                    if (string.IsNullOrWhiteSpace(prevTrack.actorInstanceKey)) continue;
+
+                    var newTrack = new StoryActorTrackData { actorInstanceKey = prevTrack.actorInstanceKey };
+                    ImportLastKeysAtZero(prevTrack.keyframes, newTrack.keyframes);
+                    if (newTrack.keyframes.Count > 0)
+                        layout.ActorTracksEditable.Add(newTrack);
+                }
+            }
+
             SaveLayoutAndRefresh(layout);
         }
 
@@ -2085,6 +2214,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             }
 
             setter(entry);
+            entry.focusVisualAlpha = -1f;
             entry.SyncActorKey();
             entry.EnsureActorInstanceKey(actorInstanceKey);
             _stageState[entry.ResolvedActorKey] = entry.ShallowClone();
