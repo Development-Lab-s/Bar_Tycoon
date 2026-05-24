@@ -22,18 +22,20 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.StoryRewardUI
         [SerializeField] private TextMeshProUGUI storyTitleText;
         
         [Header("Motion")]
-        [SerializeField] private Vector2 hidePosition = new Vector2(0f, 500f);
-        [SerializeField] private Vector2 showPosition = new Vector2(0f, 0f);
+        [SerializeField] private Vector2 showOffset = new Vector2(0f, -500f);
         [SerializeField] private float moveDuration = 0.45f;
         [SerializeField] private float showTime = 1.2f;
         
+        private Vector2 _hidePosition;
+        private Vector2 _showPosition;
         private readonly Queue<StoryEpisodeSO> storyEpisodeQueue = new();
         
         private bool _isPlaying;
 
         private void Awake()
         {
-            rewardPanel.anchoredPosition = hidePosition;
+            _hidePosition = rewardPanel.anchoredPosition;
+            _showPosition = _hidePosition + showOffset;
             
             storyUnlockEventChannel.AddListener<StoryEpisodeUnlockRequested>(HandleStoryUnlock);
             levelUpRewardExitClickChannel.AddListener<StoryEpisodeUnlockRequested>(HandleLevelUpExitClick);
@@ -52,6 +54,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.StoryRewardUI
         
         private void HandleLevelUpExitClick(StoryEpisodeUnlockRequested obj)
         {
+            Debug.Log(obj.Episode.Title);
             if (_isPlaying)
                 return;
             
@@ -68,20 +71,18 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.StoryRewardUI
 
                 ShowEpisodeText(episode);
 
-                yield return MovePanel(hidePosition, showPosition);
+                yield return MovePanel(_hidePosition, _showPosition);
 
                 yield return new WaitForSeconds(showTime);
 
-                yield return MovePanel(showPosition, hidePosition);
+                yield return MovePanel(_showPosition, _hidePosition);
             }
-
-            rewardPanel.gameObject.SetActive(false);
+            
             _isPlaying = false;
         }
         
         private void ShowEpisodeText(StoryEpisodeSO episode)
         {
-            rewardPanel.gameObject.SetActive(true);
             
             if (storyTitleText != null)
                 storyTitleText.text = episode.Title;

@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using _00._Work.Goat._02._Scripts.Exp;
 using _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards;
 using _00._Work.Lusaload._02._Scripts.SO;
-using BBJ.GridSystem.Objects;
-using Gamelib.EventSystem;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
@@ -18,7 +17,8 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         [SerializeField] private ExpManager expManager;
         
         [Header("CockTailDatabase")]
-        [SerializeField] private CocktailRecipeDatabaseSO _cocktailRecipeDatabaseSo;
+        [SerializeField] private CocktailRecipeDatabaseSO cocktailRecipeDatabaseSo;
+        [SerializeField] private AlcoholListSO alcoholListSO;
 
         public event Action<int, CocktailRecipeSO> OnCockTailAdd;
         public event Action<Sprite> OnFuncAdd; 
@@ -51,12 +51,19 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
                     Debug.Log($"{rewardIndex}번 인덱스 레벨보상 없음");
                     continue;
                 }
-                
+
+                List<BaseAlcoholDataSO> alcoholList = new();
                 foreach (CocktailRecipeSO reward in rewardGroup.cockTails)
                 {
-                    _cocktailRecipeDatabaseSo.AddCockTail(reward);
+                    foreach (BaseAlcoholDataSO alcohole in reward.cocktailRecipeList)
+                    {
+                        alcoholList.Add(alcohole);
+                    }
+                    cocktailRecipeDatabaseSo.AddCockTail(reward);
                     OnCockTailAdd?.Invoke(level, reward);
                 }
+
+                alcoholListSO.alcoholList = alcoholListSO.alcoholList.Union(alcoholList).ToList();
                 
                 rewardGroup.unlockData.LevelUpReward();
 
