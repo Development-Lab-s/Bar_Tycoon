@@ -106,7 +106,7 @@ namespace BBJ.GridSystem.Objects
             if (data?.WorkplacePrefab != null)
             {
                 var go = Instantiate(data.WorkplacePrefab, worldPos, Quaternion.identity);
-                //tycoonObject = go.GetComponent<TycoonObject>();
+                tycoonObject = go;
 
                 Func<Vector2Int, Vector3> offsetToWorld = off => _gridManager.CellToWorld(cellIndex + off);
                 tycoonObject?.Setup(offsetToWorld, flipX);

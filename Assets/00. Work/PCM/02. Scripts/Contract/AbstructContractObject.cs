@@ -1,51 +1,42 @@
 using _00._Work._Resources._02._Scripts.Agents.Players;
 using _00._Work._Resources._02._Scripts.Modules;
-using System;
+using BBJ.Modules; // IHoverRenderer 네임스페이스
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace _00._Work.PCM._02._Scripts
 {
-    public abstract class AbstructContractObject :MonoBehaviour,IContractObject,IModule
+    public abstract class AbstructContractObject : MonoBehaviour, IContractObject, IModule
     {
         private ModuleOwner _owner;
-        [field: SerializeField]public UnityEvent OnClickEvent { get; set; }
-        [field: SerializeField]public CharacterEnum characterEnum { get; set; }
-        [field: SerializeField]public UnityEvent<int> OnLike { get; set; }
+        private IHoverRenderer _hoverRenderer;
+        private bool isHover;
 
-        [SerializeField]private Renderer spriteRenderer;
-        Material material;
-        protected bool isHover;
-        private float tintValue = 0.21f;
-        private void Start()
+        [field: SerializeField] public UnityEvent OnClickEvent { get; set; }
+        [field: SerializeField] public CharacterEnum characterEnum { get; set; }
+        [field: SerializeField] public UnityEvent<int> OnLike { get; set; }
+
+        public void Initialize(ModuleOwner owner)
         {
-            material = spriteRenderer.material;
-            material.SetFloat("_OuterOutlineFade", 0);
-            material.SetFloat("_StrongTintFade", 0);
+            _owner = owner;
+            _hoverRenderer = _owner.GetModule<IHoverRenderer>();
         }
+
         public virtual void ExcuteClick()
         {
             OnClickEvent?.Invoke();
         }
+
         public virtual void Hover()
         {
             isHover = true;
-            material = spriteRenderer.material;
-            material.SetFloat("_OuterOutlineFade", 1);
-            material.SetFloat("_StrongTintFade", tintValue);
+            _hoverRenderer?.EnableHoverEffect();
         }
 
         public virtual void UnHover()
         {
             isHover = false;
-            material = spriteRenderer.material;
-            material.SetFloat("_OuterOutlineFade", 0);
-            material.SetFloat("_StrongTintFade", 0);
-        }
-
-        public void Initialize(ModuleOwner owner)
-        {
-            _owner = owner;
+            _hoverRenderer?.DisableHoverEffect();
         }
     }
 }

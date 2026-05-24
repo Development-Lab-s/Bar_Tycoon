@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace BBJ.Modules
 {
+
     public class NULLRenderer : MonoBehaviour, IModule, IRenderer
     {
         [field: SerializeField] public float FacingDirection { get; private set; } = 1f;

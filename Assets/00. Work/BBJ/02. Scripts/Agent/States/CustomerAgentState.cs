@@ -15,7 +15,7 @@ namespace BBJ.States
 
         public override void Enter()
         {
-            int layer = _customer?.AssignedSeat != null ? 1 : 0;
+            int layer = _customer?.AssignedSeat != null && !_customer.FoodServed ? 1 : 0;
             _renderer.PlayClip(_clipHash, layer);
             _isTriggerCall = false;
         }

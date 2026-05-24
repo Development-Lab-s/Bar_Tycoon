@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 public class SkeletonMimic : MonoBehaviour
 {
     public MeshFilter skeletonMesh;
-    MeshFilter myFilter;
+    public MeshFilter myFilter { get; private set; }
 
     void Start()
     {
