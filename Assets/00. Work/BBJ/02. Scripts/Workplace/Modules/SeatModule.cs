@@ -10,6 +10,9 @@ namespace BBJ.WorkplaceSystem.Modules
         private OccupationSlot? _slot;
 
         [SerializeField] private Transform seatPos;
+        [SerializeField] private float _facingDirection = 1f;
+        public float FacingDirection => _facingDirection;
+
         private Vector3 prevPos;
         private Transform customer;
         public ModuleOwner AssignedAgent { get; private set; }

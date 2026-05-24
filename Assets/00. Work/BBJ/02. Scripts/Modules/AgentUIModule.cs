@@ -1,15 +1,18 @@
 using BBJ.UI;
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
-using System.Linq;
 
 namespace BBJ.Modules
 {
     public class AgentUIModule : MonoBehaviour, IModule, IAgentUIModule
     {
         private Dictionary<Type, IAgentUI> _uis;
+        private CancellationTokenSource    _sequenceCts;
 
         public void Initialize(ModuleOwner owner)
         {
@@ -22,21 +25,45 @@ namespace BBJ.Modules
             _uis.TryGetValue(typeof(T), out var ui);
             return ui as T;
         }
-        public void SetActiveUI<T>(bool isActive) where T : class, IAgentUI
+
+        public async UniTask PlaySequenceAsync(CancellationToken ct, params IAgentUI[] sequence)
         {
-            T ui = Get<T>();
-            if (isActive)
+            CancelSequence();
+            _sequenceCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            var token = _sequenceCts.Token;
+
+            for (int i = 0; i < sequence.Length; i++)
             {
-                ui.OnOpen();
-                return;
+                if (token.IsCancellationRequested) return;
+
+                bool cancelled = await sequence[i].OpenAsync()
+                    .AttachExternalCancellation(token)
+                    .SuppressCancellationThrow();
+                if (cancelled) return;
+
+                bool isLast = i == sequence.Length - 1;
+                if (!isLast)
+                {
+                    cancelled = await sequence[i].CloseAsync()
+                        .AttachExternalCancellation(token)
+                        .SuppressCancellationThrow();
+                    if (cancelled) return;
+                }
             }
-            ui.OnClose();
+        }
+
+        public void CancelSequence()
+        {
+            _sequenceCts?.Cancel();
+            _sequenceCts?.Dispose();
+            _sequenceCts = null;
         }
 
         public void CloseAll()
         {
+            CancelSequence();
             foreach (var ui in _uis.Values)
-                ui.OnClose();
+                _ = ui.CloseAsync();
         }
     }
 }

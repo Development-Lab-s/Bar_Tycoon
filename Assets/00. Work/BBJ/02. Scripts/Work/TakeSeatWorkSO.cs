@@ -8,6 +8,7 @@ using Cysharp.Threading.Tasks;
 using System.Linq;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
+using _00._Work._Resources._02._Scripts.Systems.AnimationSystems;
 
 namespace BBJ.Work
 {
@@ -30,7 +31,6 @@ namespace BBJ.Work
 
             if (seat == null) return WorkResult.Cancelled;
 
-            customer.AssignedSeat = seat;
             seat.GetModule<OccupancyModule>()?.Occupy(executor);
 
             var role       = executor.GetModule<SchedulingModule>()?.InteractRole;
@@ -43,16 +43,15 @@ namespace BBJ.Work
             {
                 await actions.Execute<MoveAction>(a => a.ExecuteAsync(dest, ctx.Token));
                 seatModule?.Seat(executor);
+                executor.GetModule<IRenderer>()?.FlipController(seatModule.FacingDirection);
+                customer.AssignedSeat = seat;
                 seated = true;
                 return WorkResult.Completed;
             }
             finally
             {
                 if (!seated)
-                {
                     seat.GetModule<OccupancyModule>()?.Release();
-                    customer.AssignedSeat = null;
-                }
             }
         }
     }

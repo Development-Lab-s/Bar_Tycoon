@@ -13,6 +13,7 @@ namespace BBJ.Actions
 
         public event Action OnWorkPhaseStarted;
         public event Action OnWorkPhaseEnded;
+        public event Action<float> OnProgressUpdated;
         public bool IsInWorkPhase { get; private set; }
 
         public override void  InitOwner(Agent owner)
@@ -26,9 +27,14 @@ namespace BBJ.Actions
             var workExecutor = workplace.GetModule<IWorkExecutor>();
             if (workExecutor == null) return;
 
+            void HandleProgress(float p)
+            {
+                _durationUI?.SetPercent(p);
+                OnProgressUpdated?.Invoke(p);
+            }
+
             _durationUI?.Active();
-            if (_durationUI != null)
-                workExecutor.OnProgressChanged += _durationUI.SetPercent;
+            workExecutor.OnProgressChanged += HandleProgress;
 
             IsInWorkPhase = true;
             OnWorkPhaseStarted?.Invoke();
@@ -42,8 +48,7 @@ namespace BBJ.Actions
                 IsInWorkPhase = false;
                 OnWorkPhaseEnded?.Invoke();
 
-                if (_durationUI != null)
-                    workExecutor.OnProgressChanged -= _durationUI.SetPercent;
+                workExecutor.OnProgressChanged -= HandleProgress;
                 _durationUI?.Disable();
             }
         }

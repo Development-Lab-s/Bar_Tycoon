@@ -4,22 +4,23 @@ using BBJ.Actions;
 using BBJ.Customer;
 using BBJ.Modules;
 using BBJ.UI;
+using Cysharp.Threading.Tasks;
 
 namespace BBJ.States
 {
-    public class CustomerWorkState : TransitionAgentState
+    public class CustomerWorkState : CustomerAgentState
     {
-        private readonly WorkAction     _workAction;
+        private readonly WorkAction    _workAction;
         private readonly IAgentUIModule _uiModule;
-        private readonly AgentStatusUI  _statusUI;
+        private readonly EatDurationUI  _eatDurationUI;
 
         private bool _workEnded;
 
         public CustomerWorkState(Agent owner, AnimParamSO stateParam) : base(owner, stateParam)
         {
-            _workAction = owner.GetModule<IAgentActionModule>().GetAction<WorkAction>();
-            _uiModule   = owner.GetModule<IAgentUIModule>();
-            _statusUI   = _uiModule?.Get<AgentStatusUI>();
+            _workAction    = owner.GetModule<IAgentActionModule>().GetAction<WorkAction>();
+            _uiModule      = owner.GetModule<IAgentUIModule>();
+            _eatDurationUI = _uiModule?.Get<EatDurationUI>();
 
             UtilDebugger.AssertAllAssigned(this);
 
@@ -30,18 +31,21 @@ namespace BBJ.States
         {
             base.Enter();
             _workEnded = false;
-            _workAction.OnWorkPhaseEnded += HandleWorkEnded;
+            _workAction.OnWorkPhaseEnded  += HandleWorkEnded;
+            _workAction.OnProgressUpdated += HandleProgress;
 
-            _statusUI?.SetText("먹는 중");
-            _uiModule?.SetActiveUI<AgentStatusUI>(true);
+            _ = _eatDurationUI?.OpenAsync();
         }
 
         public override void Exit()
         {
-            _workAction.OnWorkPhaseEnded -= HandleWorkEnded;
-            _uiModule?.SetActiveUI<AgentStatusUI>(false);
+            _workAction.OnWorkPhaseEnded  -= HandleWorkEnded;
+            _workAction.OnProgressUpdated -= HandleProgress;
+
+            _ = _eatDurationUI?.CloseAsync();
         }
 
-        private void HandleWorkEnded() => _workEnded = true;
+        private void HandleWorkEnded()           => _workEnded = true;
+        private void HandleProgress(float value) => _eatDurationUI?.SetPercent(value);
     }
 }

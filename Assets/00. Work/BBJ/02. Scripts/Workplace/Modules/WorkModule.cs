@@ -1,3 +1,4 @@
+using BBJ.Order;
 using BBJ.Work;
 using BBJ.WorkplaceSystem.Handlers;
 using Cysharp.Threading.Tasks;
@@ -18,7 +19,8 @@ namespace BBJ.WorkplaceSystem.Modules
 
         public event Action<float> OnProgressChanged;
 
-        public void Initialize(ModuleOwner owner) { }
+        private ModuleOwner _owner;
+        public void Initialize(ModuleOwner owner) { _owner = owner; }
 
         public float GetDuration(ModuleOwner worker)
         {
@@ -53,6 +55,14 @@ namespace BBJ.WorkplaceSystem.Modules
         {
             foreach (var handler in _completionHandlers)
                 handler.OnCompleted(worker, position);
+        }
+
+        public void InstantExecute(ModuleOwner executor, OrderTicket ticket)
+        {
+            _owner.GetModule<WorkplaceQueueModule>()
+                  ?.TryCompleteSlotByOwner(ticket.Customer.transform);
+            ticket.TryStartProgress(executor);
+            NotifyCompleted(executor, executor.transform.position);
         }
     }
 }

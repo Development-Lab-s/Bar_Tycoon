@@ -4,6 +4,7 @@ using Assets._00._Work.PCM._02._Scripts.Contract;
 using BBJ.Modules;
 using BBJ.Schedule;
 using BBJ.UI;
+using Cysharp.Threading.Tasks;
 
 namespace BBJ.States
 {
@@ -25,13 +26,13 @@ namespace BBJ.States
         public override void Enter()
         {
             base.Enter();
-            _uiModule.SetActiveUI<ContractChat>(true);
+            _uiModule.Get<ContractChat>()?.OpenAsync().Forget();
         }
 
         public override void Exit()
         {
             base.Exit();
-            _uiModule.SetActiveUI<ContractChat>(false);
+            _uiModule.Get<ContractChat>()?.CloseAsync().Forget();
             _scheduling?.Resume();
         }
     }

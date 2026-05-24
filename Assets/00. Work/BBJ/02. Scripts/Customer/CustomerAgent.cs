@@ -3,6 +3,7 @@ using BBJ.EventSystem;
 using BBJ.Order;
 using BBJ.Schedule;
 using BBJ.WorkplaceSystem;
+using BBJ.WorkplaceSystem.Modules;
 using Gamelib.EventSystem;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
@@ -23,6 +24,8 @@ namespace BBJ.Customer
         public bool FoodServed { get; private set; }
         public bool PaymentDone { get; private set; }
         public ModuleOwner AssignedServer { get; private set; }
+
+        public int RestoreCycleStep { get; set; }
 
         public bool IsReadyForOrder => IsAwaitingOrder;
 
@@ -82,6 +85,8 @@ namespace BBJ.Customer
             _orderChannel?.AddListener<OrderStateChangedEvent>(HandleOrderStateChanged);
         }
 
+        internal void SetFoodServedForRestore() => FoodServed = true;
+
         public override void ResetItem()
         {
             _orderChannel?.RemoveListener<OrderStateChangedEvent>(HandleOrderStateChanged);
@@ -91,7 +96,13 @@ namespace BBJ.Customer
                 _orderChannel?.RaiseEvent(new OrderCancelRequestEvent(ActiveTicket, CancelReason.CustomerLeft));
 
             GetModule<SchedulingModule>()?.CancelWork();
-            AssignedSeat    = null;
+            var seat = AssignedSeat;
+            if (seat != null)
+            {
+                seat.GetModule<SeatModule>()?.ClearCustomer();
+                seat.GetModule<OccupancyModule>()?.Release();
+                AssignedSeat = null;
+            }
             AssignedServer  = null;
             ActiveTicket    = null;
             SelectedFood    = null;
@@ -99,6 +110,7 @@ namespace BBJ.Customer
             FoodServed      = false;
             PaymentDone     = false;
             IsAwaitingOrder = false;
+            RestoreCycleStep = 0;
         }
     }
 }

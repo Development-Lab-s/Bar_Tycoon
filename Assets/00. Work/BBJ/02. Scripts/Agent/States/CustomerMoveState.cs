@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace BBJ.States
 {
-    public class CustomerMoveState : TransitionAgentState
+    public class CustomerMoveState : CustomerAgentState
     {
         private readonly IPathMovement _movement;
 
