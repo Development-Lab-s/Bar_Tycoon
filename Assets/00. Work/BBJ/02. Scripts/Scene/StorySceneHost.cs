@@ -28,7 +28,7 @@ namespace BBJ.Scene
         {
             var episode = StoryTransitionContext.Instance?.PendingEpisode;
             if (episode == null) return;
-            _storyCommandChannel.RaiseEvent(new PlayStoryRequested(episode));
+            _storyCommandChannel.RaiseEvent(new PlayStoryRequested(episode: episode.Episode, callerId: episode.EpisodeId));
         }
 
         public void OnBackground()

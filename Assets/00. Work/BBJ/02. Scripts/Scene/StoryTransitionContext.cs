@@ -1,6 +1,7 @@
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
 using BBJ.EventSystem;
 using Gamelib.EventSystem;
-using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using UnityEngine;
 
 namespace BBJ.Scene
@@ -11,7 +12,7 @@ namespace BBJ.Scene
 
         [SerializeField] private EventChannelSO _sceneChannel;
 
-        public StoryEpisodeSO PendingEpisode { get; private set; }
+        public StoryEpisodeUnlockRequested PendingEpisode { get; private set; }
 
         private void Awake()
         {
@@ -24,7 +25,7 @@ namespace BBJ.Scene
             Instance = null;
         }
 
-        public void RequestStory(StoryEpisodeSO episode)
+        public void RequestStory(StoryEpisodeUnlockRequested episode)
         {
             PendingEpisode = episode;
             _sceneChannel.RaiseEvent(new SceneTransitionRequestEvent(SceneType.Story));

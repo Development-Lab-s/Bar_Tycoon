@@ -1,11 +1,9 @@
 using BBJ.Save;
-using Gamelib.ObjectPool.Runtime;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using BBJ.Schedule;
-using BBJ.Register;
-using BBJ.WorkplaceSystem;
 
 namespace BBJ.Staff
 {
@@ -15,11 +13,10 @@ namespace BBJ.Staff
         public struct StaffEntry
         {
             public StaffConfigSO Config;
+            public Vector3       DefaultSpawnPosition;
         }
 
-        [SerializeField] private List<StaffEntry>      _entries = new();
-        [SerializeField] private WorkplaceRegisterSO   _workplaceRegister;
-        [SerializeField] private WorkplaceTypeSO       _entranceType;
+        [SerializeField] private List<StaffEntry> _entries = new();
 
         private readonly List<StaffAgent> _spawnedAgents = new();
 
@@ -66,12 +63,8 @@ namespace BBJ.Staff
         {
             if (entry.Config?.Prefab == null) return;
 
-            var entrances = _workplaceRegister?.GetAll(_entranceType);
-            var spawnPos  = entrances != null && entrances.Count > 0
-                ? entrances[0].transform.position
-                : Vector3.zero;
-
-            var go    = Instantiate(entry.Config.Prefab, spawnPos, Quaternion.identity);
+            var go    = Instantiate(entry.Config.Prefab, entry.DefaultSpawnPosition, Quaternion.identity);
+            SceneManager.MoveGameObjectToScene(go, gameObject.scene);
             var agent = go.GetComponent<StaffAgent>();
             if (agent == null) return;
 
@@ -83,6 +76,7 @@ namespace BBJ.Staff
             if (entry.Config?.Prefab == null) return;
 
             var go    = Instantiate(entry.Config.Prefab, position, Quaternion.identity);
+            SceneManager.MoveGameObjectToScene(go, gameObject.scene);
             var agent = go.GetComponent<StaffAgent>();
             if (agent == null) return;
 
