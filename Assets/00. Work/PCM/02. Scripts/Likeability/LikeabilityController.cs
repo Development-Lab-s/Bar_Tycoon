@@ -15,7 +15,8 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 {
     [SerializeField]private CharItemSO _itemSO; //Char은 매력이라는 뜻 ㅇㅇ
     [SerializeField]private CoinData _coinData;
-    public UnityEvent errorMessage; 
+    public UnityEvent errorMessage;
+    public UnityEvent targetMessage;
     private Image _image;
     private GameObject dragInstance;
     private RectTransform dragRectTransform;
@@ -98,7 +99,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
             {
                 if (_itemSO.CharacterEnum != pychar.characterEnum)
                 {
-                    errorMessage?.Invoke();
+                    targetMessage?.Invoke();
                     Destroy(dragInstance);
                     return;
                 }
