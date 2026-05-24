@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
+using _00._Work.Goat._02._Scripts.Events;
 using Gamelib.EventSystem;
 using LitMotion;
 using LitMotion.Extensions;
@@ -38,13 +39,13 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.StoryRewardUI
             _showPosition = _hidePosition + showOffset;
             
             storyUnlockEventChannel.AddListener<StoryEpisodeUnlockRequested>(HandleStoryUnlock);
-            levelUpRewardExitClickChannel.AddListener<StoryEpisodeUnlockRequested>(HandleLevelUpExitClick);
+            levelUpRewardExitClickChannel.AddListener<LevelUpRewardeExitBtnClickEvent>(HandleLevelUpExitClick);
         }
 
         private void OnDestroy()
         {
             storyUnlockEventChannel.RemoveListener<StoryEpisodeUnlockRequested>(HandleStoryUnlock);
-            levelUpRewardExitClickChannel.RemoveListener<StoryEpisodeUnlockRequested>(HandleLevelUpExitClick);
+            levelUpRewardExitClickChannel.RemoveListener<LevelUpRewardeExitBtnClickEvent>(HandleLevelUpExitClick);
         }
 
         private void HandleStoryUnlock(StoryEpisodeUnlockRequested obj)
@@ -52,9 +53,8 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.StoryRewardUI
             storyEpisodeQueue.Enqueue(obj.Episode);
         }
         
-        private void HandleLevelUpExitClick(StoryEpisodeUnlockRequested obj)
+        private void HandleLevelUpExitClick(LevelUpRewardeExitBtnClickEvent obj)
         {
-            Debug.Log(obj.Episode.Title);
             if (_isPlaying)
                 return;
             
