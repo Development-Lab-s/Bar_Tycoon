@@ -1,11 +1,11 @@
+using BBJ.EventSystem;
 using BBJ.Save;
-using Gamelib.ObjectPool.Runtime;
+using Gamelib.EventSystem;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using BBJ.Schedule;
-using BBJ.Register;
-using BBJ.WorkplaceSystem;
 
 namespace BBJ.Staff
 {
@@ -17,16 +17,33 @@ namespace BBJ.Staff
             public StaffConfigSO Config;
         }
 
-        [SerializeField] private List<StaffEntry>      _entries = new();
-        [SerializeField] private WorkplaceRegisterSO   _workplaceRegister;
-        [SerializeField] private WorkplaceTypeSO       _entranceType;
+        [Serializable]
+        public struct SpawnPoint
+        {
+            public AgentRole Role;
+            public Vector3   Position;
+        }
+
+        [SerializeField] private List<StaffEntry>  _entries     = new();
+        [SerializeField] private List<SpawnPoint>  _spawnPoints = new();
+        [SerializeField] private EventChannelSO    _staffChannel;
 
         private readonly List<StaffAgent> _spawnedAgents = new();
+
+        private void Awake()     => _staffChannel?.AddListener<StaffSpawnEvent>(OnSpawnEvent);
+        private void OnDestroy() => _staffChannel?.RemoveListener<StaffSpawnEvent>(OnSpawnEvent);
+
+        private void OnSpawnEvent(StaffSpawnEvent e)
+        {
+            var agent = SpawnByConfig(e.Config);
+            if (agent != null)
+                e.OnSpawnEnded(agent.transform.position);
+        }
 
         public void SpawnAll()
         {
             foreach (var entry in _entries)
-                SpawnNormal(entry);
+                SpawnByConfig(entry.Config);
         }
 
         public void RestoreStaff(StaffSaveData data)
@@ -35,7 +52,7 @@ namespace BBJ.Staff
             {
                 var entry = _entries.Find(e => e.Config != null && e.Config.Role == save.Role);
                 if (entry.Config == null) continue;
-                SpawnAtPosition(entry, save.LastPosition);
+                SpawnAtPosition(entry.Config, save.LastPosition);
             }
         }
 
@@ -62,31 +79,25 @@ namespace BBJ.Staff
                 agent?.GetModule<SchedulingModule>()?.CancelWork();
         }
 
-        private void SpawnNormal(StaffEntry entry)
+        private StaffAgent SpawnByConfig(StaffConfigSO config)
         {
-            if (entry.Config?.Prefab == null) return;
+            if (config?.Prefab == null) return null;
 
-            var entrances = _workplaceRegister?.GetAll(_entranceType);
-            var spawnPos  = entrances != null && entrances.Count > 0
-                ? entrances[0].transform.position
-                : Vector3.zero;
-
-            var go    = Instantiate(entry.Config.Prefab, spawnPos, Quaternion.identity);
-            var agent = go.GetComponent<StaffAgent>();
-            if (agent == null) return;
-
-            _spawnedAgents.Add(agent);
+            var point = _spawnPoints.Find(p => p.Role == config.Role);
+            return SpawnAtPosition(config, point.Position);
         }
 
-        private void SpawnAtPosition(StaffEntry entry, Vector3 position)
+        private StaffAgent SpawnAtPosition(StaffConfigSO config, Vector3 position)
         {
-            if (entry.Config?.Prefab == null) return;
+            if (config?.Prefab == null) return null;
 
-            var go    = Instantiate(entry.Config.Prefab, position, Quaternion.identity);
+            var go    = Instantiate(config.Prefab, position, Quaternion.identity);
+            SceneManager.MoveGameObjectToScene(go, gameObject.scene);
             var agent = go.GetComponent<StaffAgent>();
-            if (agent == null) return;
+            if (agent == null) return null;
 
             _spawnedAgents.Add(agent);
+            return agent;
         }
     }
 }

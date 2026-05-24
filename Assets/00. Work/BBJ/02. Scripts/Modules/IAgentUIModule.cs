@@ -1,11 +1,14 @@
-﻿using BBJ.UI;
+using System.Threading;
+using BBJ.UI;
+using Cysharp.Threading.Tasks;
 
 namespace BBJ.Modules
 {
     public interface IAgentUIModule
     {
-        void CloseAll();
         T Get<T>() where T : class, IAgentUI;
-        void SetActiveUI<T>(bool isActive) where T : class, IAgentUI;
+        UniTask PlaySequenceAsync(CancellationToken ct, params IAgentUI[] sequence);
+        void CancelSequence();
+        void CloseAll();
     }
 }

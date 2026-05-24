@@ -45,12 +45,6 @@ namespace BBJ.EventSystem
         }
     }
 
-    public class PlayerOrderTakeEvent : GameEvent
-    {
-        public OrderTicket Ticket { get; }
-        public PlayerOrderTakeEvent(OrderTicket ticket) => Ticket = ticket;
-    }
-
     public class CustomerEatCompleteEvent : GameEvent
     {
         public OrderTicket Ticket { get; }

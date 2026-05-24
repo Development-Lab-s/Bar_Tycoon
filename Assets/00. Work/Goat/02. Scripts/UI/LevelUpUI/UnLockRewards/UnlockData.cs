@@ -18,18 +18,5 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
                 unlockData.LevelUpReward();
             }
         }
-        public List<Vector2> GetSpawnPositions()
-        {
-            List<Vector2> result = new();
-
-            if (unlockDatas == null) return result;
-
-            foreach (AbstractUnlockSO unlockData in unlockDatas)
-            {
-                result.AddRange(unlockData.GetSpawnPositions());
-            }
-
-            return result;
-        }
     }
 }

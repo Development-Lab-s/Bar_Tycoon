@@ -4,14 +4,15 @@ using Gamelib.EventSystem;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace BBJ.GridSystem.Objects
 {
     public class ObjectManager : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private GridManager          _gridManager;
-        [SerializeField] private StageLayoutSO        _stageLayout;
+        [SerializeField] private GridManager _gridManager;
+        [SerializeField] private StageLayoutSO _stageLayout;
         [SerializeField] private ObjectDataRegistrySO _registry;
 
         [Header("Event Channels")]
@@ -19,7 +20,7 @@ namespace BBJ.GridSystem.Objects
 
         private readonly List<PlacedObstacleEntrySave> _placed = new();
 
-        private void Awake()     { SubEventChannel(); }
+        private void Awake() { SubEventChannel(); }
         private void OnDestroy() { UnSubEventChannel(); }
 
         // ─── GameLoader 호출 API ──────────────────────────────
@@ -65,8 +66,8 @@ namespace BBJ.GridSystem.Objects
                     _placed.Add(new PlacedObstacleEntrySave
                     {
                         ObjectDataId = entry.obstacleData.Id,
-                        CellIndex    = entry.cellIndex,
-                        FlipX        = entry.flipX,
+                        CellIndex = entry.cellIndex,
+                        FlipX = entry.flipX,
                     });
             }
 
@@ -91,8 +92,8 @@ namespace BBJ.GridSystem.Objects
                 _placed.Add(new PlacedObstacleEntrySave
                 {
                     ObjectDataId = data.Id,
-                    CellIndex    = cellIndex,
-                    FlipX        = flipX,
+                    CellIndex = cellIndex,
+                    FlipX = flipX,
                 });
             return obj;
         }
@@ -105,7 +106,7 @@ namespace BBJ.GridSystem.Objects
             if (data?.WorkplacePrefab != null)
             {
                 var go = Instantiate(data.WorkplacePrefab, worldPos, Quaternion.identity);
-                tycoonObject = go.GetComponent<TycoonObject>();
+                //tycoonObject = go.GetComponent<TycoonObject>();
 
                 Func<Vector2Int, Vector3> offsetToWorld = off => _gridManager.CellToWorld(cellIndex + off);
                 tycoonObject?.Setup(offsetToWorld, flipX);
@@ -155,18 +156,18 @@ namespace BBJ.GridSystem.Objects
 
     public class ObjectSpawnEvent : GameEvent
     {
-        public ObjectDataSO   ObjectData { get; private set; }
-        public Vector2Int     CellIndex  { get; private set; }
-        public bool           FlipX      { get; private set; }
+        public ObjectDataSO ObjectData { get; private set; }
+        public Vector2Int CellIndex { get; private set; }
+        public bool FlipX { get; private set; }
         public event Action<Vector3> CallBack;
         public void OnSpawnEnded(Vector3 pos) => CallBack?.Invoke(pos);
 
         public ObjectSpawnEvent Init(ObjectDataSO data, Vector2Int cellIndex, bool flipX = false, Action<Vector3> callback = default)
         {
             ObjectData = data;
-            CellIndex  = cellIndex;
-            FlipX      = flipX;
-            CallBack   = callback;
+            CellIndex = cellIndex;
+            FlipX = flipX;
+            CallBack = callback;
             return this;
         }
     }

@@ -14,6 +14,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
     {
         [Header("Event")]
         [SerializeField] private EventChannelSO cameraEventSO;
+        [SerializeField] private EventChannelSO levelUpExitBtnClickEvent;
         
         [Header("References")]
         [SerializeField] private CinemachineCamera playCamera;
@@ -38,6 +39,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
         private void Awake()
         {
             cameraEventSO.AddListener<CameraManagerEvent>(HandleCameraEvent);
+            levelUpExitBtnClickEvent.AddListener<LevelUpRewardeExitBtnClickEvent>(HandleExitBtnClickEvent);
             _cameraPanController = playCamera.GetComponent<CameraPanController>();
             _freeZoomController = playCamera.GetComponent<FreeZoomController>();
         }
@@ -45,6 +47,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
         private void OnDestroy()
         {
             cameraEventSO.RemoveListener<CameraManagerEvent>(HandleCameraEvent);
+            levelUpExitBtnClickEvent.RemoveListener<LevelUpRewardeExitBtnClickEvent>(HandleExitBtnClickEvent);
         }
         
         private void HandleCameraEvent(CameraManagerEvent obj)
@@ -53,11 +56,23 @@ namespace _00._Work.Goat._02._Scripts.Camera
             
             _objectPositionQueue.Enqueue(obj.objectPositionList);
 
+            if (obj.isImmediateStart)
+            {
+                if (!_isPlaying)
+                {
+                    _isPlaying = true;
+                    StartCoroutine(CameraMotionCoroutine());
+                }   
+            }
+        }
+        
+        private void HandleExitBtnClickEvent(LevelUpRewardeExitBtnClickEvent obj)
+        {
             if (!_isPlaying)
             {
                 _isPlaying = true;
                 StartCoroutine(CameraMotionCoroutine());
-            }
+            }   
         }
 
         private IEnumerator CameraMotionCoroutine()

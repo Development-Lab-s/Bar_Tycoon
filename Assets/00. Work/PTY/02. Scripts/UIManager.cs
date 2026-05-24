@@ -16,7 +16,8 @@ public enum MenuType
     Menu,
     Order,
     StealConfirm,
-    LP
+    LP,
+    Item
 }
 
 [System.Serializable]

@@ -17,6 +17,7 @@ namespace BBJ
     /// 복원 순서: Stage → Tickets → Customers → Link → Staff → ReadyCount
     /// 종료 시 Stage + Orders + Staff를 game.save 하나에 저장.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     public class GameLoader : MonoBehaviour
     {
         [Header("Managers")]
@@ -45,7 +46,7 @@ namespace BBJ
                 StartFresh();
         }
 
-        private void OnApplicationQuit()
+        private void OnDestroy()
         {
             _staffManager?.CancelAllWork();
             SaveAll();
@@ -86,6 +87,9 @@ namespace BBJ
 
             // Step 4: Customer ↔ OrderTicket 연결 + Phase별 Dispatch
             _orderManager?.LinkTicketsToCustomers(tickets, customers);
+
+            // Step 4.5: 복원된 고객 사이클 시작
+            _customerManager?.StartRestoredCycles(customers);
 
             // Step 5: Staff 저장 위치에 스폰
             _staffManager?.RestoreStaff(saveData.Staff);

@@ -2,6 +2,7 @@
 using _00._Work.Goat._02._Scripts.Events;
 using _00._Work.Goat._02._Scripts.Exp.ExpDatas;
 using _00._Work.Goat._02._Scripts.SaveCode;
+using _00._Work.Goat._02._Scripts.UI.AchievementUI.Data;
 using Gamelib.EventSystem;
 using UnityEngine;
 
@@ -10,7 +11,11 @@ namespace _00._Work.Goat._02._Scripts.Exp
     public class ExpManager : MonoBehaviour
     {
         [field: SerializeField] public ExpTableSO ExpTableSo { get; private set; }
+        
+        [Header("EventChannel")]
         [SerializeField] private EventChannelSO expChannelSO;
+        [SerializeField] private EventChannelSO achieveChannelSO;
+            
         [SerializeField] private ExpData expData;
         [SerializeField] private SaveFileNameSO saveFileNameSO;
         
@@ -56,6 +61,7 @@ namespace _00._Work.Goat._02._Scripts.Exp
                 expData.currentExp -= maxExp;
                 expData.currentLevel += 1;
                 levelUpCount++;
+                achieveChannelSO.RaiseEvent(new AchievementEvent().Init(AchievementType.LevelUp , 1));
             }
             
             int afterLevel = CurrentLevel;

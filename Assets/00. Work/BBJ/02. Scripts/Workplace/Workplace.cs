@@ -58,7 +58,7 @@ namespace BBJ.WorkplaceSystem
                 foreach (var pt in _validPoints[key])
                 {
                     Node node = gridManager.NodeFromWorldPoint(pt);
-                    if (node != null)
+                    if (node != null && node.walkable)
                         filtered.Add(pt);
                 }
                 _validPoints[key] = filtered;

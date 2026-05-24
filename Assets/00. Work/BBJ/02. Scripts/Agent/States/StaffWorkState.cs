@@ -3,6 +3,7 @@ using _00._Work._Resources._02._Scripts.Systems.AnimationSystems;
 using BBJ.Actions;
 using BBJ.Modules;
 using BBJ.UI;
+using Cysharp.Threading.Tasks;
 
 namespace BBJ.States
 {
@@ -35,15 +36,15 @@ namespace BBJ.States
             _workEnded      = false;
             _shouldInteract = false;
 
-            _statusUI?.SetText("작업중");
-            _uiModule.SetActiveUI<AgentStatusUI>(true);
+            _statusUI?.ToggleText("작업중");
+            _statusUI?.OpenAsync().Forget();
             _workAction.OnWorkPhaseEnded += HandleWorkEnded;
             _input.OnInteracted          += HandleInteract;
         }
 
         public override void Exit()
         {
-            _uiModule.SetActiveUI<AgentStatusUI>(false);
+            _statusUI?.CloseAsync().Forget();
             _workAction.OnWorkPhaseEnded -= HandleWorkEnded;
             _input.OnInteracted          -= HandleInteract;
         }
