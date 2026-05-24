@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class ContractUi : AbstructContractPopUp
 {
-    private UiOwner _uiOwner;
     public override void OnOpen()
     {
         //_uiOwner.StackAdd(this);

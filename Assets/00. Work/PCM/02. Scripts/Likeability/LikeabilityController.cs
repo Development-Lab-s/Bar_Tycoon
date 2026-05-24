@@ -2,6 +2,7 @@ using _00._Work._Resources._02._Scripts.Agents.Players;
 using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work._Resources._02._Scripts.Systems;
 using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
+using _00._Work.Goat._02._Scripts.Coin.CoinDatas;
 using _00._Work.PCM._02._Scripts;
 using Systems;
 using TMPro;
@@ -13,7 +14,7 @@ using UnityEngine.UI;
 public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField]private CharItemSO _itemSO; //Char은 매력이라는 뜻 ㅇㅇ
-    [SerializeField]private TextMeshProUGUI _text;
+    [SerializeField]private CoinData _coinData;
     public UnityEvent errorMessage; 
     private Image _image;
     private GameObject dragInstance;
@@ -25,7 +26,6 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
         _image = GetComponent<Image>();
         mainCanvas = GetComponentInParent<Canvas>();
         LoadItem();
-        ChangedText();
     }
     private void LoadItem()
     {
@@ -43,23 +43,15 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
                 $"{_itemSO.ItemName}.save",
                 "Items");
 
-        _itemSO.LoadSaveData(saveData);
-    }
-    private void OnEnable()
-    {
-        _itemSO.OnChangedCount.AddListener(ChangedText);
-    }
-    private void OnDisable()
-    {
-        _itemSO.OnChangedCount.RemoveListener(ChangedText);
-    }
-    public void ChangedText()
-    {
-        _text.text = _itemSO.CurrentCount.ToString();
     }
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (_itemSO.CurrentCount == 0) return;
+        if (_coinData.coin == 0)
+        {
+            errorMessage?.Invoke();
+            return;
+        }
+        ;
         if (_image.sprite == null)
         {
             return;
@@ -92,7 +84,11 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (_itemSO.CurrentCount == 0) return;
+        if (_coinData.coin == 0)
+        {
+            Destroy(dragInstance);
+            return;
+        }
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(eventData.position);
         RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
@@ -106,7 +102,6 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
                     Destroy(dragInstance);
                     return;
                 }
-                _itemSO.RemoveCount();
                 pychar.OnLike.Invoke(_itemSO.LikePlus);
             }
         }
