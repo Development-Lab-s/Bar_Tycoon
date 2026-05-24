@@ -1,9 +1,5 @@
-using _00._Work._Resources._02._Scripts.Agents.FSM;
 using Agents.StatSystem;
 using BBJ.Movement;
-using BBJ.States;
-using System;
-using UnityEditorInternal;
 using UnityEngine;
 
 namespace BBJ
