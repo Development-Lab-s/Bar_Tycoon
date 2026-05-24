@@ -65,7 +65,6 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
         if (characterData.currentLevel >= characterData.maxLevel) return;
 
         characterData.currentExp += expAmount;
-        Debug.Log($"{characterData.characterName} 호감도 경험치 +{expAmount}");
         int text = Random.Range(0, CharlikeSo.DialogueDataList.Count);
         ChatOpen?.Invoke(CharlikeSo.DialogueDataList[text].context);
         //bool isLeveledUp = false;
@@ -75,7 +74,6 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
             characterData.currentExp -= characterData.GetMaxExpForLevel(characterData.currentLevel);
             characterData.currentLevel++;
             //isLeveledUp = true;
-            Debug.Log($"레벨업! 현재 레벨: {characterData.currentLevel}");
         }
         SaveManager.Save(characterData.GetSaveData(), $"{characterData.id}.save", "Characters");
 

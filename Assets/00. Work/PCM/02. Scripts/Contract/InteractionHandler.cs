@@ -2,6 +2,7 @@
 using _00._Work.PCM._02._Scripts;
 using Systems;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Assets._00._Work.PCM._02._Scripts
 {
@@ -45,6 +46,8 @@ namespace Assets._00._Work.PCM._02._Scripts
 
         private void CheckHover()
         {
+            if (EventSystem.current.IsPointerOverGameObject())
+                return;
             if (_inputSo.MainCam == null)
                 return;
             Vector2 worldPos = _inputSo.MainCam.ScreenToWorldPoint(_inputSo.MousePosition);

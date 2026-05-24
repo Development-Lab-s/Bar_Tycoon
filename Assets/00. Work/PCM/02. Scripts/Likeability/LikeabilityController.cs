@@ -13,17 +13,16 @@ using UnityEngine.UI;
 public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField]private CharItemSO _itemSO; //Char은 매력이라는 뜻 ㅇㅇ
+    [SerializeField]private TextMeshProUGUI _text;
     public UnityEvent errorMessage; 
-    private TextMeshProUGUI _text;
     private Image _image;
     private GameObject dragInstance;
     private RectTransform dragRectTransform;
     private Canvas mainCanvas;
 
-    public void Awake()
+    private void Awake()
     {
         _image = GetComponent<Image>();
-        _text = GetComponentInChildren<TextMeshProUGUI>();
         mainCanvas = GetComponentInParent<Canvas>();
         LoadItem();
         ChangedText();

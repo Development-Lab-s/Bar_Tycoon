@@ -1,6 +1,7 @@
 ﻿using _00._Work.PCM._02._Scripts;
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Systems
@@ -49,6 +50,8 @@ namespace Systems
 
         public void OnContractClick(InputAction.CallbackContext context)
         {
+            if (EventSystem.current.IsPointerOverGameObject())
+                return;
             if (context.performed)
             {
                 // 현재 Hover 대상 클릭
@@ -57,7 +60,6 @@ namespace Systems
                 IsClick?.Invoke();
             }
         }
-
         public void OnIntractClick(
             InputAction.CallbackContext context)
         {
