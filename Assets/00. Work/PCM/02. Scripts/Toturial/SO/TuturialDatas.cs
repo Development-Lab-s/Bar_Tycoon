@@ -6,6 +6,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "TuturialDatas", menuName = "Scriptable Objects/TuturialDatas")]
 public class TuturialDatas : ScriptableObject
 {
-   public string TutorialName;
-   public ToturialInfoSO[] data;   
+    public bool isEnd;
+    public string TutorialName;
+    public ToturialInfoSO[] data;   
 }
