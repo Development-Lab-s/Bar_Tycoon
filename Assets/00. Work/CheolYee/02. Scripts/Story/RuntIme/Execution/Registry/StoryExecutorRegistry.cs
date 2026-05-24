@@ -61,28 +61,55 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Registry
             if (line.Modules == null || line.Modules.Count == 0)
                 return;
 
-            foreach (StoryModuleSO storyModuleSO in line.Modules)
+            // WithDialogue modules run in parallel so FadeOut and stage/sound/text all start together.
+            // BeforeDialogue and AfterDialogue remain sequential.
+            if (timing == StoryModuleTiming.WithDialogue)
             {
-                ct.ThrowIfCancellationRequested();
-
-                StoryModuleSO module = storyModuleSO;
-                if (module == null || module.Timing != timing)
-                    continue;
-
-                // Choice 계열은 StoryRunner 가 IStoryChoiceLikeModule 로 처리
-                if (module is IStoryChoiceLikeModule)
-                    continue;
-
-                IStoryModuleExecutor executor = FindExecutor(module);
-                if (executor == null)
+                var tasks = new System.Collections.Generic.List<UniTask>();
+                foreach (StoryModuleSO module in line.Modules)
                 {
-                    Debug.LogWarning(
-                        $"모듈 '{module.name}' ({module.GetType().Name}) 에 대한 executor 를 찾을 수 없습니다.",
-                        module);
-                    continue;
-                }
+                    ct.ThrowIfCancellationRequested();
+                    if (module == null || module.Timing != timing) continue;
+                    if (module is IStoryChoiceLikeModule) continue;
 
-                await executor.ExecuteAsync(module, session, ct);
+                    IStoryModuleExecutor executor = FindExecutor(module);
+                    if (executor == null)
+                    {
+                        Debug.LogWarning(
+                            $"모듈 '{module.name}' ({module.GetType().Name}) 에 대한 executor 를 찾을 수 없습니다.",
+                            module);
+                        continue;
+                    }
+                    tasks.Add(executor.ExecuteAsync(module, session, ct));
+                }
+                if (tasks.Count > 0)
+                    await UniTask.WhenAll(tasks);
+            }
+            else
+            {
+                foreach (StoryModuleSO storyModuleSO in line.Modules)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    StoryModuleSO module = storyModuleSO;
+                    if (module == null || module.Timing != timing)
+                        continue;
+
+                    // Choice 계열은 StoryRunner 가 IStoryChoiceLikeModule 로 처리
+                    if (module is IStoryChoiceLikeModule)
+                        continue;
+
+                    IStoryModuleExecutor executor = FindExecutor(module);
+                    if (executor == null)
+                    {
+                        Debug.LogWarning(
+                            $"모듈 '{module.name}' ({module.GetType().Name}) 에 대한 executor 를 찾을 수 없습니다.",
+                            module);
+                        continue;
+                    }
+
+                    await executor.ExecuteAsync(module, session, ct);
+                }
             }
         }
 

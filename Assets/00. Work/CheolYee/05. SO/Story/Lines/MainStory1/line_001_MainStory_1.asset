@@ -17,10 +17,12 @@ MonoBehaviour:
   canSkip: 1
   affectsAutoAdvance: 0
   background:
-    background: {fileID: 11400000, guid: aa9cfe2edd1ce9f41b118a83f04571f8, type: 2}
-    backgroundKey: test_1
+    background: {fileID: 11400000, guid: 30609fbbdb2e9424ea3bddfa800b52a8, type: 2}
+    backgroundKey: home
     visible: 1
     stageLocalPosition: {x: 0, y: 0}
+    overrideParallax: 0
+    parallaxFactorOverride: 0
     scaleMultiplier: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     sortOrder: -100
@@ -30,7 +32,7 @@ MonoBehaviour:
     actorInstanceKey: cian_01
     stageLocalPosition: {x: 0, y: 0}
     scaleMultiplier: 1
-    visible: 1
+    visible: 0
     focused: 1
     sortOrder: 0
     poseKey: 
@@ -50,14 +52,13 @@ MonoBehaviour:
     keyframes: []
   actorTracks: []
   soundTrack:
-    bgmKeyframes: []
+    bgmKeyframes:
+    - normalizedTime: 0
+      timeSeconds: 0
+      operation: 0
+      bgmSound: 0
+      transitionMode: 1
     sfxKeyframes: []
-  soundSettings:
-    soundChannel: {fileID: 0}
-    bgmFadeDuration: 0.25
-    sfxFadeDuration: 0.08
-  useSoundSettingsOverride: 0
-  hasExplicitSoundSettingsOverrideState: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -73,7 +74,7 @@ MonoBehaviour:
   lineId: line_001_MainStory_1
   speaker: {fileID: 0}
   nameOverride: 
-  dialogueText: "\uADF8\uB7F0 \uB0A0\uC774\uB2E4."
+  dialogueText: "\u300C\uD14C\uC2A4\uD2B8\uC6A9 \uC544\uBB34\uB9D0\u300D "
   nextLineId: line_002_MainStory_1
   logVisible: 1
   allowTapToComplete: 1

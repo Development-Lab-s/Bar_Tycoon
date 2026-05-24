@@ -326,22 +326,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 }
             };
             _soundSettingsPanelRoot.Add(_episodeSoundDefaultsRoot);
-            _soundSettingsPanelRoot.Add(MakeSeparator());
-
-            _lineSoundOverrideRoot = new VisualElement
-            {
-                style =
-                {
-                    flexDirection = FlexDirection.Column
-                }
-            };
-            _soundSettingsPanelRoot.Add(_lineSoundOverrideRoot);
             return _soundSettingsPanelRoot;
         }
 
         private void RefreshSoundSettingsPanels()
         {
-            if (_episodeSoundDefaultsRoot == null || _lineSoundOverrideRoot == null)
+            if (_episodeSoundDefaultsRoot == null)
                 return;
 
             bool visible = IsStageAuthoringMode;
@@ -350,9 +340,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
 
             _episodeSoundDefaultsRoot.Clear();
-            _lineSoundOverrideRoot.Clear();
             BuildEpisodeSoundDefaultsPanel();
-            BuildLineSoundOverridePanel();
         }
 
         private void BuildEpisodeSoundDefaultsPanel()
@@ -405,128 +393,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _episodeSoundDefaultsRoot.Add(sfxFadeField);
         }
 
-        private void BuildLineSoundOverridePanel()
-        {
-            _lineSoundOverrideRoot.Add(MakeBoldLabel("This Line Sound Override"));
-
-            if (_currentLine == null)
-            {
-                _lineSoundOverrideRoot.Add(new Label("Select a story line to edit line sound override settings.")
-                {
-                    style = { fontSize = 10, color = new StyleColor(new Color(0.5f, 0.5f, 0.5f)), marginTop = 4 }
-                });
-                return;
-            }
-
-            StoryStageLayoutModuleSO layout = FindCurrentStageLayout();
-            bool overrideEnabled = StorySoundSettingsUtility.ShouldUseLineOverride(episode, layout);
-
-            var toggle = new Toggle("Override This Line")
-            {
-                value = overrideEnabled,
-                style = { marginBottom = 4 }
-            };
-            toggle.RegisterValueChangedCallback(e => SetCurrentLineSoundOverrideEnabled(e.newValue));
-            _lineSoundOverrideRoot.Add(toggle);
-
-            StorySoundSettingsData displaySettings = overrideEnabled && layout != null
-                ? layout.SoundSettingsEditable
-                : ResolveEpisodeSoundDefaultsForDisplay();
-            bool editable = overrideEnabled && layout != null;
-
-            if (!editable)
-            {
-                _lineSoundOverrideRoot.Add(new Label("Using episode sound defaults for this line.")
-                {
-                    style = { fontSize = 10, color = new StyleColor(new Color(0.52f, 0.56f, 0.62f)), marginBottom = 4 }
-                });
-            }
-
-            var channelField = new ObjectField("Sound Channel")
-            {
-                objectType = typeof(EventChannelSO),
-                allowSceneObjects = false,
-                value = displaySettings.soundChannel,
-                style = { marginBottom = 4 }
-            };
-            channelField.SetEnabled(editable);
-            channelField.RegisterValueChangedCallback(e =>
-            {
-                SaveSoundSettingsToCurrent(settings => settings.soundChannel = e.newValue as EventChannelSO, refresh: true);
-            });
-            _lineSoundOverrideRoot.Add(channelField);
-
-            var bgmFadeField = new FloatField("BGM Fade Duration")
-            {
-                value = displaySettings.bgmFadeDuration,
-                style = { marginBottom = 4 }
-            };
-            bgmFadeField.SetEnabled(editable);
-            bgmFadeField.RegisterValueChangedCallback(e =>
-            {
-                SaveSoundSettingsToCurrent(settings => settings.bgmFadeDuration = Mathf.Max(0f, e.newValue), refresh: true);
-            });
-            _lineSoundOverrideRoot.Add(bgmFadeField);
-
-            var sfxFadeField = new FloatField("SFX Fade Duration")
-            {
-                value = displaySettings.sfxFadeDuration
-            };
-            sfxFadeField.SetEnabled(editable);
-            sfxFadeField.RegisterValueChangedCallback(e =>
-            {
-                SaveSoundSettingsToCurrent(settings => settings.sfxFadeDuration = Mathf.Max(0f, e.newValue), refresh: true);
-            });
-            _lineSoundOverrideRoot.Add(sfxFadeField);
-        }
-
         private StorySoundSettingsData ResolveEpisodeSoundDefaultsForDisplay() =>
             StorySoundSettingsUtility.ResolveEpisodeDefaults(episode) ?? new StorySoundSettingsData();
-
-        private bool IsUninitializedLineSoundSettings(StoryStageLayoutModuleSO layout)
-        {
-            return layout != null
-                && !layout.HasExplicitSoundSettingsOverrideState
-                && !(layout.SoundTrackEditable?.HasAnyKeyframes ?? false)
-                && StorySoundSettingsUtility.IsStructDefault(layout.SoundSettingsEditable);
-        }
-
-        private void EnsureResolvedSoundOverrideState(StoryStageLayoutModuleSO layout)
-        {
-            if (layout == null || layout.HasExplicitSoundSettingsOverrideState)
-                return;
-
-            bool useOverride = !IsUninitializedLineSoundSettings(layout)
-                && StorySoundSettingsUtility.ResolveLegacyLineOverride(episode, layout);
-            layout.HasExplicitSoundSettingsOverrideStateEditable = true;
-            layout.UseSoundSettingsOverrideEditable = useOverride;
-        }
-
-        private void SetCurrentLineSoundOverrideEnabled(bool enabled)
-        {
-            if (!IsStageAuthoringMode || _currentLine == null)
-                return;
-
-            StoryStageLayoutModuleSO layout = enabled
-                ? GetOrCreateCurrentStageLayout("Edit Line Sound Override", InteractionContext.Stage)
-                : FindCurrentStageLayout();
-            if (layout == null)
-            {
-                RefreshSoundSettingsPanels();
-                return;
-            }
-
-            RecordStageUndo(layout, "Edit Line Sound Override");
-            if (enabled && IsUninitializedLineSoundSettings(layout))
-                layout.SoundSettingsEditable.CopyFrom(ResolveEpisodeSoundDefaultsForDisplay());
-
-            layout.HasExplicitSoundSettingsOverrideStateEditable = true;
-            layout.UseSoundSettingsOverrideEditable = enabled;
-            MarkLayoutDirty(layout, saveNow: false);
-            RefreshSoundSettingsPanels();
-            RefreshActorInspector();
-            RefreshTimelinePanel();
-        }
 
         private void SaveEpisodeSoundSettingsToCurrent(Action<StorySoundSettingsData> setter)
         {
@@ -1007,32 +875,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             e.StopPropagation();
         }
 
-        private void SaveSoundSettingsToCurrent(Action<StorySoundSettingsData> setter, bool refresh = false)
-        {
-            if (!IsStageAuthoringMode || _currentLine == null)
-                return;
-
-            StoryStageLayoutModuleSO layout = GetOrCreateCurrentStageLayout("Edit Line Sound Settings", InteractionContext.Stage);
-            if (layout == null)
-                return;
-
-            RecordStageUndo(layout, "Edit Line Sound Settings");
-            if (IsUninitializedLineSoundSettings(layout))
-                layout.SoundSettingsEditable.CopyFrom(ResolveEpisodeSoundDefaultsForDisplay());
-
-            layout.HasExplicitSoundSettingsOverrideStateEditable = true;
-            layout.UseSoundSettingsOverrideEditable = true;
-            setter(layout.SoundSettingsEditable);
-            MarkLayoutDirty(layout, saveNow: false);
-
-            if (refresh)
-            {
-                RefreshSoundSettingsPanels();
-                RefreshActorInspector();
-                RefreshTimelinePanel();
-            }
-        }
-
         private void SaveSoundTrackToCurrent(Action<StorySoundTrackData> setter, bool refresh = false)
         {
             if (!IsStageAuthoringMode || _currentLine == null)
@@ -1042,7 +884,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (layout == null)
                 return;
 
-            EnsureResolvedSoundOverrideState(layout);
             if (!_suppressTimelineUndoRecording)
                 RecordTimelineUndo(layout, "Edit Sound Timeline");
             StorySoundTrackData track = layout.SoundTrackEditable;

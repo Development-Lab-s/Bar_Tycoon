@@ -180,6 +180,41 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             });
             extendedToolbar.Add(_timelineSpeedField);
 
+            _timelineSnapBtn = new Button(OnTimelineSnapToggled)
+            {
+                text  = _timelineSnapEnabled ? "Snap ON" : "Snap OFF",
+                style =
+                {
+                    width = 68, marginLeft = 8,
+                    backgroundColor = new StyleColor(_timelineSnapEnabled
+                        ? new Color(0.22f, 0.48f, 0.22f)
+                        : new Color(0.28f, 0.28f, 0.28f))
+                }
+            };
+            extendedToolbar.Add(_timelineSnapBtn);
+
+            var snapFieldRow = new VisualElement
+            {
+                style = { flexDirection = FlexDirection.Row, alignItems = Align.Center, marginLeft = 4 }
+            };
+            snapFieldRow.Add(new Label("s:")
+            {
+                style = { fontSize = 10, color = new StyleColor(new Color(0.7f, 0.7f, 0.7f)), marginRight = 2 }
+            });
+            _timelineSnapField = new FloatField
+            {
+                value = _timelineSnapInterval,
+                style = { width = 46 }
+            };
+            _timelineSnapField.RegisterValueChangedCallback(e =>
+            {
+                _timelineSnapInterval = Mathf.Max(0.01f, e.newValue);
+                _timelineSnapField.SetValueWithoutNotify(_timelineSnapInterval);
+                SavePreviewLayoutPrefs();
+            });
+            snapFieldRow.Add(_timelineSnapField);
+            extendedToolbar.Add(snapFieldRow);
+
             _timelinePanel.Add(_timelineToolbar);
 
             var scroll = new ScrollView(ScrollViewMode.VerticalAndHorizontal)
@@ -205,6 +240,24 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             return _timelinePanel;
         }
 
+        private void OnTimelineSnapToggled()
+        {
+            _timelineSnapEnabled = !_timelineSnapEnabled;
+            if (_timelineSnapBtn != null)
+            {
+                _timelineSnapBtn.text = _timelineSnapEnabled ? "Snap ON" : "Snap OFF";
+                _timelineSnapBtn.style.backgroundColor = new StyleColor(_timelineSnapEnabled
+                    ? new Color(0.22f, 0.48f, 0.22f)
+                    : new Color(0.28f, 0.28f, 0.28f));
+            }
+            SavePreviewLayoutPrefs();
+        }
+
+        private float ApplySnap(float time) =>
+            _timelineSnapEnabled && _timelineSnapInterval > 0f
+                ? Mathf.Round(time / _timelineSnapInterval) * _timelineSnapInterval
+                : time;
+
         private void RefreshTimelinePanel()
         {
             if (_timelinePanel == null || _timelineRows == null || _timelineRuler == null) return;
@@ -222,6 +275,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_timelineTitleLabel != null) _timelineTitleLabel.text = ResolveTimelineTitle();
             if (_timelineRecordBtn != null) _timelineRecordBtn.text = _timelineRecordEnabled ? "Record On" : "Record";
             if (_timelineRecordBtn != null) _timelineRecordBtn.SetEnabled(_selectionKind != StageSelectionKind.Sound);
+            if (_timelineSnapBtn  != null)
+            {
+                _timelineSnapBtn.text = _timelineSnapEnabled ? "Snap ON" : "Snap OFF";
+                _timelineSnapBtn.style.backgroundColor = new StyleColor(_timelineSnapEnabled
+                    ? new Color(0.22f, 0.48f, 0.22f)
+                    : new Color(0.28f, 0.28f, 0.28f));
+            }
+            if (_timelineSnapField != null) _timelineSnapField.SetValueWithoutNotify(_timelineSnapInterval);
             if (_timelinePlayBtn != null) _timelinePlayBtn.text = _timelineIsPlaying ? "Stop" : "Play";
             if (_timelineSpeedField != null) _timelineSpeedField.SetValueWithoutNotify(_timelinePlaybackSpeed);
 
@@ -1122,7 +1183,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void SetTimelinePlayheadFromLocalX(float localX)
         {
-            _timelinePlayheadTime = ResolveTimelineTimeFromLaneX(localX);
+            _timelinePlayheadTime = ApplySnap(ResolveTimelineTimeFromLaneX(localX));
             ApplyTimelinePlayheadSample();
             RefreshTimelinePanel();
         }
@@ -1278,7 +1339,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             {
                 var proposedTimes = new Dictionary<StoryActorKeyframeData, float>();
                 foreach (TimelineKeyDragState state in _timelineKeyDragStates)
-                    proposedTimes[state.key] = Mathf.Max(0f, state.startTime + deltaTime);
+                    proposedTimes[state.key] = ApplySnap(Mathf.Max(0f, state.startTime + deltaTime));
 
                 bool hasCollision = HasTimelineKeyCollision(keyframes, proposedTimes);
                 foreach (TimelineKeyDragState state in _timelineKeyDragStates)
@@ -1326,7 +1387,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             if (_isTimelineKeyDragging)
             {
-                float time = Mathf.Max(0f, (e.localPosition.x - TimelinePropertyWidth) / Mathf.Max(1f, _timelinePixelsPerSecond));
+                float time = ApplySnap(Mathf.Max(0f, (e.localPosition.x - TimelinePropertyWidth) / Mathf.Max(1f, _timelinePixelsPerSecond)));
                 SetTimelineKeyTime(_draggingTimelineSelectionKind, _draggingTimelineActorKey, _draggingTimelineKeyIndex, time, refresh: false);
                 _draggingTimelineKeyIndex = _selectedTimelineKeyIndex;
                 _timelinePlayheadTime = time;
@@ -1344,7 +1405,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             if (_isTimelineBoxSelecting)
                 FinishTimelineBoxSelection(e.position);
 
+            bool wasKeyDragging = _isTimelineKeyDragging || _isTimelineGroupKeyDragging;
             CancelTimelinePointerDrag();
+            if (wasKeyDragging)
+                RefreshActorInspector();
+
             e.StopPropagation();
         }
 

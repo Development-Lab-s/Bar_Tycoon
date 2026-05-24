@@ -98,9 +98,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
                     try
                     {
-                        if (ShouldPreapplyStageLayoutBeforeDialogue(line, stageLayout))
-                            _characterStage?.ApplyStageLayoutImmediate(stageLayout);
-
                         await ExecuteModulesAsync(line, StoryModuleTiming.BeforeDialogue, session, ct);
 
                         await _characterStage.EnsureSpeakerVisibleAsync(line, ct);
@@ -272,24 +269,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             }
 
             choiceModule = null;
-            return false;
-        }
-
-        private static bool ShouldPreapplyStageLayoutBeforeDialogue(
-            StoryLineSO line,
-            StoryStageLayoutModuleSO stageLayout)
-        {
-            if (line == null || stageLayout == null || line.Modules == null)
-                return false;
-
-            foreach (StoryModuleSO module in line.Modules)
-            {
-                if (module is StoryFadeModuleSO fade
-                    && fade.Timing == StoryModuleTiming.BeforeDialogue
-                    && fade.Direction == StoryFadeDirection.FadeOut)
-                    return true;
-            }
-
             return false;
         }
 

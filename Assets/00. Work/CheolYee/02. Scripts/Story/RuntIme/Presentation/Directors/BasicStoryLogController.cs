@@ -1,8 +1,13 @@
+using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.RuntimeModules;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.ViewModels;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Motion;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
+using Cysharp.Threading.Tasks;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +15,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 {
     public sealed class BasicStoryLogController : MonoBehaviour, IStoryLogController
     {
+        
+        private const string PlayerPlaceholder = "{player}";
+
+        
         [Header("UI")]
         [SerializeField] private GameObject logAreaRoot;
         [SerializeField] private Transform contentRoot;
@@ -26,8 +35,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
         private readonly List<StoryLogEntry> _entries = new();
         private readonly List<GameObject> _spawnedItems = new();
+        private bool _playerNameLoaded;
+        private string _cachedPlayerName = string.Empty;
 
         public bool IsOpen { get; private set; }
+        
+        private void Start()
+        {
+            CachePlayerNameAsync().Forget();
+        }
 
         // ── IStoryLogController ────────────────
 
@@ -84,7 +100,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             {
                 SetCanvasGroupInteractable(false);
                 motionPlayer.Play("Hide",
-                    onFinish: () => CloseImmediate());
+                    onFinish: CloseImmediate);
             }
             else
             {
@@ -96,10 +112,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
         {
             _entries.Clear();
 
-            for (int i = 0; i < _spawnedItems.Count; i++)
+            foreach (var item in _spawnedItems)
             {
-                if (_spawnedItems[i] != null)
-                    Destroy(_spawnedItems[i]);
+                if (item != null)
+                    Destroy(item);
             }
 
             _spawnedItems.Clear();
@@ -184,10 +200,104 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
             BasicStoryLogItemView view = item.GetComponent<BasicStoryLogItemView>();
             if (view != null)
+            {
+                ReplacePlayerPlaceholderInEntry(entry);
                 view.Bind(entry);
+            }
 
             if (item.transform is RectTransform itemRect)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(itemRect);
+        }
+        
+        private async UniTaskVoid CachePlayerNameAsync()
+        {
+            if (_playerNameLoaded)
+                return;
+
+            if (!await EnsureUnityServicesReadyAsync())
+                return;
+
+            try
+            {
+                string playerName = AuthenticationService.Instance.PlayerName;
+
+                if (string.IsNullOrWhiteSpace(playerName))
+                    playerName = await AuthenticationService.Instance.GetPlayerNameAsync(false);
+
+                playerName = SanitizePlayerName(playerName);
+
+                if (string.IsNullOrWhiteSpace(playerName))
+                {
+                    Debug.LogWarning("[BasicStoryLogController] 플레이어 이름이 비어 있습니다.", this);
+                    return;
+                }
+
+                _cachedPlayerName = playerName;
+                _playerNameLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[BasicStoryLogController] 플레이어 이름 조회 실패: {ex.Message}", this);
+            }
+        }
+        
+        private string ReplacePlayerPlaceholder(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            if (!_playerNameLoaded || string.IsNullOrWhiteSpace(_cachedPlayerName))
+                return text;
+
+            return text.Replace(PlayerPlaceholder, _cachedPlayerName, StringComparison.Ordinal);
+        }
+
+        private static string SanitizePlayerName(string playerName)
+        {
+            if (string.IsNullOrWhiteSpace(playerName))
+                return string.Empty;
+
+            return Regex.IsMatch(playerName, @"#\d{4}$")
+                ? playerName.Substring(0, playerName.Length - 5)
+                : playerName;
+        }
+        
+        private void ReplacePlayerPlaceholderInEntry(StoryLogEntry entry)
+        {
+            if (entry == null)
+                return;
+
+            entry.displayName = ReplacePlayerPlaceholder(entry.displayName);
+            entry.text = ReplacePlayerPlaceholder(entry.text);
+        }
+        
+        private async UniTask<bool> EnsureUnityServicesReadyAsync()
+        {
+            try
+            {
+                if (UnityServices.State == ServicesInitializationState.Uninitialized)
+                {
+                    await UnityServices.InitializeAsync();
+                }
+
+                if (UnityServices.State != ServicesInitializationState.Initialized)
+                {
+                    Debug.LogWarning($"[BasicStoryTextDirector] Unity Services 초기화 실패 또는 진행 중: {UnityServices.State}", this);
+                    return false;
+                }
+
+                if (!AuthenticationService.Instance.IsSignedIn)
+                {
+                    await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                }
+
+                return AuthenticationService.Instance.IsSignedIn;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[BasicStoryTextDirector] Unity Services 준비 실패: {ex.Message}", this);
+                return false;
+            }
         }
     }
 }

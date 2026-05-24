@@ -151,13 +151,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             Vector2 panelCenter = new Vector2(camW * 0.5f, camH * 0.5f);
             Vector2 parallaxBasePixel = panelCenter;
 
-            if (state?.background != null)
+            float pf = state?.EffectiveParallaxFactor ?? 0f;
+            if (pf > 0f)
             {
                 Vector2 cameraStageLocal = ResolvePreviewCameraFocusOffset();
                 Vector2 cameraPixel = new Vector2(
                     camW * 0.5f + cameraStageLocal.x * pixelsPerWorld,
                     camH * 0.5f - cameraStageLocal.y * pixelsPerWorld);
-                parallaxBasePixel = Vector2.Lerp(panelCenter, cameraPixel, state.background.ParallaxFactor);
+                parallaxBasePixel = Vector2.Lerp(panelCenter, cameraPixel, pf);
             }
 
             Rect rect = StoryStageVisualSizing.CalculateBackgroundPreviewRect(

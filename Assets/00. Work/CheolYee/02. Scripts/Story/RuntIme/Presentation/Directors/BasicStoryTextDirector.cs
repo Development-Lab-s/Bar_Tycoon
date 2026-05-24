@@ -5,6 +5,8 @@ using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using Cysharp.Threading.Tasks;
 using TMPro;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
 using UnityEngine;
 using UnityEngine.UI;
 using Unity.Services.Leaderboards;
@@ -168,27 +170,72 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
         {
             bool needsPlayerName = ContainsPlayerPlaceholder(line?.GetResolvedSpeakerName())
                                    || ContainsPlayerPlaceholder(line?.DialogueText);
+
             if (!needsPlayerName)
                 return string.Empty;
 
-            if (_playerNameLoaded)
+            if (_playerNameLoaded && !string.IsNullOrWhiteSpace(_cachedPlayerName))
                 return _cachedPlayerName;
+
+            if (!await EnsureUnityServicesReadyAsync())
+                return string.Empty;
 
             try
             {
-                var scoresResponse = await LeaderboardsService.Instance.GetPlayerScoreAsync("Bar_Tycoon");
-                string playerName = scoresResponse?.PlayerName ?? string.Empty;
-                _cachedPlayerName = SanitizePlayerName(playerName);
+                string playerName = AuthenticationService.Instance.PlayerName;
+
+                if (string.IsNullOrWhiteSpace(playerName))
+                    playerName = await AuthenticationService.Instance.GetPlayerNameAsync(false);
+
+                playerName = SanitizePlayerName(playerName);
+
+                if (string.IsNullOrWhiteSpace(playerName))
+                {
+                    Debug.LogWarning("[BasicStoryTextDirector] 플레이어 이름이 비어 있습니다.", this);
+                    return string.Empty;
+                }
+
+                _cachedPlayerName = playerName;
+                _playerNameLoaded = true;
+
+                return _cachedPlayerName;
             }
             catch (Exception ex)
             {
                 Debug.LogWarning($"[BasicStoryTextDirector] 플레이어 이름 조회 실패: {ex.Message}", this);
+                return string.Empty;
             }
-
-            _playerNameLoaded = true;
-            return _cachedPlayerName;
         }
 
+        private async UniTask<bool> EnsureUnityServicesReadyAsync()
+        {
+            try
+            {
+                if (UnityServices.State == ServicesInitializationState.Uninitialized)
+                {
+                    await UnityServices.InitializeAsync();
+                }
+
+                if (UnityServices.State != ServicesInitializationState.Initialized)
+                {
+                    Debug.LogWarning($"[BasicStoryTextDirector] Unity Services 초기화 실패 또는 진행 중: {UnityServices.State}", this);
+                    return false;
+                }
+
+                if (!AuthenticationService.Instance.IsSignedIn)
+                {
+                    await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                }
+
+                return AuthenticationService.Instance.IsSignedIn;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[BasicStoryTextDirector] Unity Services 준비 실패: {ex.Message}", this);
+                return false;
+            }
+        }
+        
         private void ResolveSpeakerColorImage()
         {
             if (speakerColorImage != null || nameRoot == null)

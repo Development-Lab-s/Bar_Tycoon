@@ -47,21 +47,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.ViewModels
                 choiceBadgeText.text = choiceLabel;
 
             // ── 아이콘 ─────────────────────────
+            bool hasIcon = hasSpeaker && entry.speaker.LogIcon != null && !isChoice && !isNarration;
+
             if (iconRoot != null)
-                iconRoot.SetActive(hasSpeaker && !isChoice && !isNarration);
+                iconRoot.SetActive(hasIcon);
 
             if (iconImage != null)
             {
-                if (hasSpeaker && entry.speaker.LogIcon != null && !isChoice && !isNarration)
-                {
-                    iconImage.sprite = entry.speaker.LogIcon;
-                    iconImage.enabled = true;
-                }
-                else
-                {
-                    iconImage.sprite = null;
-                    iconImage.enabled = false;
-                }
+                iconImage.sprite = hasIcon ? entry.speaker.LogIcon : null;
+                iconImage.enabled = hasIcon;
             }
 
             // ── 이름 영역 ─────────────────────

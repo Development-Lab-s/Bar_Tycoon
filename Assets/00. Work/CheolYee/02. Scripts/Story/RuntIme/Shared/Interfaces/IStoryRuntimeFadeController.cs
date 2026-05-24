@@ -9,6 +9,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces
         float CurrentAlpha { get; }
         void ApplyBlackImmediate();
         void ApplyClearImmediate();
-        UniTask PlayFadeAsync(StoryFadeDirection direction, CancellationToken ct);
+        UniTask PlayFadeAsync(StoryFadeDirection direction, float holdDuration, CancellationToken ct);
     }
 }

@@ -30,7 +30,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Execution.Executors
             if (module is not StoryFadeModuleSO fadeModule || _fadeController == null)
                 return UniTask.CompletedTask;
 
-            return _fadeController.PlayFadeAsync(fadeModule.Direction, ct);
+            return _fadeController.PlayFadeAsync(fadeModule.Direction, fadeModule.HoldDuration, ct);
         }
     }
 }

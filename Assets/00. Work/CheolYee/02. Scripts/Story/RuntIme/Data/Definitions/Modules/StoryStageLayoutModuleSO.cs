@@ -43,12 +43,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         [Tooltip("Optional per-line sound keyframes. BGM은 line을 넘어 유지될 수 있고, SFX는 line 내부 이벤트로만 동작한다.")]
         [SerializeField] private StorySoundTrackData soundTrack = new();
 
-        [Tooltip("Optional sound settings for this line. EventChannelSO와 BGM/SFX fade duration을 포함한다.")]
-        [SerializeField] private StorySoundSettingsData soundSettings = new();
-
-        [SerializeField] private bool useSoundSettingsOverride;
-        [SerializeField] private bool hasExplicitSoundSettingsOverrideState;
-
         public StoryBackgroundStateData Background => background;
         public bool HasBackground => background is { HasBackground: true };
         public StoryBackgroundTrackData BackgroundTrack => backgroundTrack ??= new StoryBackgroundTrackData();
@@ -57,9 +51,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         public string CameraFocusTarget => cameraFocusTarget ?? "";
         public StoryCameraTrackData CameraTrack => cameraTrack ??= new StoryCameraTrackData();
         public StorySoundTrackData SoundTrack => soundTrack ??= new StorySoundTrackData();
-        public StorySoundSettingsData SoundSettings => soundSettings ??= new StorySoundSettingsData();
-        public bool UseSoundSettingsOverride => useSoundSettingsOverride;
-        public bool HasExplicitSoundSettingsOverrideState => hasExplicitSoundSettingsOverrideState;
 
         public override string DisplayName => "Stage Layout";
 
@@ -71,17 +62,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
         public StoryBackgroundTrackData BackgroundTrackEditable => backgroundTrack ??= new StoryBackgroundTrackData();
         public StoryCameraTrackData CameraTrackEditable => cameraTrack ??= new StoryCameraTrackData();
         public StorySoundTrackData SoundTrackEditable => soundTrack ??= new StorySoundTrackData();
-        public StorySoundSettingsData SoundSettingsEditable => soundSettings ??= new StorySoundSettingsData();
-        public bool UseSoundSettingsOverrideEditable
-        {
-            get => useSoundSettingsOverride;
-            set => useSoundSettingsOverride = value;
-        }
-        public bool HasExplicitSoundSettingsOverrideStateEditable
-        {
-            get => hasExplicitSoundSettingsOverrideState;
-            set => hasExplicitSoundSettingsOverrideState = value;
-        }
         public List<StoryActorStateData> ActorsEditable => actors;
         public List<StoryActorTrackData> ActorTracksEditable => actorTracks;
 #endif
@@ -92,7 +72,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules
             backgroundTrack ??= new StoryBackgroundTrackData();
             cameraTrack ??= new StoryCameraTrackData();
             soundTrack ??= new StorySoundTrackData();
-            soundSettings ??= new StorySoundSettingsData();
             background.SyncBackgroundKey();
 
             if (actors == null)

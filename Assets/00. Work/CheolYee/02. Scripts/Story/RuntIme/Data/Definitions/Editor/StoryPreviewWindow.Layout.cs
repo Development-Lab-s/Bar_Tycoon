@@ -122,6 +122,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 MinTimelinePixelsPerSecond,
                 MaxTimelinePixelsPerSecond);
             _timelinePlaybackSpeed = Mathf.Max(0.1f, UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "TimelinePlaybackSpeed", 1f));
+            _timelineSnapEnabled   = UnityEditor.EditorPrefs.GetBool(PrefsKeyPrefix  + "TimelineSnapEnabled",  false);
+            _timelineSnapInterval  = Mathf.Max(0.01f, UnityEditor.EditorPrefs.GetFloat(PrefsKeyPrefix + "TimelineSnapInterval", 0.1f));
         }
 
         private void SavePreviewLayoutPrefs()
@@ -132,6 +134,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "TimelineHeight", _timelineHeight);
             UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "TimelinePixelsPerSecond", _timelinePixelsPerSecond);
             UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "TimelinePlaybackSpeed", _timelinePlaybackSpeed);
+            UnityEditor.EditorPrefs.SetBool(PrefsKeyPrefix  + "TimelineSnapEnabled",   _timelineSnapEnabled);
+            UnityEditor.EditorPrefs.SetFloat(PrefsKeyPrefix + "TimelineSnapInterval",  _timelineSnapInterval);
         }
 
         private void ApplyPreviewLayoutVisibility()
@@ -376,10 +380,18 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
             }
 
-            float frameLeft  = _stagePanOffset.x;
-            float frameWidth = DefaultUnitPixels * _stageZoom;
-            float rightStart = frameLeft + frameWidth;
-            float wrapW      = _stageWrapper?.resolvedStyle.width ?? 0f;
+            // DefaultUnitPixels already equals the visible width. In authoring mode
+            // actors are not shifted by camera offset, so we shift the window manually.
+            float camOffsetCanvas = 0f;
+            if (!ShouldApplyCameraFocusToRenderedPreview())
+            {
+                float pixelsPerWorld = DefaultUnitPixels / ResolvePreviewCameraWorldWidth();
+                camOffsetCanvas = ResolvePreviewCameraFocusOffset().x * pixelsPerWorld;
+            }
+
+            float visibleLeftPanel  = _stagePanOffset.x + camOffsetCanvas * _stageZoom;
+            float visibleRightPanel = _stagePanOffset.x + (DefaultUnitPixels + camOffsetCanvas) * _stageZoom;
+            float wrapW             = _stageWrapper?.resolvedStyle.width ?? 0f;
 
             Color color = IsRuntimePreviewMode && _previewAspectSettings != null
                 ? _previewAspectSettings.LetterboxColor
@@ -387,12 +399,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             _letterboxLeftOverlay.style.display = DisplayStyle.Flex;
             _letterboxLeftOverlay.style.left    = 0;
-            _letterboxLeftOverlay.style.width   = Mathf.Max(0f, frameLeft);
+            _letterboxLeftOverlay.style.width   = Mathf.Max(0f, visibleLeftPanel);
             _letterboxLeftOverlay.style.backgroundColor = new StyleColor(color);
 
             _letterboxRightOverlay.style.display = DisplayStyle.Flex;
-            _letterboxRightOverlay.style.left    = Mathf.Max(0f, rightStart);
-            _letterboxRightOverlay.style.width   = Mathf.Max(0f, wrapW - rightStart);
+            _letterboxRightOverlay.style.left    = Mathf.Max(0f, visibleRightPanel);
+            _letterboxRightOverlay.style.width   = Mathf.Max(0f, wrapW - visibleRightPanel);
             _letterboxRightOverlay.style.backgroundColor = new StyleColor(color);
 
             if (IsRuntimePreviewMode && _previewAspectSettings != null)

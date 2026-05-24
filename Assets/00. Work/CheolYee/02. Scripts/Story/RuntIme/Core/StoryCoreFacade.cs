@@ -320,7 +320,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             if (runtimeFadeController != null)
             {
                 runtimeFadeController.ApplyBlackImmediate();
-                await runtimeFadeController.PlayFadeAsync(Data.Definitions.Modules.StoryFadeDirection.FadeOut, ct);
+                await runtimeFadeController.PlayFadeAsync(Data.Definitions.Modules.StoryFadeDirection.FadeOut, 0f, ct);
             }
 
             if (episodeIntroController != null)
