@@ -18,7 +18,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             if (storyCommandChannel == null)
                 return;
 
-            storyCommandChannel.AddListener<StoryClosed>(HandleStoryClosed);
+            //storyCommandChannel.AddListener<StoryClosed>(HandleStoryClosed);
         }
 
         private void OnDisable()
@@ -26,7 +26,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             if (storyCommandChannel == null)
                 return;
 
-            storyCommandChannel.RemoveListener<StoryClosed>(HandleStoryClosed);
+            //storyCommandChannel.RemoveListener<StoryClosed>(HandleStoryClosed);
         }
 
         private void HandleStoryClosed(StoryClosed evt)
