@@ -62,7 +62,7 @@ namespace Assets._00._Work.PCM._02._Scripts
                 AbstructContractObject target =hit.collider.GetComponentInParent<AbstructContractObject>();
                 if (target == null)
                     continue;
-                float distance =Vector2.Distance(_inputSo.MainCam.transform.position,target.transform.position);
+                float distance =Vector2.Distance(hit.point, hit.collider.transform.position);
                 if (distance < closestDistance)
                 {
                     closestDistance = distance;

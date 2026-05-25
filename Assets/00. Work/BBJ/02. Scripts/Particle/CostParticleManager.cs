@@ -26,7 +26,6 @@ namespace BBJ.Particle
 
             CostTypeConfig config = _config.costTypes[idx];
             CostParticleItem item = _config.poolManager.Pop<CostParticleItem>(_config.particlePoolItem);
-            Debug.Log("aaaaa");
             if (item == null) return;
             string assetName = config.spriteAsset != null ? config.spriteAsset.name : null;
             item.Play(evt.amount, assetName, config.spriteIndex, config.gainColor, config.spendColor,

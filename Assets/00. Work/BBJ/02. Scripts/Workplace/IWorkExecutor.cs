@@ -6,12 +6,13 @@ using System.Threading;
 
 namespace BBJ.WorkplaceSystem
 {
+    using BBJ.Order;
     using System;
     public interface IWorkExecutor
     {
         event Action<float> OnProgressChanged;
-        float GetDuration(ModuleOwner worker);
-        IEnumerator ExecuteWork(ModuleOwner worker);
-        UniTask ExecuteWorkAsync(ModuleOwner worker, CancellationToken ct);
+        float GetDuration(ModuleOwner worker, OrderTicket orderTicket);
+        IEnumerator ExecuteWork(ModuleOwner worker, OrderTicket orderTicket);
+        UniTask ExecuteWorkAsync(ModuleOwner worker, OrderTicket orderTicket, CancellationToken ct);
     }
 }

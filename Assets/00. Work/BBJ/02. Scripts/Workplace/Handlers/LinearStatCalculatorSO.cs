@@ -1,15 +1,16 @@
-using Agents.StatSystem;
-using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
+using Agents.StatSystem;
+using BBJ.Order;
+using UnityEngine;
 
 namespace BBJ.WorkplaceSystem.Handlers
 {
     [CreateAssetMenu(fileName = "StatTipCalculator", menuName = "Tycoon/Tip/StatTip")]
-    public class StatTipCalculatorSO : TipCalculatorSO
+    public class LinearStatCalculatorSO : CalculatorSO
     {
         [SerializeField] private StatSO _stat;
 
-        public override int Calculate(ModuleOwner executor)
+        public override int Calculate(ModuleOwner executor, OrderTicket orderTicket)
         {
             var statModule = executor.GetModule<IStatModule>();
             if (statModule == null) return 0;

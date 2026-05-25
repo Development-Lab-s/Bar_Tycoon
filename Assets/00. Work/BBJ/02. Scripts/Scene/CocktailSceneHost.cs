@@ -12,7 +12,6 @@ namespace BBJ.Scene
     {
         [SerializeField] private EventChannelSO        _orderChannel;
         [SerializeField] private CocktailRecipeManager _recipeManager;
-        [SerializeField] private CocktailShaker        _shaker;
         [SerializeField] private EventChannelSO        _sceneChannel;
 
         private enum Result { None, Success, Fail }
@@ -24,16 +23,7 @@ namespace BBJ.Scene
         {
             UtilDebugger.AssertAllAssigned(this);
             GameSceneManager.Instance.RegisterHost(this);
-            _shaker.OnCocktailSuccess += OnShakerSuccess;
-            _shaker.OnCocktailFail    += OnShakerFail;
         }
-
-        private void OnDestroy()
-        {
-            _shaker.OnCocktailSuccess -= OnShakerSuccess;
-            _shaker.OnCocktailFail    -= OnShakerFail;
-        }
-
         public void OnForeground()
         {
             _result = Result.None;
@@ -55,13 +45,13 @@ namespace BBJ.Scene
                 _orderChannel.RaiseEvent(new OrderNotifyReleasedEvent(ticket, ticket.ReservedBy));
         }
 
-        private void OnShakerSuccess()
+        public void OnShakerSuccess()
         {
             _result = Result.Success;
             _sceneChannel.RaiseEvent(new SceneTransitionRequestEvent(SceneType.Main));
         }
 
-        private void OnShakerFail()
+        public void OnShakerFail()
         {
             _result = Result.Fail;
             _sceneChannel.RaiseEvent(new SceneTransitionRequestEvent(SceneType.Main));

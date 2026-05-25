@@ -44,7 +44,7 @@ namespace BBJ.Work
                 await actions.Execute<MoveAction>(
                     a => a.ExecuteAsync(ticket.Seat.GetNearestPoint(role, from), linked.Token));
                 await actions.Execute<WorkAction>(
-                    a => a.ExecuteAsync(ticket.Seat, linked.Token));
+                    a => a.ExecuteAsync(ticket.Seat, ticket, linked.Token));
 
                 var customer = ticket.Seat.GetModule<SeatModule>()?.AssignedAgent as CustomerAgent;
                 customer?.OnFoodServed();

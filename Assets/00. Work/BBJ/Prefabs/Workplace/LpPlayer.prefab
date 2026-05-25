@@ -30,6 +30,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 3567897082732700760}
   - {fileID: 8187257211513652329}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -47,6 +48,128 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.TycoonObject
   _tileSetData: {fileID: 11400000, guid: 9290f689aa2a61f40a0023dc043cff4f, type: 2}
   _flipX: 0
+--- !u!1 &1863688030627557753
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3567897082732700760}
+  - component: {fileID: 3706951125605002054}
+  - component: {fileID: 4467507410957379601}
+  m_Layer: 19
+  m_Name: LPEvent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3567897082732700760
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1863688030627557753}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.24, y: 0.6, z: 0}
+  m_LocalScale: {x: 0.29999998, y: 0.29999998, z: 0.29999998}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 8890326312362303347}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!60 &3706951125605002054
+PolygonCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1863688030627557753}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: 1.6916064, y: 1.2938104}
+      - {x: 1.0493388, y: 2.5292933}
+      - {x: 0.7381687, y: 2.6735203}
+      - {x: -2.3679497, y: 1.159153}
+      - {x: -2.4817152, y: -0.87452054}
+      - {x: -2.4589965, y: -1.2459373}
+      - {x: -0.87831813, y: -2.0340815}
+      - {x: 2.558846, y: -0.29552758}
+      - {x: 2.5410771, y: 0.051133938}
+      - {x: 1.6973608, y: 0.50570345}
+  m_UseDelaunayMesh: 1
+--- !u!114 &4467507410957379601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1863688030627557753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ea1f7f2662e2004087263664bdba572, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LPSetActive
+  <OnClickEvent>k__BackingField:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 4467507410957379601}
+        m_TargetAssemblyTypeName: LPSetActive, Assembly-CSharp
+        m_MethodName: Open
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  <characterEnum>k__BackingField: 0
+  <OnLike>k__BackingField:
+    m_PersistentCalls:
+      m_Calls: []
+  menuType: 12
 --- !u!1001 &1109879658112316516
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -59,6 +182,10 @@ PrefabInstance:
       propertyPath: m_SortingOrder
       value: -43
       objectReference: {fileID: 0}
+    - target: {fileID: 2245312950944503166, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 48da67f63c2009149935aa4eaab07796, type: 2}
     - target: {fileID: 3549193808183608796, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
       propertyPath: m_Name
       value: visual
@@ -110,7 +237,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3549193808183608796, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3464234451494014799}
+    - targetCorrespondingSourceObject: {fileID: 3549193808183608796, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7222886320725481992}
   m_SourcePrefab: {fileID: 100100000, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
+--- !u!212 &1175406039572865306 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 2245312950944503166, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
+  m_PrefabInstance: {fileID: 1109879658112316516}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4478356343148491192 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3549193808183608796, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}
@@ -128,6 +263,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34fb7e1cb3a09b74090ab67b9ac27098, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BBJ.WorkplaceSystem.TycoonVisualRoot
+--- !u!114 &7222886320725481992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4478356343148491192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dc5d3ea4cb38d348a6a58aaf7c250dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BBJ.Modules.SpriteHoverRenderer
+  targetRenderers:
+  - {fileID: 1175406039572865306}
 --- !u!4 &8187257211513652329 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9149606512500518925, guid: 6536723cf31e4ef479389d40bca3f542, type: 3}

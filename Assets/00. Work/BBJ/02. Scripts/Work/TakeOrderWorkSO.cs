@@ -32,7 +32,7 @@ namespace BBJ.Work
                     a => a.ExecuteAsync(ticket.Seat.GetNearestPoint(role, executor.transform.position), linked.Token));
                 ticket.TryStartProgress(executor);
 
-                await actions.Execute<WorkAction>(a => a.ExecuteAsync(ticket.Seat, linked.Token));
+                await actions.Execute<WorkAction>(a => a.ExecuteAsync(ticket.Seat, ticket, linked.Token));
 
                 _ctx.OrderChannel?.RaiseEvent(new OrderNotifyCompleteEvent(ticket, executor));
                 return WorkResult.Completed;

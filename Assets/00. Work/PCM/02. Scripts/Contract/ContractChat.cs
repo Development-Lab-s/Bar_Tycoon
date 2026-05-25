@@ -44,5 +44,6 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         {
             _text.text = message;
         }
+
     }
 }
