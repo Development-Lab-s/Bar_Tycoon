@@ -4,6 +4,8 @@ using System.Threading;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Interfaces;
 using Cysharp.Threading.Tasks;
+using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
 using TMPro;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
@@ -31,9 +33,15 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
         [SerializeField] private float lineBreakDelay = 0.50f;
         [SerializeField] private float spaceDelay = 0.05f;
 
+        [Header("Typing Sound")]
+        [SerializeField] private EventChannelSO soundChannel;
+        [SerializeField] private SfxSounds[] typingSounds = Array.Empty<SfxSounds>();
+        [SerializeField] private float typingSoundMinInterval = 0.05f;
+
         private bool _completeRequested;
         private bool _playerNameLoaded;
         private string _cachedPlayerName = string.Empty;
+        private float _lastTypingSoundTime;
 
         public bool IsTyping { get; private set; }
 
@@ -79,6 +87,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                     dialogueText.maxVisibleCharacters = i + 1;
 
                     char currentChar = dialogueText.textInfo.characterInfo[i].character;
+                    PlayTypingSoundIfNeeded(currentChar);
                     float delay = CalculateDelay(currentChar);
 
                     if (_completeRequested)
@@ -271,6 +280,23 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
             return Regex.IsMatch(playerName, @"#\d{4}$")
                 ? playerName.Substring(0, playerName.Length - 5)
                 : playerName;
+        }
+
+        private void PlayTypingSoundIfNeeded(char ch)
+        {
+            if (soundChannel == null || typingSounds == null || typingSounds.Length == 0)
+                return;
+
+            if (char.IsWhiteSpace(ch) || char.IsPunctuation(ch) || char.IsSymbol(ch))
+                return;
+
+            float now = Time.unscaledTime;
+            if (now - _lastTypingSoundTime < typingSoundMinInterval)
+                return;
+
+            _lastTypingSoundTime = now;
+            SfxSounds chosen = typingSounds[UnityEngine.Random.Range(0, typingSounds.Length)];
+            soundChannel.RaiseEvent(new PlaySoundEvent(chosen, Vector3.zero));
         }
 
         private float CalculateDelay(char ch)

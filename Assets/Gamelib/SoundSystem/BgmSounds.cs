@@ -5,6 +5,7 @@ namespace Gamelib.SoundSystem
     {
         MAINBGM = 0,
 		STORYSAD = 1,
-		STORYWHAT = 2
+		STORYWHAT = 2,
+		STORYCYANHAPPY = 3
     }
 }

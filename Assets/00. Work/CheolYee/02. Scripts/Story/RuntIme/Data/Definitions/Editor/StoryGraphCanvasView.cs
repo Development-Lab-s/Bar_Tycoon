@@ -101,6 +101,14 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         // ── 프리뷰 하이라이트 ────────────────────────────────
         private string _previewLineId;
 
+        // ── 일괄 입력 배치 프리뷰 ───────────────────────────
+        private bool    _bulkPreviewActive;
+        private Vector2 _bulkPreviewStart;
+        private int     _bulkPreviewCols;
+        private float   _bulkPreviewXOffset;
+        private float   _bulkPreviewYOffset;
+        private int     _bulkPreviewCount;
+
         // ── 생성자 ───────────────────────────────────
 
         public StoryGraphCanvasView()
@@ -210,6 +218,41 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 {
                     AddToSelection(n);
                     break;
+                }
+            }
+            FireSelectionChanged();
+            _canvas.MarkDirtyRepaint();
+        }
+
+        public void SetBulkImportPreview(Vector2 start, int cols, float xOffset, float yOffset, int count)
+        {
+            _bulkPreviewActive  = true;
+            _bulkPreviewStart   = start;
+            _bulkPreviewCols    = Mathf.Max(1, cols);
+            _bulkPreviewXOffset = xOffset;
+            _bulkPreviewYOffset = yOffset;
+            _bulkPreviewCount   = count;
+            _canvas.MarkDirtyRepaint();
+        }
+
+        public void ClearBulkImportPreview()
+        {
+            _bulkPreviewActive = false;
+            _canvas.MarkDirtyRepaint();
+        }
+
+        public void SelectNodes(IReadOnlyList<StoryLineSO> lines)
+        {
+            ClearAllSelected();
+            foreach (var line in lines)
+            {
+                foreach (var n in _nodes)
+                {
+                    if (n.Line == line)
+                    {
+                        AddToSelection(n);
+                        break;
+                    }
                 }
             }
             FireSelectionChanged();
@@ -1067,6 +1110,48 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     p.ClosePath();
                     p.Stroke();
                 }
+            }
+
+            // 일괄 입력 배치 프리뷰
+            if (_bulkPreviewActive)
+            {
+                // 노드 위치 미리보기 (하늘색 테두리) — 분석 후에만
+                if (_bulkPreviewCount > 0)
+                {
+                    float nodeW = Mathf.Max(40f, _bulkPreviewXOffset - 20f);
+                    float nodeH = Mathf.Max(20f, _bulkPreviewYOffset - 20f);
+                    p.strokeColor = new Color(0.4f, 0.85f, 1f, 0.55f);
+                    p.lineWidth   = 1.5f;
+                    for (int i = 0; i < _bulkPreviewCount; i++)
+                    {
+                        int col = i % _bulkPreviewCols;
+                        int row = i / _bulkPreviewCols;
+                        float x = _bulkPreviewStart.x + col * _bulkPreviewXOffset;
+                        float y = _bulkPreviewStart.y + row * _bulkPreviewYOffset;
+                        p.BeginPath();
+                        p.MoveTo(new Vector2(x,        y));
+                        p.LineTo(new Vector2(x + nodeW, y));
+                        p.LineTo(new Vector2(x + nodeW, y + nodeH));
+                        p.LineTo(new Vector2(x,         y + nodeH));
+                        p.ClosePath();
+                        p.Stroke();
+                    }
+                }
+
+                // 시작 지점 십자 마커 (주황) — 항상 표시
+                float cx        = _bulkPreviewStart.x;
+                float cy        = _bulkPreviewStart.y;
+                float crossSize = 14f;
+                p.strokeColor = new Color(1f, 0.6f, 0.15f, 0.95f);
+                p.lineWidth   = 2.5f;
+                p.BeginPath();
+                p.MoveTo(new Vector2(cx - crossSize, cy));
+                p.LineTo(new Vector2(cx + crossSize, cy));
+                p.Stroke();
+                p.BeginPath();
+                p.MoveTo(new Vector2(cx, cy - crossSize));
+                p.LineTo(new Vector2(cx, cy + crossSize));
+                p.Stroke();
             }
         }
 
