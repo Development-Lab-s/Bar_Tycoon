@@ -38,7 +38,6 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         }
         public void Open(bool isAutoClose = false)
         {
-
             //if (isOpen || IsAnimating) return;
 
             //isOpen = true;

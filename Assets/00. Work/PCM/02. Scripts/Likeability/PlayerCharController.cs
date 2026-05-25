@@ -98,9 +98,6 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
         {
             int randomIndex = Random.Range(0, availableDialogues.Count);
             CharacterSO.DialogueData selectedDialogue = availableDialogues[randomIndex];
-
-            Debug.Log($"[{characterData.characterName} Lv.{characterData.currentLevel} ด๋ป็]: {selectedDialogue.context}");
-
             chat.Message(selectedDialogue.context);
         }
     }
