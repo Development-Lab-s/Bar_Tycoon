@@ -576,6 +576,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TutorialManager
   tutorialDatas:
   - {fileID: 11400000, guid: 16914475ee13c91479f6cca255d0122b, type: 2}
+  - {fileID: 11400000, guid: 23e94a94f92595640bc0189d7d8abb24, type: 2}
+  parents: {fileID: 1127539192962908186}
   titleText: {fileID: 5893768251092052781}
   descText: {fileID: 2139551797590929362}
   pageText: {fileID: 1416611320777614385}
@@ -956,7 +958,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 300
   m_TargetDisplay: 0
 --- !u!114 &6820542718927341843
 MonoBehaviour:
@@ -1141,6 +1143,7 @@ GameObject:
   - component: {fileID: 6915855845083099181}
   - component: {fileID: 5453803697369870527}
   - component: {fileID: 3996111757041908067}
+  - component: {fileID: 7822438960510637168}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -1165,7 +1168,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: -260, y: -25}
-  m_SizeDelta: {x: 380, y: 380}
+  m_SizeDelta: {x: 380, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5453803697369870527
 CanvasRenderer:
@@ -1205,3 +1208,17 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7822438960510637168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6802920811623024962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.AspectRatioFitter
+  m_AspectMode: 1
+  m_AspectRatio: 1

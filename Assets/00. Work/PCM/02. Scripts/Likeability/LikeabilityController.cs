@@ -26,7 +26,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
     private RectTransform dragRectTransform;
     private Canvas mainCanvas;
 
-    private void Awake()
+    private void OnEnable()
     {
         _image = GetComponent<Image>();
         mainCanvas = GetComponentInParent<Canvas>();
@@ -107,6 +107,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
                     Destroy(dragInstance);
                     return;
                 }
+                soundChannel.RaiseEvent(new PlaySoundEvent((SfxSounds)12,Vector3.zero,SoundChannelId.None));
                 pychar.OnLike.Invoke(_itemSO.LikePlus);
             }
         }
