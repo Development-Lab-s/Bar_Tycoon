@@ -13,6 +13,9 @@ namespace Gamelib.SoundSystem
 		CLOCKALRAM = 7,
 		SMARTPHONE = 8,
 		CURIOUSEMOTION = 9,
-		SUPRISEDEMOTION = 10
+		SUPRISEDEMOTION = 10,
+		DOOR_OPEN = 11,
+		BUBBLE_POP = 12,
+		UI_SELECT = 13
     }
 }
