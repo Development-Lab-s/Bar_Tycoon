@@ -21,10 +21,7 @@ namespace BBJ.Player
             var counter = context.Register?.GetFirst(context.CounterType);
             if (counter != null)
             {
-                var foodCtx = player.GetModule<FoodContextModule>();
-                foodCtx?.SetFood(ticket.Ordered);
                 counter.GetModule<WorkModule>()?.InstantExecute(player, ticket);
-                foodCtx?.ClearFood();
             }
 
             context.OrderChannel?.RaiseEvent(new OrderNotifyCompleteEvent(ticket, player));

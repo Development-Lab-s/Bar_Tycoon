@@ -11,7 +11,7 @@ namespace _00._Work.PCM._02._Scripts
         private ModuleOwner _owner;
         private IHoverRenderer _hoverRenderer;
         private bool isHover;
-
+        public bool IsInteracting { get; set; }
         [field: SerializeField] public UnityEvent OnClickEvent { get; set; }
         [field: SerializeField] public CharacterEnum characterEnum { get; set; }
         [field: SerializeField] public UnityEvent<int> OnLike { get; set; }
@@ -29,6 +29,8 @@ namespace _00._Work.PCM._02._Scripts
 
         public virtual void Hover()
         {
+            if (IsInteracting) return;
+
             isHover = true;
             _hoverRenderer?.EnableHoverEffect();
         }

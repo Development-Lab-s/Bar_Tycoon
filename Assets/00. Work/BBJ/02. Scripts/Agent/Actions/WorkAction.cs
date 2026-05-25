@@ -1,4 +1,5 @@
 using _00._Work._Resources._02._Scripts.Agents;
+using BBJ.Order;
 using BBJ.WorkplaceSystem;
 using Cysharp.Threading.Tasks;
 using System;
@@ -22,7 +23,7 @@ namespace BBJ.Actions
             _durationUI = owner.GetModule<WorkDurationUI>();
         }
 
-        public async UniTask ExecuteAsync(Workplace workplace, CancellationToken ct)
+        public async UniTask ExecuteAsync(Workplace workplace,OrderTicket orderTicket, CancellationToken ct)
         {
             var workExecutor = workplace.GetModule<IWorkExecutor>();
             if (workExecutor == null) return;
@@ -41,7 +42,7 @@ namespace BBJ.Actions
 
             try
             {
-                await workExecutor.ExecuteWorkAsync(_owner, ct);
+                await workExecutor.ExecuteWorkAsync(_owner, orderTicket, ct);
             }
             finally
             {

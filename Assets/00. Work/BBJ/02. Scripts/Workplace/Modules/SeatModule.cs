@@ -1,4 +1,5 @@
 using _00._Work._Resources._02._Scripts.Modules;
+using Cysharp.Threading.Tasks.Triggers;
 using System;
 using UnityEngine;
 
@@ -17,7 +18,12 @@ namespace BBJ.WorkplaceSystem.Modules
         private Transform customer;
         public ModuleOwner AssignedAgent { get; private set; }
 
-        public void Initialize(ModuleOwner owner) => _owner = owner;
+        public void Initialize(ModuleOwner owner)
+        {
+            var tycoonObject = owner as TycoonObject;
+            _facingDirection *= (tycoonObject.FlipX ? 1f : -1f);
+            _owner = owner;
+        }
 
         public void AssignCustomer(ModuleOwner customer)
         {
@@ -33,7 +39,7 @@ namespace BBJ.WorkplaceSystem.Modules
         }
         public void AssignWithSlot(OccupationSlot slot, ModuleOwner customer)
         {
-            _slot         = slot;
+            _slot = slot;
             AssignedAgent = customer;
         }
 

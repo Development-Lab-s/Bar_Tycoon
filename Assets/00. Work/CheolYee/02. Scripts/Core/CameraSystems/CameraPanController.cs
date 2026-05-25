@@ -6,6 +6,8 @@ using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using BBJ.EventSystem;
+using Gamelib.EventSystem;
 
 namespace _00._Work.CheolYee._02._Scripts.Core.CameraSystems
 {
@@ -35,103 +37,129 @@ namespace _00._Work.CheolYee._02._Scripts.Core.CameraSystems
 
         [Header("입력 활성화")]
         [SerializeField] private bool enableInput = true;
-        
-        [Header("정지 스냅")]
-        [SerializeField] private float panSnapThreshold = 0.002f;
+        [SerializeField] private EventChannelSO sceneChannel;
 
+        [Header("스냅 설정")]
+        [SerializeField] private float panSnapThreshold = 0.01f;
+
+        // 내부 상태 관리 변수
+        private CameraBlockReason _blockReasons = CameraBlockReason.None;
         private Transform _camTransform;
-        private Vector3 _targetPosition;
-        private Vector3 _velocity;
+        private Vector2 _targetPosition;
+        private Vector3 _velocity = Vector3.zero;
         private bool _isDragging;
+        private Vector2 _dragStartMousePos;
+        private Vector2 _dragStartWorldPos;
 
         private void Awake()
         {
-            _camTransform = cinemachineCamera != null
-                ? cinemachineCamera.transform
-                : (mainCamera != null ? mainCamera.transform : transform);
+            if (cinemachineCamera != null) _camTransform = cinemachineCamera.transform;
+            else if (mainCamera != null) _camTransform = mainCamera.transform;
+            else _camTransform = transform;
+
             _targetPosition = _camTransform.position;
+
+            if (sceneChannel != null)
+            {
+                sceneChannel.AddListener<SceneTypeChangedEvent>(OnSceneTypeChanged);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (sceneChannel != null)
+            {
+                sceneChannel.RemoveListener<SceneTypeChangedEvent>(OnSceneTypeChanged);
+            }
         }
 
         private void Update()
         {
-            if (enableInput)
+            if (!enableInput || _blockReasons != CameraBlockReason.None)
             {
-                if (enableDrag) HandleDrag();
-                if (enableKeyboard) HandleKeyboard();
+                _isDragging = false;
+                return;
             }
-            ApplyClamp();
+
+            HandleMouseDrag();
+            HandleKeyboardInput();
+            ApplyBounds();
             ApplySmoothMove();
         }
 
-        // ── 드래그 ─────────────────────────────────────────
-
-        private void HandleDrag()
+        private void HandleMouseDrag()
         {
-            var mouse = Mouse.current;
+            if (!enableDrag) return;
+
+            Mouse mouse = Mouse.current;
             if (mouse == null) return;
 
-            ButtonControl button = GetDragButton(mouse);
-
-            if (button.wasPressedThisFrame)
-                _isDragging = true;
-            else if (button.wasReleasedThisFrame)
-                _isDragging = false;
-
-            if (!_isDragging) return;
-
-            // 한 프레임 동안 마우스가 픽셀 단위로 얼마나 이동했는지
-            Vector2 mouseDelta = mouse.delta.ReadValue();
-            if (mouseDelta.sqrMagnitude < 0.0001f) return;
-
-            // 스크린 1픽셀 = 월드 몇 단위? (정직한 변환식, 줌 레벨에 자동 비례)
-            float worldPerPixel = (GetOrthoSize() * 2f) / Screen.height;
-
-            // 마우스가 오른쪽으로 가면 화면이 왼쪽으로 가야 손에 붙어 따라옴
-            _targetPosition.x -= mouseDelta.x * worldPerPixel;
-            _targetPosition.y -= mouseDelta.y * worldPerPixel;
-        }
-
-        private ButtonControl GetDragButton(Mouse mouse)
-        {
-            return dragButton switch
+            ButtonControl targetButton = dragButton switch
             {
-                DragButton.Left   => mouse.leftButton,
-                DragButton.Right  => mouse.rightButton,
+                DragButton.Left => mouse.leftButton,
                 DragButton.Middle => mouse.middleButton,
-                _                 => mouse.rightButton,
+                DragButton.Right => mouse.rightButton,
+                _ => mouse.rightButton
             };
+
+            Vector2 mousePos = mouse.position.ReadValue();
+
+            if (targetButton.wasPressedThisFrame)
+            {
+                _isDragging = true;
+                _dragStartMousePos = mousePos;
+                _dragStartWorldPos = _targetPosition;
+            }
+            else if (targetButton.isPressed && _isDragging)
+            {
+                if (mainCamera == null) mainCamera = UnityEngine.Camera.main;
+                if (mainCamera == null) return;
+
+                Vector3 startScreen = new Vector3(_dragStartMousePos.x, _dragStartMousePos.y, mainCamera.nearClipPlane);
+                Vector3 currentScreen = new Vector3(mousePos.x, mousePos.y, mainCamera.nearClipPlane);
+
+                Vector3 startWorld = mainCamera.ScreenToWorldPoint(startScreen);
+                Vector3 currentWorld = mainCamera.ScreenToWorldPoint(currentScreen);
+
+                Vector3 deltaWorld = currentWorld - startWorld;
+
+                _targetPosition = _dragStartWorldPos - (Vector2)deltaWorld;
+            }
+            else
+            {
+                _isDragging = false;
+            }
         }
 
-        // ── 키보드 ─────────────────────────────────────────
-
-        private void HandleKeyboard()
+        private void HandleKeyboardInput()
         {
-            var kb = Keyboard.current;
-            if (kb == null) return;
+            if (!enableKeyboard || _isDragging) return;
 
-            float h = 0f, v = 0f;
-            if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) h += 1f;
-            if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)  h -= 1f;
-            if (kb.wKey.isPressed || kb.upArrowKey.isPressed)    v += 1f;
-            if (kb.sKey.isPressed || kb.downArrowKey.isPressed)  v -= 1f;
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null) return;
 
-            if (Mathf.Approximately(h, 0f) && Mathf.Approximately(v, 0f)) return;
+            Vector2 moveInput = Vector2.zero;
 
-            Vector3 dir = new Vector3(h, v, 0f).normalized;
-            float zoomFactor = GetOrthoSize() / 5f; // 확대 시 천천히
-            _targetPosition += dir * (keyboardSpeed * zoomFactor * Time.deltaTime);
+            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) moveInput.y += 1f;
+            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) moveInput.y -= 1f;
+            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) moveInput.x -= 1f;
+            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) moveInput.x += 1f;
+
+            if (moveInput.sqrMagnitude > 0.001f)
+            {
+                float orthoSize = GetOrthoSize();
+                float currentSpeed = keyboardSpeed * (orthoSize / 5f);
+                _targetPosition += moveInput.normalized * (currentSpeed * Time.deltaTime);
+            }
         }
 
-        // ── 적용 ──────────────────────────────────────────
-
-        private void ApplyClamp()
+        private void ApplyBounds()
         {
             if (!useBounds) return;
+
             _targetPosition.x = Mathf.Clamp(_targetPosition.x, minBounds.x, maxBounds.x);
             _targetPosition.y = Mathf.Clamp(_targetPosition.y, minBounds.y, maxBounds.y);
         }
-        
-        // 거리(월드 단위)가 이 값 이하면 정지
 
         private void ApplySmoothMove()
         {
@@ -140,7 +168,6 @@ namespace _00._Work.CheolYee._02._Scripts.Core.CameraSystems
 
             float dist = Vector2.Distance(current, target);
 
-            // 정지 — 미세 떨림 차단
             if (dist < panSnapThreshold && !_isDragging)
             {
                 if (current != target)
@@ -151,11 +178,8 @@ namespace _00._Work.CheolYee._02._Scripts.Core.CameraSystems
                 return;
             }
 
-            _camTransform.position = Vector3.SmoothDamp(
-                current, target, ref _velocity, smoothTime);
+            _camTransform.position = Vector3.SmoothDamp(current, target, ref _velocity, smoothTime);
         }
-
-        // ── 유틸 ──────────────────────────────────────────
 
         private float GetOrthoSize()
         {
@@ -164,10 +188,26 @@ namespace _00._Work.CheolYee._02._Scripts.Core.CameraSystems
             return 5f;
         }
 
-        // ── 외부 API ──────────────────────────────────────
+        public void AddBlockReason(CameraBlockReason reason) => _blockReasons |= reason;
+        public void RemoveBlockReason(CameraBlockReason reason) => _blockReasons &= ~reason;
+
+        private void OnSceneTypeChanged(SceneTypeChangedEvent evt)
+        {
+            if (evt.Current != SceneType.Main)
+            {
+                AddBlockReason(CameraBlockReason.NotMainScene);
+            }
+            else
+            {
+                RemoveBlockReason(CameraBlockReason.NotMainScene);
+            }
+        }
 
         public void SetInputEnabled(bool isEnabled) => enableInput = isEnabled;
-        public void MoveTo(Vector2 worldPos) =>
-            _targetPosition = new Vector3(worldPos.x, worldPos.y, _camTransform.position.z);
+
+        public void MoveTo(Vector3 targetPosition)
+        {
+            _targetPosition = targetPosition;
+        }
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
+using BBJ.Scene;
 using Gamelib.EventSystem;
 using UnityEngine;
 
@@ -98,8 +99,9 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Replay
 
         private void OnItemReplayClicked(StoryEpisodeCatalogEntry entry)
         {
-            storyCommandChannel?.RaiseEvent(
-                new StoryEpisodeLaunchRequested(entry.Episode, entry.Episode.EpisodeId));
+            StoryTransitionContext.Instance.RequestStory(entry);
+            //storyCommandChannel?.RaiseEvent(
+            //    new StoryEpisodeLaunchRequested(entry.Episode, entry.Episode.EpisodeId));
         }
     }
 }

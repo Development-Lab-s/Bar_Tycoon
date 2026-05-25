@@ -26,15 +26,15 @@ namespace BBJ.Scene
 
         public void OnForeground()
         {
+            // 카메라는 자기 자신들이 생성되면서 Bridge를 통해 자동으로 주입되었으므로 신경 쓰지 않음
             var episode = StoryTransitionContext.Instance?.PendingEpisode;
             if (episode == null) return;
-            _storyCommandChannel.RaiseEvent(new PlayStoryRequested(episode: episode.Episode, callerId: episode.EpisodeId));
+            _storyCommandChannel.RaiseEvent(new PlayStoryRequested(episode: episode.Episode));
         }
 
         public void OnBackground()
         {
             StoryTransitionContext.Instance?.Clear();
-            // TODO: 스토리 결과 전달 — StoryResultEvent(episodeId, unlockedItems)
         }
 
         private void OnStoryClosed(StoryClosed _)

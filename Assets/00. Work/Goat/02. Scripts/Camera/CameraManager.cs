@@ -15,12 +15,12 @@ namespace _00._Work.Goat._02._Scripts.Camera
         [Header("Event")]
         [SerializeField] private EventChannelSO cameraEventSO;
         [SerializeField] private EventChannelSO levelUpExitBtnClickEvent;
-        
+
         [Header("References")]
         [SerializeField] private CinemachineCamera playCamera;
         [SerializeField] private CinemachineCamera focusCamera;
 
-        [Header("Settings")] 
+        [Header("Settings")]
         [SerializeField] private float movePositionDuration;
         [SerializeField] private float moveZoomDuration;
         [SerializeField] private int focusCameraActivePriority = 100;
@@ -28,11 +28,11 @@ namespace _00._Work.Goat._02._Scripts.Camera
         [SerializeField] private float waitDuration = 1;
         [SerializeField] private float zoomPercent = 0.7f;
         [SerializeField] private float space = 0.6f;
-        
+
         private Queue<List<Vector2>> _objectPositionQueue = new();
 
         private bool _isPlaying = false;
-        
+
         private CameraPanController _cameraPanController;
         private FreeZoomController _freeZoomController;
 
@@ -40,6 +40,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
         {
             cameraEventSO.AddListener<CameraManagerEvent>(HandleCameraEvent);
             levelUpExitBtnClickEvent.AddListener<LevelUpRewardeExitBtnClickEvent>(HandleExitBtnClickEvent);
+
             _cameraPanController = playCamera.GetComponent<CameraPanController>();
             _freeZoomController = playCamera.GetComponent<FreeZoomController>();
         }
@@ -49,104 +50,96 @@ namespace _00._Work.Goat._02._Scripts.Camera
             cameraEventSO.RemoveListener<CameraManagerEvent>(HandleCameraEvent);
             levelUpExitBtnClickEvent.RemoveListener<LevelUpRewardeExitBtnClickEvent>(HandleExitBtnClickEvent);
         }
-        
-        private void HandleCameraEvent(CameraManagerEvent obj)
-        {
-            if (obj.objectPositionList.Count < 1) return;
-            
-            _objectPositionQueue.Enqueue(obj.objectPositionList);
 
-            if (obj.isImmediateStart)
+        private void HandleExitBtnClickEvent(LevelUpRewardeExitBtnClickEvent obj)
+        {
+            if (_objectPositionQueue.Count > 0)
+            {
+                StartCoroutine(CameraMotionCoroutine());
+            }
+        }
+
+        private void HandleCameraEvent(CameraManagerEvent evt)
+        {
+            _objectPositionQueue.Enqueue(evt.objectPositionList);
+
+            if (evt.isImmediateStart)
             {
                 if (!_isPlaying)
                 {
-                    _isPlaying = true;
                     StartCoroutine(CameraMotionCoroutine());
-                }   
+                }
             }
-        }
-        
-        private void HandleExitBtnClickEvent(LevelUpRewardeExitBtnClickEvent obj)
-        {
-            if (!_isPlaying)
-            {
-                _isPlaying = true;
-                StartCoroutine(CameraMotionCoroutine());
-            }   
         }
 
         private IEnumerator CameraMotionCoroutine()
         {
-            _cameraPanController.SetInputEnabled(false);
-            _freeZoomController.SetInputEnabled(false);
-            
-            focusCamera.transform.position = playCamera.transform.position;
-            focusCamera.Lens.OrthographicSize = playCamera.Lens.OrthographicSize;
-            
-            float originZoom = playCamera.Lens.OrthographicSize;
-            
+            _isPlaying = true;
+
+            _cameraPanController.AddBlockReason(CameraBlockReason.CameraMotion);
+            _freeZoomController.AddBlockReason(CameraBlockReason.CameraMotion);
+
+            List<Vector2> targetList = _objectPositionQueue.Dequeue();
+
+            Vector3 originPosition = playCamera.transform.position;
+            float originZoom = _freeZoomController.CurrentOrthoSize;
+
+            Vector2 targetPosition = CalculateCameraPosition(targetList);
+            float targetLens = CalculateContainLens(targetList);
+
+            focusCamera.transform.position = new Vector3(targetPosition.x, targetPosition.y, focusCamera.transform.position.z);
+            focusCamera.Lens.OrthographicSize = originZoom;
+
             focusCamera.Priority = focusCameraActivePriority;
-            
-            while(_objectPositionQueue.Count > 0)
+
+            yield return StartCoroutine(MoveZoomCoroutine(targetLens));
+
+            yield return new WaitForSeconds(waitDuration);
+
+            float startTime = Time.time;
+            float startLens = focusCamera.Lens.OrthographicSize;
+
+            while (Time.time < startTime + movePositionDuration)
             {
-                List<Vector2> nowObjectPositions = _objectPositionQueue.Dequeue();
-                
-                float containLens = CalculateContainLens(nowObjectPositions);
-                
-                yield return MovePositionCoroutine(nowObjectPositions);
-                
-                float zoomInTarget = focusCamera.Lens.OrthographicSize * zoomPercent;
-                yield return ZoomToCoroutine(zoomInTarget, containLens);
-                
-                yield return new WaitForSeconds(waitDuration);
-                
-                yield return ZoomToCoroutine(originZoom);
+                float t = (Time.time - startTime) / movePositionDuration;
+                t = Mathf.SmoothStep(0f, 1f, t);
+
+                focusCamera.transform.position = Vector3.Lerp(
+                    new Vector3(targetPosition.x, targetPosition.y, focusCamera.transform.position.z),
+                    new Vector3(originPosition.x, originPosition.y, focusCamera.transform.position.z), t);
+
+                focusCamera.Lens.OrthographicSize = Mathf.Lerp(startLens, originZoom, t);
+
+                yield return null;
             }
-            
+
             Vector3 finalPosition = focusCamera.transform.position;
             _cameraPanController.MoveTo(finalPosition);
-            
+
             _freeZoomController.SetZoom(originZoom, true);
-            
-            _cameraPanController.SetInputEnabled(true);
-            _freeZoomController.SetInputEnabled(true);
-            
+
+            _cameraPanController.RemoveBlockReason(CameraBlockReason.CameraMotion);
+            _freeZoomController.RemoveBlockReason(CameraBlockReason.CameraMotion);
+
             focusCamera.Priority = focusCameraUnActivePriority;
             _isPlaying = false;
         }
 
-        private IEnumerator MovePositionCoroutine(List<Vector2> objectPositions)
+        private IEnumerator MoveZoomCoroutine(float targetLens)
         {
-            Vector2 targetPos = CalculateCameraPosition(objectPositions);
-            float cameraPosition = Vector2.Distance(targetPos, focusCamera.transform.position);
-            float speed = cameraPosition / movePositionDuration;
-            
-            while (Vector2.Distance(targetPos, focusCamera.transform.position) > 0.01f)
-            {
-                Vector2 nextPos = Vector2.MoveTowards( focusCamera.transform.position, targetPos, speed * Time.deltaTime);
-                focusCamera.transform.position = new Vector3(nextPos.x, nextPos.y, focusCamera.transform.position.z);
-                
-                yield return null;
-            }
-        }
-        
-        private IEnumerator ZoomToCoroutine(float targetLens, float minContainLens = 0f)
-        {
-            targetLens = Mathf.Max(targetLens, minContainLens);
-            
-            float startLens = focusCamera.Lens.OrthographicSize;
             float startTime = Time.time;
+            float startLens = focusCamera.Lens.OrthographicSize;
 
             while (Time.time < startTime + moveZoomDuration)
             {
                 float t = (Time.time - startTime) / moveZoomDuration;
                 t = Mathf.SmoothStep(0f, 1f, t);
-                
+
                 focusCamera.Lens.OrthographicSize = Mathf.Lerp(startLens, targetLens, t);
 
                 yield return null;
             }
-            
+
             focusCamera.Lens.OrthographicSize = targetLens;
         }
 
@@ -155,7 +148,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
             Bounds bounds = CalculateBounds(objectPositions);
             return bounds.center;
         }
-        
+
         private Bounds CalculateBounds(List<Vector2> objectPositions)
         {
             Bounds bounds = new Bounds(objectPositions[0], Vector3.zero);
@@ -167,7 +160,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
 
             return bounds;
         }
-        
+
         private float CalculateContainLens(List<Vector2> vecList)
         {
             Bounds bounds = CalculateBounds(vecList);
@@ -180,7 +173,8 @@ namespace _00._Work.Goat._02._Scripts.Camera
             float needSizeByX = boundsSizeX / (2f * aspect);
             float needSizeByY = boundsSizeY / 2f;
 
-            return Mathf.Max(needSizeByX, needSizeByY);
+            float targetLens = Mathf.Max(needSizeByX, needSizeByY);
+            return targetLens / zoomPercent;
         }
     }
 }
