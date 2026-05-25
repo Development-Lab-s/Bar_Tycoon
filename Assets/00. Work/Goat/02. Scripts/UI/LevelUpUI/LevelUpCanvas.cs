@@ -49,7 +49,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         public void ExitBtn()
         {
             levelUpObject.SetActive(false);
-            levelUpRewardeExitBtnClickEvent.RaiseEvent(new LevelUpRewardeExitBtnClickEvent());
+            levelUpRewardeExitBtnClickEvent.RaiseEvent(new LevelUpRewardeExitBtnClickEvent().Init(true));
         }
 
         [ContextMenu("Show UI")]
