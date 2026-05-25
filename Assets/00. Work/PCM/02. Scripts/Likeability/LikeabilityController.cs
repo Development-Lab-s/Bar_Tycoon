@@ -4,6 +4,12 @@ using _00._Work._Resources._02._Scripts.Systems;
 using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
 using _00._Work.Goat._02._Scripts.Coin.CoinDatas;
 using _00._Work.PCM._02._Scripts;
+using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
+using System.Diagnostics.Tracing;
+using _00._Work.Goat._02._Scripts.Coin;
+using _00._Work.Goat._02._Scripts.Events;
+using _00._Work.Goat._02._Scripts.SaveCode;
 using Systems;
 using TMPro;
 using UnityEngine;
@@ -13,8 +19,15 @@ using UnityEngine.UI;
 
 public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    [SerializeField]private CharItemSO _itemSO; //CharÀº ¸Å·ÂÀÌ¶ó´Â ¶æ ¤·¤·
-    [SerializeField]private CoinData _coinData;
+    [SerializeField] private CharItemSO _itemSO; //Charï¿½ï¿½ ï¿½Å·ï¿½ï¿½Ì¶ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    [SerializeField] private CoinManager coinManager;
+
+    [Header("Setting")]
+    [SerializeField] private int needMoney;
+    [SerializeField]private LayerMask charact;
+
+    [Header("Events")]
+    [SerializeField] private EventChannelSO soundChannel;
     public UnityEvent errorMessage;
     public UnityEvent targetMessage;
     private Image _image;
@@ -22,7 +35,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
     private RectTransform dragRectTransform;
     private Canvas mainCanvas;
 
-    private void Awake()
+    private void OnEnable()
     {
         _image = GetComponent<Image>();
         mainCanvas = GetComponentInParent<Canvas>();
@@ -47,7 +60,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
     }
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (_coinData.coin == 0)
+        if (coinManager.CurrentCoin < needMoney)
         {
             errorMessage?.Invoke();
             return;
@@ -70,8 +83,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
         dragImg.raycastTarget = false;
 
         dragRectTransform = dragInstance.GetComponent<RectTransform>();
-
-        // ÃÊ±â À§Ä¡ ¼³Á¤
+        
         UpdateDragPosition(eventData);
     }
 
@@ -85,16 +97,18 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (_coinData.coin == 0)
+        Debug.Log("ã…‹ã…‹");
+        if (coinManager.CurrentCoin < needMoney)
         {
             Destroy(dragInstance);
             return;
         }
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(eventData.position);
-        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero,100,charact);
 
         if (hit.collider != null)
         {
+            Debug.Log(hit.collider.gameObject.name);
             if (hit.collider.gameObject.TryGetComponent<IContractObject>(out IContractObject pychar))
             {
                 if (_itemSO.CharacterEnum != pychar.characterEnum)
@@ -103,14 +117,14 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
                     Destroy(dragInstance);
                     return;
                 }
+                soundChannel.RaiseEvent(new PlaySoundEvent((SfxSounds)12,Vector3.zero,SoundChannelId.None));
+                coinManager.TryUseCoin(needMoney);
                 pychar.OnLike.Invoke(_itemSO.LikePlus);
             }
         }
         if(dragInstance != null)
             Destroy(dragInstance);
     }
-
-    // ¸¶¿ì½ºÀÇ ½ºÅ©¸° ÁÂÇ¥¸¦ Canvas ³»ºÎ ·ÎÄÃ ÁÂÇ¥·Î Á¤È®ÇÏ°Ô º¯È¯ÇØÁÖ´Â ÇÔ¼ö
     private void UpdateDragPosition(PointerEventData eventData)
     {
         Vector2 localPoint;

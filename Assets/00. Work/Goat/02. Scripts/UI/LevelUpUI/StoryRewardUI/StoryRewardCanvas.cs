@@ -17,6 +17,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.StoryRewardUI
         [Header("EventChannel")] 
         [SerializeField] private EventChannelSO storyUnlockEventChannel;
         [SerializeField] private EventChannelSO levelUpRewardExitClickChannel;
+        [SerializeField] private EventChannelSO storyCommandChannel;
         
         [Header("UI")]
         [SerializeField] private RectTransform rewardPanel;
@@ -55,6 +56,15 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.StoryRewardUI
         
         private void HandleLevelUpExitClick(LevelUpRewardeExitBtnClickEvent obj)
         {
+            if (obj.playGoScene)
+            {
+                if (storyEpisodeQueue.Count <= 0)
+                    return;
+                
+                StoryEpisodeSO episode = storyEpisodeQueue.Dequeue();
+                storyCommandChannel.RaiseEvent(new StoryEpisodeLaunchRequested(episode));    
+            }
+            
             if (_isPlaying)
                 return;
             

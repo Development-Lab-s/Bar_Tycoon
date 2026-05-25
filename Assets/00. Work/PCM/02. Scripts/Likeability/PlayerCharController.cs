@@ -108,8 +108,9 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     {
         if (characterData.currentLevel % 2 == 0)
         {
-            if (characterData.currentLevel / 2 >= storyEpisodeSo.Length) return;
-            storyCommandChannel.RaiseEvent(new StoryEpisodeUnlockRequested(storyEpisodeSo[characterData.currentLevel/2]));
+            if (((characterData.currentLevel / 2)-1 )>= storyEpisodeSo.Length) return;
+            Debug.Log("Ω√¿€");
+            storyCommandChannel.RaiseEvent(new StoryEpisodeUnlockRequested(storyEpisodeSo[(characterData.currentLevel/2)-1]));
         }
     }
 }
