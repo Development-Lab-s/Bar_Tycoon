@@ -34,10 +34,11 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
             levelUpRewardManager.OnFuncAdd -= HandleFuncAdd;
         }
 
-        private void HandleFuncAdd(Sprite obj)
+        private void HandleFuncAdd(Sprite sprite, string description, int level)
         {
             ShowUI();
-            levelUpFunctionContainer.SpawnSlotSprite(obj);
+            levelText.text = level.ToString();
+            levelUpFunctionContainer.SpawnSlotSprite(sprite, description);
         }
         private void HandleCockTailAdd(int level, CocktailRecipeSO cockTailSo)
         {

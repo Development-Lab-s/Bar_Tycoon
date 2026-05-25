@@ -9,7 +9,8 @@ namespace _00._Work.Goat._02._Scripts.SaveCode
     {
         [SerializeField] private string savePath;
         private const string Extension = ".json";
+        private const string SaveFolder = "Saves";
         
-        public string SavePath => Path.Combine(Application.persistentDataPath, savePath + Extension);
+        public string SavePath => Path.Combine(Application.persistentDataPath, SaveFolder, savePath + Extension);
     }
 }
