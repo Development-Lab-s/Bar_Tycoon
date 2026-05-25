@@ -24,7 +24,8 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
     [Header("Setting")]
     [SerializeField] private int needMoney;
-    
+    [SerializeField]private LayerMask charact;
+
     [Header("Events")]
     [SerializeField] private EventChannelSO soundChannel;
     public UnityEvent errorMessage;
@@ -96,16 +97,18 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        Debug.Log("ㅋㅋ");
         if (coinManager.CurrentCoin < needMoney)
         {
             Destroy(dragInstance);
             return;
         }
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(eventData.position);
-        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero,100,charact);
 
         if (hit.collider != null)
         {
+            Debug.Log(hit.collider.gameObject.name);
             if (hit.collider.gameObject.TryGetComponent<IContractObject>(out IContractObject pychar))
             {
                 if (_itemSO.CharacterEnum != pychar.characterEnum)
