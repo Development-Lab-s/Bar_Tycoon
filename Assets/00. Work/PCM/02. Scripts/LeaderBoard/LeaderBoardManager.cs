@@ -227,6 +227,7 @@ public class LeaderBoardManager : MonoBehaviour
     }
     public string GetMyNickName()
     {
+        Debug.Log(_isInitialized);
         if (!_isInitialized)
             return string.Empty;
 
