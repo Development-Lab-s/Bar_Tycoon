@@ -1,4 +1,4 @@
-
+﻿
 namespace Gamelib.SoundSystem
 {
     public enum BgmSounds
@@ -6,6 +6,8 @@ namespace Gamelib.SoundSystem
         MAINBGM = 0,
 		STORYSAD = 1,
 		STORYWHAT = 2,
-		STORYCYANHAPPY = 3
+		STORYCYANHAPPY = 3,
+		STORY_FAST = 4,
+		STORY_CLOSED = 5
     }
 }
