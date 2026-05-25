@@ -58,9 +58,6 @@ namespace _00._Work.Goat._02._Scripts.Exp
             {
                 int maxExp = ExpTableSo.GetRequiredExp(CurrentLevel);
                 
-                if (maxExp <= 0)
-                    return;
-                
                 expData.currentExp -= maxExp;
                 expData.currentLevel += 1;
                 levelUpCount++;
