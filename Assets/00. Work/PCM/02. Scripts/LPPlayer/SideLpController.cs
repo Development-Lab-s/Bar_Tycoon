@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SideLpController : MonoBehaviour, IModule
 {
@@ -14,6 +15,7 @@ public class SideLpController : MonoBehaviour, IModule
 
     [Header("LP ºÎ¸ð ÇÁ¸®ÆÕ")]
     [SerializeField] private GameObject lpItemPrefab;
+    [SerializeField]private LpBoxImage lpImage;
 
     private Transform parentTrm;
 
@@ -46,6 +48,7 @@ public class SideLpController : MonoBehaviour, IModule
                 Instantiate(lpItemPrefab, parentTrm);
             LPBOX lpBox =
                 lpObj.GetComponentInChildren<LPBOX>();
+            lpBox.GetComponent<Image>().sprite = lpImage.image[i];
             if (lpBox == null)
             {
                 Debug.LogError(
