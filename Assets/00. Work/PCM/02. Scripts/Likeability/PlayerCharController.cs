@@ -6,6 +6,7 @@ using Assets._00._Work.PCM._02._Scripts.Contract;
 using Gamelib.EventSystem;
 using System;
 using System.Collections.Generic;
+using _00._Work.Goat._02._Scripts.Events;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -13,17 +14,18 @@ using Random = UnityEngine.Random;
 
 public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModule , IPlayer
 {
-    [Header("¿¬µ¿ÇÒ SO (ÀÎ½ºÆåÅÍ¿¡¼­ ÇÒ´ç)")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ SO (ï¿½Î½ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ï¿½ï¿½ ï¿½Ò´ï¿½)")]
     [field: SerializeField] public CharacterSO characterData { get; private set; }
     [field: SerializeField] public CharacterRegisterSO registerSO { get; private set; }
     [field: SerializeField]public CharcterLikeSO CharlikeSo{ get; set; }
     [field:SerializeField]public  UnityEvent<string> ChatOpen { get; set; }
+    [SerializeField] private EventChannelSO exitBtnClickEvent;
     private ContractChat chat;
 
-    [Header("ÇöÀç ½Ç½Ã°£ »óÅÂ Á¤º¸")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ ï¿½Ç½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½")]
 
 
-    [Header("¿¬µ¿ÇÒ UI (¼±ÅÃ »çÇ×)")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ UI (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)")]
     public Image characterImage { get; private set; }
     public Action<int> levelTrigger { get; private set; }
 
@@ -74,7 +76,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
         int text = Random.Range(0, CharlikeSo.DialogueDataList.Count);
         ChatOpen?.Invoke(CharlikeSo.DialogueDataList[text].context);
         //bool isLeveledUp = false;
-        // ·¹º§¾÷ Ã¼Å©
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã¼Å©
         while (characterData.currentLevel < characterData.maxLevel && characterData.currentExp >= characterData.GetMaxExpForLevel(characterData.currentLevel))
         {
             characterData.currentExp -= characterData.GetMaxExpForLevel(characterData.currentLevel);
@@ -99,7 +101,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
             int randomIndex = Random.Range(0, availableDialogues.Count);
             CharacterSO.DialogueData selectedDialogue = availableDialogues[randomIndex];
 
-            Debug.Log($"[{characterData.characterName} Lv.{characterData.currentLevel} ´ë»ç]: {selectedDialogue.context}");
+            Debug.Log($"[{characterData.characterName} Lv.{characterData.currentLevel} ï¿½ï¿½ï¿½]: {selectedDialogue.context}");
 
             chat.Message(selectedDialogue.context);
         }
@@ -109,8 +111,8 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
         if (characterData.currentLevel % 2 == 0)
         {
             if (((characterData.currentLevel / 2)-1 )>= storyEpisodeSo.Length) return;
-            Debug.Log("½ÃÀÛ");
             storyCommandChannel.RaiseEvent(new StoryEpisodeUnlockRequested(storyEpisodeSo[(characterData.currentLevel/2)-1]));
+            exitBtnClickEvent.RaiseEvent(new LevelUpRewardeExitBtnClickEvent().Init());
         }
     }
 }

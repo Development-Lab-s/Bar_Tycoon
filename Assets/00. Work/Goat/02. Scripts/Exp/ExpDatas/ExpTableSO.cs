@@ -7,6 +7,8 @@ namespace _00._Work.Goat._02._Scripts.Exp.ExpDatas
     public class ExpTableSO : ScriptableObject
     {
         [SerializeField] private List<int> requiredExpByLevel = new();
+        
+        public int LevelUpCount => requiredExpByLevel.Count;
 
         public int MaxLevel => requiredExpByLevel.Count + 1;
 

@@ -631,7 +631,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000061035156}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 1000}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &5421413070211072529
@@ -15825,6 +15825,7 @@ MonoBehaviour:
   _LPchannel: {fileID: 11400000, guid: 37b14455f6249404db63b0a0f13c61f4, type: 2}
   text: {fileID: 6141483824887929176}
   lpItemPrefab: {fileID: 822947416406432347, guid: f8fbf60e0e0dec84e8dd1358b70f94da, type: 3}
+  lpImage: {fileID: 0}
 --- !u!1 &5070758371379743086
 GameObject:
   m_ObjectHideFlags: 0
@@ -18221,6 +18222,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LpController
   _LPchannel: {fileID: 11400000, guid: 37b14455f6249404db63b0a0f13c61f4, type: 2}
   text: {fileID: 6141483824887929176}
+  _LpImage: {fileID: 0}
+  Lpbox: {fileID: 0}
 --- !u!222 &8625611089705771568
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20907,7 +20910,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3628716163486829261}
   m_HandleRect: {fileID: 7602104602655288660}
   m_Direction: 2
-  m_Value: 0.9999999
+  m_Value: 1.0000001
   m_Size: 0.365
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -22449,7 +22452,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbb8682e67e7e2846b3acbaa1f86d79e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LPContents
-  loopCount: 2
 --- !u!1 &7071143529026822475
 GameObject:
   m_ObjectHideFlags: 0
@@ -29454,6 +29456,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 21300000, guid: 777155becdc90204fa4a44cfa773e206, type: 3}
     - target: {fileID: 3188582136279272211, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
+      propertyPath: exitBtnClickEvent
+      value: 
+      objectReference: {fileID: 11400000, guid: 5a8678d1d1e2cf9439de2d0af7fa5db4, type: 2}
+    - target: {fileID: 3188582136279272211, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
       propertyPath: <expSlider>k__BackingField
       value: 
       objectReference: {fileID: 0}
@@ -30030,6 +30036,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: e586f2fd21e0fa941ae32e5f1a02a82a, type: 3}
+    - target: {fileID: 3188582136279272211, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
+      propertyPath: exitBtnClickEvent
+      value: 
+      objectReference: {fileID: 11400000, guid: 5a8678d1d1e2cf9439de2d0af7fa5db4, type: 2}
     - target: {fileID: 3188582136279272211, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
       propertyPath: <expSlider>k__BackingField
       value: 
@@ -30639,6 +30649,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3188582136279272211, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
+      propertyPath: exitBtnClickEvent
+      value: 
+      objectReference: {fileID: 11400000, guid: 5a8678d1d1e2cf9439de2d0af7fa5db4, type: 2}
     - target: {fileID: 6343629743945905020, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
       propertyPath: m_Name
       value: Cian
