@@ -7,6 +7,9 @@ using _00._Work.PCM._02._Scripts;
 using Gamelib.EventSystem;
 using Gamelib.SoundSystem;
 using System.Diagnostics.Tracing;
+using _00._Work.Goat._02._Scripts.Coin;
+using _00._Work.Goat._02._Scripts.Events;
+using _00._Work.Goat._02._Scripts.SaveCode;
 using Systems;
 using TMPro;
 using UnityEngine;
@@ -16,8 +19,13 @@ using UnityEngine.UI;
 
 public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    [SerializeField]private CharItemSO _itemSO; //CharÀº ¸Å·ÂÀÌ¶ó´Â ¶æ ¤·¤·
-    [SerializeField]private CoinData _coinData;
+    [SerializeField] private CharItemSO _itemSO; //Charï¿½ï¿½ ï¿½Å·ï¿½ï¿½Ì¶ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    [SerializeField] private CoinManager coinManager;
+
+    [Header("Setting")]
+    [SerializeField] private int needMoney;
+    
+    [Header("Events")]
     [SerializeField] private EventChannelSO soundChannel;
     public UnityEvent errorMessage;
     public UnityEvent targetMessage;
@@ -51,7 +59,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
     }
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (_coinData.coin == 0)
+        if (coinManager.CurrentCoin < needMoney)
         {
             errorMessage?.Invoke();
             return;
@@ -74,8 +82,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
         dragImg.raycastTarget = false;
 
         dragRectTransform = dragInstance.GetComponent<RectTransform>();
-
-        // ÃÊ±â À§Ä¡ ¼³Á¤
+        
         UpdateDragPosition(eventData);
     }
 
@@ -89,7 +96,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (_coinData.coin == 0)
+        if (coinManager.CurrentCoin < needMoney)
         {
             Destroy(dragInstance);
             return;
@@ -108,14 +115,13 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
                     return;
                 }
                 soundChannel.RaiseEvent(new PlaySoundEvent((SfxSounds)12,Vector3.zero,SoundChannelId.None));
+                coinManager.TryUseCoin(needMoney);
                 pychar.OnLike.Invoke(_itemSO.LikePlus);
             }
         }
         if(dragInstance != null)
             Destroy(dragInstance);
     }
-
-    // ¸¶¿ì½ºÀÇ ½ºÅ©¸° ÁÂÇ¥¸¦ Canvas ³»ºÎ ·ÎÄÃ ÁÂÇ¥·Î Á¤È®ÇÏ°Ô º¯È¯ÇØÁÖ´Â ÇÔ¼ö
     private void UpdateDragPosition(PointerEventData eventData)
     {
         Vector2 localPoint;
