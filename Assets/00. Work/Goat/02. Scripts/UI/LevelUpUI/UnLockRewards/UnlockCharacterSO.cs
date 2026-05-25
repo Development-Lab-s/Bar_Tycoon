@@ -12,7 +12,8 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
     {
         [SerializeField] private EventChannelSO cameraManagerEvent;
         [SerializeField] private Sprite characterSprite; 
-        [SerializeField]private StaffConfigSO _staffConfig;
+        [SerializeField] private StaffConfigSO _staffConfig;
+        [SerializeField] private string description;
         
         public readonly List<Vector2> spawnPositions = new List<Vector2>();
         public override void LevelUpReward()
@@ -27,6 +28,13 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
             List<Sprite> sprites = new List<Sprite>();
             sprites.Add(characterSprite);
             return  sprites;
+        }
+
+        public override List<string> GetDescription()
+        {
+            List<string> strings = new List<string>();
+            strings.Add(description);
+            return strings;
         }
     }
 }

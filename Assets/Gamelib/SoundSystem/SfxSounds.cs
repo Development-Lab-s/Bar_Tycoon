@@ -1,4 +1,4 @@
-
+﻿
 namespace Gamelib.SoundSystem
 {
     public enum SfxSounds
@@ -13,6 +13,28 @@ namespace Gamelib.SoundSystem
 		CLOCKALRAM = 7,
 		SMARTPHONE = 8,
 		CURIOUSEMOTION = 9,
-		SUPRISEDEMOTION = 10
+		SUPRISEDEMOTION = 10,
+		DOOR_OPEN = 11,
+		BUBBLE_POP = 12,
+		UI_SELECT = 13,
+		DOTEMOTION = 14,
+		MUSICEMOTION = 15,
+		RUN2 = 16,
+		STEAMEMOTION = 17,
+		TYPEING_1 = 18,
+		TYPEING_2 = 19,
+		TYPEING_3 = 20,
+		TYPEING_4 = 21,
+		TYPEING_5 = 22,
+		TYPEING_6 = 23,
+		CUTE_RUN = 24,
+		CLOTHES = 25,
+		SAD_RUN = 26,
+		DRINK = 27,
+		HANSUM = 28,
+		BARTENDERSHAKING = 29,
+		CALCULATIONSOUND = 30,
+		FAILSOUND = 31,
+		SUCESSSOUND = 32
     }
 }

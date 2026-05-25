@@ -1,0 +1,122 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-4809306617204946130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb28fc288a95cfd42b44da0593857113, type: 3}
+  m_Name: StoryStageLayoutModuleSO
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules.StoryStageLayoutModuleSO
+  timing: 0
+  isBlocking: 0
+  canSkip: 1
+  affectsAutoAdvance: 0
+  background:
+    background: {fileID: 11400000, guid: aa9cfe2edd1ce9f41b118a83f04571f8, type: 2}
+    backgroundKey: Bar_BG_Default
+    visible: 1
+    stageLocalPosition: {x: 0, y: 0}
+    overrideParallax: 1
+    parallaxFactorOverride: 0
+    scaleMultiplier: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    sortOrder: -100
+  actors: []
+  cameraFocusTarget: 
+  cameraTrack:
+    defaultState:
+      stageLocalPosition: {x: 0, y: 0}
+      zoom: 1
+      targetActorInstanceKey: 
+      followMode: 0
+      snapshotNormalizedPosition: {x: 0.5, y: 0.5}
+    keyframes:
+    - property: 8
+      normalizedTime: 0.9090909
+      timeSeconds: 1
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0.72, y: 1.09}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 9
+      normalizedTime: 1
+      timeSeconds: 1
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1.2
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+  backgroundTrack:
+    keyframes: []
+  actorTracks: []
+  soundTrack:
+    bgmKeyframes:
+    - normalizedTime: 0
+      timeSeconds: 0
+      operation: 0
+      bgmSound: 4
+      transitionMode: 1
+    sfxKeyframes:
+    - normalizedTime: 0
+      timeSeconds: 0
+      sfxSound: 9
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4181cc477f04d9fbe9287c625e92565, type: 3}
+  m_Name: line_001
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryLineSO
+  lineId: line_001
+  speaker: {fileID: 11400000, guid: 138cd276fea4f4e41bc7c6833b2c72e6, type: 2}
+  nameOverride: 
+  dialogueText: "\uD55C\uC794 \uB354 \uBD80\uD0C1\uD569\uB2C8\uB2E4."
+  nextLineId: line_002
+  logVisible: 1
+  allowTapToComplete: 1
+  focusPolicy: 0
+  voice:
+    voiceKey: 
+    playbackPolicy: 0
+    allowReplayInLog: 1
+  useAutoAdvanceOverride: 0
+  autoAdvanceDelay: 1
+  modules:
+  - {fileID: -4809306617204946130}
+  editorNodePosition: {x: 295, y: 61}
+  editorNodeSize: {x: -1, y: -1}

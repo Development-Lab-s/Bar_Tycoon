@@ -21,7 +21,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         [SerializeField] private AlcoholListSO alcoholListSO;
 
         public event Action<int, CocktailRecipeSO> OnCockTailAdd;
-        public event Action<Sprite> OnFuncAdd; 
+        public event Action<Sprite, string, int> OnFuncAdd; 
         private void Awake()
         {
             expManager.OnLevelChanged += HandleLevelChange;
@@ -60,7 +60,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
                         alcoholList.Add(alcohole);
                     }
                     cocktailRecipeDatabaseSo.AddCockTail(reward);
-                    OnCockTailAdd?.Invoke(level, reward);
+                    OnCockTailAdd?.Invoke(afterLevel, reward);
                 }
 
                 alcoholListSO.alcoholList = alcoholListSO.alcoholList.Union(alcoholList).ToList();
@@ -69,9 +69,14 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
 
                 foreach (AbstractUnlockSO unlockData in rewardGroup.unlockData.unlockDatas)
                 {
-                    foreach (Sprite sprite in unlockData.GetSprite())
+                    List<Sprite> sprites = unlockData.GetSprite();
+                    List<string> descriptions = unlockData.GetDescription();
+
+                    int count = Mathf.Min(sprites.Count, descriptions.Count);
+
+                    for (int i = 0; i < count; i++)
                     {
-                        OnFuncAdd?.Invoke(sprite);
+                        OnFuncAdd?.Invoke(sprites[i], descriptions[i], afterLevel);
                     }
                 }
             }

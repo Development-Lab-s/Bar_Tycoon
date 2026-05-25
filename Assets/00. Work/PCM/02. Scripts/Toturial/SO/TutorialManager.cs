@@ -1,60 +1,139 @@
+using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class TutorialManager : MonoBehaviour
 {
-    [SerializeField] private TuturialDatas[] tutorialDatas;
+    [Header("Tutorial Data")]
+    [SerializeField]
+    private TuturialDatas[] tutorialDatas;
 
-    [SerializeField] private TMP_Text titleText;
-    [SerializeField] private TMP_Text descText;
-    [SerializeField] private TMP_Text pageText;
-    [SerializeField] private Image tutorialImage;
-    private void Start()
+    [Header("UI")]
+    [SerializeField] private GameObject parents;
+    [SerializeField]private TMP_Text titleText;
+    [SerializeField]private TMP_Text descText;
+    [SerializeField]private TMP_Text pageText;
+    [SerializeField]private Image tutorialImage;
+    private int pageIndex;
+    private int currentTutorialIndex = -1;
+    private ToturialInfoSO[] currentPages;
+
+    private void Awake()
     {
-        gameObject.SetActive(false);
+        LoadTutorial();
+        if (parents.activeSelf)
+        {
+            parents.SetActive(false);
+        }       
     }
-    private int currentIndex;
-    private ToturialInfoSO[] data = null;
-    public void OpenTutorial(int tutorialIndex)
+
+    public void OpenTutorial()
     {
-        gameObject.SetActive(true);
-        data = tutorialDatas[tutorialIndex].data;
-        currentIndex = 0;
-        ShowTutorial(currentIndex);
+        for (int i = 0; i < tutorialDatas.Length; i++)
+        {
+            if (!tutorialDatas[i].isEnd)
+            {
+                Debug.Log(i+ " " + tutorialDatas[i].isEnd);
+                currentTutorialIndex = i;
+                currentPages = tutorialDatas[i].data;
+                pageIndex = 0;
+                parents.SetActive(true);
+                tutorialDatas[i].isEnd = true;
+                ShowTutorial(pageIndex);
+                SaveTutorial();
+                return;
+            }
+        }
+
+        Debug.Log("실행할 튜토리얼 없음");
     }
+
     public void Next()
     {
-        currentIndex++;
+        if (currentPages == null)
+            return;
 
-        if (currentIndex >= data.Length)
+        pageIndex++;
+
+        // 마지막 페이지 도달
+        if (pageIndex >= currentPages.Length)
         {
-            gameObject.SetActive(false);
-            currentIndex = data.Length - 1;
+            parents.SetActive(false);
+
+            Debug.Log(
+                $"{tutorialDatas[currentTutorialIndex].TutorialName} 완료");
+
+            return;
         }
-        Debug.Log(currentIndex);
-        ShowTutorial(currentIndex);
+
+        ShowTutorial(pageIndex);
     }
 
     public void Prev()
     {
-        currentIndex--;
+        if (currentPages == null)
+            return;
 
-        if (currentIndex < 0)
-            currentIndex = 0;
+        pageIndex--;
 
-        ShowTutorial(currentIndex);
+        if (pageIndex < 0)
+            pageIndex = 0;
+
+        ShowTutorial(pageIndex);
     }
 
     private void ShowTutorial(int index)
     {
-        ToturialInfoSO data = this.data[index];
+        ToturialInfoSO tutorialData =
+            currentPages[index];
 
-        titleText.text = data.title;
-        descText.text = data.description;
-        tutorialImage.sprite = data.image;
+        titleText.text = tutorialData.title;
+
+        descText.text = tutorialData.description;
+
+        tutorialImage.sprite = tutorialData.image;
 
         pageText.text =
-            $"{index + 1}/{this.data.Length}";
+            $"{index + 1}/{currentPages.Length}";
+    }
+    private void SaveTutorial()
+    {
+        TutorialSaveData saveData =
+            new TutorialSaveData();
+
+        for (int i = 0; i < tutorialDatas.Length; i++)
+        {
+            saveData.tutorialEnds.Add(
+                tutorialDatas[i].isEnd);
+        }
+        SaveManager.Save(
+            saveData,
+            "Tutorial.save",
+            "Tutorial");
+    }
+    private void LoadTutorial()
+    {
+        if (!SaveManager.IsSaveFile(
+            "Tutorial.save",
+            "Tutorial"))
+        {
+            return;
+        }
+
+        TutorialSaveData saveData =
+            (TutorialSaveData)SaveManager.Load(
+                typeof(TutorialSaveData),
+                "Tutorial.save",
+                "Tutorial");
+
+        for (int i = 0;
+             i < tutorialDatas.Length &&
+             i < saveData.tutorialEnds.Count;
+             i++)
+        {
+            tutorialDatas[i].isEnd =
+                saveData.tutorialEnds[i];
+        }
     }
 }

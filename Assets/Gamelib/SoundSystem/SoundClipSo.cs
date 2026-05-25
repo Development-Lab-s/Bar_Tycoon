@@ -11,7 +11,10 @@ namespace Gamelib.SoundSystem
     {
         public int soundIndex;
         public string soundName;
-        
+
+        [Multiline(2)]
+        public string note;
+
         public AudioTypes audioType;
         public AudioClip clip;
         public bool loop;

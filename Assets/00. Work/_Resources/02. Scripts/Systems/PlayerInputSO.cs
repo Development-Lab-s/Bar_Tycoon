@@ -1,4 +1,6 @@
 ﻿using _00._Work.PCM._02._Scripts;
+using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -12,6 +14,7 @@ namespace Systems
         [Header("Hover Layer")]
         [SerializeField]
         private LayerMask whatisPlayer;
+        [SerializeField] private EventChannelSO soundChannel;
         // 현재 Hover 중인 대상
         private AbstructContractObject _currentHover;
 
@@ -49,11 +52,12 @@ namespace Systems
         }
 
         public void OnContractClick(InputAction.CallbackContext context)
-        {
-            if (EventSystem.current.IsPointerOverGameObject())
-                return;
+        { 
             if (context.performed)
             {
+                soundChannel.RaiseEvent(new PlaySoundEvent((SfxSounds)13,Vector3.zero,SoundChannelId.None));
+                if (EventSystem.current.IsPointerOverGameObject())
+                    return;
                 // 현재 Hover 대상 클릭
                 _currentHover?.ExcuteClick();
 

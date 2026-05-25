@@ -94,6 +94,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
                     StoryStageLayoutModuleSO stageLayout = FindStageLayout(line);
                     CancellationTokenSource lineSoundCts = null;
+                    CancellationTokenSource lineModuleCts = null;
                     UniTask lineSoundTask = UniTask.CompletedTask;
 
                     try
@@ -112,18 +113,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                             await WarmupPresentationFramesAsync(1, ct);
                         }
 
+                        lineModuleCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                         UniTask withModulesTask = ExecuteModulesAsync(
                             line,
                             StoryModuleTiming.WithDialogue,
                             session,
-                            ct);
+                            lineModuleCts.Token);
 
                         lineSoundCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                         lineSoundTask = RunLineSoundTrackAsync(session.Episode, line, stageLayout, lineSoundCts.Token);
 
                         await _textDirector.PlayLineAsync(line, ct);
                         isFirstPresentedLine = false;
-                        await withModulesTask;
+                        bool advanceConsumed = await WaitForWithDialogueAsync(withModulesTask, lineModuleCts, stageLayout, ct);
 
                         if (_abortRequested)
                             return CreateResult(session, _abortReason, false);
@@ -173,17 +175,20 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                             return CreateResult(session, StoryCloseReason.Completed, false);
                         }
 
-                        if (ShouldAutoAdvance(session, line))
+                        if (!advanceConsumed)
                         {
-                            float delay = line.UseAutoAdvanceOverride
-                                ? line.AutoAdvanceDelay
-                                : defaultAutoAdvanceDelay;
+                            if (ShouldAutoAdvance(session, line))
+                            {
+                                float delay = line.UseAutoAdvanceOverride
+                                    ? line.AutoAdvanceDelay
+                                    : defaultAutoAdvanceDelay;
 
-                            await WaitAutoAdvanceDelayAsync(delay, ct);
-                        }
-                        else
-                        {
-                            await WaitForAdvanceAsync(ct);
+                                await WaitAutoAdvanceDelayAsync(delay, ct);
+                            }
+                            else
+                            {
+                                await WaitForAdvanceAsync(ct);
+                            }
                         }
 
                         if (_abortRequested)
@@ -197,6 +202,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                     }
                     finally
                     {
+                        lineModuleCts?.Cancel();
+                        lineModuleCts?.Dispose();
                         await CleanupLineSoundAsync(session.Episode, stageLayout, lineSoundCts, lineSoundTask);
                     }
                 }
@@ -313,6 +320,38 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             }
 
             _advanceRequested = false;
+        }
+
+        // WithDialogue 모듈(키프레임 애니메이션 등)이 실행 중일 때 대기한다.
+        // 애니메이션이 먼저 끝나면 false 반환 (이후 WaitForAdvanceAsync 진입).
+        // 탭이 먼저 오면 애니메이션을 취소하고 최종 상태로 스냅한 뒤 true 반환 (어드밴스 소비됨).
+        private async UniTask<bool> WaitForWithDialogueAsync(
+            UniTask withModulesTask,
+            CancellationTokenSource lineModuleCts,
+            StoryStageLayoutModuleSO stageLayout,
+            CancellationToken ct)
+        {
+            while (withModulesTask.Status == UniTaskStatus.Pending)
+            {
+                if (_advanceRequested || _skipRequested || _abortRequested)
+                {
+                    lineModuleCts.Cancel();
+
+                    bool consumed = _advanceRequested && !_skipRequested && !_abortRequested;
+                    if (consumed)
+                    {
+                        if (stageLayout != null)
+                            _characterStage?.ApplyStageLayoutImmediate(stageLayout);
+                        _advanceRequested = false;
+                    }
+
+                    return consumed;
+                }
+
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+            }
+
+            return false;
         }
 
         private bool ShouldAutoAdvance(StorySession session, StoryLineSO line)

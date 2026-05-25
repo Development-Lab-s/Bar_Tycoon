@@ -1870,72 +1870,242 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             StoryActorKeyframeProperty? propertyOverride = null,
             float? timeOverride = null)
         {
-            if (preset == null
-                || _selectionKind != StageSelectionKind.Actor
-                || string.IsNullOrWhiteSpace(_selectedActorKey))
-                return false;
-
-            StoryActorKeyframeProperty property = propertyOverride ?? preset.property;
-            if (propertyOverride.HasValue && !CanApplyMotionPresetToProperty(preset, property))
-                return false;
+            if (preset == null) return false;
 
             float offset = Mathf.Max(0f, timeOverride ?? _timelinePlayheadTime);
-            bool appliedAny = false;
-            SaveActorTrackToCurrent(_selectedActorKey, track =>
+            var firstKeys = GetFirstPresetKeyPerProperty(preset.keyframes);
+
+            if (_selectionKind == StageSelectionKind.Actor)
             {
-                _selectedTimelineKeys.Clear();
-                foreach (StoryActorKeyframeData sourceKey in preset.keyframes)
+                if (string.IsNullOrWhiteSpace(_selectedActorKey)) return false;
+
+                StoryActorKeyframeProperty property = propertyOverride ?? preset.property;
+                if (propertyOverride.HasValue && !CanApplyMotionPresetToProperty(preset, property))
+                    return false;
+
+                _stageState.TryGetValue(_selectedActorKey, out StoryActorStateData curActor);
+                Vector2 posDelta   = Vector2.zero;
+                Vector2 scaleDelta = Vector2.zero;
+                if (curActor != null)
                 {
-                    if (sourceKey == null || !IsMotionPresetProperty(sourceKey.property))
-                        continue;
-                    if (propertyOverride.HasValue && sourceKey.property != property)
-                        continue;
-
-                    StoryActorKeyframeData clone = sourceKey.ShallowClone();
-                    clone.property = sourceKey.property;
-                    clone.timeSeconds = offset + StoryTransitionSampler.GetKeyTime(sourceKey);
-                    clone.normalizedTime = Mathf.Clamp01(clone.timeSeconds / Mathf.Max(1f, GetTimelineDuration()));
-
-                    int existing = FindKeyIndexNearTime(track, clone.property, clone.timeSeconds);
-                    if (existing >= 0)
+                    if (firstKeys.TryGetValue(StoryActorKeyframeProperty.Position, out var fPos))
+                        posDelta = curActor.stageLocalPosition - fPos.stageLocalPosition;
+                    if (firstKeys.TryGetValue(StoryActorKeyframeProperty.Scale, out var fScale))
                     {
-                        track.keyframes[existing] = clone;
+                        float sm = curActor.scaleMultiplier > 0f ? curActor.scaleMultiplier : 1f;
+                        scaleDelta = new Vector2(sm, sm) - fScale.scale;
                     }
-                    else
-                    {
-                        track.keyframes.Add(clone);
-                    }
-
-                    _selectedTimelineKeys.Add(clone);
-                    appliedAny = true;
                 }
 
-                _selectedTimelineProperty = property;
-                _selectedTimelineKeyIndex = -1;
-                _selectedTimelineSegmentKeyIndex = -1;
-            }, refresh: false);
+                bool appliedAny = false;
+                SaveActorTrackToCurrent(_selectedActorKey, track =>
+                {
+                    _selectedTimelineKeys.Clear();
+                    foreach (StoryActorKeyframeData sourceKey in preset.keyframes)
+                    {
+                        if (sourceKey == null || !IsMotionPresetProperty(sourceKey.property) || !IsActorTimelineProperty(sourceKey.property))
+                            continue;
+                        if (propertyOverride.HasValue && sourceKey.property != property)
+                            continue;
 
-            if (!appliedAny)
-                return false;
+                        StoryActorKeyframeData clone = sourceKey.ShallowClone();
+                        clone.property = sourceKey.property;
+                        clone.timeSeconds = offset + StoryTransitionSampler.GetKeyTime(sourceKey);
+                        clone.normalizedTime = Mathf.Clamp01(clone.timeSeconds / Mathf.Max(1f, GetTimelineDuration()));
+                        if (clone.property == StoryActorKeyframeProperty.Position)
+                            clone.stageLocalPosition += posDelta;
+                        else if (clone.property == StoryActorKeyframeProperty.Scale)
+                            clone.scale += scaleDelta;
 
-            NormalizeTimelineSelectionFromSet(property);
-            ApplyTimelinePlayheadSample();
-            RefreshActorInspector();
-            RefreshTimelinePanel();
-            return true;
+                        int existing = FindKeyIndexNearTime(track, clone.property, clone.timeSeconds);
+                        if (existing >= 0)
+                            track.keyframes[existing] = clone;
+                        else
+                            track.keyframes.Add(clone);
+
+                        _selectedTimelineKeys.Add(clone);
+                        appliedAny = true;
+                    }
+
+                    _selectedTimelineProperty = property;
+                    _selectedTimelineKeyIndex = -1;
+                    _selectedTimelineSegmentKeyIndex = -1;
+                }, refresh: false);
+
+                if (!appliedAny) return false;
+                NormalizeTimelineSelectionFromSet(property);
+                ApplyTimelinePlayheadSample();
+                RefreshActorInspector();
+                RefreshTimelinePanel();
+                return true;
+            }
+
+            if (_selectionKind == StageSelectionKind.Background)
+            {
+                Vector2 bgPosDelta   = Vector2.zero;
+                Vector2 bgScaleDelta = Vector2.zero;
+                if (_bgState != null)
+                {
+                    if (firstKeys.TryGetValue(StoryActorKeyframeProperty.BackgroundPosition, out var fBgPos))
+                        bgPosDelta = _bgState.stageLocalPosition - fBgPos.stageLocalPosition;
+                    if (firstKeys.TryGetValue(StoryActorKeyframeProperty.BackgroundScale, out var fBgScale))
+                    {
+                        float sm = _bgState.scaleMultiplier > 0f ? _bgState.scaleMultiplier : 1f;
+                        bgScaleDelta = new Vector2(sm, sm) - fBgScale.scale;
+                    }
+                }
+
+                bool appliedAny = false;
+                StoryActorKeyframeProperty primaryProperty = StoryActorKeyframeProperty.BackgroundPosition;
+                SaveBackgroundTrackToCurrent(track =>
+                {
+                    _selectedTimelineKeys.Clear();
+                    foreach (StoryActorKeyframeData sourceKey in preset.keyframes)
+                    {
+                        if (sourceKey == null || !IsMotionPresetProperty(sourceKey.property) || !IsBackgroundTimelineProperty(sourceKey.property))
+                            continue;
+                        if (propertyOverride.HasValue && sourceKey.property != propertyOverride.Value)
+                            continue;
+
+                        StoryActorKeyframeData clone = sourceKey.ShallowClone();
+                        clone.property = sourceKey.property;
+                        clone.timeSeconds = offset + StoryTransitionSampler.GetKeyTime(sourceKey);
+                        clone.normalizedTime = Mathf.Clamp01(clone.timeSeconds / Mathf.Max(1f, GetTimelineDuration()));
+                        if (clone.property == StoryActorKeyframeProperty.BackgroundPosition)
+                            clone.stageLocalPosition += bgPosDelta;
+                        else if (clone.property == StoryActorKeyframeProperty.BackgroundScale)
+                            clone.scale += bgScaleDelta;
+
+                        int existing = FindKeyIndexNearTime(track.keyframes, clone.property, clone.timeSeconds);
+                        if (existing >= 0)
+                            track.keyframes[existing] = clone;
+                        else
+                            track.keyframes.Add(clone);
+
+                        _selectedTimelineKeys.Add(clone);
+                        if (!appliedAny) primaryProperty = clone.property;
+                        appliedAny = true;
+                    }
+
+                    _selectedTimelineProperty = primaryProperty;
+                    _selectedTimelineKeyIndex = -1;
+                    _selectedTimelineSegmentKeyIndex = -1;
+                }, refresh: false);
+
+                if (!appliedAny) return false;
+                NormalizeTimelineSelectionFromSet(primaryProperty);
+                ApplyTimelinePlayheadSample();
+                RefreshActorInspector();
+                RefreshTimelinePanel();
+                return true;
+            }
+
+            if (_selectionKind == StageSelectionKind.Camera)
+            {
+                Vector2 camOffDelta  = Vector2.zero;
+                float   camZoomDelta = 0f;
+                StoryCameraStateData curCam = ResolveCurrentPreviewCameraState();
+                if (curCam != null)
+                {
+                    if (firstKeys.TryGetValue(StoryActorKeyframeProperty.CameraOffset, out var fCamOff))
+                        camOffDelta = curCam.stageLocalPosition - fCamOff.cameraStageLocalPosition;
+                    if (firstKeys.TryGetValue(StoryActorKeyframeProperty.CameraZoom, out var fCamZoom))
+                        camZoomDelta = curCam.zoom - fCamZoom.cameraZoom;
+                }
+
+                bool appliedAny = false;
+                StoryActorKeyframeProperty primaryProperty = StoryActorKeyframeProperty.CameraOffset;
+                SaveCameraTrackToCurrent(track =>
+                {
+                    _selectedTimelineKeys.Clear();
+                    foreach (StoryActorKeyframeData sourceKey in preset.keyframes)
+                    {
+                        if (sourceKey == null || !IsMotionPresetProperty(sourceKey.property) || !IsCameraTimelineProperty(sourceKey.property))
+                            continue;
+                        if (propertyOverride.HasValue && sourceKey.property != propertyOverride.Value)
+                            continue;
+
+                        StoryActorKeyframeData clone = sourceKey.ShallowClone();
+                        clone.property = sourceKey.property;
+                        clone.timeSeconds = offset + StoryTransitionSampler.GetKeyTime(sourceKey);
+                        clone.normalizedTime = Mathf.Clamp01(clone.timeSeconds / Mathf.Max(1f, GetTimelineDuration()));
+                        if (clone.property == StoryActorKeyframeProperty.CameraOffset)
+                            clone.cameraStageLocalPosition += camOffDelta;
+                        else if (clone.property == StoryActorKeyframeProperty.CameraZoom)
+                            clone.cameraZoom = Mathf.Max(0.01f, clone.cameraZoom + camZoomDelta);
+
+                        int existing = FindKeyIndexNearTime(track.keyframes, clone.property, clone.timeSeconds);
+                        if (existing >= 0)
+                            track.keyframes[existing] = clone;
+                        else
+                            track.keyframes.Add(clone);
+
+                        _selectedTimelineKeys.Add(clone);
+                        if (!appliedAny) primaryProperty = clone.property;
+                        appliedAny = true;
+                    }
+
+                    _selectedTimelineProperty = primaryProperty;
+                    _selectedTimelineKeyIndex = -1;
+                    _selectedTimelineSegmentKeyIndex = -1;
+                }, refresh: false);
+
+                if (!appliedAny) return false;
+                NormalizeTimelineSelectionFromSet(primaryProperty);
+                ApplyTimelinePlayheadSample();
+                RefreshActorInspector();
+                RefreshTimelinePanel();
+                return true;
+            }
+
+            return false;
+        }
+
+        private static Dictionary<StoryActorKeyframeProperty, StoryActorKeyframeData> GetFirstPresetKeyPerProperty(
+            IEnumerable<StoryActorKeyframeData> keyframes)
+        {
+            var result = new Dictionary<StoryActorKeyframeProperty, StoryActorKeyframeData>();
+            if (keyframes == null) return result;
+            foreach (StoryActorKeyframeData k in keyframes)
+            {
+                if (k == null) continue;
+                if (!result.TryGetValue(k.property, out StoryActorKeyframeData existing)
+                    || StoryTransitionSampler.GetKeyTime(k) < StoryTransitionSampler.GetKeyTime(existing))
+                    result[k.property] = k;
+            }
+            return result;
         }
 
         internal bool SaveSelectedTimelineKeysAsMotionPreset()
         {
-            if (_selectionKind != StageSelectionKind.Actor || string.IsNullOrWhiteSpace(_selectedActorKey))
-                return false;
+            IReadOnlyList<StoryActorKeyframeData> sourceKeyframes;
+            string defaultNameSuffix;
 
-            StoryActorTrackData track = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey);
-            List<StoryActorKeyframeData> selectedKeys = GetSelectedTimelineKeys(track?.keyframes);
+            if (_selectionKind == StageSelectionKind.Actor && !string.IsNullOrWhiteSpace(_selectedActorKey))
+            {
+                sourceKeyframes = FindActorTrack(FindCurrentStageLayout(), _selectedActorKey)?.keyframes;
+                defaultNameSuffix = SanitizePresetAssetName(_selectedActorKey);
+            }
+            else if (_selectionKind == StageSelectionKind.Background)
+            {
+                sourceKeyframes = FindCurrentStageLayout()?.BackgroundTrack?.keyframes;
+                defaultNameSuffix = "Background";
+            }
+            else if (_selectionKind == StageSelectionKind.Camera)
+            {
+                sourceKeyframes = FindCurrentStageLayout()?.CameraTrackEditable?.keyframes;
+                defaultNameSuffix = "Camera";
+            }
+            else
+            {
+                return false;
+            }
+
+            List<StoryActorKeyframeData> selectedKeys = GetSelectedTimelineKeys(sourceKeyframes);
             selectedKeys.RemoveAll(key => key == null || !IsMotionPresetProperty(key.property));
             if (selectedKeys.Count == 0)
             {
-                EditorUtility.DisplayDialog("Save Motion Preset", "Select one or more Position/Scale timeline keys first.", "OK");
+                EditorUtility.DisplayDialog("Save Motion Preset", "Select one or more preset-eligible timeline keys first.", "OK");
                 return false;
             }
 
@@ -1947,7 +2117,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             });
 
             StoryActorKeyframeProperty primaryProperty = selectedKeys[0].property;
-            string defaultName = $"MotionPreset_{SanitizePresetAssetName(_selectedActorKey)}_Selection";
+            string defaultName = $"MotionPreset_{defaultNameSuffix}_Selection";
             string path = EditorUtility.SaveFilePanelInProject(
                 "Save Motion Preset",
                 defaultName,
@@ -2647,7 +2817,11 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private static bool IsMotionPresetProperty(StoryActorKeyframeProperty property) =>
             property == StoryActorKeyframeProperty.Position
-            || property == StoryActorKeyframeProperty.Scale;
+            || property == StoryActorKeyframeProperty.Scale
+            || property == StoryActorKeyframeProperty.BackgroundPosition
+            || property == StoryActorKeyframeProperty.BackgroundScale
+            || property == StoryActorKeyframeProperty.CameraOffset
+            || property == StoryActorKeyframeProperty.CameraZoom;
 
         private bool IsPropertyAllowedForCurrentSelection(StoryActorKeyframeProperty property) =>
             _selectionKind == StageSelectionKind.Actor

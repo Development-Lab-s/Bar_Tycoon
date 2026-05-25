@@ -1,5 +1,7 @@
 ﻿using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work.PCM._02._Scripts;
+using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
 using Systems;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,9 +13,7 @@ namespace Assets._00._Work.PCM._02._Scripts
         IModule
     {
         [Header("Input")]
-        [SerializeField]
-        private PlayerInputSO _inputSo;
-
+        [SerializeField] private PlayerInputSO _inputSo;
         [Header("Interact Layer")]
         [SerializeField]
         private LayerMask whatisPlayer;

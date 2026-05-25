@@ -25,6 +25,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         private string      _saveFolder        = "";
         private List<StoryGraphNodeView> _currentSelectedNodes = new();
 
+        // ── 클립보드 ─────────────────────────────────
+        private List<StoryLineSO> _clipboard          = new();
+        private List<Vector2>     _clipboardRelPos    = new();
+
         // ── UI 참조 ─────────────────────────────────
         private StoryGraphCanvasView     _canvas;
         private StoryGraphInspectorPanel _inspectorPanel;
@@ -52,11 +56,17 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
         {
             LoadGraphLayoutPrefs();
             Undo.undoRedoPerformed += OnUndoRedoPerformed;
+            StoryBulkLineImportWindow.LinesCreated    += OnBulkLinesCreated;
+            StoryBulkLineImportWindow.PreviewChanged  += OnBulkPreviewChanged;
+            StoryBulkLineImportWindow.PreviewCleared  += OnBulkPreviewCleared;
         }
 
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedoPerformed;
+            StoryBulkLineImportWindow.LinesCreated   -= OnBulkLinesCreated;
+            StoryBulkLineImportWindow.PreviewChanged -= OnBulkPreviewChanged;
+            StoryBulkLineImportWindow.PreviewCleared -= OnBulkPreviewCleared;
             SaveGraphLayoutPrefs();
             var key = EpisodePrefsKey;
             if (key != null) _canvas?.SaveViewState(key);
@@ -74,6 +84,29 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             RebuildCanvas();
             _inspectorPanel?.SetLine(null, episode);
             RefreshStatusBar();
+        }
+
+        private void OnBulkLinesCreated(StoryEpisodeSO created, List<StoryLineSO> newLines)
+        {
+            if (created != episode) return;
+            _selectedLine = null;
+            _currentSelectedNodes.Clear();
+            RebuildCanvas();
+            _canvas.SelectNodes(newLines);
+            Repaint();
+            RefreshStatusBar();
+        }
+
+        private void OnBulkPreviewChanged(Vector2 start, int cols, float xOffset, float yOffset, int count)
+        {
+            _canvas?.SetBulkImportPreview(start, cols, xOffset, yOffset, count);
+            Repaint();
+        }
+
+        private void OnBulkPreviewCleared()
+        {
+            _canvas?.ClearBulkImportPreview();
+            Repaint();
         }
 
         // ── 진입점 ──────────────────────────────────
@@ -243,8 +276,34 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 return;
             }
 
+            bool onTextField = StoryGraphInspectorPanel.IsFocusedOnTextField(rootVisualElement);
+
+            // Ctrl+C: Copy
+            if (e.control && !e.shift && e.keyCode == KeyCode.C && !onTextField)
+            {
+                CopySelectedNodes();
+                e.Use();
+                return;
+            }
+
+            // Ctrl+V: Paste
+            if (e.control && !e.shift && e.keyCode == KeyCode.V && !onTextField)
+            {
+                PasteNodes();
+                e.Use();
+                return;
+            }
+
+            // Ctrl+D: Duplicate
+            if (e.control && !e.shift && e.keyCode == KeyCode.D && !onTextField)
+            {
+                DuplicateNodes();
+                e.Use();
+                return;
+            }
+
             if (e.keyCode != KeyCode.Delete && e.keyCode != KeyCode.Backspace) return;
-            if (StoryGraphInspectorPanel.IsFocusedOnTextField(rootVisualElement)) return;
+            if (onTextField) return;
 
             // 엣지 연결 해제 우선
             var edgeSrc = _canvas?.SelectedEdgeSrc;
@@ -386,6 +445,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 }
             };
             bar.Add(addBtn);
+
+            var bulkBtn = new Button(OnBulkImportClicked)
+            {
+                text = "일괄 입력",
+                style =
+                {
+                    height = 22,
+                    paddingLeft = 8,
+                    paddingRight = 8,
+                    marginLeft = 4
+                }
+            };
+            bar.Add(bulkBtn);
 
             var previewBtn = new Button(() => StoryPreviewWindow.Open())
             {
@@ -533,6 +605,19 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
         private void OnAddLineClicked() => CreateLine(null);
 
+        private void OnBulkImportClicked()
+        {
+            if (episode == null)
+            {
+                EditorUtility.DisplayDialog("Episode 없음", "상단에서 StoryEpisodeSO를 먼저 선택하세요.", "확인");
+                return;
+            }
+
+            string folder      = string.IsNullOrEmpty(_saveFolder) ? null : _saveFolder;
+            Vector2 canvasPos  = _canvas?.CanvasMousePosition ?? Vector2.zero;
+            StoryBulkLineImportWindow.Open(episode, folder, canvasPos);
+        }
+
         /// <summary>새 StoryLineSO를 생성한다. canvasPos 가 주어지면 해당 위치에 노드를 배치한다.</summary>
         private void CreateLine(Vector2? canvasPos)
         {
@@ -578,6 +663,110 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             _currentSelectedNodes.Clear();
             _inspectorPanel.SetLine(null, episode);
             RebuildCanvas();
+            RefreshStatusBar();
+        }
+
+        // ── Copy / Paste / Duplicate ─────────────────
+
+        private void CopySelectedNodes()
+        {
+            if (_currentSelectedNodes.Count == 0) return;
+
+            _clipboard.Clear();
+            _clipboardRelPos.Clear();
+
+            var positions = new List<Vector2>();
+            foreach (var node in _currentSelectedNodes)
+            {
+                if (node.Line == null) continue;
+                _clipboard.Add(node.Line);
+                positions.Add(node.Line.EditorNodePosition);
+            }
+
+            if (_clipboard.Count == 0) return;
+
+            Vector2 center = Vector2.zero;
+            foreach (var p in positions) center += p;
+            center /= positions.Count;
+
+            foreach (var p in positions)
+                _clipboardRelPos.Add(p - center);
+        }
+
+        private void PasteNodes()
+        {
+            if (episode == null || _clipboard.Count == 0) return;
+
+            string folder      = string.IsNullOrEmpty(_saveFolder) ? null : _saveFolder;
+            Vector2 pasteCenter = _canvas.CanvasMousePosition;
+
+            var newLines = new List<StoryLineSO>();
+            for (int i = 0; i < _clipboard.Count; i++)
+            {
+                var source = _clipboard[i];
+                if (source == null) continue;
+
+                var newLine = StoryEditorUtility.DuplicateLine(episode, source, folder);
+                Vector2 relPos = i < _clipboardRelPos.Count ? _clipboardRelPos[i] : Vector2.zero;
+                StoryEditorUtility.SetEditorNodePosition(newLine, pasteCenter + relPos);
+                newLines.Add(newLine);
+            }
+
+            FinishMultiCreate(newLines);
+        }
+
+        private void DuplicateNodes()
+        {
+            if (episode == null || _currentSelectedNodes.Count == 0) return;
+
+            string folder      = string.IsNullOrEmpty(_saveFolder) ? null : _saveFolder;
+            Vector2 pasteCenter = _canvas.CanvasMousePosition;
+
+            var positions = new List<Vector2>();
+            var sources   = new List<StoryLineSO>();
+            foreach (var node in _currentSelectedNodes)
+            {
+                if (node.Line == null) continue;
+                sources.Add(node.Line);
+                positions.Add(node.Line.EditorNodePosition);
+            }
+
+            if (sources.Count == 0) return;
+
+            Vector2 center = Vector2.zero;
+            foreach (var p in positions) center += p;
+            center /= positions.Count;
+
+            var newLines = new List<StoryLineSO>();
+            for (int i = 0; i < sources.Count; i++)
+            {
+                var newLine = StoryEditorUtility.DuplicateLine(episode, sources[i], folder);
+                StoryEditorUtility.SetEditorNodePosition(newLine, pasteCenter + (positions[i] - center));
+                newLines.Add(newLine);
+            }
+
+            FinishMultiCreate(newLines);
+        }
+
+        private void FinishMultiCreate(List<StoryLineSO> newLines)
+        {
+            if (newLines.Count == 0) return;
+
+            _selectedLine = null;
+            _currentSelectedNodes.Clear();
+            RebuildCanvas();
+            _canvas.SelectNodes(newLines);
+
+            if (newLines.Count == 1)
+            {
+                _selectedLine = newLines[0];
+                _inspectorPanel.SetLine(_selectedLine, episode);
+            }
+            else
+            {
+                _inspectorPanel.SetMultipleSelection(newLines.Count);
+            }
+
             RefreshStatusBar();
         }
 
@@ -689,7 +878,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 }
             };
 
-            var hintLbl = new Label("[우클릭] 라인 추가  [Del] 노드/연결 삭제")
+            var hintLbl = new Label("[우클릭] 라인 추가  [Del] 삭제  [Ctrl+C/V] 복사/붙여넣기  [Ctrl+D] 복제")
             {
                 style =
                 {

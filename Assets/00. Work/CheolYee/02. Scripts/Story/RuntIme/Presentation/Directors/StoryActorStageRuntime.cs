@@ -301,8 +301,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
                 rootCenter,
                 0f);
 
-            float focusBlend = StoryTransitionSampler.ResolveFocusBlend(data.EffectiveFocusAlpha);
-            Color tint = Color.Lerp(dimColor, focusColor, focusBlend);
+            Color tint = data.focused ? focusColor : dimColor;
 
             if (actorEntry.View != null)
             {
@@ -344,6 +343,12 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors
 
             public void ApplyTint(Color color)
             {
+                if (View != null)
+                {
+                    View.ApplyTint(color);
+                    return;
+                }
+
                 for (int i = 0; i < _spriteRenderers.Length; i++)
                 {
                     if (_spriteRenderers[i] != null)

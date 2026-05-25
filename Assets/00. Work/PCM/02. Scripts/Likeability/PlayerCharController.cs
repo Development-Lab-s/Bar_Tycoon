@@ -1,6 +1,9 @@
 using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
+using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
 using Assets._00._Work.PCM._02._Scripts.Contract;
+using Gamelib.EventSystem;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -27,6 +30,9 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
 
     private ModuleOwner _owner;
     private int maxExp;
+
+    [SerializeField]private EventChannelSO storyCommandChannel;
+    [SerializeField]private StoryEpisodeSO[] storyEpisodeSo;
 
     public void Initialize(ModuleOwner owner)
     {
@@ -73,6 +79,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
         {
             characterData.currentExp -= characterData.GetMaxExpForLevel(characterData.currentLevel);
             characterData.currentLevel++;
+            CheckLikeStory();
             //isLeveledUp = true;
         }
         SaveManager.Save(characterData.GetSaveData(), $"{characterData.id}.save", "Characters");
@@ -95,6 +102,15 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
             Debug.Log($"[{characterData.characterName} Lv.{characterData.currentLevel} 대사]: {selectedDialogue.context}");
 
             chat.Message(selectedDialogue.context);
+        }
+    }
+    private void CheckLikeStory()
+    {
+        if (characterData.currentLevel % 2 == 0)
+        {
+            if (((characterData.currentLevel / 2)-1 )>= storyEpisodeSo.Length) return;
+            Debug.Log("시작");
+            storyCommandChannel.RaiseEvent(new StoryEpisodeUnlockRequested(storyEpisodeSo[(characterData.currentLevel/2)-1]));
         }
     }
 }
