@@ -438,7 +438,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
                 Transform vcamTransform = _resolvedCinemachineCamera.transform;
                 Vector3 followOffset = _followBody.FollowOffset;
                 followOffset.x = 0f;
-                followOffset.y = vcamTransform.position.y - followTarget.position.y;
+                followOffset.y = 0f;
                 followOffset.z = vcamTransform.position.z - followTarget.position.z;
                 _followBody.FollowOffset = followOffset;
             }

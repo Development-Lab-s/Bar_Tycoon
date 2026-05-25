@@ -32,6 +32,58 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             public float timeSeconds;
         }
 
+        private static readonly Dictionary<string, SoundListSo> _soundListCache = new();
+
+        private static SoundListSo GetCachedSoundList(string enumName)
+        {
+            if (_soundListCache.TryGetValue(enumName, out SoundListSo cached))
+                return cached;
+
+            string[] guids = AssetDatabase.FindAssets("t:SoundListSo");
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                SoundListSo so = AssetDatabase.LoadAssetAtPath<SoundListSo>(path);
+                if (so != null && !string.IsNullOrEmpty(so.enumName))
+                    _soundListCache[so.enumName] = so;
+            }
+
+            _soundListCache.TryGetValue(enumName, out SoundListSo result);
+            return result;
+        }
+
+        private static string GetSoundNote(string enumName, int soundIndex)
+        {
+            SoundListSo list = GetCachedSoundList(enumName);
+            if (list?.sounds == null)
+                return null;
+
+            foreach (SoundClipSo so in list.sounds)
+            {
+                if (so != null && so.soundIndex == soundIndex)
+                    return so.note;
+            }
+            return null;
+        }
+
+        private static string BuildBgmTooltip(StoryBgmKeyframeData keyframe)
+        {
+            string text = keyframe.operation == StoryBgmKeyOperation.Stop
+                ? $"BGM Stop {keyframe.timeSeconds:0.00}s"
+                : $"BGM {keyframe.bgmSound} {keyframe.timeSeconds:0.00}s";
+            if (keyframe.operation == StoryBgmKeyOperation.Stop)
+                return text;
+            string note = GetSoundNote("BgmSounds", (int)keyframe.bgmSound);
+            return string.IsNullOrEmpty(note) ? text : $"{text}\n{note}";
+        }
+
+        private static string BuildSfxTooltip(StorySfxKeyframeData keyframe)
+        {
+            string text = $"SFX {keyframe.sfxSound} {keyframe.timeSeconds:0.00}s";
+            string note = GetSoundNote("SfxSounds", (int)keyframe.sfxSound);
+            return string.IsNullOrEmpty(note) ? text : $"{text}\n{note}";
+        }
+
         private static bool HasEnumOptions<TEnum>() where TEnum : Enum =>
             Enum.GetValues(typeof(TEnum)).Length > 0;
 
@@ -590,6 +642,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                         }, refresh: true);
                     });
                     _inspectorRoot.Add(bgmField);
+                    string bgmNote = GetSoundNote("BgmSounds", (int)_selectedBgmKey.bgmSound);
+                    if (!string.IsNullOrEmpty(bgmNote))
+                    {
+                        var noteBox = new HelpBox(bgmNote, HelpBoxMessageType.None);
+                        noteBox.style.marginBottom = 3;
+                        _inspectorRoot.Add(noteBox);
+                    }
                 }
                 else
                 {
@@ -653,6 +712,13 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                     }, refresh: true);
                 });
                 _inspectorRoot.Add(sfxField);
+                string sfxNote = GetSoundNote("SfxSounds", (int)_selectedSfxKey.sfxSound);
+                if (!string.IsNullOrEmpty(sfxNote))
+                {
+                    var noteBox = new HelpBox(sfxNote, HelpBoxMessageType.None);
+                    noteBox.style.marginTop = 3;
+                    _inspectorRoot.Add(noteBox);
+                }
             }
             else
             {
@@ -752,9 +818,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             var marker = new VisualElement
             {
-                tooltip = keyframe.operation == StoryBgmKeyOperation.Stop
-                    ? $"BGM Stop {keyframe.timeSeconds:0.00}s"
-                    : $"BGM {keyframe.bgmSound} {keyframe.timeSeconds:0.00}s",
+                tooltip = BuildBgmTooltip(keyframe),
                 style =
                 {
                     position = Position.Absolute,
@@ -794,7 +858,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             bool selected = IsTimelineKeySelected(proxy, index, StoryActorKeyframeProperty.SoundSfx);
             var marker = new VisualElement
             {
-                tooltip = $"SFX {keyframe.sfxSound} {keyframe.timeSeconds:0.00}s",
+                tooltip = BuildSfxTooltip(keyframe),
                 style =
                 {
                     position = Position.Absolute,

@@ -326,7 +326,6 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
                 var data  = kvp.Value;
                 var actor = data.actor;
                 if (actor == null) continue;
-                if (!data.visible) continue;
 
                 bool sel = _selectionKind == StageSelectionKind.Actor && actorKey == _selectedActorKey;
 
@@ -1586,17 +1585,29 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
 
             RecordStageUndo(layout, "Remove Actor From Stage");
 
-            StoryActorStateData entry = FindActorEntry(layout, _selectedActorKey);
-            if (entry == null)
+            string key = _selectedActorKey;
+            bool wasInCurrentLayout = FindActorEntry(layout, key) != null;
+
+            layout.ActorsEditable.RemoveAll(e => e != null && e.MatchesActorInstance(key));
+            layout.ActorTracksEditable.RemoveAll(t => t != null && t.actorInstanceKey == key);
+
+            if (wasInCurrentLayout)
             {
-                entry = _stageState.TryGetValue(_selectedActorKey, out var current)
+                // 이 라인에서 직접 추가된 액터 → 완전 삭제
+                _stageState.Remove(key);
+                ClearStageSelection();
+            }
+            else
+            {
+                // 이전 라인에서 상속된 액터 → 이 라인에서만 숨기는 tombstone 추가
+                StoryActorStateData tombstone = _stageState.TryGetValue(key, out var current)
                     ? current.ShallowClone()
                     : new StoryActorStateData();
-                entry.EnsureActorInstanceKey(_selectedActorKey);
-                layout.ActorsEditable.Add(entry);
+                tombstone.EnsureActorInstanceKey(key);
+                tombstone.visible = false;
+                layout.ActorsEditable.Add(tombstone);
             }
 
-            entry.visible = false;
             SaveLayoutAndRefresh(layout);
         }
 

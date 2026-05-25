@@ -201,6 +201,32 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             EditorUtility.SetDirty(line);
         }
 
+        // ── 대화 필드 수정 ──────────────────────────
+
+        public static void SetSpeaker(StoryLineSO line, CharacterDefinitionSO speaker)
+        {
+            var so = new SerializedObject(line);
+            so.FindProperty("speaker").objectReferenceValue = speaker;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(line);
+        }
+
+        public static void SetNameOverride(StoryLineSO line, string nameOverride)
+        {
+            var so = new SerializedObject(line);
+            so.FindProperty("nameOverride").stringValue = nameOverride ?? "";
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(line);
+        }
+
+        public static void SetDialogueText(StoryLineSO line, string text)
+        {
+            var so = new SerializedObject(line);
+            so.FindProperty("dialogueText").stringValue = text ?? "";
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(line);
+        }
+
         // ── nextLineId 수정 ─────────────────────────
 
         public static void SetNextLineId(StoryLineSO line, string nextId)
@@ -219,6 +245,64 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Editor
             so.FindProperty("lineId").stringValue = newId;
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(line);
+        }
+
+        // ── 라인 복제 ────────────────────────────────
+
+        /// <summary>
+        /// sourceLine의 모든 필드와 모듈을 deep copy한 새 StoryLineSO를 생성하고 episode에 추가합니다.
+        /// lineId는 새로 생성, nextLineId는 비웁니다. editorNodePosition은 별도로 설정하세요.
+        /// </summary>
+        public static StoryLineSO DuplicateLine(StoryEpisodeSO episode, StoryLineSO source, string folder = null)
+        {
+            if (string.IsNullOrEmpty(folder))
+                folder = Path.GetDirectoryName(AssetDatabase.GetAssetPath(episode));
+
+            string lineId    = GenerateUniqueLineId(episode);
+            string assetPath = AssetDatabase.GenerateUniqueAssetPath($"{folder}/{lineId}.asset");
+
+            var newLine = ScriptableObject.CreateInstance<StoryLineSO>();
+            AssetDatabase.CreateAsset(newLine, assetPath);
+
+            // 기본 필드 복사 (lineId·nextLineId·editorNode*·modules 제외)
+            var srcSO = new SerializedObject(source);
+            var dstSO = new SerializedObject(newLine);
+            foreach (string field in new[]
+                { "speaker", "nameOverride", "dialogueText", "logVisible",
+                  "allowTapToComplete", "focusPolicy", "voice",
+                  "useAutoAdvanceOverride", "autoAdvanceDelay" })
+            {
+                var srcProp = srcSO.FindProperty(field);
+                if (srcProp != null) dstSO.CopyFromSerializedProperty(srcProp);
+            }
+            dstSO.FindProperty("lineId").stringValue    = lineId;
+            dstSO.FindProperty("nextLineId").stringValue = "";
+            dstSO.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(newLine);
+
+            // 모듈 deep copy
+            foreach (var module in source.Modules)
+            {
+                if (module == null) continue;
+
+                var newModule = (StoryModuleSO)ScriptableObject.CreateInstance(module.GetType());
+                newModule.name = module.name;
+                EditorUtility.CopySerialized(module, newModule);
+                AssetDatabase.AddObjectToAsset(newModule, newLine);
+
+                var lineSO    = new SerializedObject(newLine);
+                var modulesProp = lineSO.FindProperty("modules");
+                modulesProp.InsertArrayElementAtIndex(modulesProp.arraySize);
+                modulesProp.GetArrayElementAtIndex(modulesProp.arraySize - 1).objectReferenceValue = newModule;
+                lineSO.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(newLine);
+            }
+
+            AddToEpisode(episode, newLine);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(assetPath);
+
+            return newLine;
         }
 
         // ── asset 삭제 ───────────────────────────────
