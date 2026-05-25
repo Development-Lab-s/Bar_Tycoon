@@ -11,6 +11,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
     {
         [SerializeField] private StoryEpisodeSO targetEpisode;
         [SerializeField] private Sprite sprite;
+        [SerializeField] private string description;
         public override void LevelUpReward()
         {
             eventChannelSo?.RaiseEvent(new StoryEpisodeUnlockRequested(targetEpisode));
@@ -21,6 +22,13 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
             List<Sprite> sprites = new List<Sprite>();
             sprites.Add(sprite);
             return  sprites;
+        }
+
+        public override List<string> GetDescription()
+        {
+            List<string> strings = new List<string>();
+            strings.Add(description);
+            return strings;
         }
     }
 }

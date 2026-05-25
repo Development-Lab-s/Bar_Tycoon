@@ -51,5 +51,28 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
             
             return sprites;
         }
+
+        public override List<string> GetDescription()
+        {
+            List<string> strings = new();
+            foreach (ObjectDataSO obsData in objectDataSOs)
+            {
+                if (obsData == null)
+                {
+                    Debug.Log("obsDataSO is null");
+                    continue;
+                }
+
+                if (obsData.Description == null)
+                {
+                    Debug.Log("obsData.description is null");
+                    continue;   
+                }
+                
+                strings.Add(obsData.DisplayName);
+            }
+            
+            return strings;
+        }
     }
 }

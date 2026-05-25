@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using _00._Work.Lusaload._02._Scripts.SO;
 using BBJ.GridSystem.Objects;
+using TMPro;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
@@ -8,6 +9,8 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
     public class LevelUpContainer : MonoBehaviour
     {
         [SerializeField] private LevelUpRewardSlot levelUpRewardSlot;
+        [SerializeField] private GameObject descriptionPanel;
+        [SerializeField] private TextMeshProUGUI descriptionText;
 
         [Header("detail")] 
         [SerializeField] private int spawnCount;
@@ -33,11 +36,11 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
                 slot = CreateSlot();
             }
 
-            slot.SetImage(levelUpReward.cocktailIcon);
+            slot.SetImage(levelUpReward.cocktailIcon, levelUpReward.cocktailName);
             slot.gameObject.SetActive(true);
         }
 
-        public void SpawnSlotSprite(Sprite sprite)
+        public void SpawnSlotSprite(Sprite sprite, string description)
         {
             LevelUpRewardSlot slot = GetInactiveSlot();
 
@@ -46,7 +49,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
                 slot = CreateSlot();
             }
 
-            slot.SetImage(sprite);
+            slot.SetImage(sprite, description);
             slot.gameObject.SetActive(true);
         }
 
@@ -73,6 +76,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         private LevelUpRewardSlot CreateSlot()
         {
             LevelUpRewardSlot slot = Instantiate(levelUpRewardSlot, transform);
+            slot.Init(descriptionPanel, descriptionText);
             slot.gameObject.SetActive(false);
             levelUpRewardSlots.Add(slot);
 
