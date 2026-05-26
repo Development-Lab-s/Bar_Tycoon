@@ -71,6 +71,9 @@ namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
             if (failPanel != null) failPanel.SetActive(false);
             if (successPanel == null) return;
 
+            if (cocktailName != null)
+                cocktailName.text = _recipeReader?.CurrentRecipe?.cocktailName;
+
             if (successText != null)
                 successText.text = "성공";
 

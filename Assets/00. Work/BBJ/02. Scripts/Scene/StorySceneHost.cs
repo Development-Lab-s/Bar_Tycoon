@@ -6,8 +6,13 @@ using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core;
 
 namespace BBJ.Scene
 {
-    public class StorySceneHost : MonoBehaviour
+    public class StorySceneHost : MonoBehaviour, ISceneHost
     {
-       
+        public SceneType SceneType => SceneType.Story;
+
+        private void Awake() => GameSceneManager.Instance.RegisterHost(this);
+
+        public void OnForeground() { }
+        public void OnBackground() { }
     }
 }

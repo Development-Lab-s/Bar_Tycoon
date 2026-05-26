@@ -20,4 +20,9 @@ namespace _00._Work.PCM._02._Scripts
         public CharacterEnum characterEnum { get; }
         public UnityEvent<int> OnLike { get; }
     }
+
+    public interface IChatProvider
+    {
+        string ChatMessage { get; }
+    }
 }

@@ -34,6 +34,7 @@ namespace BBJ.GridSystem.Objects
             }
 
             _placed.Clear();
+            _placed.AddRange(data.PlacedObjects);
             _registry?.BuildRuntimeDict();
 
             var workplaces = new List<Workplace>();
@@ -44,7 +45,6 @@ namespace BBJ.GridSystem.Objects
 
                 var obj = PlaceObjectInternal(objData, entry.CellIndex, entry.FlipX);
                 if (obj is Workplace wp) workplaces.Add(wp);
-                _placed.Add(entry);
             }
 
             foreach (var wp in workplaces)
