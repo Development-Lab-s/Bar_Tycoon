@@ -184,19 +184,26 @@ namespace BBJ.Customer
             }
         }
 
-        // r ∈ [1, 2^n - 1] 균일 샘플 → 비트 길이(r) = 스테이지
-        // stage k 의 슬롯 수 = 2^(k-1)  →  높은 스테이지일수록 높은 확률
+        // stage k 의 슬롯 수 = k^2  →  높은 스테이지일수록 높은 확률
         private CocktailRecipeSO PickWeightedRandom(int currentStage)
         {
             int n = Mathf.Clamp(currentStage, 1, 30);
-            int r = Random.Range(1, 1 << n);
 
-            int stage = 0, temp = r;
-            while (temp > 0) { temp >>= 1; stage++; }
+            int totalWeight = 0;
+            for (int k = 1; k <= n; k++) totalWeight += k * k;
+
+            int r = Random.Range(0, totalWeight);
+
+            int accumulated = 0, selectedStage = 1;
+            for (int k = 1; k <= n; k++)
+            {
+                accumulated += k * k;
+                if (r < accumulated) { selectedStage = k; break; }
+            }
 
             // unlockStage 0은 stage 1과 같은 버킷으로 취급
             var candidates = _database.Recipes
-                .Where(c => c.unlockStage == stage || (stage == 1 && c.unlockStage == 0))
+                .Where(c => c.unlockStage == selectedStage || (selectedStage == 1 && c.unlockStage == 0))
                 .ToList();
 
             if (candidates.Count == 0)
