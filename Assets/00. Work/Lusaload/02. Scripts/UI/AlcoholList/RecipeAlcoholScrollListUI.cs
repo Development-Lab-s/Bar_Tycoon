@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using _00._Work.Lusaload._02._Scripts.SO;
+﻿using _00._Work.Lusaload._02._Scripts.SO;
 using _00._Work.Lusaload._02._Scripts.UI.CocktailShaker;
 using UnityEngine;
 
@@ -11,80 +10,51 @@ namespace _00._Work.Lusaload._02._Scripts.UI.AlcoholList
         [SerializeField] private Transform contentParent;          // 버튼들이 생성될 부모 Transform
         [SerializeField] private BaseAlcoholButtonUI buttonPrefab; // 재료 버튼 프리팹
 
-        private ISequenceReader _sequenceReader;                                          // 시퀀스 변경 알림을 받기 위한 의존성
-        private CocktailOrderSequence _currentSequence;                                   // 체크 이벤트 구독 해제에 사용
-        private readonly Dictionary<BaseAlcoholDataSO, BaseAlcoholButtonUI> _buttonMap = new(); // SO → 버튼 매핑
-
+        private ISequenceReader _sequenceReader; // 시퀀스 변경 알림을 받기 위한 의존성
+ 
         // 시퀀스 리더를 교체하고 현재 시퀀스로 목록을 즉시 갱신
         public void SetSequenceReader(ISequenceReader reader)
         {
             if (_sequenceReader != null)
                 _sequenceReader.OnSequenceChanged -= OnSequenceChanged;
-
+ 
             _sequenceReader = reader;
-
+ 
             if (_sequenceReader != null)
             {
                 _sequenceReader.OnSequenceChanged += OnSequenceChanged;
-                SubscribeToSequence(_sequenceReader.CurrentSequence);
                 BuildList(_sequenceReader.CurrentSequence);
             }
         }
-
+ 
         private void OnDestroy()
         {
             if (_sequenceReader != null)
                 _sequenceReader.OnSequenceChanged -= OnSequenceChanged;
-
-            UnsubscribeFromSequence(_currentSequence);
         }
-
+ 
         private void OnSequenceChanged(CocktailOrderSequence sequence)
         {
-            UnsubscribeFromSequence(_currentSequence);
-            SubscribeToSequence(sequence);
             BuildList(sequence);
         }
-
-        private void SubscribeToSequence(CocktailOrderSequence sequence)
-        {
-            _currentSequence = sequence;
-            if (sequence != null)
-                sequence.OnAlcoholAdded += HandleAlcoholAdded;
-        }
-
-        private void UnsubscribeFromSequence(CocktailOrderSequence sequence)
-        {
-            if (sequence != null)
-                sequence.OnAlcoholAdded -= HandleAlcoholAdded;
-            _currentSequence = null;
-        }
-
-        private void HandleAlcoholAdded(BaseAlcoholDataSO alcohol)
-        {
-            if (_buttonMap.TryGetValue(alcohol, out BaseAlcoholButtonUI button))
-                button.SetChecked(true);
-        }
-
+ 
         // sequence의 ExpectedOrder 순서대로 버튼을 재생성. null이면 목록을 비움
         private void BuildList(CocktailOrderSequence sequence)
         {
             ClearChild();
-            _buttonMap.Clear();
-
+ 
             if (sequence == null)
                 return;
-
+ 
             foreach (BaseAlcoholDataSO alcoholData in sequence.ExpectedOrder)
             {
                 if (alcoholData == null) continue;
-
+ 
                 BaseAlcoholButtonUI buttonUI = Instantiate(buttonPrefab, contentParent);
                 buttonUI.SetData(alcoholData);
-                _buttonMap[alcoholData] = buttonUI;
             }
         }
-
+ 
         // contentParent의 모든 자식 오브젝트를 역순으로 제거
         private void ClearChild()
         {
