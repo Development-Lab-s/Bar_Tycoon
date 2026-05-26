@@ -29,6 +29,8 @@ namespace BBJ.Modules
         public async UniTask PlaySequenceAsync(CancellationToken ct, params IAgentUI[] sequence)
         {
             CancelSequence();
+            foreach (var ui in _uis.Values)
+                _ = ui.CloseAsync();
             _sequenceCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             var token = _sequenceCts.Token;
 

@@ -1,5 +1,7 @@
 using _00._Work._Resources._02._Scripts.Agents;
 using _00._Work._Resources._02._Scripts.Systems.AnimationSystems;
+using _00._Work.Goat._02._Scripts.Events;
+using _00._Work.Goat._02._Scripts.Module;
 using _00._Work.PCM._02._Scripts;
 using Assets._00._Work.PCM._02._Scripts.Contract;
 using BBJ.Modules;
@@ -13,11 +15,12 @@ namespace BBJ.States
 {
     public class InteractState : TransitionAgentState
     {
-        private readonly SchedulingModule _scheduling;
-        private readonly IAgentUIModule _uiModule;
-        private readonly IAgentInput _input; // �Է��� �ޱ� ���� �߰�
+        private readonly SchedulingModule    _scheduling;
+        private readonly IAgentUIModule      _uiModule;
+        private readonly IAgentInput         _input;
+        private AgentParticleModule          _particles;
         private bool _isTriggerCall;
-        private CancellationTokenSource _autoCloseCts; // �ڵ� ���� Ÿ�̸� �����
+        private CancellationTokenSource _autoCloseCts;
 
         public InteractState(Agent owner, AnimParamSO stateParam) : base(owner, stateParam)
         {
@@ -26,6 +29,7 @@ namespace BBJ.States
             _input = owner.GetModule<IAgentInput>();
             _autoCloseCts = new CancellationTokenSource();
             UtilDebugger.AssertAllAssigned(this);
+            _particles = owner.GetModule<AgentParticleModule>();
 
             // _isTriggerCall�� true�� �Ǹ� Idle ���·� ��ȯ
             AddTransitionToEnum(() => _isTriggerCall, StaffState.Idle);
@@ -42,6 +46,7 @@ namespace BBJ.States
                 contractObj.CanInteracting = false;
                 contractObj.UnHover();
             }
+            _particles?.PlayParticle(ParticleType.HEART);
             _input.OnInteracted += HandleManualClose;
             _autoCloseCts = new CancellationTokenSource();
             AutoCloseRoutine(_autoCloseCts.Token).Forget();
