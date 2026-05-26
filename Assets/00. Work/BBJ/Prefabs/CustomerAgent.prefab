@@ -219,6 +219,14 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 19
       objectReference: {fileID: 0}
+    - target: {fileID: 4158405732919155808, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 47
+      objectReference: {fileID: 0}
+    - target: {fileID: 4158405732919155808, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -394
+      objectReference: {fileID: 0}
     - target: {fileID: 4163554416922227793, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -618,16 +626,52 @@ PrefabInstance:
       propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: BBJ.Customer.CustomerAgent, Assembly-CSharp
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3059886861373003527, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8907611397715803414}
   m_SourcePrefab: {fileID: 100100000, guid: 3c11c4b9397898045b720904c118e669, type: 3}
 --- !u!4 &47537337642613909 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5090612577067697272, guid: 3c11c4b9397898045b720904c118e669, type: 3}
   m_PrefabInstance: {fileID: 5047866533225756909}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7816974883069702122 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3059886861373003527, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+  m_PrefabInstance: {fileID: 5047866533225756909}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8907611397715803414
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7816974883069702122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8fa16224a25d3e44b7e98c54ce16c27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Assets._00._Work.PCM._02._Scripts.TestContractObject
+  <OnClickEvent>k__BackingField:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 11400000, guid: 4245cd5d39747ac4197e0336dd5bdbd7, type: 2}
+        m_TargetAssemblyTypeName: BBJ.Player.PlayerOrderHandlerSO, Assembly-CSharp
+        m_MethodName: OnCustomerClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 8571343857732948807}
+          m_ObjectArgumentAssemblyTypeName: BBJ.Customer.CustomerAgent, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1001 &5789050548185350236
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -915,6 +959,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7378113679254595189, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 00fc7325225811d46afd88d445835a6c, type: 2}
     - target: {fileID: 7503204690083717616, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
       propertyPath: m_Name
       value: SittingMimic
@@ -946,6 +994,10 @@ PrefabInstance:
       propertyPath: skeletonMesh
       value: 
       objectReference: {fileID: 6900056992769913531}
+    - target: {fileID: 5640682306033516157, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
+      propertyPath: m_SortingOrder
+      value: 501
+      objectReference: {fileID: 0}
     - target: {fileID: 6341209904422489513, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
       propertyPath: sortPoint
       value: 

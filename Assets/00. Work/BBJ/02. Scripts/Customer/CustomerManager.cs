@@ -13,13 +13,20 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using _00._Work.Lusaload._02._Scripts.SO;
+using _00._Work._Resources._02._Scripts.Systems.GameEvents;
+using _00._Work.Goat._02._Scripts.UI.LevelUpUI;
+using _00._Work.Goat._02._Scripts.Exp;
+using System.Net.NetworkInformation;
 
 namespace BBJ.Customer
 {
     public class CustomerManager : MonoBehaviour
     {
+
         [Header("SO")]
         [SerializeField] private EventChannelSO _customerChannel;
+        [SerializeField] private ExpManager     _levelManager;
+        //[SerializeField] private EventChannelSO _levelChannel;
 
         [Header("Pool")]
         [SerializeField] private PoolManagerSo _poolManager;
@@ -47,19 +54,21 @@ namespace BBJ.Customer
         {
             UtilDebugger.AssertAllAssigned(this);
             _activeCount = 0;
+
             _customerChannel.AddListener<CustomerLeftEvent>(HandleCustomerLeft);
+        }
+        private void Start()
+        {
+            this._currentStage = _levelManager.CurrentLevel;
+            this._levelManager.OnLevelChanged += HandleLevelup;
+            StartCoroutine(SpawnLoop());
         }
 
         private void OnDestroy()
         {
             _customerChannel.RemoveListener<CustomerLeftEvent>(HandleCustomerLeft);
         }
-
-        private void Start()
-        {
-            StartCoroutine(SpawnLoop());
-        }
-
+        public void HandleLevelup(int p,int n) => SetStage(n);
         public void SetStage(int stage) => _currentStage = Mathf.Max(1, stage);
 
         private void HandleCustomerLeft(CustomerLeftEvent evt)

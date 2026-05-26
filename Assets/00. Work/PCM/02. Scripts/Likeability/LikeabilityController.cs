@@ -1,17 +1,8 @@
-using _00._Work._Resources._02._Scripts.Agents.Players;
-using _00._Work._Resources._02._Scripts.Modules;
-using _00._Work._Resources._02._Scripts.Systems;
 using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
-using _00._Work.Goat._02._Scripts.Coin.CoinDatas;
 using _00._Work.PCM._02._Scripts;
 using Gamelib.EventSystem;
 using Gamelib.SoundSystem;
-using System.Diagnostics.Tracing;
 using _00._Work.Goat._02._Scripts.Coin;
-using _00._Work.Goat._02._Scripts.Events;
-using _00._Work.Goat._02._Scripts.SaveCode;
-using Systems;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -109,7 +100,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
         if (hit.collider != null)
         {
             Debug.Log(hit.collider.gameObject.name);
-            if (hit.collider.gameObject.TryGetComponent<IContractObject>(out IContractObject pychar))
+            if (hit.collider.gameObject.TryGetComponent(out ILikeabillty pychar))
             {
                 if (_itemSO.CharacterEnum != pychar.characterEnum)
                 {

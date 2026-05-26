@@ -36,10 +36,10 @@ namespace BBJ.States
             base.Enter();
             _isTriggerCall = false;
 
-            var contractObj = _owner.GetModule<AbstructContractObject>();
+            var contractObj = _owner.GetModule<IHoverable>();
             if (contractObj != null)
             {
-                contractObj.IsInteracting = true;
+                contractObj.CanInteracting = false;
                 contractObj.UnHover();
             }
             _uiModule.Get<ContractChat>()?.OpenAsync().Forget();
@@ -88,10 +88,10 @@ namespace BBJ.States
             }
 
             // Hover 잠금 해제
-            var contractObj = _owner.GetModule<AbstructContractObject>();
+            var contractObj = _owner.GetModule<IHoverable>();
             if (contractObj != null)
             {
-                contractObj.IsInteracting = false;
+                contractObj.CanInteracting = true;
             }
 
             // UI 닫기 및 스케줄 재개
