@@ -14,16 +14,26 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
         public event Action OnComplete;
         public void AddDegree(int value)
         {
-            if (AchieveSaveData.isComplete) return;
-            
+            if (AchieveSaveData.isComplete)
+            {
+                AchieveSaveData.remainAchievementDegree += value;
+                OnChanged?.Invoke(this);
+                return;
+            }
+
             AchieveSaveData.nowAchievementDegree += value;
 
-            if (AchieveSaveData.nowAchievementDegree >= AchievementDataSO.TargetAchievementDegree[AchieveSaveData.nowTargetData])
+            int targetValue = AchievementDataSO.TargetAchievementDegree[AchieveSaveData.nowTargetData];
+
+            if (AchieveSaveData.nowAchievementDegree >= targetValue)
             {
-                AchieveSaveData.nowAchievementDegree = AchievementDataSO.TargetAchievementDegree[AchieveSaveData.nowTargetData];
+                AchieveSaveData.remainAchievementDegree += 
+                    AchieveSaveData.nowAchievementDegree - targetValue;
+
+                AchieveSaveData.nowAchievementDegree = targetValue;
                 Complete();
             }
-            
+
             OnChanged?.Invoke(this);
         }
 
@@ -35,15 +45,22 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Data
         public void GetAwardTrue()
         {
             AchieveSaveData.getAward = true;
+
             int nextIndex = AchieveSaveData.nowTargetData + 1;
 
             if (nextIndex < AchievementDataSO.TargetAchievementDegree.Count)
             {
+                int remainValue = AchieveSaveData.remainAchievementDegree;
+
                 AchieveSaveData.nowTargetData = nextIndex;
                 AchieveSaveData.nowAchievementDegree = 0;
+                AchieveSaveData.remainAchievementDegree = 0;
                 AchieveSaveData.isComplete = false;
                 AchieveSaveData.getAward = false;
+
+                AddDegree(remainValue);
             }
+
             OnChanged?.Invoke(this);
         }
         
