@@ -61,6 +61,7 @@ public class Title : MonoBehaviour
             Debug.Log(Changess.register);
             if (!Changess.register)
             {
+                _isAniming = false;
                 Debug.Log("실행");
                 contractUi.Open();
                 return;
