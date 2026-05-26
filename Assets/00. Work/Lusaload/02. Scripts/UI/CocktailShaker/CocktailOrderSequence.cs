@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using _00._Work.Lusaload._02._Scripts.SO;
 using UnityEngine;
 
@@ -16,7 +17,10 @@ namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
         public SequenceState State => _state;                                      // 현재 InProgress/Completed/Failed
         public bool IsFull => _addedAlcohols.Count >= _expectedOrder.Count;        // 투입 슬롯이 모두 채워졌는지 여부
 
-        // recipeIngredients를 복사해 시퀀스 생성. shuffle=true면 투입 순서를 랜덤화
+        // 레시피에 있는 재료가 셰이커에 추가될 때 발행 (순서 오류여도 재료 자체가 유효하면 발행)
+        public event Action<BaseAlcoholDataSO> OnAlcoholAdded;
+
+        // recipeIngredients를 복사해 시퀀스 생성. shuffle=true면 표시 순서를 랜덤화 (투입 순서는 무관)
         public CocktailOrderSequence(IReadOnlyList<BaseAlcoholDataSO> recipeIngredients, bool shuffle = true)
         {
             _expectedOrder = new List<BaseAlcoholDataSO>(recipeIngredients);
@@ -30,51 +34,42 @@ namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
         {
             for (int i = _expectedOrder.Count - 1; i > 0; i--)
             {
-                int randomIndex = Random.Range(0, i + 1);
+                int randomIndex = UnityEngine.Random.Range(0, i + 1);
                 (_expectedOrder[i], _expectedOrder[randomIndex]) = (_expectedOrder[randomIndex], _expectedOrder[i]);
             }
         }
  
-        // 재료를 셰이커에 추가 시도. 이미 완성/가득 찬 경우, 중복·잘못된 재료/순서를 판별해 결과 반환
+        // 재료를 셰이커에 추가 시도. 투입 순서는 무관하며 중복·잘못된 재료만 판별해 결과 반환
         public AddAlcoholResult TryAdd(BaseAlcoholDataSO alcohol)
         {
             if (_state == SequenceState.Completed)
                 return AddAlcoholResult.Completed;
- 
+
             if (IsFull)
                 return AddAlcoholResult.Full;
- 
+
             if (_addedAlcohols.Contains(alcohol))
                 return AddAlcoholResult.AlreadyContained;
- 
+
             _addedAlcohols.Add(alcohol);
- 
-            bool isIngredientValid = _expectedOrder.Contains(alcohol);
-            bool isOrderValid = isIngredientValid && _expectedOrder[_addedAlcohols.Count - 1] == alcohol;
- 
-            if (!isIngredientValid)
+
+            if (!_expectedOrder.Contains(alcohol))
             {
                 _state = SequenceState.Failed;
                 return IsFull ? AddAlcoholResult.FullAfterFail : AddAlcoholResult.WrongIngredient;
             }
- 
-            if (!isOrderValid)
-            {
-                _state = SequenceState.Failed;
-                return IsFull ? AddAlcoholResult.FullAfterFail : AddAlcoholResult.WrongOrder;
-            }
- 
+
+            OnAlcoholAdded?.Invoke(alcohol);
+
             if (_state == SequenceState.Failed)
-            {
                 return IsFull ? AddAlcoholResult.FullAfterFail : AddAlcoholResult.AddedAfterFail;
-            }
- 
+
             if (IsFull)
             {
                 _state = SequenceState.Completed;
                 return AddAlcoholResult.Completed;
             }
- 
+
             return AddAlcoholResult.Added;
         }
     }
