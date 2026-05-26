@@ -1,6 +1,7 @@
 using _00._Work.Goat._02._Scripts.Camera;
 using BBJ.EventSystem;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace BBJ.Scene
 {
@@ -14,7 +15,7 @@ namespace BBJ.Scene
         [SerializeField] private Canvas[] mainCanvases;
         [SerializeField] private int foregroundOffset = 0;
         [SerializeField] private int backgroundOffset = -1000;
-        
+        public UnityEvent tutorialStart;
         private int[] _originalOrders;
 
         private void Awake()
@@ -32,6 +33,7 @@ namespace BBJ.Scene
         {
             sceenMainCamera?.gameObject.SetActive(true);
             cameraManager?.gameObject.SetActive(true);
+            tutorialStart?.Invoke();
             Camera.SetupCurrent(sceenMainCamera);
             
             RestoreCanvasOrders();
