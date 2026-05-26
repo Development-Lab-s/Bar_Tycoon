@@ -2,7 +2,6 @@ using BBJ.UI;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
@@ -16,8 +15,12 @@ namespace BBJ.Modules
 
         public void Initialize(ModuleOwner owner)
         {
-            _uis = GetComponentsInChildren<IAgentUI>(true)
-                .ToDictionary(ui => ui.GetType());
+            _uis = new Dictionary<Type, IAgentUI>();
+            foreach (var ui in GetComponentsInChildren<IAgentUI>(true))
+            {
+                if (!_uis.TryAdd(ui.GetType(), ui))
+                    Debug.LogWarning($"[AgentUIModule] 중복 IAgentUI 타입 무시: {ui.GetType().Name} on {gameObject.name}", gameObject);
+            }
         }
 
         public T Get<T>() where T : class, IAgentUI
