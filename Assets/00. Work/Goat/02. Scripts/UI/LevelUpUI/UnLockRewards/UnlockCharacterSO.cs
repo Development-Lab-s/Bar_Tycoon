@@ -28,9 +28,10 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
         public override void LevelUpReward()
         {
             spawnPositions.Clear();
-            eventChannelSo?.RaiseEvent(new StaffSpawnEvent().Init(_staffConfig, (pos) => spawnPositions.Add(pos)));
             achievementEvent.RaiseEvent(new AchievementEvent().Init(achievementType, 1));
             unlockUpgradeEvent.RaiseEvent(new UpgradeUnLockEvent().Init(buttonType));
+            Debug.Log(buttonType);
+            eventChannelSo?.RaiseEvent(new StaffSpawnEvent().Init(_staffConfig, (pos) => spawnPositions.Add(pos)));
             cameraManagerEvent.RaiseEvent(new CameraManagerEvent().Init(spawnPositions, false));
         }
 

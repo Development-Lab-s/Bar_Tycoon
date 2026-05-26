@@ -5,8 +5,17 @@ using UnityEngine;
 public class TutorialOpen : MonoBehaviour
 {
     [SerializeField] private TutorialManager _manager;
+    [SerializeField] private TutoBoolSO Tutobol;
+    private void Start()
+    {
+        Open();
+    }
     public void Open()
     {
-        _manager.OpenTutorial();
+        if (Tutobol.value)
+        {
+            _manager.OpenTutorial();
+            Tutobol.value = false;
+        }
     }
 }
