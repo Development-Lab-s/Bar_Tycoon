@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Contracts;
@@ -88,7 +89,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
 
         private void HandlePlayStoryRequested(PlayStoryRequested evt)
         {
-            PlayAsync(
+             PlayAsync(
                 new StoryPlayRequest(evt.Episode, evt.OpenMode, evt.CallerId),
                 this.GetCancellationTokenOnDestroy()).Forget();
         }

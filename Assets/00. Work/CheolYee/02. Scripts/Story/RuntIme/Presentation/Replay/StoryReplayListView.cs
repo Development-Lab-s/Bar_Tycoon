@@ -99,9 +99,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Replay
 
         private void OnItemReplayClicked(StoryEpisodeCatalogEntry entry)
         {
-            StoryTransitionContext.Instance.RequestStory(entry);
-            //storyCommandChannel?.RaiseEvent(
-            //    new StoryEpisodeLaunchRequested(entry.Episode, entry.Episode.EpisodeId));
+            storyCommandChannel?.RaiseEvent(
+                new StoryEpisodeLaunchRequested(entry.Episode, entry.Episode.EpisodeId));
         }
     }
 }

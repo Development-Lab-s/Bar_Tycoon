@@ -631,7 +631,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000061035156}
+  m_AnchoredPosition: {x: 0, y: -0.000030517578}
   m_SizeDelta: {x: 0, y: 1000}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &5421413070211072529
@@ -4928,6 +4928,51 @@ MonoBehaviour:
   category: 0
   selectedSprite: {fileID: 0}
   normalSprite: {fileID: 0}
+--- !u!1 &1805327501705282620
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1534042830390468785}
+  - component: {fileID: 6966063840686298346}
+  m_Layer: 0
+  m_Name: SungtaeParticleManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1534042830390468785
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1805327501705282620}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1006.0263, y: -616.9048, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5826901216046077197}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6966063840686298346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1805327501705282620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b91f9d9a6fde433e98211713580670af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.Goat._02._Scripts.Pool.SungtaeParticleManager
+  config: {fileID: 11400000, guid: 02a794de755568e438116e5f35bdcca1, type: 2}
 --- !u!1 &1818525163063691210
 GameObject:
   m_ObjectHideFlags: 0
@@ -15825,6 +15870,7 @@ MonoBehaviour:
   _LPchannel: {fileID: 11400000, guid: 37b14455f6249404db63b0a0f13c61f4, type: 2}
   text: {fileID: 6141483824887929176}
   lpItemPrefab: {fileID: 822947416406432347, guid: f8fbf60e0e0dec84e8dd1358b70f94da, type: 3}
+  lpImage: {fileID: 0}
 --- !u!1 &5070758371379743086
 GameObject:
   m_ObjectHideFlags: 0
@@ -18221,6 +18267,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LpController
   _LPchannel: {fileID: 11400000, guid: 37b14455f6249404db63b0a0f13c61f4, type: 2}
   text: {fileID: 6141483824887929176}
+  _LpImage: {fileID: 0}
+  Lpbox: {fileID: 0}
 --- !u!222 &8625611089705771568
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20907,7 +20955,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3628716163486829261}
   m_HandleRect: {fileID: 7602104602655288660}
   m_Direction: 2
-  m_Value: 0.9999999
+  m_Value: 1.0000001
   m_Size: 0.365
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -22449,7 +22497,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbb8682e67e7e2846b3acbaa1f86d79e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LPContents
-  loopCount: 2
 --- !u!1 &7071143529026822475
 GameObject:
   m_ObjectHideFlags: 0
@@ -27355,6 +27402,7 @@ Transform:
   - {fileID: 8532328250472597607}
   - {fileID: 705685379734103025}
   - {fileID: 3332725123578202603}
+  - {fileID: 1534042830390468785}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8820968757829785106
@@ -29336,23 +29384,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3452456766099762479, guid: 590138a8988db4e41885bb6a94d038b2, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3452456766099762479, guid: 590138a8988db4e41885bb6a94d038b2, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4100040720716084081, guid: 590138a8988db4e41885bb6a94d038b2, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4100040720716084081, guid: 590138a8988db4e41885bb6a94d038b2, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4100040720716084081, guid: 590138a8988db4e41885bb6a94d038b2, type: 3}
       propertyPath: m_SizeDelta.x
-      value: -17
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5838862079660047063, guid: 590138a8988db4e41885bb6a94d038b2, type: 3}
       propertyPath: m_IsActive
@@ -29453,6 +29501,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 777155becdc90204fa4a44cfa773e206, type: 3}
+    - target: {fileID: 3188582136279272211, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
+      propertyPath: exitBtnClickEvent
+      value: 
+      objectReference: {fileID: 11400000, guid: 5a8678d1d1e2cf9439de2d0af7fa5db4, type: 2}
     - target: {fileID: 3188582136279272211, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
       propertyPath: <expSlider>k__BackingField
       value: 
@@ -30030,6 +30082,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: e586f2fd21e0fa941ae32e5f1a02a82a, type: 3}
+    - target: {fileID: 3188582136279272211, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
+      propertyPath: exitBtnClickEvent
+      value: 
+      objectReference: {fileID: 11400000, guid: 5a8678d1d1e2cf9439de2d0af7fa5db4, type: 2}
     - target: {fileID: 3188582136279272211, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
       propertyPath: <expSlider>k__BackingField
       value: 
@@ -30639,6 +30695,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3188582136279272211, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
+      propertyPath: exitBtnClickEvent
+      value: 
+      objectReference: {fileID: 11400000, guid: 5a8678d1d1e2cf9439de2d0af7fa5db4, type: 2}
     - target: {fileID: 6343629743945905020, guid: e6ff4fbb104eb4f4e89cda20656507fe, type: 3}
       propertyPath: m_Name
       value: Cian

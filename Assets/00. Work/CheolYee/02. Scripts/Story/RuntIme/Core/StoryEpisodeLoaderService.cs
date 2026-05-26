@@ -1,5 +1,7 @@
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
+using BBJ.EventSystem;
+using BBJ.Scene;
 using Gamelib.EventSystem;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,6 +12,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
     {
         [Header("Channels")]
         [SerializeField] private EventChannelSO storyCommandChannel;
+        [SerializeField] private EventChannelSO _sceneChannel;
 
         [Header("References")]
         [SerializeField] private StoryProgressService progressService;
@@ -67,7 +70,8 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
                 Debug.LogWarning("[StoryEpisodeLoaderService] storySceneName이 비어 있습니다. scene load를 중단합니다.");
                 return;
             }
-            SceneManager.LoadScene(storySceneName);
+            _sceneChannel.RaiseEvent(new SceneTransitionRequestEvent(SceneType.Story));
+            //SceneManager.LoadScene(storySceneName);
         }
 
         private static string ResolveEpisodeId(StoryEpisodeSO episode, string episodeId)

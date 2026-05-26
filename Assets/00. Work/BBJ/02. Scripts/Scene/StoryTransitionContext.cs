@@ -12,8 +12,6 @@ namespace BBJ.Scene
 
         [SerializeField] private EventChannelSO _sceneChannel;
 
-        public StoryEpisodeCatalogEntry PendingEpisode { get; private set; }
-
         private void Awake()
         {
             Instance = this;
@@ -27,10 +25,7 @@ namespace BBJ.Scene
 
         public void RequestStory(StoryEpisodeCatalogEntry episode)
         {
-            PendingEpisode = episode;
             _sceneChannel.RaiseEvent(new SceneTransitionRequestEvent(SceneType.Story));
         }
-
-        public void Clear() => PendingEpisode = null;
     }
 }

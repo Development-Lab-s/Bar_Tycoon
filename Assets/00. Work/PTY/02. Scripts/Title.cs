@@ -1,6 +1,7 @@
-using System.Collections;
 using LitMotion;
 using LitMotion.Extensions;
+using System.Collections;
+using System.Diagnostics.Contracts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -12,7 +13,8 @@ public class Title : MonoBehaviour
     [SerializeField] private TextMeshProUGUI touchAnywhere;
     [SerializeField] private Image background;
     [SerializeField] private Image cover;
-    [SerializeField] private GameObject mainUI;
+    [SerializeField]private ContractUi contractUi;
+    [SerializeField] private SceneChangess Changess; 
     
     private float[] durations = { // 타이틀 로고 각 텍스트 애니메이션 속도
         0.1f, 0.1f, 0.1f, 0.1f,
@@ -35,15 +37,14 @@ public class Title : MonoBehaviour
     private bool _isAniming = true;
     private bool _isCovering = false;
     private bool _isBlink = true;
-    
     private void Start()
     {
         for(int i = 0; i < titleElements.Length; i++)
             titleElements[i].color = new Color(1, 1, 1, 0);
         _text = touchAnywhere.text;
         touchAnywhere.text = string.Empty;
-        mainUI.SetActive(false);
-        StartCoroutine(GameStartEffect());
+        TitleAppearAnim();
+        //StartCoroutine(GameStartEffect());
     }
 
     private IEnumerator GameStartEffect()
@@ -57,11 +58,18 @@ public class Title : MonoBehaviour
     {
         if (Mouse.current.leftButton.wasPressedThisFrame && !_isAniming)
         {
+            Debug.Log(Changess.register);
+            if (!Changess.register)
+            {
+                Debug.Log("실행");
+                contractUi.Open();
+                return;
+            }
             StartCover();
         }
     }
 
-    async void StartCover() // 타이틀 화면 전환 시 화면 덮어주는 커버 알파갚 1
+    public async void StartCover() // 타이틀 화면 전환 시 화면 덮어주는 커버 알파갚 1
     {
         if (_isCovering) return;
         _isCovering = true;
@@ -73,7 +81,6 @@ public class Title : MonoBehaviour
         await System.Threading.Tasks.Task.Delay(1000);
             
         background.gameObject.SetActive(false);
-        mainUI.SetActive(true);
         titleElements[0].transform.parent.gameObject.SetActive(false);
 
         _isBlink = false;
@@ -87,10 +94,10 @@ public class Title : MonoBehaviour
         var coverTween = LMotion.Create(_coverColor, _invisibleCoverColor, 0.7f)
             .WithEase(Ease.InQuad)
             .BindToColor(cover)
-            .ToAwaitable();
-        
+            .ToAwaitable();        
         await coverTween;
         
+        Changess.HandleSceneChanged();
         cover.gameObject.SetActive(false);
         _isCovering = false;
     }

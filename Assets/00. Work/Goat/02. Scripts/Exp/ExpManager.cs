@@ -61,6 +61,7 @@ namespace _00._Work.Goat._02._Scripts.Exp
                 expData.currentExp -= maxExp;
                 expData.currentLevel += 1;
                 levelUpCount++;
+                
                 achieveChannelSO.RaiseEvent(new AchievementEvent().Init(AchievementType.LevelUp , 1));
             }
             

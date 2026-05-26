@@ -14,26 +14,29 @@ namespace BBJ.Scene
         [SerializeField] private CocktailRecipeManager _recipeManager;
         [SerializeField] private EventChannelSO        _sceneChannel;
 
-        private enum Result { None, Success, Fail }
-        private Result _result;
-
-        public SceneType SceneType => SceneType.Cocktail;
+        public Camera sceenMainCamera;
 
         private void Awake()
         {
             UtilDebugger.AssertAllAssigned(this);
             GameSceneManager.Instance.RegisterHost(this);
+
+            sceenMainCamera.gameObject.SetActive(false);
         }
+
         public void OnForeground()
         {
+            sceenMainCamera?.gameObject.SetActive(true);
+            Camera.SetupCurrent(sceenMainCamera);
+
             _result = Result.None;
             var ticket = CocktailTransitionTrigger.Instance.PendingTicket;
             if (ticket != null)
                 _recipeManager.SetRecipe(ticket.Ordered);
         }
-
         public void OnBackground()
         {
+            sceenMainCamera?.gameObject.SetActive(false);
             var ticket = CocktailTransitionTrigger.Instance.PendingTicket;
             CocktailTransitionTrigger.Instance.Clear();
 
@@ -44,6 +47,11 @@ namespace BBJ.Scene
             else if (_result == Result.Fail)
                 _orderChannel.RaiseEvent(new OrderNotifyReleasedEvent(ticket, ticket.ReservedBy));
         }
+
+        private enum Result { None, Success, Fail }
+        private Result _result;
+
+        public SceneType SceneType => SceneType.Cocktail;
 
         public void OnShakerSuccess()
         {
