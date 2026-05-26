@@ -88,6 +88,26 @@ MonoBehaviour:
       cameraShakeDuration: 0.25
       cameraShakeFrequency: 2
       cameraShakeTargetMode: 0
+    - property: 9
+      normalizedTime: 1
+      timeSeconds: 1
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
   backgroundTrack:
     keyframes: []
   actorTracks:
@@ -135,7 +155,10 @@ MonoBehaviour:
       cameraShakeTargetMode: 0
   soundTrack:
     bgmKeyframes: []
-    sfxKeyframes: []
+    sfxKeyframes:
+    - normalizedTime: 0
+      timeSeconds: 0
+      sfxSound: 9
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
