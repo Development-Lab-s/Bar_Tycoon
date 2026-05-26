@@ -107,7 +107,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
         if (hit.collider != null)
         {
-            if (hit.collider.gameObject.TryGetComponent<IContractObject>(out IContractObject pychar))
+            if (hit.collider.gameObject.TryGetComponent<ILikeabillty>(out ILikeabillty pychar))
             {
                 if (_itemSO.CharacterEnum != pychar.characterEnum)
                 {
