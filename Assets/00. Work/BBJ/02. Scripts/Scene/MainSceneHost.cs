@@ -39,6 +39,7 @@ namespace BBJ.Scene
             tutorialStart?.Invoke();
             Camera.SetupCurrent(sceenMainCamera);
             playerInput?.SetEnable(true);
+            storyCanvas?.gameObject.SetActive(true);
             RestoreCanvasOrders();
         }
         public void OnBackground()
