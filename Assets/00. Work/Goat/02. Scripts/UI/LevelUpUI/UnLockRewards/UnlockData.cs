@@ -15,7 +15,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
             
             foreach (AbstractUnlockSO unlockData  in unlockDatas)
             {
-                unlockData.LevelUpReward();
+                unlockData?.LevelUpReward();
             }
         }
     }

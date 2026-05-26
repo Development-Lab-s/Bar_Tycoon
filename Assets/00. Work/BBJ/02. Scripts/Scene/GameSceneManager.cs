@@ -48,12 +48,13 @@
             private void OnTransitionRequested(SceneTransitionRequestEvent e) => TransitionTo(e.Target);
             private void OnSceneReady(SceneReadyEvent _) => _sceneReady = true;
 
-            private void TransitionTo(SceneType target)
-            {
-                if (_isTransitioning) return;
-                StartCoroutine(DoTransition(target));
-            }
+        private void TransitionTo(SceneType target)
+        {
+            Debug.Log($"[GSM] TransitionTo({target}) — _isTransitioning={_isTransitioning}"); if (_isTransitioning) return;
+             StartCoroutine(DoTransition(target));
+        }
 
+       
             private IEnumerator Init()
             {
                 _isTransitioning = true;
@@ -71,17 +72,10 @@
                 _isTransitioning = false;
             }
 
-            private IEnumerator DoTransition(SceneType target)
-            {
-                _isTransitioning = true;
-
-                // 새 씬 로드를 페이드 아웃과 동시에 시작
-                AsyncOperation loadOp = null;
-                if (!_loadedScenes.Contains(target))
-                {
-                    loadOp = SceneManager.LoadSceneAsync(SceneName(target), LoadSceneMode.Additive);
-                    loadOp.allowSceneActivation = false;
-                }
+        private IEnumerator DoTransition(SceneType target)
+        {
+            Debug.Log($"[GSM] DoTransition START → {target}");
+            _isTransitioning = true;
 
                 yield return StartCoroutine(_fadeUI.FadeOut());
 
@@ -96,11 +90,9 @@
                     _hosts.Remove(_foreground);
                 }
 
-                if (loadOp != null)
+                if (!_loadedScenes.Contains(target))
                 {
-                    while (loadOp.progress < 0.9f) yield return null;
-                    loadOp.allowSceneActivation = true;
-                    yield return loadOp;
+                    yield return SceneManager.LoadSceneAsync(SceneName(target), LoadSceneMode.Additive);
                     _loadedScenes.Add(target);
                 }
 

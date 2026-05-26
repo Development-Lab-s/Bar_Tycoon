@@ -48,6 +48,7 @@ namespace BBJ.Scene
         
         private void SaveOriginalCanvasOrders()
         {
+            if (mainCanvases == null) return;
             _originalOrders = new int[mainCanvases.Length];
 
             for (int i = 0; i < mainCanvases.Length; i++)
@@ -59,6 +60,7 @@ namespace BBJ.Scene
 
         private void RestoreCanvasOrders()
         {
+            if (mainCanvases == null || _originalOrders == null) return;
             for (int i = 0; i < mainCanvases.Length; i++)
             {
                 if (mainCanvases[i] == null) continue;
@@ -70,6 +72,7 @@ namespace BBJ.Scene
 
         private void LowerCanvasOrders()
         {
+            if (mainCanvases == null || _originalOrders == null) return;
             for (int i = 0; i < mainCanvases.Length; i++)
             {
                 if (mainCanvases[i] == null) continue;

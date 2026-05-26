@@ -12,10 +12,12 @@ namespace BBJ.Movement
     {
         [SerializeField] private float moveSpeed = 1f;
         [SerializeField] private EventChannelSO PathRequestChannel;
+        [SerializeField] [Range(0f, 1f)] private float minTurnSpeedRatio = 0.4f;
 
         private CancellationTokenSource _cts;
         private int _targetIndex;
         private Vector3[] _path;
+        private Vector3 _prevDir;
         private ModuleOwner _owner;
 
         public bool IsMoving { get; private set; }
@@ -38,6 +40,7 @@ namespace BBJ.Movement
 
             _targetIndex = 0;
             _path = path;
+            _prevDir = Vector3.zero;
             FollowPath(_cts.Token).Forget();
         }
 
@@ -62,10 +65,16 @@ namespace BBJ.Movement
                 while (_targetIndex < _path.Length)
                 {
                     Vector3 target = _path[_targetIndex];
+
+                    Vector3 newDir = (target - _owner.transform.position).normalized;
+                    float dot = _prevDir.sqrMagnitude > 0f ? Vector3.Dot(_prevDir, newDir) : 1f;
+                    float speedMult = Mathf.Lerp(minTurnSpeedRatio, 1f, (dot + 1f) * 0.5f);
+                    _prevDir = newDir;
+
                     OnMoveVelocityChanged?.Invoke(Velocity);
                     Velocity = target - _owner.transform.position;
 
-                    float step = moveSpeed * Time.fixedDeltaTime;
+                    float step = moveSpeed * speedMult * Time.fixedDeltaTime;
                     if (Vector3.Distance(_owner.transform.position, target) <= step)
                     {
                         _owner.transform.position = target;
