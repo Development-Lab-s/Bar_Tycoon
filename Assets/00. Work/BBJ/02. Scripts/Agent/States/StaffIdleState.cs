@@ -44,7 +44,7 @@ namespace BBJ.States
 
             _movement.OnMoveStarted        += HandleMoveStarted;
             _workAction.OnWorkPhaseStarted += HandleWorkPhaseStarted;
-            _input.OnInteracted            += HandleInteract;
+            _input.OnInteracted += HandleInteract;
         }
 
         public override void Exit()
