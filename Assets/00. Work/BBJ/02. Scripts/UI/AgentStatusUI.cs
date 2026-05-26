@@ -63,6 +63,7 @@ namespace BBJ.UI
         public void SetText(string text) => _label.text = text;
         private void SetActive(bool isActive)
         {
+            if (this == null || _canvasGroup == null) return;
             IsOpen = isActive;
             _canvasGroup.gameObject.SetActive(isActive);
         }
