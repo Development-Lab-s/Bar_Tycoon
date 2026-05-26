@@ -108,7 +108,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
                     Destroy(dragInstance);
                     return;
                 }
-                soundChannel.RaiseEvent(new PlaySoundEvent((SfxSounds)12,Vector3.zero,SoundChannelId.None));
+                soundChannel.RaiseEvent(new PlaySoundEvent((SfxSounds)13,Vector3.zero,SoundChannelId.None));
                 coinManager.TryUseCoin(needMoney);
                 pychar.OnLike.Invoke(_itemSO.LikePlus);
             }

@@ -5,6 +5,7 @@ using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
 using _00._Work.Goat._02._Scripts.Events;
 using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
 using LitMotion;
 using LitMotion.Extensions;
 using TMPro;
