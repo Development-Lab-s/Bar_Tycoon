@@ -1,27 +1,30 @@
-﻿using UnityEngine;
+﻿using LitMotion;
+using LitMotion.Extensions;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using _00._Work.Lusaload._02._Scripts.UI.AlcoholList;
 
 namespace _00._Work.Lusaload._02._Scripts
 {
-    // 롱 프레스를 감지해 짧은 드래그는 스크롤로, 긴 드래그는 아이템 이동으로 분기하는 컴포넌트
-    public class DraggableItem : MonoBehaviour,  IPointerDownHandler,
-        IBeginDragHandler, IDragHandler, IEndDragHandler
+    // 드래그 즉시 고스트를 생성해 커서를 따라다니게 하는 컴포넌트
+    // 스크롤은 리스트의 빈 영역에서 가능
+    public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
-        [SerializeField] private float longPressTime = 0.2f; // 이 시간 이상 누른 뒤 드래그해야 아이템 이동 모드 진입
+        [SerializeField] private float ghostAlpha = 0.9f;       // 커서를 따라다니는 고스트 투명도
+        [SerializeField] private float originFadeAlpha = 0.35f; // 드래그 중 원본 아이템 투명도
+        [SerializeField] private float dragScale = 1.1f;        // 고스트 픽업 스케일 배율
+        [SerializeField] private float pickupDuration = 0.12f;  // 고스트 픽업 애니메이션 시간
+        [SerializeField] private float releaseDuration = 0.2f;  // 원본 복귀 애니메이션 시간
 
-        private ScrollRect _parentScrollRect; // 짧은 드래그를 위임할 부모 스크롤
-        private Canvas _rootCanvas;           // 드래그 중 아이템을 최상위로 올리기 위한 루트 캔버스
-        private CanvasGroup _canvasGroup;     // 드래그 중 레이캐스트 차단 제어
-        private RectTransform _rectTransform; // 드래그 위치 갱신에 사용
+        private Canvas _rootCanvas;           // 고스트를 최상위로 올리기 위한 루트 캔버스
+        private CanvasGroup _canvasGroup;     // 원본 투명도 제어
+        private RectTransform _rectTransform; // 원본 위치 참조
 
-        private Transform _originalParent; // 드롭 실패 시 복귀할 원래 부모
-        private int _originalIndex;        // 드롭 실패 시 복귀할 원래 인덱스
+        private GameObject _dragGhost; // 커서를 따라다니는 시각적 복사본
+        private RectTransform _ghostRT; // OnDrag 성능을 위해 캐시
+        private Vector2 _grabOffset;    // 클릭 지점과 고스트 피벗 사이의 오프셋
 
-        private float _pointerDownTime; // 포인터 누른 시각 (롱 프레스 판별용)
-        private bool _routeToScroll;    // true면 이번 드래그를 스크롤에 위임
-        private bool _draggingItem;     // true면 아이템 이동 드래그 진행 중
-        
         private void Awake()
         {
             _rectTransform = GetComponent<RectTransform>();
@@ -30,82 +33,73 @@ namespace _00._Work.Lusaload._02._Scripts
             if (_canvasGroup == null)
                 _canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
-            _parentScrollRect = GetComponentInParent<ScrollRect>();
             _rootCanvas = GetComponentInParent<Canvas>();
         }
 
-        // 포인터가 눌린 시각을 기록해 롱 프레스 여부를 판별할 기준점으로 사용
-        public void OnPointerDown(PointerEventData eventData)
-        {
-            _pointerDownTime = Time.unscaledTime;
-        }
-
-        // 드롭 대상이 없거나 드롭이 실패한 경우 아이템을 원래 위치로 되돌림
-        public void ReturnToOriginalParent()
-        {
-            if (_originalParent == null)
-                return;
-
-            transform.SetParent(_originalParent, false);
-            transform.SetSiblingIndex(_originalIndex);
-        }
+        // 고스트 방식에서는 원본이 제자리 유지 — CocktailShaker 호환을 위해 존재
+        public void ReturnToOriginalParent() { }
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            float heldTime = Time.unscaledTime - _pointerDownTime;
+            // 원본은 반투명 ghost 상태로 제자리 유지 (레이아웃 변형 없음)
+            _canvasGroup.alpha = originFadeAlpha;
 
-            // 짧게 드래그하면 스크롤로 넘김
-            if (heldTime < longPressTime)
-            {
-                _routeToScroll = true;
-                _parentScrollRect?.OnBeginDrag(eventData);
-                return;
-            }
-
-            // 길게 누른 뒤 드래그하면 아이템 이동 시작
-            _draggingItem = true;
-            _originalParent = transform.parent;
-            _originalIndex = transform.GetSiblingIndex();
-
-            transform.SetParent(_rootCanvas.transform, true);
-            _canvasGroup.blocksRaycasts = false;
+            // 시각적 복사본 생성 후 그랩 오프셋 계산
+            _dragGhost = CreateDragGhost();
+            _grabOffset = (Vector2)_ghostRT.position - eventData.position;
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (_routeToScroll)
-            {
-                _parentScrollRect?.OnDrag(eventData);
-                return;
-            }
+            if (_ghostRT == null) return;
 
-            if (!_draggingItem)
-                return;
-
-            _rectTransform.position = eventData.position;
+            _ghostRT.position = eventData.position + _grabOffset;
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            if (_routeToScroll)
+            if (_dragGhost != null)
             {
-                _parentScrollRect?.OnEndDrag(eventData);
-                _routeToScroll = false;
-                return;
+                Destroy(_dragGhost);
+                _dragGhost = null;
+                _ghostRT = null;
             }
 
-            if (!_draggingItem)
-                return;
+            PlayReleaseAnimation();
+        }
 
-            _draggingItem = false;
-            _canvasGroup.blocksRaycasts = true;
+        // 전체 하이어라키 복사 후 상호작용 컴포넌트만 제거해 시각적 정확도 확보
+        private GameObject CreateDragGhost()
+        {
+            GameObject ghost = Instantiate(gameObject, _rootCanvas.transform);
 
-            // 드롭 실패 시 원래 자리로 복귀
-            if (transform.parent == _rootCanvas.transform)
-            {
-                transform.SetParent(_originalParent, false);
-                transform.SetSiblingIndex(_originalIndex);
-            }
+            // 데이터·상호작용 컴포넌트 제거 (시각 전용 오브젝트로 만들기)
+            if (ghost.TryGetComponent<DraggableItem>(out var di)) Destroy(di);
+            if (ghost.TryGetComponent<BaseAlcoholButtonUI>(out var ui)) Destroy(ui);
+
+            // 고스트 아래의 IDropHandler가 드롭 이벤트를 받을 수 있도록 레이캐스트 차단 해제
+            if (!ghost.TryGetComponent<CanvasGroup>(out var cg))
+                cg = ghost.AddComponent<CanvasGroup>();
+            cg.blocksRaycasts = false;
+            cg.alpha = ghostAlpha;
+
+            // 원본 위치에 배치 후 픽업 스케일 애니메이션
+            _ghostRT = ghost.GetComponent<RectTransform>();
+            _ghostRT.position = _rectTransform.position;
+
+            LMotion.Create(Vector3.one, Vector3.one * dragScale, pickupDuration)
+                .WithEase(Ease.OutBack)
+                .BindToLocalScale(_ghostRT);
+
+            return ghost;
+        }
+
+        // 드래그 완료 후 원본 투명도를 부드럽게 복원
+        private void PlayReleaseAnimation()
+        {
+            LMotion.Create(_canvasGroup.alpha, 1f, releaseDuration)
+                .WithEase(Ease.OutQuad)
+                .Bind(a => _canvasGroup.alpha = a);
         }
     }
 }
