@@ -119,8 +119,6 @@ public class CharInfoUI : MonoBehaviour
     {
         for (int i = 0; i < Unlock.Length; i++)
         {
-            Debug.Log(charList.charList[currentIndex]
-                .charLevel.currentLevel);
             bool isUnlocked =
                 charList.charList[currentIndex]
                 .charLevel.currentLevel >= 2*(i+1);
