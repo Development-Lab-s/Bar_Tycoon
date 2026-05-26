@@ -8,6 +8,7 @@ namespace _00._Work.Goat._02._Scripts.UI.AchievementUI.Save
     {
         public AchievementType achievementType;
         public int nowAchievementDegree;
+        public int remainAchievementDegree;
         public bool isComplete;
         public bool getAward;
         public int nowTargetData;
