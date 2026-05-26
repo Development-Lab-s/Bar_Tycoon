@@ -2,7 +2,6 @@ using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
-using _00._Work.PCM._02._Scripts;
 using Assets._00._Work.PCM._02._Scripts.Contract;
 using Gamelib.EventSystem;
 using System;
@@ -58,15 +57,11 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     {
         if (registerSO != null) registerSO.Register(this);
         levelTrigger += GiveItem;
-        if (TryGetComponent<IContractObject>(out var contract))
-            contract.OnLike.AddListener(GiveItem);
     }
 
     private void OnDisable()
     {
         if (registerSO != null) registerSO.Unregister(this);
-        if (TryGetComponent<IContractObject>(out var contract))
-            contract.OnLike.RemoveListener(GiveItem);
     }
     public float GetExpRatio()
     {
