@@ -38,12 +38,30 @@ namespace BBJ
         private const string SaveFile = "game.save";
         private const string SaveFolder = "BarTycoon";
 
+        private bool _initialized;
+
+        private void Awake()
+        {
+            _sceneChannel?.AddListener<SceneTransitionRequestEvent>(OnTransitionRequested);
+        }
+
+        private void OnDestroy()
+        {
+            _sceneChannel?.RemoveListener<SceneTransitionRequestEvent>(OnTransitionRequested);
+        }
+
+        private void OnTransitionRequested(SceneTransitionRequestEvent _)
+        {
+            if (_initialized) SaveAll();
+        }
+
         private void Start()
         {
             if (SaveManager.IsSaveFile(SaveFile, SaveFolder))
                 RestoreFromSave();
             else
                 StartFresh();
+            _initialized = true;
         }
 
         // ─── 새롭게 교체된 생명주기 저장 트리거 (OnDestroy 대체) ────────────────

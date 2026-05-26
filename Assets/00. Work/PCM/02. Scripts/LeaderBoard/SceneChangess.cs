@@ -15,11 +15,10 @@ public class SceneChangess : MonoBehaviour
     [SerializeField] private StoryEpisodeSO targetEpisode;
     [SerializeField] private EventChannelSO storyChannelSo;
     [SerializeField] private EventChannelSO mainChannelSo;
-    [SerializeField] private SceneType target;
     private bool firstStory;
     public bool register;
     private const string SaveSubFileName = "TitleSave.save";
-    private void Awake()
+    private void Start()
     {
         LoadGameData();
         mainChannelSo.RaiseEvent(new SceneReadyEvent());
@@ -34,45 +33,45 @@ public class SceneChangess : MonoBehaviour
 
         if (!firstStory)
         {
-            Debug.Log("½ÇÇà");
+            Debug.Log("ì‹¤í–‰");
             firstStory = true;
             register = true;
             SaveGameData();
-            storyChannelSo?.RaiseEvent(new StoryEpisodeUnlockRequested(targetEpisode));
+            storyChannelSo?.RaiseEvent(new StoryEpisodeLaunchRequested(targetEpisode));
         }
         else
         {
-            Debug.Log("½ÇÇà2");
-            mainChannelSo?.RaiseEvent(new SceneTransitionRequestEvent(target));
+            Debug.Log("ì‹¤í–‰2");
+            mainChannelSo?.RaiseEvent(new SceneTransitionRequestEvent(SceneType.Main));
         }
     }
     public void SaveGameData()
     {
         TitleData dataToSave = GetSaveData();
 
-        // SaveManager¸¦ »ç¿ëÇØ ÁöÁ¤µÈ ÆÄÀÏ ÀÌ¸§À¸·Î ÀúÀå (Default Æú´õ¿¡ ÀúÀåµÊ)
+        // SaveManagerë¥¼ ì‚¬ìš©í•´ ì§€ì •ëœ íŒŒì¼ ì´ë¦„ìœ¼ë¡œ ì €ì¥ (Default í´ë”ì— ì €ì¥ë¨)
         SaveManager.Save(dataToSave, SaveSubFileName,"Title");
-        Debug.Log("[SceneChangess] ¼¼ÀÌºê ¼º°ø! firstStory: " + firstStory + " " + register);
+        Debug.Log("[SceneChangess] ì„¸ì´ë¸Œ ì„±ê³µ! firstStory: " + firstStory + " " + register);
     }
 
     public void LoadGameData()
     {
-        // ¸ÕÀú ÀúÀåµÈ ÆÄÀÏÀÌ Á¸ÀçÇÏ´ÂÁö °Ë»ç
+        // ë¨¼ì € ì €ì¥ëœ íŒŒì¼ì´ ì¡´ì¬í•˜ëŠ”ì§€ ê²€ì‚¬
         if (SaveManager.IsSaveFile(SaveSubFileName, "Title"))
         {
-            // ÆÄÀÏÀ» ·ÎµåÇÏ°í TitleData Å¸ÀÔÀ¸·Î Ä³½ºÆÃÇÕ´Ï´Ù.
+            // íŒŒì¼ì„ ë¡œë“œí•˜ê³  TitleData íƒ€ì…ìœ¼ë¡œ ìºìŠ¤íŒ…í•©ë‹ˆë‹¤.
             TitleData loadedData = SaveManager.Load(typeof(TitleData),SaveSubFileName,"Title") as TitleData;
 
             if (loadedData != null)
             {
                 firstStory = loadedData.firstStory;
                 register = loadedData.registerId;
-                Debug.Log("[SceneChangess] ¼¼ÀÌºê ·Îµå ¿Ï·á! firstStory: " + firstStory + " " + register);
+                Debug.Log("[SceneChangess] ì„¸ì´ë¸Œ ë¡œë“œ ì™„ë£Œ! firstStory: " + firstStory + " " + register);
                 return;
             }
         }
         firstStory = false;
-        Debug.Log("[SceneChangess] ÀúÀåµÈ ¼¼ÀÌºê ÆÄÀÏÀÌ ¾ø¾î ±âº»°ª(false)À¸·Î ½ÃÀÛÇÕ´Ï´Ù.");
+        Debug.Log("[SceneChangess] ì €ì¥ëœ ì„¸ì´ë¸Œ íŒŒì¼ì´ ì—†ì–´ ê¸°ë³¸ê°’(false)ìœ¼ë¡œ ì‹œì‘í•©ë‹ˆë‹¤.");
     }
     public TitleData GetSaveData()
     {
