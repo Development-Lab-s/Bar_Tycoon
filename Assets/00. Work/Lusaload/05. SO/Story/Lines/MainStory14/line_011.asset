@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4181cc477f04d9fbe9287c625e92565, type: 3}
+  m_Name: line_011
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryLineSO
+  lineId: line_011
+  speaker: {fileID: 0}
+  nameOverride: 
+  dialogueText: "\uCE74\uC6B4\uD130 \uD55C\uCABD\uC5D0\uC11C \uC720\uB77C\uAC00 \uC794\uC744
+    \uB2E6\uB2E4 \uC190\uC744 \uBA48\uCD98\uB2E4."
+  nextLineId: line_012
+  logVisible: 1
+  allowTapToComplete: 1
+  focusPolicy: 0
+  voice:
+    voiceKey: 
+    playbackPolicy: 0
+    allowReplayInLog: 1
+  useAutoAdvanceOverride: 0
+  autoAdvanceDelay: 1
+  modules:
+  - {fileID: 8722927568459559012}
+  editorNodePosition: {x: 1390.6667, y: 135.33334}
+  editorNodeSize: {x: -1, y: -1}
+--- !u!114 &8722927568459559012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb28fc288a95cfd42b44da0593857113, type: 3}
+  m_Name: StoryStageLayoutModuleSO
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules.StoryStageLayoutModuleSO
+  timing: 0
+  isBlocking: 0
+  canSkip: 1
+  affectsAutoAdvance: 0
+  background:
+    background: {fileID: 11400000, guid: aa9cfe2edd1ce9f41b118a83f04571f8, type: 2}
+    backgroundKey: Bar_BG_Default
+    visible: 1
+    stageLocalPosition: {x: 0, y: 0}
+    overrideParallax: 0
+    parallaxFactorOverride: 0
+    scaleMultiplier: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    sortOrder: -100
+  actors:
+  - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
+    actorKey: cian
+    actorInstanceKey: cian_01
+    stageLocalPosition: {x: 0, y: -1.045733}
+    scaleMultiplier: 1
+    visible: 0
+    focused: 1
+    sortOrder: 0
+    poseKey: 
+    expression: 0
+    expressionKey: 
+    motionProfileKey: 
+  - actor: {fileID: 11400000, guid: f8ed6af24a23de34cb63365fac84a702, type: 2}
+    actorKey: Yura
+    actorInstanceKey: Yura_01
+    stageLocalPosition: {x: 0, y: -1.045733}
+    scaleMultiplier: 1
+    visible: 1
+    focused: 1
+    sortOrder: 1
+    poseKey: 
+    expression: 0
+    expressionKey: 
+    motionProfileKey: 
+  cameraFocusTarget: 
+  cameraTrack:
+    defaultState:
+      stageLocalPosition: {x: 0, y: 0}
+      zoom: 1
+      targetActorInstanceKey: 
+      followMode: 0
+      snapshotNormalizedPosition: {x: 0.5, y: 0.5}
+    keyframes: []
+  backgroundTrack:
+    keyframes: []
+  actorTracks: []
+  soundTrack:
+    bgmKeyframes: []
+    sfxKeyframes: []
