@@ -154,7 +154,6 @@ namespace BBJ.States
 
                 if (ticket != null && ticket.IsPlayerActionable)
                 {
-                    // �ϼ� ��
                     icon.SetSprite(newIcon)
                         .SetRecolorFade(0f);
 
@@ -163,7 +162,6 @@ namespace BBJ.States
                 }
                 else
                 {
-                    // ����
                     icon.SetSprite(newIcon)
                         .SetRecolorFade(0.72f);
 
