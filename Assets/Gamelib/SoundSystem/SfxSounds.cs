@@ -39,6 +39,8 @@ namespace Gamelib.SoundSystem
 		CASH_REGISTER_DING = 33,
 		LEVELUPSOUND2 = 34,
 		FALL = 35,
-		BEEP = 36
+		BEEP = 36,
+		FIREWORKS_01 = 37,
+		FIREWORKS_02 = 38
     }
 }
