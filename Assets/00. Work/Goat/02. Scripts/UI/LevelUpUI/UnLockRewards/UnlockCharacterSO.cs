@@ -32,6 +32,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
             achievementEvent.RaiseEvent(new AchievementEvent().Init(achievementType, 1));
             unlockUpgradeEvent.RaiseEvent(new UpgradeUnLockEvent().Init(buttonType));
             cameraManagerEvent.RaiseEvent(new CameraManagerEvent().Init(spawnPositions, false));
+            Debug.Log(buttonType);
         }
 
         public override List<Sprite> GetSprite()
