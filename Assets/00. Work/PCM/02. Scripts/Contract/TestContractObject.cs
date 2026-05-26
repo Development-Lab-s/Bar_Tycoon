@@ -11,6 +11,7 @@ namespace Assets._00._Work.PCM._02._Scripts
         private ModuleOwner _owner;
         private IHoverRenderer _hoverRenderer;
         private bool isHover;
+
         public bool CanInteracting { get; set; }
         [field: SerializeField] public UnityEvent OnClickEvent { get; set; }
         [field: SerializeField] public CharacterEnum characterEnum { get; set; }

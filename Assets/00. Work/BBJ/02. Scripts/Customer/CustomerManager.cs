@@ -184,20 +184,18 @@ namespace BBJ.Customer
             }
         }
 
-        // stage k 의 슬롯 수 = k^2  →  높은 스테이지일수록 높은 확률
+        // stage k 의 슬롯 수 = k << 1 (= 2k)  →  선형 증가, 높은 스테이지일수록 높은 확률
         private CocktailRecipeSO PickWeightedRandom(int currentStage)
         {
             int n = Mathf.Clamp(currentStage, 1, 30);
 
-            int totalWeight = 0;
-            for (int k = 1; k <= n; k++) totalWeight += k * k;
-
-            int r = Random.Range(0, totalWeight);
+            // sum(2k, k=1..n) = n*(n+1)
+            int r = Random.Range(0, n * (n + 1));
 
             int accumulated = 0, selectedStage = 1;
             for (int k = 1; k <= n; k++)
             {
-                accumulated += k * k;
+                accumulated += k << 1;
                 if (r < accumulated) { selectedStage = k; break; }
             }
 

@@ -8,7 +8,8 @@ namespace BBJ.WorkplaceSystem.Modules
 {
     public class WorkplaceQueueModule : MonoBehaviour, IModule
     {
-        [SerializeField] private Transform[]   _queuePositions;
+        [SerializeField] private Transform[]    _queuePositions;
+        [SerializeField] private float          _spacing = 1f;
         [SerializeField] private EventChannelSO _scheduleChannel;
 
         private readonly List<OccupationSlot> _slots = new();
@@ -51,8 +52,25 @@ namespace BBJ.WorkplaceSystem.Modules
 
         private void RefreshPositions()
         {
-            for (int i = 0; i < _slots.Count && i < _queuePositions.Length; i++)
-                _slots[i].NotifyPosition(_queuePositions[i].position);
+            for (int i = 0; i < _slots.Count; i++)
+                _slots[i].NotifyPosition(GetQueuePosition(i));
+        }
+
+        private Vector3 GetQueuePosition(int index)
+        {
+            if (_queuePositions == null || _queuePositions.Length == 0)
+                return transform.position;
+
+            if (index < _queuePositions.Length)
+                return _queuePositions[index].position;
+
+            // 정의된 포인트 초과 시 마지막에서 같은 방향으로 연장
+            int last = _queuePositions.Length - 1;
+            Vector3 dir = _queuePositions.Length >= 2
+                ? (_queuePositions[last].position - _queuePositions[last - 1].position).normalized
+                : Vector3.back;
+
+            return _queuePositions[last].position + dir * (_spacing * (index - last));
         }
     }
 }

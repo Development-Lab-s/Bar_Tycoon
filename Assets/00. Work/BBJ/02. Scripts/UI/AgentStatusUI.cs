@@ -16,6 +16,8 @@ namespace BBJ.UI
         public Image Icon => _icon;
         public bool IsOpen { get; private set; }
 
+        private MotionHandle _currentHandle;
+        private bool _closing;
 
         private void Start()
         {
@@ -28,22 +30,31 @@ namespace BBJ.UI
         {
             if (_canvasGroup == null) return;
 
+            _closing = false;
+            if (_currentHandle.IsActive()) _currentHandle.Cancel();
+
             SetActive(true);
-            await LMotion.Create(0f, 1f, _animDuration)
+            _currentHandle = LMotion.Create(0f, 1f, _animDuration)
                 .WithEase(Ease.OutCubic)
                 .BindToAlpha(_canvasGroup)
                 .AddTo(this);
+            await _currentHandle;
         }
 
         public async UniTask CloseAsync()
         {
             if (_canvasGroup == null) return;
 
-            await LMotion.Create(1f, 0f, _animDuration)
+            _closing = true;
+            if (_currentHandle.IsActive()) _currentHandle.Cancel();
+
+            _currentHandle = LMotion.Create(1f, 0f, _animDuration)
                 .WithEase(Ease.InCubic)
                 .BindToAlpha(_canvasGroup)
                 .AddTo(this);
-            SetActive(false);
+            await _currentHandle;
+            if (_closing)
+                SetActive(false);
         }
         public void ToggleIcon()
         {

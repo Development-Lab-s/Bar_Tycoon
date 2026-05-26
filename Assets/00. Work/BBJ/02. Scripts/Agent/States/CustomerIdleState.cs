@@ -61,6 +61,8 @@ namespace BBJ.States
             if (IsWorking()) { HandleWorkPhaseStarted(); return; }
             if (IsMoving()) { HandleMoveStarted(); return; }
 
+            _contractObj?.OnClickEvent.AddListener(HandleClick);
+
             _uiCts = new CancellationTokenSource();
             PlayOrderSequenceAsync().Forget();
 
@@ -77,6 +79,9 @@ namespace BBJ.States
             _uiCts = null;
             _uiModule.CloseAll();
 
+            _contractObj?.OnClickEvent.RemoveListener(HandleClick);
+            if (_contractObj != null) _contractObj.CanInteracting = false;
+
             _movement.OnMoveStarted -= HandleMoveStarted;
             _workAction.OnWorkPhaseStarted -= HandleWorkPhaseStarted;
             _customer.OnOrderStateChanged -= RefreshUI;
@@ -88,23 +93,37 @@ namespace BBJ.States
         private bool IsWorking() => _scheduling != null && !_scheduling.IsAvailableForWork
                                     && _workAction != null && _workAction.IsInWorkPhase;
 
+        private void HandleClick()
+        {
+            var ticket = _customer.ActiveTicket;
+            if (ticket != null && ticket.IsPlayerActionable)
+                _customer.PlayerOrderHandler?.OnCustomerClicked(_customer);
+            else
+                ShowRandomDialogue();
+        }
+
+        private void ShowRandomDialogue()
+        {
+            var lines = _customer.ChatLines;
+            if (lines == null || lines.Line.Count == 0) return;
+
+            _uiCts?.Cancel();
+            _uiCts?.Dispose();
+            _uiCts = new CancellationTokenSource();
+
+            RefreshStatusUI();
+            var line = lines.Line[Random.Range(0, lines.Line.Count)];
+            _dialogueUI.SetText(line);
+            _uiModule.PlaySequenceAsync(_uiCts.Token, _dialogueUI, _statusUI).Forget();
+        }
+
         private async UniTaskVoid PlayOrderSequenceAsync()
         {
             if (_uiCts == null) return;
             var ct = _uiCts.Token;
 
-            var line = "Å×½ºÆ®";
-
-            if (!string.IsNullOrEmpty(line) && _dialogueUI != null)
-            {
-                RefreshStatusUI();
-                _dialogueUI.SetText(line);
-                await _uiModule.PlaySequenceAsync(ct, _dialogueUI, _statusUI);
-            }
-            else
-            {
-                await _uiModule.PlaySequenceAsync(ct, _statusUI);
-            }
+            RefreshStatusUI();
+            await _uiModule.PlaySequenceAsync(ct, _statusUI);
 
             if (!ct.IsCancellationRequested)
                 RefreshStatusUI();
@@ -115,12 +134,8 @@ namespace BBJ.States
         private void RefreshStatusUI()
         {
             if (_statusUI == null) return;
-
-            if (_customer.FoodServed)
-            {
-                _ = _statusUI.CloseAsync();
-                return;
-            }
+            if (_contractObj != null)
+                _contractObj.CanInteracting = _customer.AssignedSeat != null || (_customer.FoodServed && !_customer.PaymentDone);
 
             if (!_customer.OrderPlaced || _customer.IsAwaitingOrder)
             {
@@ -139,22 +154,19 @@ namespace BBJ.States
 
                 if (ticket != null && ticket.IsPlayerActionable)
                 {
-                    // ¿Ï¼º µÊ
+                    // ï¿½Ï¼ï¿½ ï¿½ï¿½
                     icon.SetSprite(newIcon)
                         .SetRecolorFade(0f);
-
-                    _contractObj.CanInteracting = true;
 
                     alphaColor.a = 1f;
                     _backUI.BackgroundImage.color = alphaColor;
                 }
                 else
                 {
-                    // ¾ÆÁ÷
+                    // ï¿½ï¿½ï¿½ï¿½
                     icon.SetSprite(newIcon)
                         .SetRecolorFade(0.72f);
 
-                    _contractObj.CanInteracting = false;
                     alphaColor.a = 148f / 255f;
                     _backUI.BackgroundImage.color = alphaColor;
                 }

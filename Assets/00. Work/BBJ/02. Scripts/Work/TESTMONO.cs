@@ -14,10 +14,10 @@ public class TESTMONO : MonoBehaviour
     public 
     void Update()
     {
-        //if (Keyboard.current.sKey.wasPressedThisFrame)
-        //    StoryTransitionContext.Instance.RequestStory(new _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events.StoryEpisodeUnlockRequested
-        //        (targetEpisode));
-        //if (Keyboard.current.aKey.wasPressedThisFrame)
-        //    a.RaiseEvent(new StaffSpawnEvent().Init(s,(pos)=>transform.position = pos));
+        //if (keyboard.current.skey.waspressedthisframe)
+        //    storytransitioncontext.instance.requeststory(new _00._work.cheolyee._02._scripts.story.runtime.shared.events.storyepisodeunlockrequested
+        //        (targetepisode));
+        if (Keyboard.current.aKey.wasPressedThisFrame)
+            a.RaiseEvent(new StaffSpawnEvent().Init(s, (pos) => transform.position = pos));
     }
 }

@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using BBJ.EventSystem;
 using BBJ.Order;
+using BBJ.Player;
 using BBJ.Schedule;
 using BBJ.WorkplaceSystem;
 using BBJ.WorkplaceSystem.Modules;
+using Assets._00._Work.PCM._02._Scripts.Contract;
 using Gamelib.EventSystem;
 using UnityEngine;
 using _00._Work._Resources._02._Scripts.Modules;
@@ -24,6 +27,12 @@ namespace BBJ.Customer
         public bool FoodServed { get; private set; }
         public bool PaymentDone { get; private set; }
         public ModuleOwner AssignedServer { get; private set; }
+
+        [SerializeField] private PlayerOrderHandlerSO _playerOrderHandler;
+        [SerializeField] private ChatSO _chatLines;
+
+        public PlayerOrderHandlerSO PlayerOrderHandler => _playerOrderHandler;
+        public ChatSO ChatLines => _chatLines;
 
         public int RestoreCycleStep { get; set; }
 

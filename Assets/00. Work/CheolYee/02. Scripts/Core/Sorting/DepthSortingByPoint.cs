@@ -25,6 +25,11 @@ namespace _00._Work.CheolYee._02._Scripts.Core.Sorting
             if (updateMode == UpdateMode.Once) Apply();
         }
 
+        void OnEnable()
+        {
+            if (updateMode == UpdateMode.Once) Apply();
+        }
+
         void Start()
         {
             if (updateMode == UpdateMode.Once) Apply();
