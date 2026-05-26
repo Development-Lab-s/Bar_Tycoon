@@ -1,3 +1,4 @@
+using System;
 using BBJ.Customer;
 using BBJ.EventSystem;
 using BBJ.GridSystem.Objects;
@@ -57,11 +58,22 @@ namespace BBJ
 
         private void Start()
         {
-            if (SaveManager.IsSaveFile(SaveFile, SaveFolder))
-                RestoreFromSave();
-            else
-                StartFresh();
-            _initialized = true;
+            try
+            {
+                if (SaveManager.IsSaveFile(SaveFile, SaveFolder))
+                    RestoreFromSave();
+                else
+                    StartFresh();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[GameLoader] Start 중 예외 발생, SceneReady 강제 발행: {e}");
+            }
+            finally
+            {
+                _sceneChannel?.RaiseEvent(new SceneReadyEvent());
+                _initialized = true;
+            }
         }
 
         // ─── 새롭게 교체된 생명주기 저장 트리거 (OnDestroy 대체) ────────────────
@@ -92,7 +104,6 @@ namespace BBJ
         {
             _objectManager?.LoadDefaultLayout();
             _staffManager?.SpawnAll();
-            _sceneChannel?.RaiseEvent(new SceneReadyEvent());
         }
 
         // ─── 복원 ────────────────────────────────────────────
@@ -131,7 +142,6 @@ namespace BBJ
             // Step 6: ReadyForServe 티켓 집계
             _playerOrderHandle?.RebuildReadyCount(tickets);
 
-            _sceneChannel?.RaiseEvent(new SceneReadyEvent());
         }
 
         // ─── 저장 ─────────────────────────────────────────────
