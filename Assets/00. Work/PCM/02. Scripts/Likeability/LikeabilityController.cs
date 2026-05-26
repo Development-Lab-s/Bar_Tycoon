@@ -97,7 +97,6 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        Debug.Log("ㅋㅋ");
         if (coinManager.CurrentCoin < needMoney)
         {
             Destroy(dragInstance);
@@ -108,7 +107,6 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
 
         if (hit.collider != null)
         {
-            Debug.Log(hit.collider.gameObject.name);
             if (hit.collider.gameObject.TryGetComponent<IContractObject>(out IContractObject pychar))
             {
                 if (_itemSO.CharacterEnum != pychar.characterEnum)
