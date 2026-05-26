@@ -1,13 +1,14 @@
+using _00._Work._Resources._02._Scripts.Modules;
 using BBJ.Actions;
 using BBJ.Modules;
 using BBJ.Order;
 using BBJ.Schedule;
+using BBJ.UI.Order;
 using BBJ.WorkplaceSystem.Modules;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Linq;
 using System.Threading;
-using _00._Work._Resources._02._Scripts.Modules;
 
 namespace BBJ.Work
 {
@@ -36,16 +37,14 @@ namespace BBJ.Work
                 return WorkResult.Cancelled;
             }
 
-            var foodContext = executor.GetModule<FoodContextModule>();
             try
             {
                 await actions.Execute<MoveAction>(
                     a => a.ExecuteAsync(kitchen.GetNearestPoint(role, executor.transform.position), linked.Token));
                 ticket.TryStartProgress(executor);
-                foodContext?.SetFood(ticket.Ordered);
 
                 _ctx.OrderChannel?.RaiseEvent(new CookingStartEvent(ticket, executor));
-                await actions.Execute<WorkAction>(a => a.ExecuteAsync(kitchen, linked.Token));
+                await actions.Execute<WorkAction>(a => a.ExecuteAsync(kitchen, ticket, linked.Token));
 
                 _ctx.OrderChannel?.RaiseEvent(new OrderNotifyCompleteEvent(ticket, executor));
                 return WorkResult.Completed;
@@ -58,7 +57,6 @@ namespace BBJ.Work
             }
             finally
             {
-                foodContext?.ClearFood();
                 kitchen.GetModule<OccupancyModule>()?.Release();
             }
         }

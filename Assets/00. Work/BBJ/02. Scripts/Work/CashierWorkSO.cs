@@ -48,8 +48,6 @@ namespace BBJ.Work
                 await actions.Execute<MoveAction>(
                     a => a.ExecuteAsync(counter.GetNearestPoint(role, executor.transform.position), linked.Token));
                 ticket.TryStartProgress(executor);
-                var foodContext = executor.GetModule<FoodContextModule>();
-                foodContext?.SetFood(ticket.Ordered);
                 await actions.Execute<WaitAction>(
                     a => a.ExecuteAsync(() => queue.HasWaiting, linked.Token));
 
@@ -61,7 +59,7 @@ namespace BBJ.Work
                 }
 
                 await actions.Execute<WorkAction>(
-                    a => a.ExecuteAsync(counter, linked.Token));
+                    a => a.ExecuteAsync(counter, ticket, linked.Token));
 
                 slot.Value.NotifyProcessed();
                 processed = true;

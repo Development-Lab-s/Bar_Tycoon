@@ -8,6 +8,7 @@ namespace Gamelib.SoundSystem
 		STORYWHAT = 2,
 		STORYCYANHAPPY = 3,
 		STORY_FAST = 4,
-		STORY_CLOSED = 5
+		STORY_CLOSED = 5,
+		STORY_CIRIOUS = 6
     }
 }

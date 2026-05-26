@@ -1,5 +1,6 @@
 using _00._Work._Resources._02._Scripts.Agents;
 using _00._Work._Resources._02._Scripts.Systems.AnimationSystems;
+using _00._Work.PCM._02._Scripts;
 using BBJ.Actions;
 using BBJ.Customer;
 using BBJ.Modules;
@@ -14,11 +15,13 @@ namespace BBJ.States
 {
     public class CustomerIdleState : CustomerAgentState
     {
-        private readonly IPathMovement _movement;
-        private readonly ISchedulable _scheduling;
+        private readonly IPathMovement  _movement;
+        private readonly ISchedulable   _scheduling;
         private readonly IAgentUIModule _uiModule;
-        private readonly WorkAction _workAction;
-        private readonly AgentStatusUI _statusUI;
+        private readonly IHoverable      _hoverObj;
+        private readonly IContractObject _contractObj;
+        private readonly WorkAction     _workAction;
+        private readonly AgentStatusUI  _statusUI;
         private readonly DialogueBubbleUI _dialogueUI;
         private readonly AgentBubbleUI _backUI;
 
@@ -28,14 +31,20 @@ namespace BBJ.States
 
         public CustomerIdleState(Agent owner, AnimParamSO stateParam) : base(owner, stateParam)
         {
-            _movement = owner.GetModule<IPathMovement>();
+            _movement   = owner.GetModule<IPathMovement>();
             _scheduling = owner.GetModule<ISchedulable>();
-            _uiModule = owner.GetModule<IAgentUIModule>();
-            _workAction = owner.GetModule<IAgentActionModule>().GetAction<WorkAction>();
-            _statusUI = _uiModule.Get<AgentStatusUI>();
+            _uiModule   = owner.GetModule<IAgentUIModule>();
+            _hoverObj   = owner.GetModule<IHoverable>();
+            _contractObj= owner.GetModule<IContractObject>();
+            
+            var ActionModule = owner.GetModule<IAgentActionModule>();
+            _workAction = ActionModule.GetAction<WorkAction>();
+
+            _statusUI   = _uiModule.Get<AgentStatusUI>();
             _dialogueUI = _uiModule.Get<DialogueBubbleUI>();
-            _backUI = _uiModule.Get<AgentBubbleUI>();
-            _uiCts = new CancellationTokenSource();
+            _backUI     = _uiModule.Get<AgentBubbleUI>();
+
+            _uiCts      = new CancellationTokenSource();
 
             UtilDebugger.AssertAllAssigned(this);
 
@@ -125,7 +134,7 @@ namespace BBJ.States
 
             if (newIcon != null)
             {
-                    _statusUI.ToggleIcon();
+                _statusUI.ToggleIcon();
                 if (!(_statusUI.Icon is IStylableUI icon)) return;
 
                 if (ticket != null && ticket.IsPlayerActionable)
@@ -133,6 +142,8 @@ namespace BBJ.States
                     // ¿Ï¼º µÊ
                     icon.SetSprite(newIcon)
                         .SetRecolorFade(0f);
+
+                    _contractObj.CanInteracting = true;
 
                     alphaColor.a = 1f;
                     _backUI.BackgroundImage.color = alphaColor;
@@ -143,6 +154,7 @@ namespace BBJ.States
                     icon.SetSprite(newIcon)
                         .SetRecolorFade(0.72f);
 
+                    _contractObj.CanInteracting = false;
                     alphaColor.a = 148f / 255f;
                     _backUI.BackgroundImage.color = alphaColor;
                 }

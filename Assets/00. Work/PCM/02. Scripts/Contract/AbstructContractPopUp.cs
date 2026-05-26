@@ -38,10 +38,9 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         }
         public void Open(bool isAutoClose = false)
         {
+            //if (isOpen || IsAnimating) return;
 
-            if (isOpen || IsAnimating) return;
-
-            isOpen = true;
+            //isOpen = true;
             
 
             if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
@@ -59,9 +58,9 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
 
         public virtual void OnClose()
         {
-            if (!isOpen ||IsAnimating) return;
+            //if (!isOpen ||IsAnimating) return;
 
-            isOpen = false;
+            //isOpen = false;
 
             if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
             if (_motionHandle.IsActive()) _motionHandle.Cancel();
@@ -73,7 +72,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
         {
             if (_motionHandle.IsActive()) _motionHandle.Cancel();
 
-            Vector3 start = transform.localScale; 
+            Vector3 start =isAppearing? Vector3.zero : transform.localScale; 
             Vector3 end = isAppearing ? _originScale : Vector3.zero;
 
             Ease currentEase = isAppearing ? easeType : Ease.InBack;

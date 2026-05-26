@@ -1,0 +1,200 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-2318436144651483231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b1d8d78353467940b73df1c7e7434e7, type: 3}
+  m_Name: Fade
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules.StoryFadeModuleSO
+  timing: 2
+  isBlocking: 1
+  canSkip: 0
+  affectsAutoAdvance: 1
+  direction: 0
+  holdDuration: 0.5
+  _holdInitialized: 1
+  _prevDirection: 0
+--- !u!114 &-518082533626880521
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb28fc288a95cfd42b44da0593857113, type: 3}
+  m_Name: StoryStageLayoutModuleSO
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules.StoryStageLayoutModuleSO
+  timing: 0
+  isBlocking: 0
+  canSkip: 1
+  affectsAutoAdvance: 0
+  background:
+    background: {fileID: 11400000, guid: 5e24018f83dc15e479f902d871d0fa19, type: 2}
+    backgroundKey: Cyan_Memoryal_1
+    visible: 1
+    stageLocalPosition: {x: 0, y: 0}
+    overrideParallax: 0
+    parallaxFactorOverride: 0
+    scaleMultiplier: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    sortOrder: -100
+  actors:
+  - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
+    actorKey: cian
+    actorInstanceKey: cian_01
+    stageLocalPosition: {x: 6.59, y: -1}
+    scaleMultiplier: 1
+    visible: 0
+    focused: 0
+    sortOrder: 0
+    poseKey: 
+    expression: 4
+    expressionKey: 
+    motionProfileKey: 
+  cameraFocusTarget: 
+  cameraTrack:
+    defaultState:
+      stageLocalPosition: {x: 0, y: 2.41}
+      zoom: 1.2
+      targetActorInstanceKey: 
+      followMode: 0
+      snapshotNormalizedPosition: {x: 0.5, y: 0.5}
+    keyframes:
+    - property: 8
+      normalizedTime: 0
+      timeSeconds: 0
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 2.41}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 9
+      normalizedTime: 0
+      timeSeconds: 0
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1.2
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+  backgroundTrack:
+    keyframes: []
+  actorTracks:
+  - actorInstanceKey: cian_01
+    keyframes:
+    - property: 0
+      normalizedTime: 0
+      timeSeconds: 0
+      stageLocalPosition: {x: 6.59, y: -1}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 3
+      normalizedTime: 0
+      timeSeconds: 0
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 7
+      expression: 4
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+  soundTrack:
+    bgmKeyframes: []
+    sfxKeyframes:
+    - normalizedTime: 0
+      timeSeconds: 0
+      sfxSound: 37
+    - normalizedTime: 1
+      timeSeconds: 2
+      sfxSound: 38
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4181cc477f04d9fbe9287c625e92565, type: 3}
+  m_Name: line_023
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryLineSO
+  lineId: line_023
+  speaker: {fileID: 0}
+  nameOverride: 
+  dialogueText: "\uD3C9\uBC94\uD55C \uBD88\uAF43\uB180\uC774\uC600\uB2E4. \uADF8\uB7F0\uB370
+    \uC2DC\uC548\uC758 \uC606\uC5D0\uC11C \uBCF4\uB294 \uADF8 \uD48D\uACBD\uC740,
+    \uC5B4\uB514\uC11C\uB098 \uBCFC \uC218 \uC788\uB294 \uD48D\uACBD\uC774 \uC544\uB2C8\uC5C8\uB2E4.
+    \uB450 \uC0AC\uB78C\uC774 \uB2E4\uC2DC \uAC78\uC74C\uC744 \uC62E\uACBC\uB2E4.
+    \uC2DC\uC548\uC758 \uAC78\uC74C\uC740 \uD3C9\uC18C\uC640 \uAC19\uC558\uC9C0\uB9CC,
+    \uC5B4\uB518\uAC00 \uAC00\uBCBC\uC6E0\uB2E4."
+  nextLineId: 
+  logVisible: 1
+  allowTapToComplete: 1
+  focusPolicy: 0
+  voice:
+    voiceKey: 
+    playbackPolicy: 0
+    allowReplayInLog: 1
+  useAutoAdvanceOverride: 0
+  autoAdvanceDelay: 1
+  modules:
+  - {fileID: -518082533626880521}
+  - {fileID: -2318436144651483231}
+  editorNodePosition: {x: 1597.4546, y: 1910.1819}
+  editorNodeSize: {x: -1, y: -1}

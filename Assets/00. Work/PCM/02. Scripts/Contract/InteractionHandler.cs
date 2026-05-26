@@ -20,7 +20,7 @@ namespace Assets._00._Work.PCM._02._Scripts
 
         private ModuleOwner _owner;
 
-        private AbstructContractObject _currentHover;
+        private IHoverable _currentHover;
 
         public void Initialize(ModuleOwner owner)
         {
@@ -31,6 +31,7 @@ namespace Assets._00._Work.PCM._02._Scripts
 
         private void Update()
         {
+            //Debug.Log("a");
             CheckHover();
         }
 
@@ -46,34 +47,36 @@ namespace Assets._00._Work.PCM._02._Scripts
 
         private void CheckHover()
         {
-            if (EventSystem.current.IsPointerOverGameObject())
-                return;
-            if (_inputSo.MainCam == null)
-                return;
+            if (EventSystem.current.IsPointerOverGameObject()) return;
+            if (_inputSo.MainCam == null) return;
+
             Vector2 worldPos = _inputSo.MainCam.ScreenToWorldPoint(_inputSo.MousePosition);
-            RaycastHit2D[] hits =Physics2D.RaycastAll(worldPos,Vector2.zero,0f,whatisPlayer);
-            float closestDistance =float.MaxValue;
-            AbstructContractObject closestTarget =null;
+            RaycastHit2D[] hits = Physics2D.RaycastAll(worldPos, Vector2.zero, 0f, whatisPlayer);
+            float closestDistance = float.MaxValue;
+            IHoverable closestTarget = null;
+
 
             foreach (RaycastHit2D hit in hits)
             {
-                if (hit.collider == null)
-                    continue;
-                AbstructContractObject target =hit.collider.GetComponentInParent<AbstructContractObject>();
-                if (target == null)
-                    continue;
-                float distance =Vector2.Distance(_inputSo.MainCam.transform.position,target.transform.position);
+                if (hit.collider == null ||
+                    hit.collider.transform.TryGetComponent<IHoverable>(out var target) == false ||
+                    target.CanInteracting == false) continue;
+
+
+                float distance = Vector2.Distance(hit.point, hit.collider.transform.position);
                 if (distance < closestDistance)
                 {
                     closestDistance = distance;
                     closestTarget = target;
                 }
             }
+
             if (_currentHover != closestTarget)
             {
                 _currentHover?.UnHover();
+                closestTarget?.TryHover();
+
                 _currentHover = closestTarget;
-                _currentHover?.Hover();
             }
         }
         #endregion

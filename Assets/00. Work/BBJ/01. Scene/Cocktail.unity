@@ -814,7 +814,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1617931383}
   m_HandleRect: {fileID: 1617931382}
   m_Direction: 2
-  m_Value: 1.0000014
+  m_Value: 1
   m_Size: 0.92608297
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -2291,8 +2291,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BBJ.Scene.CocktailSceneHost
   _orderChannel: {fileID: 11400000, guid: e938c0b95e57c6c43a8d4e8533e62923, type: 2}
   _recipeManager: {fileID: 2021853153}
-  _shaker: {fileID: 1372752317}
   _sceneChannel: {fileID: 11400000, guid: 6a40620e1f64d5d4ca762ce52fea31f0, type: 2}
+  sceenMainCamera: {fileID: 1940844822}
 --- !u!1 &1173101460
 GameObject:
   m_ObjectHideFlags: 0
@@ -3919,7 +3919,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1791857897}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1068253513}
+        m_TargetAssemblyTypeName: BBJ.Scene.CocktailSceneHost, Assembly-CSharp
+        m_MethodName: OnShakerFail
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1791857897
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4883,7 +4895,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2117838961}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1068253513}
+        m_TargetAssemblyTypeName: BBJ.Scene.CocktailSceneHost, Assembly-CSharp
+        m_MethodName: OnShakerSuccess
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2117838961
 MonoBehaviour:
   m_ObjectHideFlags: 0

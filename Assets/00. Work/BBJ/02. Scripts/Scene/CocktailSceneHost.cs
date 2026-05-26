@@ -12,38 +12,31 @@ namespace BBJ.Scene
     {
         [SerializeField] private EventChannelSO        _orderChannel;
         [SerializeField] private CocktailRecipeManager _recipeManager;
-        [SerializeField] private CocktailShaker        _shaker;
         [SerializeField] private EventChannelSO        _sceneChannel;
 
-        private enum Result { None, Success, Fail }
-        private Result _result;
-
-        public SceneType SceneType => SceneType.Cocktail;
+        public Camera sceenMainCamera;
 
         private void Awake()
         {
             UtilDebugger.AssertAllAssigned(this);
             GameSceneManager.Instance.RegisterHost(this);
-            _shaker.OnCocktailSuccess += OnShakerSuccess;
-            _shaker.OnCocktailFail    += OnShakerFail;
-        }
 
-        private void OnDestroy()
-        {
-            _shaker.OnCocktailSuccess -= OnShakerSuccess;
-            _shaker.OnCocktailFail    -= OnShakerFail;
+            sceenMainCamera.gameObject.SetActive(false);
         }
 
         public void OnForeground()
         {
+            sceenMainCamera?.gameObject.SetActive(true);
+            Camera.SetupCurrent(sceenMainCamera);
+
             _result = Result.None;
             var ticket = CocktailTransitionTrigger.Instance.PendingTicket;
             if (ticket != null)
                 _recipeManager.SetRecipe(ticket.Ordered);
         }
-
         public void OnBackground()
         {
+            sceenMainCamera?.gameObject.SetActive(false);
             var ticket = CocktailTransitionTrigger.Instance.PendingTicket;
             CocktailTransitionTrigger.Instance.Clear();
 
@@ -55,13 +48,18 @@ namespace BBJ.Scene
                 _orderChannel.RaiseEvent(new OrderNotifyReleasedEvent(ticket, ticket.ReservedBy));
         }
 
-        private void OnShakerSuccess()
+        private enum Result { None, Success, Fail }
+        private Result _result;
+
+        public SceneType SceneType => SceneType.Cocktail;
+
+        public void OnShakerSuccess()
         {
             _result = Result.Success;
             _sceneChannel.RaiseEvent(new SceneTransitionRequestEvent(SceneType.Main));
         }
 
-        private void OnShakerFail()
+        public void OnShakerFail()
         {
             _result = Result.Fail;
             _sceneChannel.RaiseEvent(new SceneTransitionRequestEvent(SceneType.Main));

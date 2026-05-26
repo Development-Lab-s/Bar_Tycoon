@@ -21,10 +21,10 @@ namespace BBJ
     public class GameLoader : MonoBehaviour
     {
         [Header("Managers")]
-        [SerializeField] private ObjectManager   _objectManager;
-        [SerializeField] private OrderManager    _orderManager;
+        [SerializeField] private ObjectManager _objectManager;
+        [SerializeField] private OrderManager _orderManager;
         [SerializeField] private CustomerManager _customerManager;
-        [SerializeField] private StaffManager    _staffManager;
+        [SerializeField] private StaffManager _staffManager;
 
         [Header("Data")]
         [SerializeField] private CocktailRecipeDatabaseSO _database;
@@ -35,7 +35,7 @@ namespace BBJ
         [Header("Scene")]
         [SerializeField] private EventChannelSO _sceneChannel;
 
-        private const string SaveFile   = "game.save";
+        private const string SaveFile = "game.save";
         private const string SaveFolder = "BarTycoon";
 
         private void Start()
@@ -46,10 +46,26 @@ namespace BBJ
                 StartFresh();
         }
 
-        private void OnDestroy()
+        // ─── 새롭게 교체된 생명주기 저장 트리거 (OnDestroy 대체) ────────────────
+
+        private void OnApplicationQuit()
         {
+            Debug.Log("<color=orange>[GameLoader] OnApplicationQuit: 게임 종료를 감지했습니다.</color>");
+
+            // 앱이 완전히 종료되므로 하던 일을 모두 취소(초기화)하고 저장
             _staffManager?.CancelAllWork();
             SaveAll();
+        }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                Debug.Log("<color=orange>[GameLoader] OnApplicationPause: 백그라운드 전환을 감지했습니다.</color>");
+
+                // 백그라운드로 전환될 때는 일을 취소하지 않고 '현재 상태'만 저장
+                SaveAll();
+            }
         }
 
         // ─── 신규 게임 ────────────────────────────────────────
@@ -106,9 +122,9 @@ namespace BBJ
         {
             var saveData = new GameSaveData
             {
-                Stage  = _objectManager?.GetStageSaveData() ?? new StageSaveData(),
+                Stage = _objectManager?.GetStageSaveData() ?? new StageSaveData(),
                 Orders = _orderManager?.GetOrdersSaveData() ?? new OrdersSaveData(),
-                Staff  = _staffManager?.GetSaveData()       ?? new StaffSaveData(),
+                Staff = _staffManager?.GetSaveData() ?? new StaffSaveData(),
             };
             SaveManager.Save(saveData, SaveFile, SaveFolder);
         }

@@ -121,7 +121,7 @@ public class LeaderBoardManager : MonoBehaviour
         {
             await AuthenticationService.Instance
                 .UpdatePlayerNameAsync(pyName);
-
+            nicknameSetting.text = GetMyNickName();
             Debug.Log($"닉네임 변경 완료 : {pyName}");
             //nicknameSetting.text = GetMyNickName();
         }
@@ -227,6 +227,7 @@ public class LeaderBoardManager : MonoBehaviour
     }
     public string GetMyNickName()
     {
+        Debug.Log(_isInitialized);
         if (!_isInitialized)
             return string.Empty;
 

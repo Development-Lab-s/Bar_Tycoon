@@ -13,13 +13,20 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using _00._Work.Lusaload._02._Scripts.SO;
+using _00._Work._Resources._02._Scripts.Systems.GameEvents;
+using _00._Work.Goat._02._Scripts.UI.LevelUpUI;
+using _00._Work.Goat._02._Scripts.Exp;
+using System.Net.NetworkInformation;
 
 namespace BBJ.Customer
 {
     public class CustomerManager : MonoBehaviour
     {
+
         [Header("SO")]
         [SerializeField] private EventChannelSO _customerChannel;
+        [SerializeField] private ExpManager     _levelManager;
+        //[SerializeField] private EventChannelSO _levelChannel;
 
         [Header("Pool")]
         [SerializeField] private PoolManagerSo _poolManager;
@@ -47,19 +54,21 @@ namespace BBJ.Customer
         {
             UtilDebugger.AssertAllAssigned(this);
             _activeCount = 0;
+
             _customerChannel.AddListener<CustomerLeftEvent>(HandleCustomerLeft);
+        }
+        private void Start()
+        {
+            this._currentStage = _levelManager.CurrentLevel;
+            this._levelManager.OnLevelChanged += HandleLevelup;
+            StartCoroutine(SpawnLoop());
         }
 
         private void OnDestroy()
         {
             _customerChannel.RemoveListener<CustomerLeftEvent>(HandleCustomerLeft);
         }
-
-        private void Start()
-        {
-            StartCoroutine(SpawnLoop());
-        }
-
+        public void HandleLevelup(int p,int n) => SetStage(n);
         public void SetStage(int stage) => _currentStage = Mathf.Max(1, stage);
 
         private void HandleCustomerLeft(CustomerLeftEvent evt)
@@ -75,7 +84,12 @@ namespace BBJ.Customer
             {
                 yield return new WaitForSeconds(_spawnInterval);
 
+                int totalSeats = _workplaceRegister.GetAll(_seatType).Count;
+
+                // 현재 매장에 있는 손님(식사 중 + 계산 대기 중 포함)이 의자 수보다 적을 때만 스폰합니다.
+                if (_activeCount >= totalSeats) continue;
                 if (_activeCount >= _maxCustomers) continue;
+
                 if (_database == null || _cycleSequence == null) continue;
                 Debug.Log("손님 소환");
 
@@ -120,9 +134,9 @@ namespace BBJ.Customer
 
                 if (save.WorkPhase != OrderWorkPhase.ReadyForCashier)
                 {
+                    // 수정 코드
                     if (seatIndex >= availableSeats.Count) { _poolManager.Push(customer); continue; }
-
-                    var seat      = availableSeats[seatIndex++];
+                    var seat = availableSeats[seatIndex++];
                     var seatModule = seat.GetModule<SeatModule>();
                     var occupancy  = seat.GetModule<OccupancyModule>();
                     if (seatModule == null || occupancy == null) { _poolManager.Push(customer); continue; }
