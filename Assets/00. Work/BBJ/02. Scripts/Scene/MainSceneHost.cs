@@ -47,7 +47,7 @@ namespace BBJ.Scene
             sceenMainCamera?.gameObject.SetActive(false);
             playerInput?.SetEnable(false);
             LowerCanvasOrders();
-            storyCanvas.gameObject.SetActive(false);
+            storyCanvas?.gameObject.SetActive(false);
         }
         
         private void SaveOriginalCanvasOrders()
