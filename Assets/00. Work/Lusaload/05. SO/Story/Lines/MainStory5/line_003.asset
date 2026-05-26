@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4181cc477f04d9fbe9287c625e92565, type: 3}
+  m_Name: line_003
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryLineSO
+  lineId: line_003
+  speaker: {fileID: 0}
+  nameOverride: 
+  dialogueText: "\uC0C8\uB85C\uC6B4 \uC190\uB2D8\uC774 \uB4E4\uC5B4\uC628\uB2E4."
+  nextLineId: line_004
+  logVisible: 1
+  allowTapToComplete: 1
+  focusPolicy: 0
+  voice:
+    voiceKey: 
+    playbackPolicy: 0
+    allowReplayInLog: 1
+  useAutoAdvanceOverride: 0
+  autoAdvanceDelay: 1
+  modules:
+  - {fileID: 6402633704017899646}
+  editorNodePosition: {x: 5716.59, y: 147.9711}
+  editorNodeSize: {x: -1, y: -1}
+--- !u!114 &6402633704017899646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb28fc288a95cfd42b44da0593857113, type: 3}
+  m_Name: StoryStageLayoutModuleSO
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules.StoryStageLayoutModuleSO
+  timing: 0
+  isBlocking: 0
+  canSkip: 1
+  affectsAutoAdvance: 0
+  background:
+    background: {fileID: 11400000, guid: e092e608913f98b439d3357dfd94b7c9, type: 2}
+    backgroundKey: Bar_Night
+    visible: 1
+    stageLocalPosition: {x: 0, y: 0}
+    overrideParallax: 0
+    parallaxFactorOverride: 0
+    scaleMultiplier: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    sortOrder: -100
+  actors: []
+  cameraFocusTarget: 
+  cameraTrack:
+    defaultState:
+      stageLocalPosition: {x: 0, y: 0}
+      zoom: 1
+      targetActorInstanceKey: 
+      followMode: 0
+      snapshotNormalizedPosition: {x: 0.5, y: 0.5}
+    keyframes: []
+  backgroundTrack:
+    keyframes: []
+  actorTracks: []
+  soundTrack:
+    bgmKeyframes: []
+    sfxKeyframes:
+    - normalizedTime: 0
+      timeSeconds: 0
+      sfxSound: 11
