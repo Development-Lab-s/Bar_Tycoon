@@ -13,6 +13,7 @@ namespace BBJ.Scene
         
         [Header("Canvas")]
         [SerializeField] private Canvas[] mainCanvases;
+        [SerializeField] private Canvas storyCanvas;
         [SerializeField] private int foregroundOffset = 0;
         [SerializeField] private int backgroundOffset = -1000;
         public UnityEvent tutorialStart;
@@ -44,6 +45,7 @@ namespace BBJ.Scene
             sceenMainCamera?.gameObject.SetActive(false);
             
             LowerCanvasOrders();
+            storyCanvas.gameObject.SetActive(false);
         }
         
         private void SaveOriginalCanvasOrders()
