@@ -11,7 +11,6 @@ namespace Gamelib.SoundSystem
 		STORY_CLOSED = 5,
 		STORY_CIRIOUS = 6,
 		QUIAT_BAR = 7,
-		YURA_CG = 8,
-		RIN_CG_2 = 9
+		YURA_CG = 8
     }
 }

@@ -82,6 +82,7 @@ namespace BBJ.Customer
             Debug.Log("싸이클 시작");
             while (true)
             {
+                yield return new WaitForSeconds(_spawnInterval);
 
                 int totalSeats = _workplaceRegister.GetAll(_seatType).Count;
 
@@ -94,7 +95,6 @@ namespace BBJ.Customer
 
                 try { SpawnCustomer(); }
                 catch (System.Exception e) { Debug.LogWarning("[CustomerManager] SpawnCustomer failed: " + e.Message); }
-                yield return new WaitForSeconds(_spawnInterval);
             }
         }
 

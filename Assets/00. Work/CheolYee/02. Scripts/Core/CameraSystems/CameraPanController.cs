@@ -157,14 +157,8 @@ namespace _00._Work.CheolYee._02._Scripts.Core.CameraSystems
         {
             if (!useBounds) return;
 
-            float clampedX = Mathf.Clamp(_targetPosition.x, minBounds.x, maxBounds.x);
-            float clampedY = Mathf.Clamp(_targetPosition.y, minBounds.y, maxBounds.y);
-
-            if (!Mathf.Approximately(clampedX, _targetPosition.x)) _velocity.x = 0f;
-            if (!Mathf.Approximately(clampedY, _targetPosition.y)) _velocity.y = 0f;
-
-            _targetPosition.x = clampedX;
-            _targetPosition.y = clampedY;
+            _targetPosition.x = Mathf.Clamp(_targetPosition.x, minBounds.x, maxBounds.x);
+            _targetPosition.y = Mathf.Clamp(_targetPosition.y, minBounds.y, maxBounds.y);
         }
 
         private void ApplySmoothMove()
