@@ -14,9 +14,6 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
     {
         [Header("Save")]
         [SerializeField] private SaveFileNameSO saveFileName;
-        
-        [Header("EventChannel")]
-        [SerializeField] private EventChannelSO upgradeUnLock;
         public event Action<ButtonType> OnClickButton;
 
         private Dictionary<ButtonType, ButtonInformation> _buttonInformations;
@@ -31,26 +28,12 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
             {
                 button.OnClickBtn += HandleButtonClick;
             }
-            upgradeUnLock.AddListener<UpgradeUnLockEvent>(HandleUpgradeUnlockEvent);
         }
 
-        private void Start()
+        private void OnEnable()
         {
-            LoadButtonData();
-        }
-
-        private void OnDestroy()
-        {
-            foreach (ButtonInformation button in _buttonInformations.Values)
-            {
-                button.OnClickBtn -= HandleButtonClick;
-            }
-            upgradeUnLock.RemoveListener<UpgradeUnLockEvent>(HandleUpgradeUnlockEvent);
-        }
-        
-        private void HandleUpgradeUnlockEvent(UpgradeUnLockEvent upgradeUnLockEvent)
-        {
-            OpenButton(upgradeUnLockEvent.buttonCanvas);
+            CreateDefaultButtonData();
+            LoadButtonData();   
         }
 
         private void HandleButtonClick(ButtonType buttonType)
@@ -70,42 +53,6 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
             }
         }
         
-        public void OpenButton(ButtonType buttonType)
-        {
-            if (!_buttonInformations.TryGetValue(buttonType, out ButtonInformation button))
-                return;
-
-            button.SetOpen(true);
-            SaveButtonData();
-        }
-        public void CloseButton(ButtonType buttonType)
-        {
-            if (!_buttonInformations.TryGetValue(buttonType, out ButtonInformation button))
-                return;
-
-            button.SetOpen(false);
-            SaveButtonData();
-        }
-        
-        private void SaveButtonData()
-        {
-            ButtonSaveData saveData = new ButtonSaveData();
-
-            foreach (ButtonInformation button in _buttonInformations.Values)
-            {
-                ButtonOpenData openData = new ButtonOpenData
-                {
-                    buttonType = button.ButtonType,
-                    canOpen = button.canOpen
-                };
-
-                saveData.buttonOpenDatas.Add(openData);
-            }
-
-            _saveService.Save(saveData);
-        }
-
-        
         private void LoadButtonData()
         {
             ButtonSaveData saveData = _saveService.Load<ButtonSaveData>();
@@ -113,7 +60,6 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
             if (saveData == null)
             {
                 CreateDefaultButtonData();
-                SaveButtonData();
                 return;
             }
 
