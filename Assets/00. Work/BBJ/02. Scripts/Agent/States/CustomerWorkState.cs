@@ -14,6 +14,7 @@ namespace BBJ.States
         private readonly IAgentUIModule _uiModule;
         private readonly EatDurationUI  _eatDurationUI;
         private readonly AgentStatusUI  _statusUI;
+        private readonly AgentBubbleUI  _backUI;
 
         private bool _workEnded;
 
@@ -23,6 +24,7 @@ namespace BBJ.States
             _uiModule      = owner.GetModule<IAgentUIModule>();
             _eatDurationUI = _uiModule?.Get<EatDurationUI>();
             _statusUI      = _uiModule?.Get<AgentStatusUI>();
+            _backUI        = owner.GetComponentInChildren<AgentBubbleUI>(true);
 
             UtilDebugger.AssertAllAssigned(this);
 
@@ -42,6 +44,7 @@ namespace BBJ.States
                 _ = _statusUI.OpenAsync();
             }
 
+            _ = _backUI?.OpenAsync();
             _ = _eatDurationUI?.OpenAsync();
         }
 
@@ -51,6 +54,7 @@ namespace BBJ.States
             _workAction.OnProgressUpdated -= HandleProgress;
 
             _ = _statusUI?.CloseAsync();
+            _ = _backUI?.CloseAsync();
             _ = _eatDurationUI?.CloseAsync();
         }
 
