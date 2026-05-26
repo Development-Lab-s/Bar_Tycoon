@@ -18,21 +18,21 @@ namespace BBJ.States
         private readonly SchedulingModule    _scheduling;
         private readonly IAgentUIModule      _uiModule;
         private readonly IAgentInput         _input;
-        private AgentParticleModule          _particles;
+        private readonly AgentParticleModule _particles;
+        private readonly ContractChat        _contractChat;
         private bool _isTriggerCall;
-        private CancellationTokenSource _autoCloseCts;
+        private CancellationTokenSource _cts;
 
         public InteractState(Agent owner, AnimParamSO stateParam) : base(owner, stateParam)
         {
-            _scheduling = owner.GetModule<SchedulingModule>();
-            _uiModule = owner.GetModule<IAgentUIModule>();
-            _input = owner.GetModule<IAgentInput>();
-            _autoCloseCts = new CancellationTokenSource();
-            _particles = owner.GetModule<AgentParticleModule>();
+            _scheduling   = owner.GetModule<SchedulingModule>();
+            _uiModule     = owner.GetModule<IAgentUIModule>();
+            _input        = owner.GetModule<IAgentInput>();
+            _particles    = owner.GetModule<AgentParticleModule>();
+            _contractChat = _uiModule?.Get<ContractChat>();
 
             UtilDebugger.AssertAllAssigned(this);
 
-            // _isTriggerCall�� true�� �Ǹ� Idle ���·� ��ȯ
             AddTransitionToEnum(() => _isTriggerCall, StaffState.Idle);
         }
 
@@ -47,62 +47,49 @@ namespace BBJ.States
                 contractObj.CanInteracting = false;
                 contractObj.UnHover();
             }
+
             _particles?.PlayParticle(ParticleType.HEART);
+
+            var chatProvider = _owner.GetModule<IChatProvider>();
+            var message = chatProvider?.ChatMessage;
+            if (!string.IsNullOrEmpty(message))
+                _contractChat?.Message(message);
+
             _input.OnInteracted += HandleManualClose;
-            _autoCloseCts = new CancellationTokenSource();
-            AutoCloseRoutine(_autoCloseCts.Token).Forget();
-
-            var chatUI = _uiModule.Get<ContractChat>();
-            if (chatUI != null)
-            {
-                var chatProvider = _owner.GetModule<IChatProvider>();
-                var message = chatProvider?.ChatMessage;
-                if (!string.IsNullOrEmpty(message))
-                    chatUI.Message(message);
-                chatUI.OpenAsync().Forget();
-            }
+            _cts = new CancellationTokenSource();
+            RunInteractAsync(_cts.Token).Forget();
         }
 
-        // [�̺�Ʈ 1] �ڵ� ���� ó��
-        private async UniTaskVoid AutoCloseRoutine(CancellationToken ct)
+        private async UniTaskVoid RunInteractAsync(CancellationToken ct)
         {
-            // �Ű������� �ƴ϶� �ڿ� .SuppressCancellationThrow() Ȯ�� �޼��带 �ٿ��ݴϴ�.
-            bool isCanceled = await UniTask.Delay(TimeSpan.FromSeconds(2f), cancellationToken: ct)
-                .SuppressCancellationThrow();
+            if (_contractChat != null)
+                await _uiModule.PlaySequenceAsync(ct, _contractChat);
+            else
+                await UniTask.Delay(TimeSpan.FromSeconds(2f), cancellationToken: ct)
+                    .SuppressCancellationThrow();
 
-            if (!isCanceled)
-            {
-                _isTriggerCall = true; // Ÿ�̸Ӱ� �� �������Ƿ� ���� ��ȯ!
-            }
+            if (!ct.IsCancellationRequested)
+                _isTriggerCall = true;
         }
-        // [�̺�Ʈ 2] ���� ���� ó��
+
         private void HandleManualClose()
         {
-            _isTriggerCall = true; // �÷��̾ Ŭ�������Ƿ� ���� ��ȯ!
+            _cts?.Cancel();
+            _isTriggerCall = true;
         }
 
         public override void Exit()
         {
             base.Exit();
+            _input.OnInteracted -= HandleManualClose;
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = null;
 
-            // �� �ٽ�: ��� �����ε� ���°� ����Ǹ� �� �̺�Ʈ�� ��� ����/����մϴ�.
-            _input.OnInteracted -= HandleManualClose; // �̺�Ʈ ���� ����
-            if (_autoCloseCts != null)
-            {
-                _autoCloseCts.Cancel(); // ���� ���̴� Ÿ�̸� ���� ����
-                _autoCloseCts.Dispose();
-                _autoCloseCts = null;
-            }
-
-            // Hover ��� ����
             var contractObj = _owner.GetModule<IHoverable>();
             if (contractObj != null)
-            {
                 contractObj.CanInteracting = true;
-            }
 
-            // UI �ݱ� �� ������ �簳
-            _uiModule.Get<ContractChat>()?.CloseAsync().Forget();
             _scheduling?.Resume();
         }
     }
