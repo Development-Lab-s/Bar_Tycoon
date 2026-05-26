@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace BBJ.UI
 {
-    public class AgentBubbleUI : MonoBehaviour, IAgentUI
+    public class AgentBubbleUI : MonoBehaviour
     {
         [SerializeField] private CanvasGroup _canvasGroup;
         [SerializeField] private float _animDuration = 0.15f;
@@ -25,10 +25,8 @@ namespace BBJ.UI
         public async UniTask OpenAsync()
         {
             if (_canvasGroup == null) return;
-
-            gameObject.SetActive(true);
+            _canvasGroup.gameObject.SetActive(true);
             IsOpen = true;
-
             await LMotion.Create(0f, 1f, _animDuration)
                 .WithEase(Ease.OutCubic)
                 .BindToAlpha(_canvasGroup)
@@ -38,14 +36,12 @@ namespace BBJ.UI
         public async UniTask CloseAsync()
         {
             if (_canvasGroup == null) return;
-
-            gameObject.SetActive(false);
             IsOpen = false;
-
             await LMotion.Create(1f, 0f, _animDuration)
                 .WithEase(Ease.InCubic)
                 .BindToAlpha(_canvasGroup)
                 .AddTo(this);
+            _canvasGroup.gameObject.SetActive(false);
         }
     }
 }

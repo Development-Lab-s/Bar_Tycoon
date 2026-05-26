@@ -1,6 +1,7 @@
 using _00._Work._Resources._02._Scripts.Agents;
 using _00._Work._Resources._02._Scripts.Systems.AnimationSystems;
 using _00._Work.PCM._02._Scripts;
+using Assets._00._Work.PCM._02._Scripts.Contract;
 using BBJ.Actions;
 using BBJ.Customer;
 using BBJ.Modules;
@@ -15,15 +16,15 @@ namespace BBJ.States
 {
     public class CustomerIdleState : CustomerAgentState
     {
-        private readonly IPathMovement  _movement;
-        private readonly ISchedulable   _scheduling;
-        private readonly IAgentUIModule _uiModule;
+        private readonly IPathMovement   _movement;
+        private readonly ISchedulable    _scheduling;
+        private readonly IAgentUIModule  _uiModule;
         private readonly IHoverable      _hoverObj;
         private readonly IContractObject _contractObj;
-        private readonly WorkAction     _workAction;
-        private readonly AgentStatusUI  _statusUI;
+        private readonly WorkAction      _workAction;
+        private readonly AgentStatusUI   _statusUI;
         private readonly DialogueBubbleUI _dialogueUI;
-        private readonly AgentBubbleUI _backUI;
+        private readonly AgentBubbleUI   _backUI;
 
         private bool _isMoveStarted;
         private bool _shouldWork;
@@ -31,44 +32,44 @@ namespace BBJ.States
 
         public CustomerIdleState(Agent owner, AnimParamSO stateParam) : base(owner, stateParam)
         {
-            _movement   = owner.GetModule<IPathMovement>();
-            _scheduling = owner.GetModule<ISchedulable>();
-            _uiModule   = owner.GetModule<IAgentUIModule>();
-            _hoverObj   = owner.GetModule<IHoverable>();
-            _contractObj= owner.GetModule<IContractObject>();
-            
-            var ActionModule = owner.GetModule<IAgentActionModule>();
-            _workAction = ActionModule.GetAction<WorkAction>();
+            _movement    = owner.GetModule<IPathMovement>();
+            _scheduling  = owner.GetModule<ISchedulable>();
+            _uiModule    = owner.GetModule<IAgentUIModule>();
+            _hoverObj    = owner.GetModule<IHoverable>();
+            _contractObj = owner.GetModule<IContractObject>();
+
+            var actionModule = owner.GetModule<IAgentActionModule>();
+            _workAction = actionModule.GetAction<WorkAction>();
 
             _statusUI   = _uiModule.Get<AgentStatusUI>();
             _dialogueUI = _uiModule.Get<DialogueBubbleUI>();
-            _backUI     = _uiModule.Get<AgentBubbleUI>();
+            _backUI     = owner.GetComponentInChildren<AgentBubbleUI>(true);
 
-            _uiCts      = new CancellationTokenSource();
+            _uiCts = new CancellationTokenSource();
 
             UtilDebugger.AssertAllAssigned(this);
 
             AddTransitionToEnum(() => _isMoveStarted, CustomerState.Move);
-            AddTransitionToEnum(() => _shouldWork, CustomerState.Work);
+            AddTransitionToEnum(() => _shouldWork,    CustomerState.Work);
         }
 
         public override void Enter()
         {
             base.Enter();
             _isMoveStarted = false;
-            _shouldWork = false;
+            _shouldWork    = false;
 
             if (IsWorking()) { HandleWorkPhaseStarted(); return; }
-            if (IsMoving()) { HandleMoveStarted(); return; }
+            if (IsMoving())  { HandleMoveStarted();      return; }
 
             _contractObj?.OnClickEvent.AddListener(HandleClick);
 
             _uiCts = new CancellationTokenSource();
-            PlayOrderSequenceAsync().Forget();
+            PlayStatusSequenceAsync().Forget();
 
-            _movement.OnMoveStarted += HandleMoveStarted;
-            _workAction.OnWorkPhaseStarted += HandleWorkPhaseStarted;
-            _customer.OnOrderStateChanged += RefreshUI;
+            _movement.OnMoveStarted              += HandleMoveStarted;
+            _workAction.OnWorkPhaseStarted        += HandleWorkPhaseStarted;
+            _customer.OnOrderStateChanged         += RefreshUI;
         }
 
         public override void Exit()
@@ -78,31 +79,32 @@ namespace BBJ.States
             _uiCts?.Dispose();
             _uiCts = null;
             _uiModule.CloseAll();
+            _ = _backUI?.CloseAsync();
 
             _contractObj?.OnClickEvent.RemoveListener(HandleClick);
             if (_contractObj != null) _contractObj.CanInteracting = false;
 
-            _movement.OnMoveStarted -= HandleMoveStarted;
-            _workAction.OnWorkPhaseStarted -= HandleWorkPhaseStarted;
-            _customer.OnOrderStateChanged -= RefreshUI;
+            _movement.OnMoveStarted              -= HandleMoveStarted;
+            _workAction.OnWorkPhaseStarted        -= HandleWorkPhaseStarted;
+            _customer.OnOrderStateChanged         -= RefreshUI;
         }
 
-        private void HandleMoveStarted() => _isMoveStarted = true;
+        private void HandleMoveStarted()      => _isMoveStarted = true;
         private void HandleWorkPhaseStarted() => _shouldWork = true;
-        private bool IsMoving() => _movement != null && _movement.IsMoving;
+        private bool IsMoving()  => _movement   != null && _movement.IsMoving;
         private bool IsWorking() => _scheduling != null && !_scheduling.IsAvailableForWork
-                                    && _workAction != null && _workAction.IsInWorkPhase;
+                                 && _workAction  != null && _workAction.IsInWorkPhase;
 
         private void HandleClick()
         {
             var ticket = _customer.ActiveTicket;
             if (ticket != null && ticket.IsPlayerActionable)
                 _customer.PlayerOrderHandler?.OnCustomerClicked(_customer);
-            else
-                ShowRandomDialogue();
+
+            ShowDialogueSequence();
         }
 
-        private void ShowRandomDialogue()
+        private void ShowDialogueSequence()
         {
             var lines = _customer.ChatLines;
             if (lines == null || lines.Line.Count == 0) return;
@@ -111,22 +113,27 @@ namespace BBJ.States
             _uiCts?.Dispose();
             _uiCts = new CancellationTokenSource();
 
-            RefreshStatusUI();
             var line = lines.Line[Random.Range(0, lines.Line.Count)];
-            _dialogueUI.SetText(line);
-            _uiModule.PlaySequenceAsync(_uiCts.Token, _dialogueUI, _statusUI).Forget();
+            RunDialogueAsync(_uiCts.Token, line).Forget();
         }
 
-        private async UniTaskVoid PlayOrderSequenceAsync()
+        private async UniTaskVoid RunDialogueAsync(CancellationToken ct, string line)
+        {
+            RefreshStatusUI();
+            _ = _backUI?.CloseAsync();
+            _dialogueUI.SetText(line);
+            await _uiModule.PlaySequenceAsync(ct, _dialogueUI, _statusUI);
+            if (!ct.IsCancellationRequested)
+                _ = _backUI?.OpenAsync();
+        }
+
+        private async UniTaskVoid PlayStatusSequenceAsync()
         {
             if (_uiCts == null) return;
             var ct = _uiCts.Token;
-
             RefreshStatusUI();
+            _ = _backUI?.OpenAsync();
             await _uiModule.PlaySequenceAsync(ct, _statusUI);
-
-            if (!ct.IsCancellationRequested)
-                RefreshStatusUI();
         }
 
         private void RefreshUI() => RefreshStatusUI();
@@ -134,8 +141,10 @@ namespace BBJ.States
         private void RefreshStatusUI()
         {
             if (_statusUI == null) return;
+
             if (_contractObj != null)
-                _contractObj.CanInteracting = _customer.AssignedSeat != null || (_customer.FoodServed && !_customer.PaymentDone);
+                _contractObj.CanInteracting = _customer.AssignedSeat != null
+                                           || (_customer.FoodServed && !_customer.PaymentDone);
 
             if (!_customer.OrderPlaced || _customer.IsAwaitingOrder)
             {
@@ -143,36 +152,36 @@ namespace BBJ.States
                 return;
             }
 
-            var ticket = _customer.ActiveTicket;
-            Color alphaColor = _backUI.BackgroundImage.color;
-            var newIcon = _customer.SelectedFood?.cocktailIcon;
+            if (_customer.FoodServed && !_customer.PaymentDone)
+            {
+                _statusUI.ToggleText("계산 대기");
+                SetBgAlpha(1f);
+                return;
+            }
+
+            var ticket      = _customer.ActiveTicket;
+            bool isActionable = ticket != null && ticket.IsPlayerActionable;
+            var newIcon     = _customer.SelectedFood?.cocktailIcon;
 
             if (newIcon != null)
             {
                 _statusUI.ToggleIcon();
-                if (!(_statusUI.Icon is IStylableUI icon)) return;
-
-                if (ticket != null && ticket.IsPlayerActionable)
-                {
-                    icon.SetSprite(newIcon)
-                        .SetRecolorFade(0f);
-
-                    alphaColor.a = 1f;
-                    _backUI.BackgroundImage.color = alphaColor;
-                }
-                else
-                {
-                    icon.SetSprite(newIcon)
-                        .SetRecolorFade(0.72f);
-
-                    alphaColor.a = 148f / 255f;
-                    _backUI.BackgroundImage.color = alphaColor;
-                }
+                if (_statusUI.Icon is IStylableUI icon)
+                    icon.SetSprite(newIcon).SetRecolorFade(isActionable ? 0f : 0.72f);
+                SetBgAlpha(isActionable ? 1f : 148f / 255f);
             }
             else
             {
                 _statusUI.ToggleText(_customer.SelectedFood?.cocktailName ?? "...");
             }
+        }
+
+        private void SetBgAlpha(float alpha)
+        {
+            if (_backUI?.BackgroundImage == null) return;
+            Color c = _backUI.BackgroundImage.color;
+            c.a = alpha;
+            _backUI.BackgroundImage.color = c;
         }
     }
 }
