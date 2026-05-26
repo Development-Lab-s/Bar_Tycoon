@@ -119,7 +119,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             }
             if (!IsInCatalog(episodeId))
             {
-                Debug.LogWarning($"[StoryProgressService] catalog에 없는 episodeId — {episodeId}. 무시합니다.");
+                Debug.Log($"[StoryProgressService] catalog에 없는 episodeId — {episodeId}. 무시합니다.");
                 return false;
             }
             _cache[episodeId] = unlocked;

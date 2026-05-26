@@ -2,6 +2,7 @@
 using Gamelib.EventSystem;
 using Gamelib.SoundSystem;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -52,17 +53,27 @@ namespace Systems
         }
 
         public void OnContractClick(InputAction.CallbackContext context)
-        { 
+        {
             if (context.performed)
             {
                 soundChannel.RaiseEvent(new PlaySoundEvent((SfxSounds)12,Vector3.zero,SoundChannelId.None));
-                if (EventSystem.current.IsPointerOverGameObject())
+                if (IsPointerOverUI())
                     return;
                 // 현재 Hover 대상 클릭
                 _currentHover?.ExcuteClick();
 
                 IsClick?.Invoke();
             }
+        }
+
+        private static readonly List<RaycastResult> _uiRaycastResults = new();
+        private bool IsPointerOverUI()
+        {
+            if (EventSystem.current == null) return false;
+            var pointerData = new PointerEventData(EventSystem.current) { position = MousePosition };
+            _uiRaycastResults.Clear();
+            EventSystem.current.RaycastAll(pointerData, _uiRaycastResults);
+            return _uiRaycastResults.Count > 0;
         }
         public void OnIntractClick(
             InputAction.CallbackContext context)

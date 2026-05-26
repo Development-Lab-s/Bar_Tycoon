@@ -22,10 +22,7 @@ namespace _00._Work.Goat._02._Scripts.SaveCode
         public T Load<T>()
         {
             if (!File.Exists(_saveFileNameSo.SavePath))
-            {
-                Debug.LogWarning($"The file {_saveFileNameSo.SavePath} was not found.");
                 return default;
-            }
             
             string saveData = File.ReadAllText(_saveFileNameSo.SavePath);
             return JsonUtility.FromJson<T>(saveData);

@@ -9,6 +9,8 @@ namespace Gamelib.SoundSystem
 		STORYCYANHAPPY = 3,
 		STORY_FAST = 4,
 		STORY_CLOSED = 5,
-		STORY_CIRIOUS = 6
+		STORY_CIRIOUS = 6,
+		QUIAT_BAR = 7,
+		YURA_CG = 8
     }
 }

@@ -30,6 +30,7 @@ public class TutorialManager : MonoBehaviour
 
     public void OpenTutorial()
     {
+        Debug.Log("½ÇÇà");
         for (int i = 0; i < tutorialDatas.Length; i++)
         {
             if (!tutorialDatas[i].isEnd)

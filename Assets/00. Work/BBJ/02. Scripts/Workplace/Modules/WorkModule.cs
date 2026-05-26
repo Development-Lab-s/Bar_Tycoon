@@ -40,7 +40,10 @@ namespace BBJ.WorkplaceSystem.Modules
         public void NotifyCompleted(ModuleOwner worker, OrderTicket ticket)
         {
             foreach (var handler in _completionHandlers)
+            {
+                if (handler == null) continue;
                 handler.OnCompleted(worker, ticket);
+            }
         }
 
         public void InstantExecute(ModuleOwner executor, OrderTicket ticket)
