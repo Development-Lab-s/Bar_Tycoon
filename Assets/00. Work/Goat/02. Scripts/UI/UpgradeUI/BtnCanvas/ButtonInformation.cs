@@ -40,6 +40,16 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
 
         private void Awake()
         {
+            Initialize();
+        }
+        
+        private bool _isInitialized;
+
+        private void Initialize()
+        {
+            if (_isInitialized)
+                return;
+
             _rectTransform = GetComponent<RectTransform>();
             _text = GetComponentInChildren<TextMeshProUGUI>();
             _image = GetComponent<Image>();
@@ -47,7 +57,11 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
 
             _originPos = _rectTransform.anchoredPosition;
             _originWidth = _rectTransform.sizeDelta;
-            _originFontSize = _text.fontSize;
+
+            if (_text != null)
+                _originFontSize = _text.fontSize;
+
+            _isInitialized = true;
         }
 
         private void OnEnable()
@@ -69,6 +83,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
         }
         public void SetOpen(bool canOpen)
         {
+            Initialize();
             this.canOpen = canOpen;
 
             if (canOpen)
@@ -172,6 +187,7 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.BtnCanvas
 
         private void SetSettingImmediately(float posYUp, float widthSizeUp, float fontSizeAdd)
         {
+            Initialize();
             _rectTransform.anchoredPosition = new Vector2(_originPos.x, _originPos.y + posYUp);
             _rectTransform.sizeDelta = new Vector2(_originWidth.x + widthSizeUp, _originWidth.y);
 
