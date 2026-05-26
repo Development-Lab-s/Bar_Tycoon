@@ -137,12 +137,6 @@ namespace BBJ.States
             if (_contractObj != null)
                 _contractObj.CanInteracting = _customer.AssignedSeat != null || (_customer.FoodServed && !_customer.PaymentDone);
 
-            if (_customer.FoodServed)
-            {
-                _ = _statusUI.CloseAsync();
-                return;
-            }
-
             if (!_customer.OrderPlaced || _customer.IsAwaitingOrder)
             {
                 _statusUI.ToggleText("...");

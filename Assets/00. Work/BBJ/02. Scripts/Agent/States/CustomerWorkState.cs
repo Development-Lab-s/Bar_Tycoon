@@ -13,6 +13,7 @@ namespace BBJ.States
         private readonly WorkAction    _workAction;
         private readonly IAgentUIModule _uiModule;
         private readonly EatDurationUI  _eatDurationUI;
+        private readonly AgentStatusUI  _statusUI;
 
         private bool _workEnded;
 
@@ -21,6 +22,7 @@ namespace BBJ.States
             _workAction    = owner.GetModule<IAgentActionModule>().GetAction<WorkAction>();
             _uiModule      = owner.GetModule<IAgentUIModule>();
             _eatDurationUI = _uiModule?.Get<EatDurationUI>();
+            _statusUI      = _uiModule?.Get<AgentStatusUI>();
 
             UtilDebugger.AssertAllAssigned(this);
 
@@ -34,6 +36,12 @@ namespace BBJ.States
             _workAction.OnWorkPhaseEnded  += HandleWorkEnded;
             _workAction.OnProgressUpdated += HandleProgress;
 
+            if (_statusUI != null)
+            {
+                _statusUI.ToggleText("먹는 중");
+                _ = _statusUI.OpenAsync();
+            }
+
             _ = _eatDurationUI?.OpenAsync();
         }
 
@@ -42,6 +50,7 @@ namespace BBJ.States
             _workAction.OnWorkPhaseEnded  -= HandleWorkEnded;
             _workAction.OnProgressUpdated -= HandleProgress;
 
+            _ = _statusUI?.CloseAsync();
             _ = _eatDurationUI?.CloseAsync();
         }
 
