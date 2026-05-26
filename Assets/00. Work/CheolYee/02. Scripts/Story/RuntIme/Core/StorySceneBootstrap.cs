@@ -22,7 +22,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         [SerializeField] private StoryEpisodeCatalogSO episodeCatalog;
 
         [SerializeField] private Camera sceenMainCamera;
-
+        [SerializeField]private TutoBoolSO tutoBool;
         public SceneType SceneType => SceneType.Story;
 
         private void Awake()
@@ -49,6 +49,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         }
         public void OnBackground()
         {
+            tutoBool.value = true;
             sceenMainCamera?.gameObject.SetActive(false);
         }
 
