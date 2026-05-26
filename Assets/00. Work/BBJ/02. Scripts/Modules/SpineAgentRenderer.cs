@@ -12,15 +12,13 @@ namespace BBJ.Modules
         [field: SerializeField] public float FacingDirection { get; private set; } = 1f;
 
         private Animator[] _animators;
-        private int _currentLayer;
+        private int        _currentLayer;
 
         private MaterialPropertyBlock _mpb;
-        private static readonly int OuterOutlineFadeID = Shader.PropertyToID("_OuterOutlineFade");
-        private static readonly int StrongTintFadeID = Shader.PropertyToID("_StrongTintFade");
 
-        private float _currentOutlineFade = 0f;
+        //private float _currentOutlineFade = 0f;
         private float _currentTintFade = 0f;
-        private float _tintValue = 0.21f;
+        private float _tintValue = 0.1f;
 
         public event Action OnAnimationEnd;
         public event Action OnAttackTrigger;
@@ -60,15 +58,15 @@ namespace BBJ.Modules
 
         public void EnableHoverEffect()
         {
-            _currentOutlineFade = 1f;
-            _currentTintFade = _tintValue;
+            //_currentOutlineFade = 1f;
+            _currentTintFade    = _tintValue;
             ApplySSUToCurrentMimic();
         }
 
         public void DisableHoverEffect()
         {
-            _currentOutlineFade = 0f;
-            _currentTintFade = 0f;
+            //_currentOutlineFade = 0f;
+            _currentTintFade    = 0f;
             ApplySSUToCurrentMimic();
         }
 
@@ -80,8 +78,8 @@ namespace BBJ.Modules
             if (targetMimic != null && _mpb != null)
             {
                 targetMimic.GetPropertyBlock(_mpb);
-                _mpb.SetFloat(OuterOutlineFadeID, _currentOutlineFade);
-                _mpb.SetFloat(StrongTintFadeID, _currentTintFade);
+                //_mpb.SetFloat("_OuterOutlineFade", _currentOutlineFade);
+                _mpb.SetFloat("_StrongTintFade",   _currentTintFade);
                 targetMimic.SetPropertyBlock(_mpb);
             }
         }

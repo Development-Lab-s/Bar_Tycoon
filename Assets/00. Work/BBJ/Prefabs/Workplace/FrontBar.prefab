@@ -249,12 +249,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 2772086232929873412, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+    - {fileID: 8819080869063847965, guid: 3c11c4b9397898045b720904c118e669, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 3059886861373003527, guid: 3c11c4b9397898045b720904c118e669, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5385637551465647299}
+    - targetCorrespondingSourceObject: {fileID: 3059886861373003527, guid: 3c11c4b9397898045b720904c118e669, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 760632667946064371}
   m_SourcePrefab: {fileID: 100100000, guid: 3c11c4b9397898045b720904c118e669, type: 3}
 --- !u!1 &4260524909239284173 stripped
 GameObject:
@@ -307,13 +311,40 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 0.7857979, y: 0.910824}
-      - {x: -0.69477355, y: 0.81875044}
+    - - {x: 0.87954026, y: 1.0731912}
+      - {x: -0.45475674, y: 1.0037212}
       - {x: -1.1286936, y: 0.33659366}
       - {x: -0.67284423, y: -0.62736225}
       - {x: 0.84628534, y: -0.64833736}
-      - {x: 1.1885253, y: -0.032197878}
+      - {x: 1.3353175, y: 0.106678024}
   m_UseDelaunayMesh: 1
+--- !u!114 &760632667946064371
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4260524909239284173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8fa16224a25d3e44b7e98c54ce16c27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Assets._00._Work.PCM._02._Scripts.TestContractObject
+  <OnClickEvent>k__BackingField:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 11400000, guid: fda5d82ec10ed1344931374ad274af81, type: 2}
+        m_TargetAssemblyTypeName: BBJ.EventSystem.UIManagerSO, Assembly-CSharp
+        m_MethodName: OpenPopupEvent
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!4 &6337680806507274930 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5090612577067697272, guid: 3c11c4b9397898045b720904c118e669, type: 3}

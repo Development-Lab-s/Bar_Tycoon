@@ -11,7 +11,7 @@ namespace BBJ.Modules
         private float tintValue = 0.21f;
 
         private static readonly int OuterOutlineFadeID = Shader.PropertyToID("_OuterOutlineFade");
-        private static readonly int StrongTintFadeID = Shader.PropertyToID("_StrongTintFade");
+        private static readonly int StrongTintFadeID   = Shader.PropertyToID("_StrongTintFade");
 
         public void Initialize(ModuleOwner owner)
         {

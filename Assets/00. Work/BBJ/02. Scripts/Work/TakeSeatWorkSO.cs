@@ -43,7 +43,6 @@ namespace BBJ.Work
             {
                 await actions.Execute<MoveAction>(a => a.ExecuteAsync(dest, ctx.Token));
                 seatModule?.Seat(executor);
-                executor.GetModule<IRenderer>()?.FlipController(seatModule.FacingDirection);
                 customer.AssignedSeat = seat;
                 seated = true;
                 return WorkResult.Completed;
