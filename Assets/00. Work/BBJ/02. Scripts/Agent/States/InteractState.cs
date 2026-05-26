@@ -28,8 +28,9 @@ namespace BBJ.States
             _uiModule = owner.GetModule<IAgentUIModule>();
             _input = owner.GetModule<IAgentInput>();
             _autoCloseCts = new CancellationTokenSource();
-            UtilDebugger.AssertAllAssigned(this);
             _particles = owner.GetModule<AgentParticleModule>();
+
+            UtilDebugger.AssertAllAssigned(this);
 
             // _isTriggerCall�� true�� �Ǹ� Idle ���·� ��ȯ
             AddTransitionToEnum(() => _isTriggerCall, StaffState.Idle);
