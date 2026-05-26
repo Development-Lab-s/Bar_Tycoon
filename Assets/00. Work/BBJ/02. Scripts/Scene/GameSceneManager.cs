@@ -14,6 +14,7 @@
 
             [SerializeField] private EventChannelSO _sceneChannel;
             [SerializeField] private FadeUI         _fadeUI;
+            [SerializeField] private float          _audioTransitionDelay = 0.5f;
 
             private readonly Dictionary<SceneType, ISceneHost> _hosts        = new();
             private readonly HashSet<SceneType>                _loadedScenes = new();
@@ -81,6 +82,9 @@
 
                 if (_hosts.TryGetValue(_foreground, out var prev))
                     prev.OnBackground();
+
+                if (_audioTransitionDelay > 0f)
+                    yield return new WaitForSeconds(_audioTransitionDelay);
 
                 // Cocktail / Story 씬은 복귀 시 언로드
                 if (_foreground != SceneType.Main && _loadedScenes.Contains(_foreground))

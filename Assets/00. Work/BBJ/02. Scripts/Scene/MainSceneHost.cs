@@ -1,5 +1,6 @@
 using _00._Work.Goat._02._Scripts.Camera;
 using BBJ.EventSystem;
+using Systems;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -10,6 +11,7 @@ namespace BBJ.Scene
         public SceneType SceneType => SceneType.Main;
         public Camera sceenMainCamera;
         public CameraManager cameraManager;
+        [SerializeField] private PlayerInputSO playerInput;
         
         [Header("Canvas")]
         [SerializeField] private Canvas[] mainCanvases;
@@ -35,14 +37,14 @@ namespace BBJ.Scene
             cameraManager?.gameObject.SetActive(true);
             tutorialStart?.Invoke();
             Camera.SetupCurrent(sceenMainCamera);
-            
+            playerInput?.SetEnable(true);
             RestoreCanvasOrders();
         }
         public void OnBackground()
         {
             cameraManager?.gameObject.SetActive(false);
             sceenMainCamera?.gameObject.SetActive(false);
-            
+            playerInput?.SetEnable(false);
             LowerCanvasOrders();
         }
         

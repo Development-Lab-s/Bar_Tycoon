@@ -17,6 +17,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Replay
         [SerializeField] private Transform contentRoot;
         [SerializeField] private StoryReplayItemView itemPrefab;
 
+        [Header("Panel")]
+        [Tooltip("다시보기 클릭 시 닫을 패널 루트 오브젝트. 스토리 캔버스 루트를 연결하세요.")]
+        [SerializeField] private GameObject panelRoot;
+
         private readonly List<GameObject> _spawnedItems = new();
         private HashSet<string> _unlockedIds = new();
         private string _callerId;
@@ -99,6 +103,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Replay
 
         private void OnItemReplayClicked(StoryEpisodeCatalogEntry entry)
         {
+            panelRoot?.SetActive(false);
             storyCommandChannel?.RaiseEvent(
                 new StoryEpisodeLaunchRequested(entry.Episode, entry.Episode.EpisodeId));
         }

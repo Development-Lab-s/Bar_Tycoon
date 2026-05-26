@@ -301,20 +301,21 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Directors.C
 
             _runtimeCameraSearchAttempted = true;
 
-            runtimeCamera = Camera.main;
+            // StoryRuntimeCameraMarker로 검색: Bootstrap.Awake()가 카메라를 비활성화한 이후에도
+            // FindObjectsInactive.Include로 찾을 수 있어 Awake 실행 순서에 무관하다.
+            if (searchSceneCameraOnceIfMissing)
+            {
+                StoryRuntimeCameraMarker[] markers = FindObjectsByType<StoryRuntimeCameraMarker>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None);
+                if (markers.Length > 0)
+                    runtimeCamera = markers[0].GetComponent<Camera>();
+            }
+
             if (runtimeCamera != null)
                 return runtimeCamera;
 
-            if (!searchSceneCameraOnceIfMissing)
-                return null;
-
-            Camera[] cameras = FindObjectsByType<Camera>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
-
-            if (cameras.Length > 0)
-                runtimeCamera = cameras[0];
-
+            runtimeCamera = Camera.main;
             return runtimeCamera;
         }
 

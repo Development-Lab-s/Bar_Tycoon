@@ -263,7 +263,7 @@ GameObject:
   - component: {fileID: 1532916464}
   - component: {fileID: 1532916463}
   m_Layer: 0
-  m_Name: EventSystem (1)
+  m_Name: EventSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -340,6 +340,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1845614349}
   - component: {fileID: 1845614348}
+  - component: {fileID: 1845614350}
   m_Layer: 0
   m_Name: GameSceneManager
   m_TagString: Untagged
@@ -361,6 +362,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BBJ.Scene.GameSceneManager
   _sceneChannel: {fileID: 11400000, guid: 6a40620e1f64d5d4ca762ce52fea31f0, type: 2}
   _fadeUI: {fileID: 2095666756}
+  _audioTransitionDelay: 0.5
 --- !u!4 &1845614349
 Transform:
   m_ObjectHideFlags: 0
@@ -376,6 +378,14 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!81 &1845614350
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1845614347}
+  m_Enabled: 1
 --- !u!1 &2095666754
 GameObject:
   m_ObjectHideFlags: 0
