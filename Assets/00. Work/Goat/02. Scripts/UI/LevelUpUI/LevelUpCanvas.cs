@@ -2,6 +2,7 @@
 using _00._Work.Goat._02._Scripts.Events;
 using _00._Work.Lusaload._02._Scripts.SO;
 using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
 using TMPro;
 using UnityEngine;
 
@@ -14,6 +15,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
 
         [Header("eventChannel")] 
         [SerializeField] private EventChannelSO levelUpRewardeExitBtnClickEvent;
+        [SerializeField] private EventChannelSO soundEvent;
         
         [Header("Reference")]
         [SerializeField] private LevelUpRewardManager levelUpRewardManager;
@@ -59,6 +61,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
             if (levelUpObject.activeSelf)
                 return;
             
+            soundEvent.RaiseEvent(new PlaySoundEvent(SfxSounds.LEVELUPSOUND2, Vector2.zero));
             levelUpObject.SetActive(true);
         }
     }
