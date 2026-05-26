@@ -12,8 +12,11 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _ENABLEOUTEROUTLINE_ON
+  - _ENABLESTRONGTINT_ON
   - _SHADERFADING_NONE
   - _SHADERSPACE_UV
+  - _STRONGTINTCONTRASTTOGGLE_ON
   - _TEXTURELAYER1SHEETTOGGLE_ON
   - _TEXTURELAYER2SHEETTOGGLE_ON
   m_InvalidKeywords:
@@ -198,7 +201,7 @@ Material:
     - _EnableInnerOutline: 0
     - _EnableMetal: 0
     - _EnableNegative: 0
-    - _EnableOuterOutline: 0
+    - _EnableOuterOutline: 1
     - _EnablePingPongGlow: 0
     - _EnablePixelOutline: 0
     - _EnablePixelate: 0
@@ -224,7 +227,7 @@ Material:
     - _EnableSplitToning: 0
     - _EnableSqueeze: 0
     - _EnableSquish: 0
-    - _EnableStrongTint: 0
+    - _EnableStrongTint: 1
     - _EnableTextureLayer1: 0
     - _EnableTextureLayer2: 0
     - _EnableUVDistort: 0
@@ -301,7 +304,7 @@ Material:
     - _MetalMaskToggle: 0
     - _NegativeFade: 1
     - _OuterOutlineDistortionToggle: 0
-    - _OuterOutlineFade: 1
+    - _OuterOutlineFade: 0
     - _OuterOutlineOutlineOnlyToggle: 0
     - _OuterOutlineTextureToggle: 0
     - _OuterOutlineWidth: 0.04
@@ -398,9 +401,9 @@ Material:
     - _SquishFlip: 0
     - _SquishSquish: 0.1
     - _SquishStretch: 0.1
-    - _StrongTintContrast: 0
-    - _StrongTintContrastToggle: 0
-    - _StrongTintFade: 1
+    - _StrongTintContrast: 0.21
+    - _StrongTintContrastToggle: 1
+    - _StrongTintFade: 0.03
     - _StrongTintMaskToggle: 0
     - _TextureLayer1Columns: 3
     - _TextureLayer1Contrast: 1
@@ -536,7 +539,7 @@ Material:
     - _MetalNoiseDistortionSpeed: {r: -0.05, g: -0.05, b: 0, a: 0}
     - _MetalNoiseScale: {r: 0.25, g: 0.25, b: 0, a: 0}
     - _MetalNoiseSpeed: {r: 0.05, g: 0.05, b: 0, a: 0}
-    - _OuterOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    - _OuterOutlineColor: {r: 0.8501387, g: 1.6539557, b: 1.7132075, a: 1}
     - _OuterOutlineDistortionIntensity: {r: 0.01, g: 0.01, b: 0, a: 0}
     - _OuterOutlineNoiseScale: {r: 4, g: 4, b: 0, a: 0}
     - _OuterOutlineNoiseSpeed: {r: 0, g: 0.1, b: 0, a: 0}
@@ -581,7 +584,7 @@ Material:
     - _SpriteSheetRect: {r: 0, g: 0, b: 1, a: 1}
     - _SqueezeCenter: {r: 0.5, g: 0.5, b: 0, a: 0}
     - _SqueezeScale: {r: 2, g: 0, b: 0, a: 0}
-    - _StrongTintTint: {r: 1, g: 1, b: 1, a: 1}
+    - _StrongTintTint: {r: 1.2879723, g: 1.7638898, b: 1.7638898, a: 1}
     - _TextureLayer1Color: {r: 0.4494117, g: 1.298301, b: 2.996079, a: 1}
     - _TextureLayer1Offset: {r: 0, g: 0, b: 0, a: 0}
     - _TextureLayer1Scale: {r: 1, g: 1, b: 0, a: 0}
