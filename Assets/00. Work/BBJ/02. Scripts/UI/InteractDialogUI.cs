@@ -7,7 +7,7 @@ namespace BBJ.UI
     {
         public bool IsOpen { get; private set; }
 
-        private void Awake() { gameObject.SetActive(false); }
+        //private void Start() { gameObject.SetActive(false); }
 
         public UniTask OpenAsync()
         {

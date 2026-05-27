@@ -12,7 +12,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModule , IPlayer
+public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModule , IPlayer , IAfterInitModule
 {
     [Header("������ SO (�ν����Ϳ��� �Ҵ�)")]
     [field: SerializeField] public CharacterSO characterData { get; private set; }
@@ -20,7 +20,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     [field: SerializeField]public CharcterLikeSO CharlikeSo{ get; set; }
     [field:SerializeField]public  UnityEvent<string> ChatOpen { get; set; }
     [SerializeField] private EventChannelSO exitBtnClickEvent;
-    private ContractChat chat;
+     private ContractChat chat;
 
     [Header("���� �ǽð� ���� ����")]
 
@@ -39,7 +39,10 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     public void Initialize(ModuleOwner owner)
     {
         _owner = owner;
-        chat = owner.GetModule<ContractChat>();
+    }
+    public void AfterInit()
+    {
+        chat = _owner.GetModule<ContractChat>(); 
     }
     public void Awake()
     {
@@ -65,6 +68,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController , IModu
     }
     public float GetExpRatio()
     {
+        Debug.Log(characterData.GetTotalProgressRatio());
         float ratio = characterData.GetTotalProgressRatio();
         return ratio ;
     }
