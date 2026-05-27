@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: line_037
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryLineSO
   lineId: line_037
-  speaker: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
+  speaker: {fileID: 11400000, guid: 0893391d14a01ad4f9de3bb1a1e77be5, type: 2}
   nameOverride: 
-  dialogueText: "\uB2E4\uD589\uC785\uB2C8\uB2E4. \uC190\uB2D8\uB4E4\uC5D0\uAC8C \uD55C
-    \uBC88 \uBCF4\uC5EC\uC904\uAE4C\uC694?"
+  dialogueText: "\uADF8\uB7FC, \uB098\uBCF4\uB2E4 \uC774 \uAC00\uAC8C\uC5D0 \uC624\uB798
+    \uC788\uB358 \uC0AC\uB78C\uC758 \uC758\uACAC\uC744 \uC548 \uB4E4\uC744 \uC218\uB294
+    \uC5C6\uC5B4."
   nextLineId: line_038
   logVisible: 1
   allowTapToComplete: 1
@@ -28,10 +29,10 @@ MonoBehaviour:
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
   modules:
-  - {fileID: 2012206920454678478}
-  editorNodePosition: {x: 1894.1062, y: 813.30743}
+  - {fileID: 1080440895756931517}
+  editorNodePosition: {x: 1980.1875, y: 732.156}
   editorNodeSize: {x: -1, y: -1}
---- !u!114 &2012206920454678478
+--- !u!114 &1080440895756931517
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -48,8 +49,8 @@ MonoBehaviour:
   canSkip: 1
   affectsAutoAdvance: 0
   background:
-    background: {fileID: 11400000, guid: 0ee66414d4d379e48880b34f09e7f535, type: 2}
-    backgroundKey: Bar_Kitchin
+    background: {fileID: 11400000, guid: e092e608913f98b439d3357dfd94b7c9, type: 2}
+    backgroundKey: Bar_Night
     visible: 1
     stageLocalPosition: {x: 0, y: 0}
     overrideParallax: 0
@@ -61,23 +62,11 @@ MonoBehaviour:
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
     actorInstanceKey: cian_01
-    stageLocalPosition: {x: -0.6, y: -1}
+    stageLocalPosition: {x: 0, y: -1}
     scaleMultiplier: 1
     visible: 1
-    focused: 1
+    focused: 0
     sortOrder: 0
-    poseKey: 
-    expression: 0
-    expressionKey: 
-    motionProfileKey: 
-  - actor: {fileID: 11400000, guid: 46cf23b7babf9c84fa08f45064393c82, type: 2}
-    actorKey: CD_Prop_Memo
-    actorInstanceKey: CD_Prop_Memo_01
-    stageLocalPosition: {x: 0, y: -6.9264073}
-    scaleMultiplier: 1
-    visible: 0
-    focused: 1
-    sortOrder: 1
     poseKey: 
     expression: 0
     expressionKey: 
@@ -85,7 +74,7 @@ MonoBehaviour:
   cameraFocusTarget: 
   cameraTrack:
     defaultState:
-      stageLocalPosition: {x: 0, y: 0}
+      stageLocalPosition: {x: 0, y: 1}
       zoom: 1
       targetActorInstanceKey: 
       followMode: 0
@@ -111,26 +100,6 @@ MonoBehaviour:
       cameraShakeDuration: 0.25
       cameraShakeFrequency: 2
       cameraShakeTargetMode: 0
-    - property: 8
-      normalizedTime: 1
-      timeSeconds: 1
-      stageLocalPosition: {x: 0, y: 0}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 3
-      expression: 0
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: 
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 1}
-      cameraZoom: 1
-      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
     - property: 9
       normalizedTime: 0
       timeSeconds: 0
@@ -146,26 +115,6 @@ MonoBehaviour:
       cameraFollowMode: 0
       cameraStageLocalPosition: {x: 0, y: 0}
       cameraZoom: 1
-      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
-    - property: 9
-      normalizedTime: 1
-      timeSeconds: 1
-      stageLocalPosition: {x: 0, y: 0}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 3
-      expression: 0
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: 
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1.2
       cameraSnapshotNormalizedPosition: {x: 0, y: 0}
       cameraShakeStrength: 1
       cameraShakeDuration: 0.25
@@ -179,7 +128,7 @@ MonoBehaviour:
     - property: 0
       normalizedTime: 0
       timeSeconds: 0
-      stageLocalPosition: {x: -0.6, y: -1}
+      stageLocalPosition: {x: 0, y: -1}
       scale: {x: 1, y: 1}
       scaleX: 1
       visible: 1
@@ -216,31 +165,6 @@ MonoBehaviour:
       cameraShakeDuration: 0.25
       cameraShakeFrequency: 2
       cameraShakeTargetMode: 0
-  - actorInstanceKey: CD_Prop_Memo_01
-    keyframes:
-    - property: 0
-      normalizedTime: 0
-      timeSeconds: 0
-      stageLocalPosition: {x: 0, y: -6.9264073}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 3
-      expression: 0
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: 
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1
-      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
   soundTrack:
     bgmKeyframes: []
-    sfxKeyframes:
-    - normalizedTime: 0
-      timeSeconds: 0
-      sfxSound: 28
+    sfxKeyframes: []

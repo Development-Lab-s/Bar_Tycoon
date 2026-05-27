@@ -1,7 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions;
 using _00._Work.CheolYee._02._Scripts.Story.RuntIme.Shared.Events;
-using BBJ.Scene;
 using Gamelib.EventSystem;
 using UnityEngine;
 
@@ -24,6 +24,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Replay
         private readonly List<GameObject> _spawnedItems = new();
         private HashSet<string> _unlockedIds = new();
         private string _callerId;
+        private bool _launching;
 
         private void Awake()
         {
@@ -47,6 +48,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Replay
                 storyCommandChannel.RemoveListener<StoryProgressStateProvided>(HandleStateProvided);
                 storyCommandChannel.RemoveListener<StoryProgressChanged>(HandleProgressChanged);
             }
+            _launching = false;
             ClearItems();
         }
 
@@ -103,7 +105,35 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Presentation.Replay
 
         private void OnItemReplayClicked(StoryEpisodeCatalogEntry entry)
         {
-            panelRoot?.SetActive(false);
+            if (_launching) return;
+            _launching = true;
+            StartCoroutine(SlideDownAndLaunch(entry));
+        }
+
+        private IEnumerator SlideDownAndLaunch(StoryEpisodeCatalogEntry entry)
+        {
+            if (panelRoot != null)
+            {
+                var rt = panelRoot.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    float duration = 0.3f;
+                    float elapsed = 0f;
+                    float startY = rt.anchoredPosition.y;
+                    float endY = -Screen.height * 2f;
+
+                    while (elapsed < duration)
+                    {
+                        elapsed += Time.unscaledDeltaTime;
+                        float t = Mathf.Clamp01(elapsed / duration);
+                        float ease = 1f - (1f - t) * (1f - t) * (1f - t); // OutCubic
+                        rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, Mathf.Lerp(startY, endY, ease));
+                        yield return null;
+                    }
+                }
+            }
+
+            _launching = false;
             storyCommandChannel?.RaiseEvent(
                 new StoryEpisodeLaunchRequested(entry.Episode, entry.Episode.EpisodeId));
         }
