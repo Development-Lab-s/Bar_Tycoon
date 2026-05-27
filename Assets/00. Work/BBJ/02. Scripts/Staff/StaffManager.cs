@@ -24,6 +24,7 @@ namespace BBJ.Staff
             public Vector3   Position;
         }
 
+        [SerializeField] private List<StaffConfigSO> _configRegistry = new();
         [SerializeField] private List<StaffEntry>  _entries     = new();
         [SerializeField] private List<SpawnPoint>  _spawnPoints = new();
         [SerializeField] private EventChannelSO    _staffChannel;
@@ -36,12 +37,14 @@ namespace BBJ.Staff
         private void OnSpawnEvent(StaffSpawnEvent e)
         {
             var agent = SpawnByConfig(e.Config);
+
             if (agent == null) return;
 
             if (e.Config != null && !_entries.Exists(en => en.Config == e.Config))
                 _entries.Add(new StaffEntry { Config = e.Config });
 
-            e.OnSpawnEnded(agent.transform.position);
+            Vector3 spawnPos = agent.transform.position;
+            e.OnSpawnEnded(spawnPos);
         }
 
         public void SpawnAll()
@@ -52,16 +55,12 @@ namespace BBJ.Staff
 
         public void RestoreStaff(StaffSaveData data)
         {
-            if (data.Entries.Count > 0)
+            _entries.Clear();
+            foreach (var role in data.Entries)
             {
-                var registry = new List<StaffEntry>(_entries);
-                _entries.Clear();
-                foreach (var role in data.Entries)
-                {
-                    var found = registry.Find(e => e.Config != null && e.Config.Role == role);
-                    if (found.Config != null)
-                        _entries.Add(found);
-                }
+                var config = _configRegistry.Find(c => c != null && c.Role == role);
+                if (config != null)
+                    _entries.Add(new StaffEntry { Config = config });
             }
 
             foreach (var save in data.Members)
@@ -75,13 +74,14 @@ namespace BBJ.Staff
         public StaffSaveData GetSaveData()
         {
             var data = new StaffSaveData();
-
+            Debug.Log("���̺� ��������");
             foreach (var entry in _entries)
                 if (entry.Config != null)
                     data.Entries.Add(entry.Config.Role);
 
             foreach (var agent in _spawnedAgents)
             {
+                Debug.Log("����߰� �õ�");
                 if (agent == null) continue;
                 var scheduling = agent.GetModule<SchedulingModule>();
                 if (scheduling == null) continue;
@@ -90,6 +90,7 @@ namespace BBJ.Staff
                     Role         = scheduling.Role,
                     LastPosition = agent.transform.position,
                 });
+                Debug.Log("����߰� ����");
             }
             return data;
         }
