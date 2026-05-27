@@ -592,8 +592,12 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2587525183379095449, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2858
+      objectReference: {fileID: 0}
+    - target: {fileID: 2587525183379095449, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2041
+      value: -1895
       objectReference: {fileID: 0}
     - target: {fileID: 3520345534137622315, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
       propertyPath: m_PresetInfoIsWorld
@@ -609,7 +613,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3998445772969092420, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
       propertyPath: m_Name
-      value: Agent_UI (1)
+      value: Agent_UI
       objectReference: {fileID: 0}
     - target: {fileID: 3998445772969092420, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
       propertyPath: m_Layer
@@ -701,7 +705,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6841366900104955353, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
       propertyPath: m_fontSize
-      value: 78.15
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 6841366900104955353, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
       propertyPath: m_fontSizeMax
@@ -712,8 +716,16 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6841366900104955353, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
-      propertyPath: m_enableAutoSizing
+      propertyPath: m_fontSizeBase
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 6841366900104955353, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
+      propertyPath: m_TextWrappingMode
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6841366900104955353, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6841366900104955353, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
       propertyPath: m_overrideHtmlColors
@@ -721,7 +733,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6841366900104955353, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
       propertyPath: m_HorizontalAlignment
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6841366900104955353, guid: 73032a95abc8d38438630bdeefb760db, type: 3}
       propertyPath: m_enableVertexGradient
@@ -1270,20 +1282,76 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 726776176761977002, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
       propertyPath: m_Name
-      value: YuraEvent (1)
+      value: Cian
       objectReference: {fileID: 0}
     - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
       propertyPath: <characterEnum>k__BackingField
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnLike>k__BackingField.m_PersistentCalls.m_Calls.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnLike>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
       propertyPath: <OnLike>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_Target
       value: 
-      objectReference: {fileID: 1714729944846041590, guid: 970a3455236b28841896689f610daedf, type: 3}
+      objectReference: {fileID: 3770610194815724646}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnLike>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnLike>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
+      value: Open
+      objectReference: {fileID: 0}
     - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
       propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_Target
       value: 
-      objectReference: {fileID: 1714729944846041590, guid: 970a3455236b28841896689f610daedf, type: 3}
+      objectReference: {fileID: 3770610194815724646}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
+      value: Open
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnLike>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
+      value: Assets._00._Work.PCM._02._Scripts.Contract.ContractChat, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnLike>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_BoolArgument
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
+      value: Assets._00._Work.PCM._02._Scripts.Contract.ContractChat, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_BoolArgument
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnLike>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 2470815443434517186, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
+      propertyPath: <OnClickEvent>k__BackingField.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 3652194290030569641, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
       propertyPath: storyEpisodeSo.Array.size
       value: 5
@@ -1319,11 +1387,11 @@ PrefabInstance:
     - target: {fileID: 3652194290030569641, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
       propertyPath: <characterData>k__BackingField
       value: 
-      objectReference: {fileID: 11400000, guid: 7e6e7524e8326ec4cad0244672206abe, type: 2}
+      objectReference: {fileID: 11400000, guid: b766322f6d097d144b1ca900593018ec, type: 2}
     - target: {fileID: 3652194290030569641, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
       propertyPath: <ChatOpen>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 3770610194815724646}
     - target: {fileID: 7734861392468631489, guid: 33ca7fa3895d754499f590406a077fe6, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
