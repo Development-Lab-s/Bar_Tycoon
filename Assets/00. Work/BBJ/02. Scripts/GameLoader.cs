@@ -26,6 +26,7 @@ namespace BBJ
         [SerializeField] private OrderManager _orderManager;
         [SerializeField] private CustomerManager _customerManager;
         [SerializeField] private StaffManager _staffManager;
+        [SerializeField] private LpStateSO _lpState;
 
         [Header("Data")]
         [SerializeField] private CocktailRecipeDatabaseSO _database;
@@ -103,6 +104,7 @@ namespace BBJ
         private void StartFresh()
         {
             _objectManager?.LoadDefaultLayout();
+            if (_lpState != null) _lpState.SelectedIndex = 0;
         }
 
         // ─── 복원 ────────────────────────────────────────────
@@ -138,6 +140,9 @@ namespace BBJ
             // Step 5: Staff 저장 위치에 스폰
             _staffManager?.RestoreStaff(saveData.Staff);
 
+            // Step 6.5: LP 선택 인덱스 복원
+            if (_lpState != null) _lpState.SelectedIndex = saveData.SelectedLpIndex;
+
             // Step 6: ReadyForServe 티켓 집계
             _playerOrderHandle?.RebuildReadyCount(tickets);
 
@@ -149,9 +154,10 @@ namespace BBJ
         {
             var saveData = new GameSaveData
             {
-                Stage = _objectManager?.GetStageSaveData() ?? new StageSaveData(),
-                Orders = _orderManager?.GetOrdersSaveData() ?? new OrdersSaveData(),
-                Staff = _staffManager?.GetSaveData() ?? new StaffSaveData(),
+                Stage          = _objectManager?.GetStageSaveData() ?? new StageSaveData(),
+                Orders         = _orderManager?.GetOrdersSaveData() ?? new OrdersSaveData(),
+                Staff          = _staffManager?.GetSaveData() ?? new StaffSaveData(),
+                SelectedLpIndex = _lpState?.SelectedIndex ?? 0,
             };
             SaveManager.Save(saveData, SaveFile, SaveFolder);
         }

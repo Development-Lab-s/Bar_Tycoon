@@ -1,4 +1,5 @@
 using _00._Work._Resources._02._Scripts.Modules;
+using BBJ.EventSystem;
 using Gamelib.EventSystem;
 using Gamelib.SoundSystem;
 using System;
@@ -10,10 +11,13 @@ using UnityEngine.UI;
 public class SideLpController : MonoBehaviour, IModule
 {
     [SerializeField] private EventChannelSO _LPchannel;
+    [SerializeField] private EventChannelSO _sceneChannel;
+    [SerializeField] private EventChannelSO _soundChannel;
+    [SerializeField] private LpStateSO _lpState;
 
     [SerializeField] private TextMeshProUGUI text;
 
-    [Header("LP ºÎ¸ð ÇÁ¸®ÆÕ")]
+    [Header("LP ï¿½Î¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
     [SerializeField] private GameObject lpItemPrefab;
     [SerializeField]private LpBoxImage lpImage;
 
@@ -22,7 +26,6 @@ public class SideLpController : MonoBehaviour, IModule
     private readonly Dictionary<int, LPBOX> _lpBoxDict = new();
 
     private int _currentActiveId = -1;
-    private int _myid = 0;
 
     private ModuleOwner _owner;
 
@@ -30,9 +33,11 @@ public class SideLpController : MonoBehaviour, IModule
     {
         _owner = owner;
         _LPchannel.AddListener<LpConncetEvent>(EventPlayLp);
+        _sceneChannel?.AddListener<SceneTypeChangedEvent>(OnSceneChanged);
         parentTrm = transform;
         CreateLPBoxes();
-        PlayLp(_myid);
+        int initialIndex = _lpState != null ? _lpState.SelectedIndex : 0;
+        PlayLp(initialIndex);
     }
 
     private void CreateLPBoxes()
@@ -52,7 +57,7 @@ public class SideLpController : MonoBehaviour, IModule
             if (lpBox == null)
             {
                 Debug.LogError(
-                    $"LPBOX ¾øÀ½ : {lpObj.name}");
+                    $"LPBOX ï¿½ï¿½ï¿½ï¿½ : {lpObj.name}");
 
                 continue;
             }
@@ -70,19 +75,27 @@ public class SideLpController : MonoBehaviour, IModule
     }
     public void PlayLp(int id)
     {
-        _myid = id;
         if (!_lpBoxDict.ContainsKey(id))
             return;
         if (_currentActiveId == id)
             return;
         if (_currentActiveId != -1)
-        {
             _lpBoxDict[_currentActiveId].StopLP();
-        }
         _lpBoxDict[id].Select();
-        text.text =
-            _lpBoxDict[id].ChangeName();
+        text.text = _lpBoxDict[id].ChangeName();
         _currentActiveId = id;
+        if (_lpState != null) _lpState.SelectedIndex = id;
+    }
+
+    private void ResumeBgm()
+    {
+        if (_currentActiveId < 0) return;
+        _soundChannel?.RaiseEvent(new PlaySoundEvent((BgmSounds)_currentActiveId, Vector3.zero, SoundChannelId.Bgm));
+    }
+
+    private void OnSceneChanged(SceneTypeChangedEvent e)
+    {
+        if (e.Current == SceneType.Main) ResumeBgm();
     }
 
     private void OnDestroy()
@@ -90,11 +103,9 @@ public class SideLpController : MonoBehaviour, IModule
         foreach (var box in _lpBoxDict.Values)
         {
             if (box != null)
-            {
                 box.OnLPClicked -= PlayLp;
-            }
         }
-        _LPchannel.RemoveListener<LpConncetEvent>(
-            EventPlayLp);
+        _LPchannel.RemoveListener<LpConncetEvent>(EventPlayLp);
+        _sceneChannel?.RemoveListener<SceneTypeChangedEvent>(OnSceneChanged);
     }
 }

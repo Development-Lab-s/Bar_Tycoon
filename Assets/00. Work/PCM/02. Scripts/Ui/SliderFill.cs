@@ -3,25 +3,22 @@ using UnityEngine.UI;
 
 public class SliderFill : MonoBehaviour
 {
-    [SerializeField]
-    private PlayerCharController[] charController;
+    [SerializeField] private CharacterRegisterSO registerSO;
+    [SerializeField] private CharListSO charList;
+    [SerializeField] private Image _slider;
 
     private int _choseCharacter;
 
     public int ChoseCharacter
     {
-        get
-        {
-            return _choseCharacter;
-        }
+        get => _choseCharacter;
         set
         {
             _choseCharacter = value;
-
             SliderAmount();
         }
     }
-    [SerializeField]private Image _slider;
+
     private void OnEnable()
     {
         SliderAmount();
@@ -29,16 +26,13 @@ public class SliderFill : MonoBehaviour
 
     private void SliderAmount()
     {
-        if (charController == null ||
-            charController.Length == 0)
-            return;
+        if (registerSO == null || charList == null) return;
+        if (_choseCharacter < 0 || _choseCharacter >= charList.charList.Length) return;
 
-        if (_choseCharacter < 0 ||
-            _choseCharacter >= charController.Length)
-            return;
+        var charSO = charList.charList[_choseCharacter]?.charLevel;
+        if (charSO == null) return;
 
-        _slider.fillAmount =
-            charController[_choseCharacter]
-            .GetExpRatio();
+        var ctrl = registerSO.GetById(charSO.id);
+        _slider.fillAmount = ctrl != null ? ctrl.GetExpRatio() : 0f;
     }
 }

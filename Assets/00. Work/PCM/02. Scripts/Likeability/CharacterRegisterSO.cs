@@ -22,7 +22,13 @@ public class CharacterRegisterSO : ScriptableObject
         return Registry.FirstOrDefault(c => c.characterData != null && c.characterData.characterName == name);
     }
 
-    // 2. 특정 기준 위치에서 가장 가까운 캐릭터 컨트롤러 찾아오기
+    public PlayerCharController GetById(string id)
+    {
+        return Registry.FirstOrDefault(c => c.characterData != null && c.characterData.id == id);
+    }
+
+    public IReadOnlyList<PlayerCharController> GetAll() => Registry;
+
     public PlayerCharController GetClosestCharacter(Vector3 from)
     {
         return Registry

@@ -51,7 +51,7 @@ namespace BBJ.UI.Order
         {
             if (!_active.TryGetValue(e.Ticket, out var ui)) return;
 
-            bool show = e.Ticket.State == OrderState.InProgress;
+            bool show = e.Ticket.State >= OrderState.Reserved;
             ui.gameObject.SetActive(show);
             if (show) ui.Refresh();
         }

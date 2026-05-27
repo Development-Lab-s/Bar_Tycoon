@@ -1,4 +1,3 @@
-using _00._Work._Resources._02._Scripts.Systems.SaveSystem;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,14 +7,12 @@ public class CharacterSO : ScriptableObject
 {
     public string id;
     public string characterName;
-    public int currentLevel = 1;
-    public int currentExp;
     public int maxLevel = 10;
+
     [System.Serializable]
     public struct DialogueData
     {
         [TextArea(2, 5)] public string context;
-        //public Sprite characterFace;
     }
 
     [System.Serializable]
@@ -25,43 +22,37 @@ public class CharacterSO : ScriptableObject
         public DialogueData[] dialogues;
     }
 
-    [Header("±âº» Á¤º¸")]
-
+    [Header("ê¸°ë³¸ ì„¤ì •")]
     public Sprite characterPortrait;
 
-    [Header("·¹º§º° ÇØ±İ ´ë»ç ¸®½ºÆ® (¿øÇÏ´Â ¸¸Å­ Ãß°¡ °¡´É)")]
+    [Header("í˜¸ê°ë„ ë ˆë²¨ë³„ ëŒ€ì‚¬ ë¦¬ìŠ¤íŠ¸ (ì›í•˜ëŠ” ë§Œí¼ ì¶”ê°€ ê°€ëŠ¥)")]
     public List<LevelDialogueGroup> dialogueGroups = new List<LevelDialogueGroup>();
 
     public List<DialogueData> GetAvailableDialogues(int currentLevel)
     {
-        List<DialogueData> availableList = new List<DialogueData>();
-
+        var availableList = new List<DialogueData>();
         foreach (var group in dialogueGroups)
         {
             if (currentLevel >= group.unlockLevel)
-            {
                 availableList.AddRange(group.dialogues);
-            }
         }
-
         return availableList;
     }
 
     public int GetMaxExpForLevel(int level)
     {
-        return (int)(Math.Pow(level -1, 2) * 21.875 + 200);
+        return (int)(Math.Pow(level - 1, 2) * 21.875 + 200);
     }
+
     public int GetTotalExpUpToLevel(int level)
     {
         int total = 0;
         for (int i = 1; i < level; i++)
-        {
             total += GetMaxExpForLevel(i);
-        }
         return total;
     }
 
-    public float GetTotalProgressRatio()
+    public float GetTotalProgressRatio(int currentLevel, int currentExp)
     {
         if (currentLevel >= maxLevel) return 1f;
 
@@ -72,22 +63,4 @@ public class CharacterSO : ScriptableObject
         float expMicroRatio = currentLevelExpRatio / (maxLevel - 1);
         return levelBaseRatio + expMicroRatio;
     }
-    public CharlikeabilitySave GetSaveData()
-    {
-        return new CharlikeabilitySave
-        {
-            id = id,
-            characterName = characterName,
-            currentLevel = currentLevel,
-            currentExp = currentExp,
-            maxLevel = maxLevel
-        };        
-    }
-    public void LoadSaveData(CharlikeabilitySave saveData)
-    {
-        currentLevel = saveData.currentLevel;
-        currentExp = saveData.currentExp;
-        maxLevel = saveData.maxLevel;
-    }
 }
-

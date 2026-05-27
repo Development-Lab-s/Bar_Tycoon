@@ -12,6 +12,7 @@ namespace BBJ.Save
         public StageSaveData  Stage  = new();
         public OrdersSaveData Orders = new();
         public StaffSaveData  Staff  = new();
+        public int            SelectedLpIndex = 0;
     }
 
     [Serializable]

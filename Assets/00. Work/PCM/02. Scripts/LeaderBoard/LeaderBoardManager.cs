@@ -33,6 +33,7 @@ public class LeaderBoardManager : MonoBehaviour
     }
 
     [SerializeField] private LikeitemListSo listSo;
+    [SerializeField] private CharacterRegisterSO characterRegisterSO;
     [SerializeField]private ExpManager expData;
     [SerializeField]private CoinManager coinData;
     [SerializeField]private TextMeshProUGUI nicknameSetting;
@@ -57,7 +58,7 @@ public class LeaderBoardManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"ÃÊ±âÈ­ ½ÇÆÐ : {e}");
+            Debug.LogError($"ï¿½Ê±ï¿½È­ ï¿½ï¿½ï¿½ï¿½ : {e}");
         }
     }
 
@@ -88,9 +89,9 @@ public class LeaderBoardManager : MonoBehaviour
             new LeaderboardExtraData
             {
                 playerLevel = expData.CurrentLevel,
-                favoriteCharacter = listSo.MostCharacter()
+                favoriteCharacter = listSo.MostCharacter(characterRegisterSO)
             };
-        Debug.Log(listSo.MostCharacter());
+        Debug.Log(listSo.MostCharacter(characterRegisterSO));
         string jsonMetadata =
             JsonConvert.SerializeObject(extraData);
 
@@ -113,7 +114,7 @@ public class LeaderBoardManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"[¸®´õº¸µå] Á¦Ãâ ½ÇÆÐ : {e}");
+            Debug.LogError($"[ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ : {e}");
         }
     }
 
@@ -124,12 +125,12 @@ public class LeaderBoardManager : MonoBehaviour
             await AuthenticationService.Instance
                 .UpdatePlayerNameAsync(pyName);
             nicknameSetting.text = GetMyNickName();
-            Debug.Log($"´Ð³×ÀÓ º¯°æ ¿Ï·á : {pyName}");
+            Debug.Log($"ï¿½Ð³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½ : {pyName}");
             //nicknameSetting.text = GetMyNickName();
         }
         catch (Exception e)
         {
-            Debug.LogError($"´Ð³×ÀÓ º¯°æ ½ÇÆÐ : {e}");
+            Debug.LogError($"ï¿½Ð³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ : {e}");
         }
     }
     public async void GetMyLeaderboardInfoNasync()
@@ -201,13 +202,13 @@ public class LeaderBoardManager : MonoBehaviour
                     catch (Exception ex)
                     {
                         Debug.LogWarning(
-                            $"[{playerName}] ¸ÞÅ¸µ¥ÀÌÅÍ ÆÄ½Ì ½ÇÆÐ : {ex}");
+                            $"[{playerName}] ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ä½ï¿½ ï¿½ï¿½ï¿½ï¿½ : {ex}");
                     }
                 }
                 else
                 {
                     Debug.LogWarning(
-                        $"[{playerName}] Metadata ¾øÀ½");
+                        $"[{playerName}] Metadata ï¿½ï¿½ï¿½ï¿½");
                 }
 
                 LeaderBoardData data =
@@ -224,7 +225,7 @@ public class LeaderBoardManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"Á¡¼ö °¡Á®¿À±â ½ÇÆÐ : {e}");
+            Debug.LogError($"ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ : {e}");
         }
     }
     public string GetMyNickName()

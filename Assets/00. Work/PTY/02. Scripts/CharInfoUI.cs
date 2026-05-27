@@ -8,6 +8,7 @@ public class CharInfoUI : MonoBehaviour
 {
     [Header("Data")]
     [SerializeField] private CharListSO charList;
+    [SerializeField] private CharacterRegisterSO registerSO;
 
     [Header("UI References - List")]
     [SerializeField] private Transform content;
@@ -15,6 +16,7 @@ public class CharInfoUI : MonoBehaviour
     [SerializeField] private GameObject charListIconPrefab;
     [SerializeField] private Button leftArrow;
     [SerializeField] private Button rightArrow;
+    [SerializeField] private TextMeshProUGUI levelText;
 
     [Header("UI References - Detail")]
     [SerializeField] private Image characterImage;
@@ -34,7 +36,8 @@ public class CharInfoUI : MonoBehaviour
     private List<CharListIcon> spawnedIcons = new();
     private int currentIndex = 0;
 
-    [SerializeField]private SliderFill sliderFill;
+    [SerializeField] private SliderFill sliderFill;
+
     private void OnEnable()
     {
         SpawnIcons();
@@ -45,7 +48,6 @@ public class CharInfoUI : MonoBehaviour
 
     private IEnumerator InitAfterLayout()
     {
-        // 레이아웃 계산 완료 대기
         yield return new WaitForEndOfFrame();
         UpdateView();
     }
@@ -80,11 +82,22 @@ public class CharInfoUI : MonoBehaviour
         }
 
         CenterToCurrentIndex();
-        UpdateDetailUI(charList.charList[currentIndex]);
-        Unlocker();
+
+        int level = GetCurrentLevel();
+        UpdateDetailUI(charList.charList[currentIndex], level);
+        Unlocker(level);
 
         leftArrow.interactable = currentIndex > 0;
         rightArrow.interactable = currentIndex < spawnedIcons.Count - 1;
+    }
+
+    private int GetCurrentLevel()
+    {
+        if (registerSO == null) return 1;
+        var charSO = charList.charList[currentIndex]?.charLevel;
+        if (charSO == null) return 1;
+        var ctrl = registerSO.GetById(charSO.id);
+        return ctrl != null ? ctrl.CurrentLevel : 1;
     }
 
     private void CenterToCurrentIndex()
@@ -96,7 +109,7 @@ public class CharInfoUI : MonoBehaviour
         content.localPosition = pos;
     }
 
-    private void UpdateDetailUI(CharacterDataSO data)
+    private void UpdateDetailUI(CharacterDataSO data, int level)
     {
         if (characterImage != null) characterImage.sprite = data.characterImage;
         if (characterTinyImage != null) characterTinyImage.sprite = data.characterImage;
@@ -107,6 +120,16 @@ public class CharInfoUI : MonoBehaviour
         if (specialtyText != null) specialtyText.text = $"특기: {data.specialty}";
         if (hobbyText != null) hobbyText.text = $"취미: {data.hobby}";
         if (favoriteCocktailText != null) favoriteCocktailText.text = $"좋아하는 칵테일: {data.favoriteCocktail}";
+        if (levelText != null) levelText.text = $"Lv.{level}";
+    }
+
+    private void Unlocker(int level)
+    {
+        for (int i = 0; i < Unlock.Length; i++)
+        {
+            bool isUnlocked = level >= 2 * (i + 1);
+            Unlock[i].gameObject.SetActive(!isUnlocked);
+        }
     }
 
     private void OnClickLeft()
@@ -115,16 +138,7 @@ public class CharInfoUI : MonoBehaviour
         sliderFill.ChoseCharacter = currentIndex;
         UpdateView();
     }
-    private void Unlocker()
-    {
-        for (int i = 0; i < Unlock.Length; i++)
-        {
-            bool isUnlocked =
-                charList.charList[currentIndex]
-                .charLevel.currentLevel >= 2*(i+1);
-            Unlock[i].gameObject.SetActive(!isUnlocked);
-        }
-    }
+
     private void OnClickRight()
     {
         currentIndex = Mathf.Min(spawnedIcons.Count - 1, currentIndex + moveStep);

@@ -13,7 +13,6 @@ namespace BBJ.UI.Order
     {
         [SerializeField] private Image    _foodIcon;
         [SerializeField] private TMP_Text _foodName;
-        [SerializeField] private TMP_Text _stateBadge;
         [SerializeField] private TMP_Text _workPhase;
         [SerializeField] private TMP_Text _priceLabel;
 
@@ -48,16 +47,13 @@ namespace BBJ.UI.Order
             {
                 _foodIcon.sprite = ordered.cocktailIcon;
                 _foodName.text   = ordered.cocktailName ?? "-";
-                _priceLabel.text = "가격 : " + ordered.price + " 원";
+                _priceLabel.text = "가격 : " + ordered.price + " <sprite=\"cost\" index=0>";
             }
         }
 
         public void Refresh()
         {
             if (_ticket == null) return;
-
-            if (_stateBadge != null)
-                _stateBadge.text = _ticket.State.ToString();
 
             if (_workPhase != null)
                 _workPhase.text = "(" + WorkPhaseLabel(_ticket.WorkPhase) + "...)";
@@ -97,8 +93,6 @@ namespace BBJ.UI.Order
             }
             _workPhase.UpdateVertexData(TMP_VertexDataUpdateFlags.Vertices);
         }
-
-        private void OnCancelClicked() => _onCancel?.Invoke(_ticket);
 
         private static string WorkPhaseLabel(OrderWorkPhase phase) => phase switch
         {

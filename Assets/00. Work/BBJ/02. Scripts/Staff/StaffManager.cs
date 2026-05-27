@@ -24,7 +24,8 @@ namespace BBJ.Staff
             public Vector3   Position;
         }
 
-        [SerializeField] private List<StaffEntry>  _entries     = new();
+        [SerializeField] private List<StaffEntry>    _entries     = new();
+        [SerializeField] private List<StaffConfigSO> _allConfigs  = new();
         [SerializeField] private List<SpawnPoint>  _spawnPoints = new();
         [SerializeField] private EventChannelSO    _staffChannel;
 
@@ -50,9 +51,9 @@ namespace BBJ.Staff
         {
             foreach (var save in data.Members)
             {
-                var entry = _entries.Find(e => e.Config != null && e.Config.Role == save.Role);
-                if (entry.Config == null) continue;
-                SpawnAtPosition(entry.Config, save.LastPosition);
+                var config = _allConfigs.Find(c => c != null && c.Role == save.Role);
+                if (config == null) continue;
+                SpawnAtPosition(config, save.LastPosition);
             }
         }
 
