@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-5696209610485515227
+--- !u!114 &-5449006355661965199
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -17,8 +17,8 @@ MonoBehaviour:
   canSkip: 1
   affectsAutoAdvance: 0
   background:
-    background: {fileID: 11400000, guid: 0ee66414d4d379e48880b34f09e7f535, type: 2}
-    backgroundKey: Bar_Kitchin
+    background: {fileID: 11400000, guid: aa9cfe2edd1ce9f41b118a83f04571f8, type: 2}
+    backgroundKey: Bar_BG_Default
     visible: 1
     stageLocalPosition: {x: 0, y: 0}
     overrideParallax: 0
@@ -30,44 +30,24 @@ MonoBehaviour:
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
     actorInstanceKey: cian_01
-    stageLocalPosition: {x: 0, y: 0}
+    stageLocalPosition: {x: -0.6, y: -1}
     scaleMultiplier: 1
     visible: 1
-    focused: 0
+    focused: 1
     sortOrder: 0
     poseKey: 
-    expression: 0
+    expression: 1
     expressionKey: 
     motionProfileKey: 
   cameraFocusTarget: 
   cameraTrack:
     defaultState:
-      stageLocalPosition: {x: 0, y: 1}
+      stageLocalPosition: {x: 0, y: 0}
       zoom: 1
       targetActorInstanceKey: 
       followMode: 0
       snapshotNormalizedPosition: {x: 0.5, y: 0.5}
     keyframes:
-    - property: 7
-      normalizedTime: 0
-      timeSeconds: 0
-      stageLocalPosition: {x: 0, y: 0}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 7
-      expression: 0
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: 
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1
-      cameraSnapshotNormalizedPosition: {x: 0.5, y: 0.5}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
     - property: 8
       normalizedTime: 0
       timeSeconds: 0
@@ -81,7 +61,7 @@ MonoBehaviour:
       backgroundKey: 
       cameraTargetActorKey: 
       cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 1}
+      cameraStageLocalPosition: {x: 0, y: 0}
       cameraZoom: 1
       cameraSnapshotNormalizedPosition: {x: 0, y: 0}
       cameraShakeStrength: 1
@@ -110,13 +90,52 @@ MonoBehaviour:
       cameraShakeTargetMode: 0
   backgroundTrack:
     keyframes: []
-  actorTracks: []
+  actorTracks:
+  - actorInstanceKey: cian_01
+    keyframes:
+    - property: 0
+      normalizedTime: 0
+      timeSeconds: 0
+      stageLocalPosition: {x: -0.6, y: -1}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 3
+      normalizedTime: 0
+      timeSeconds: 0
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 7
+      expression: 1
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
   soundTrack:
     bgmKeyframes: []
-    sfxKeyframes:
-    - normalizedTime: 0
-      timeSeconds: 0
-      sfxSound: 9
+    sfxKeyframes: []
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -130,9 +149,9 @@ MonoBehaviour:
   m_Name: line_012
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryLineSO
   lineId: line_012
-  speaker: {fileID: 11400000, guid: 0893391d14a01ad4f9de3bb1a1e77be5, type: 2}
+  speaker: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
   nameOverride: 
-  dialogueText: "\uC751? \uBB34\uC2A8\uC77C\uC774\uC57C \uC2DC\uC548?"
+  dialogueText: "\uB124, \uADF8\uB807\uC2B5\uB2C8\uB2E4."
   nextLineId: line_013
   logVisible: 1
   allowTapToComplete: 1
@@ -144,6 +163,6 @@ MonoBehaviour:
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
   modules:
-  - {fileID: -5696209610485515227}
-  editorNodePosition: {x: 514.23, y: 388.61}
+  - {fileID: -5449006355661965199}
+  editorNodePosition: {x: 3452, y: 153}
   editorNodeSize: {x: -1, y: -1}

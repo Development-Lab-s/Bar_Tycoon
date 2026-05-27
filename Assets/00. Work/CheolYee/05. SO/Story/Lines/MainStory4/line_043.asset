@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-4252531559787695410
+--- !u!114 &-2751522747865475150
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -27,22 +27,34 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     sortOrder: -100
   actors:
+  - actor: {fileID: 11400000, guid: f8ed6af24a23de34cb63365fac84a702, type: 2}
+    actorKey: Yura
+    actorInstanceKey: Yura_01
+    stageLocalPosition: {x: 0, y: 0}
+    scaleMultiplier: 1
+    visible: 1
+    focused: 0
+    sortOrder: 0
+    poseKey: 
+    expression: 0
+    expressionKey: 
+    motionProfileKey: 
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
     actorInstanceKey: cian_01
-    stageLocalPosition: {x: 0, y: -1}
+    stageLocalPosition: {x: 4.16, y: 0}
     scaleMultiplier: 1
-    visible: 1
-    focused: 1
-    sortOrder: 0
+    visible: 0
+    focused: 0
+    sortOrder: 1
     poseKey: 
-    expression: 3
+    expression: 0
     expressionKey: 
     motionProfileKey: 
   cameraFocusTarget: 
   cameraTrack:
     defaultState:
-      stageLocalPosition: {x: 0, y: 0}
+      stageLocalPosition: {x: 0, y: 1}
       zoom: 1
       targetActorInstanceKey: 
       followMode: 0
@@ -51,26 +63,6 @@ MonoBehaviour:
     - property: 8
       normalizedTime: 0
       timeSeconds: 0
-      stageLocalPosition: {x: 0, y: 0}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 3
-      expression: 0
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: 
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1
-      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
-    - property: 8
-      normalizedTime: 1
-      timeSeconds: 1
       stageLocalPosition: {x: 0, y: 0}
       scale: {x: 1, y: 1}
       scaleX: 1
@@ -108,35 +100,15 @@ MonoBehaviour:
       cameraShakeDuration: 0.25
       cameraShakeFrequency: 2
       cameraShakeTargetMode: 0
-    - property: 9
-      normalizedTime: 1
-      timeSeconds: 1
-      stageLocalPosition: {x: 0, y: 0}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 3
-      expression: 0
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: 
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1.2
-      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
   backgroundTrack:
     keyframes: []
   actorTracks:
-  - actorInstanceKey: cian_01
+  - actorInstanceKey: Yura_01
     keyframes:
     - property: 0
       normalizedTime: 0
       timeSeconds: 0
-      stageLocalPosition: {x: 0, y: -1}
+      stageLocalPosition: {x: 0, y: 0}
       scale: {x: 1, y: 1}
       scaleX: 1
       visible: 1
@@ -173,6 +145,28 @@ MonoBehaviour:
       cameraShakeDuration: 0.25
       cameraShakeFrequency: 2
       cameraShakeTargetMode: 0
+  - actorInstanceKey: cian_01
+    keyframes:
+    - property: 0
+      normalizedTime: 0
+      timeSeconds: 0
+      stageLocalPosition: {x: 4.16, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
   soundTrack:
     bgmKeyframes: []
     sfxKeyframes: []
@@ -189,10 +183,10 @@ MonoBehaviour:
   m_Name: line_043
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryLineSO
   lineId: line_043
-  speaker: {fileID: 0}
+  speaker: {fileID: 11400000, guid: 138cd276fea4f4e41bc7c6833b2c72e6, type: 2}
   nameOverride: 
-  dialogueText: "\uC2DC\uC548\uC740 \uC9C0\uC6D0\uC790\uB4E4\uC758 \uC790\uC18C\uC11C\uB97C
-    \uBCF4\uACE0 \uC788\uB2E4."
+  dialogueText: "\uC54C\uBC14\uB294 \uCC98\uC74C\uC774\uB2C8? \uC774\uAC78 \uD301\uC774\uB77C
+    \uD558\uB294\uAC70\uC57C."
   nextLineId: line_044
   logVisible: 1
   allowTapToComplete: 1
@@ -204,6 +198,6 @@ MonoBehaviour:
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
   modules:
-  - {fileID: -4252531559787695410}
-  editorNodePosition: {x: 860, y: 924.6248}
+  - {fileID: -2751522747865475150}
+  editorNodePosition: {x: 1731.7128, y: 1654.0615}
   editorNodeSize: {x: -1, y: -1}

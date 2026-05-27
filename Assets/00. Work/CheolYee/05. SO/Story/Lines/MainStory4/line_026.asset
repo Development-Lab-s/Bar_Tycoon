@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-3103611155216726763
+--- !u!114 &-6333418263983484817
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -17,8 +17,8 @@ MonoBehaviour:
   canSkip: 1
   affectsAutoAdvance: 0
   background:
-    background: {fileID: 11400000, guid: e092e608913f98b439d3357dfd94b7c9, type: 2}
-    backgroundKey: Bar_Night
+    background: {fileID: 11400000, guid: aa9cfe2edd1ce9f41b118a83f04571f8, type: 2}
+    backgroundKey: Bar_BG_Default
     visible: 1
     stageLocalPosition: {x: 0, y: 0}
     overrideParallax: 0
@@ -27,14 +27,26 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     sortOrder: -100
   actors:
+  - actor: {fileID: 11400000, guid: f8ed6af24a23de34cb63365fac84a702, type: 2}
+    actorKey: Yura
+    actorInstanceKey: Yura_01
+    stageLocalPosition: {x: 0.14999998, y: 0}
+    scaleMultiplier: 1
+    visible: 1
+    focused: 0
+    sortOrder: 0
+    poseKey: 
+    expression: 4
+    expressionKey: 
+    motionProfileKey: 
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
     actorInstanceKey: cian_01
-    stageLocalPosition: {x: 0, y: -1}
+    stageLocalPosition: {x: 4.16, y: 0}
     scaleMultiplier: 1
     visible: 1
-    focused: 1
-    sortOrder: 0
+    focused: 0
+    sortOrder: 1
     poseKey: 
     expression: 0
     expressionKey: 
@@ -42,8 +54,8 @@ MonoBehaviour:
   cameraFocusTarget: 
   cameraTrack:
     defaultState:
-      stageLocalPosition: {x: 0, y: 1}
-      zoom: 1.2
+      stageLocalPosition: {x: 2.5, y: 2}
+      zoom: 1.1
       targetActorInstanceKey: 
       followMode: 0
       snapshotNormalizedPosition: {x: 0.5, y: 0.5}
@@ -61,7 +73,7 @@ MonoBehaviour:
       backgroundKey: 
       cameraTargetActorKey: 
       cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 1}
+      cameraStageLocalPosition: {x: 2.5, y: 2}
       cameraZoom: 1
       cameraSnapshotNormalizedPosition: {x: 0, y: 0}
       cameraShakeStrength: 1
@@ -82,7 +94,27 @@ MonoBehaviour:
       cameraTargetActorKey: 
       cameraFollowMode: 0
       cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1.2
+      cameraZoom: 1.1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 9
+      normalizedTime: 1
+      timeSeconds: 1
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1
       cameraSnapshotNormalizedPosition: {x: 0, y: 0}
       cameraShakeStrength: 1
       cameraShakeDuration: 0.25
@@ -91,52 +123,12 @@ MonoBehaviour:
   backgroundTrack:
     keyframes: []
   actorTracks:
-  - actorInstanceKey: cian_01
+  - actorInstanceKey: Yura_01
     keyframes:
     - property: 0
       normalizedTime: 0
       timeSeconds: 0
-      stageLocalPosition: {x: 0, y: -1}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 3
-      expression: 0
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: 
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1
-      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
-    - property: 0
-      normalizedTime: 0.3
-      timeSeconds: 0.3
-      stageLocalPosition: {x: 0, y: -0.33}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 3
-      expression: 0
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: 
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1
-      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
-    - property: 0
-      normalizedTime: 0.6
-      timeSeconds: 0.6
-      stageLocalPosition: {x: 0, y: -1}
+      stageLocalPosition: {x: 0.14999998, y: 0}
       scale: {x: 1, y: 1}
       scaleX: 1
       visible: 1
@@ -173,6 +165,28 @@ MonoBehaviour:
       cameraShakeDuration: 0.25
       cameraShakeFrequency: 2
       cameraShakeTargetMode: 0
+  - actorInstanceKey: cian_01
+    keyframes:
+    - property: 0
+      normalizedTime: 0
+      timeSeconds: 0
+      stageLocalPosition: {x: 4.16, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
   soundTrack:
     bgmKeyframes: []
     sfxKeyframes: []
@@ -191,8 +205,8 @@ MonoBehaviour:
   lineId: line_026
   speaker: {fileID: 0}
   nameOverride: 
-  dialogueText: "\uC2DC\uC548\uC740 \uC57D\uAC04 \uB180\uB780 \uD45C\uC815\uC73C\uB85C
-    \uB2E4\uC2DC \uB418\uBB3B\uB294\uB2E4."
+  dialogueText: "\uC5B4\uCA54 \uC904 \uBAB0\uB77C\uD558\uACE0 \uC788\uB294 \uC720\uB77C\uC5D0\uAC8C
+    {player}\uC774(\uAC00) \uB9D0\uC744 \uAC74\uB2E4."
   nextLineId: line_027
   logVisible: 1
   allowTapToComplete: 1
@@ -204,6 +218,6 @@ MonoBehaviour:
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
   modules:
-  - {fileID: -3103611155216726763}
-  editorNodePosition: {x: 1694.8125, y: 511.34348}
+  - {fileID: -6333418263983484817}
+  editorNodePosition: {x: 2587.287, y: 1071.3334}
   editorNodeSize: {x: -1, y: -1}

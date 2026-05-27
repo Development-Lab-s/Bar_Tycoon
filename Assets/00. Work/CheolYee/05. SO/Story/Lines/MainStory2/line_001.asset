@@ -15,7 +15,7 @@ MonoBehaviour:
   lineId: line_001
   speaker: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
   nameOverride: 
-  dialogueText: "\uC798\uD558\uC168\uC5B4\uC694, \uC810\uC7A5\uB2D8."
+  dialogueText: "\uC810\uC7A5\uB2D8."
   nextLineId: line_002
   logVisible: 1
   allowTapToComplete: 1
@@ -27,10 +27,10 @@ MonoBehaviour:
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
   modules:
-  - {fileID: 6812989213952043900}
-  editorNodePosition: {x: 221, y: 164}
+  - {fileID: 3366027477583873909}
+  editorNodePosition: {x: 226, y: 148}
   editorNodeSize: {x: -1, y: -1}
---- !u!114 &6812989213952043900
+--- !u!114 &3366027477583873909
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -47,12 +47,12 @@ MonoBehaviour:
   canSkip: 1
   affectsAutoAdvance: 0
   background:
-    background: {fileID: 11400000, guid: 0ee66414d4d379e48880b34f09e7f535, type: 2}
-    backgroundKey: Bar_Kitchin
+    background: {fileID: 11400000, guid: aa9cfe2edd1ce9f41b118a83f04571f8, type: 2}
+    backgroundKey: Bar_BG_Default
     visible: 1
     stageLocalPosition: {x: 0, y: 0}
-    overrideParallax: 1
-    parallaxFactorOverride: 0
+    overrideParallax: 0
+    parallaxFactorOverride: 0.5
     scaleMultiplier: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     sortOrder: -100
@@ -60,7 +60,7 @@ MonoBehaviour:
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
     actorInstanceKey: cian_01
-    stageLocalPosition: {x: 0, y: 0}
+    stageLocalPosition: {x: -0.6, y: -1}
     scaleMultiplier: 1
     visible: 1
     focused: 1
@@ -78,26 +78,6 @@ MonoBehaviour:
       followMode: 0
       snapshotNormalizedPosition: {x: 0.5, y: 0.5}
     keyframes:
-    - property: 7
-      normalizedTime: 0
-      timeSeconds: 0
-      stageLocalPosition: {x: 0, y: 0}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 7
-      expression: 0
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: cian_01
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1
-      cameraSnapshotNormalizedPosition: {x: 0.5, y: 0.5}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
     - property: 8
       normalizedTime: 1
       timeSeconds: 1
@@ -111,7 +91,7 @@ MonoBehaviour:
       backgroundKey: 
       cameraTargetActorKey: 
       cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 1.84}
+      cameraStageLocalPosition: {x: 0, y: 1}
       cameraZoom: 1
       cameraSnapshotNormalizedPosition: {x: 0, y: 0}
       cameraShakeStrength: 1
@@ -140,29 +120,7 @@ MonoBehaviour:
       cameraShakeTargetMode: 0
   backgroundTrack:
     keyframes: []
-  actorTracks:
-  - actorInstanceKey: cian_01
-    keyframes:
-    - property: 3
-      normalizedTime: 0
-      timeSeconds: 0
-      stageLocalPosition: {x: 0, y: 0}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 7
-      expression: 1
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: 
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1
-      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
+  actorTracks: []
   soundTrack:
     bgmKeyframes:
     - normalizedTime: 0
@@ -173,4 +131,4 @@ MonoBehaviour:
     sfxKeyframes:
     - normalizedTime: 0
       timeSeconds: 0
-      sfxSound: 2
+      sfxSound: 15

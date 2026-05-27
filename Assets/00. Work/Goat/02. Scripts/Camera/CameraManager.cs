@@ -24,7 +24,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
         [SerializeField] private float movePositionDuration;
         [SerializeField] private float moveZoomDuration;
         [SerializeField] private int focusCameraActivePriority = 100;
-        [SerializeField] private int focusCameraUnActivePriority = 1;
+        [SerializeField] private int focusCameraUnActivePriority = -1;
         [SerializeField] private float waitDuration = 1;
         [SerializeField] private float zoomPercent = 0.7f;
         [SerializeField] private float space = 0.6f;
@@ -35,6 +35,8 @@ namespace _00._Work.Goat._02._Scripts.Camera
 
         private CameraPanController _cameraPanController;
         private FreeZoomController _freeZoomController;
+        
+        private Coroutine _coroutine;
 
         private void Awake()
         {
@@ -43,6 +45,19 @@ namespace _00._Work.Goat._02._Scripts.Camera
 
             _cameraPanController = playCamera.GetComponent<CameraPanController>();
             _freeZoomController = playCamera.GetComponent<FreeZoomController>();
+        }
+        
+        private void OnDisable()
+        {
+            _isPlaying = false;
+            if (_coroutine != null)
+            {
+                StopCoroutine(_coroutine);
+                _coroutine = null;
+            }
+            
+            if (focusCamera != null)
+                focusCamera.Priority = focusCameraUnActivePriority;
         }
 
         private void OnDestroy()
@@ -55,7 +70,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
         {
             if (_objectPositionQueue.Count > 0)
             {
-                StartCoroutine(CameraMotionCoroutine());
+                _coroutine = StartCoroutine(CameraMotionCoroutine());
             }
         }
 
@@ -67,7 +82,7 @@ namespace _00._Work.Goat._02._Scripts.Camera
             {
                 if (!_isPlaying)
                 {
-                    StartCoroutine(CameraMotionCoroutine());
+                    _coroutine = StartCoroutine(CameraMotionCoroutine());
                 }
             }
         }
@@ -75,9 +90,6 @@ namespace _00._Work.Goat._02._Scripts.Camera
         private IEnumerator CameraMotionCoroutine()
         {
             _isPlaying = true;
-
-            _cameraPanController.AddBlockReason(CameraBlockReason.CameraMotion);
-            _freeZoomController.AddBlockReason(CameraBlockReason.CameraMotion);
 
             List<Vector2> targetList = _objectPositionQueue.Dequeue();
 
@@ -118,11 +130,9 @@ namespace _00._Work.Goat._02._Scripts.Camera
 
             _freeZoomController.SetZoom(originZoom, true);
 
-            _cameraPanController.RemoveBlockReason(CameraBlockReason.CameraMotion);
-            _freeZoomController.RemoveBlockReason(CameraBlockReason.CameraMotion);
-
             focusCamera.Priority = focusCameraUnActivePriority;
             _isPlaying = false;
+            _coroutine = null;
         }
 
         private IEnumerator MoveZoomCoroutine(float targetLens)

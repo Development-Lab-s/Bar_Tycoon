@@ -33,8 +33,8 @@ public class LeaderBoardManager : MonoBehaviour
     }
 
     [SerializeField] private LikeitemListSo listSo;
-    private ExpManager expData;
-    private CoinManager coinData;
+    [SerializeField]private ExpManager expData;
+    [SerializeField]private CoinManager coinData;
     [SerializeField]private TextMeshProUGUI nicknameSetting;
     private int limit = 50;
 
@@ -87,7 +87,7 @@ public class LeaderBoardManager : MonoBehaviour
         LeaderboardExtraData extraData =
             new LeaderboardExtraData
             {
-                playerLevel = expData.CurrentExp,
+                playerLevel = expData.CurrentLevel,
                 favoriteCharacter = listSo.MostCharacter()
             };
         Debug.Log(listSo.MostCharacter());

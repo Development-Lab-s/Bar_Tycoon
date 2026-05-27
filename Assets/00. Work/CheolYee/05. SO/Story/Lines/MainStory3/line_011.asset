@@ -1,6 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-2329079083342158225
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4181cc477f04d9fbe9287c625e92565, type: 3}
+  m_Name: line_011
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryLineSO
+  lineId: line_011
+  speaker: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
+  nameOverride: 
+  dialogueText: "\uC804 \uAD1C\uCC2E\uC2B5\uB2C8\uB2E4. \uC810\uC7A5\uB2D8"
+  nextLineId: line_012
+  logVisible: 1
+  allowTapToComplete: 1
+  focusPolicy: 0
+  voice:
+    voiceKey: 
+    playbackPolicy: 0
+    allowReplayInLog: 1
+  useAutoAdvanceOverride: 0
+  autoAdvanceDelay: 1
+  modules:
+  - {fileID: 5376125121088662456}
+  editorNodePosition: {x: 300.1875, y: 284.74973}
+  editorNodeSize: {x: -1, y: -1}
+--- !u!114 &5376125121088662456
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -30,19 +60,19 @@ MonoBehaviour:
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
     actorInstanceKey: cian_01
-    stageLocalPosition: {x: -0.6, y: -1}
+    stageLocalPosition: {x: 0.1, y: 0}
     scaleMultiplier: 1
     visible: 1
-    focused: 0
+    focused: 1
     sortOrder: 0
     poseKey: 
-    expression: 1
+    expression: 0
     expressionKey: 
     motionProfileKey: 
   cameraFocusTarget: 
   cameraTrack:
     defaultState:
-      stageLocalPosition: {x: 0, y: 0}
+      stageLocalPosition: {x: 0.76, y: 1.3}
       zoom: 1
       targetActorInstanceKey: 
       followMode: 0
@@ -61,7 +91,7 @@ MonoBehaviour:
       backgroundKey: 
       cameraTargetActorKey: 
       cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraStageLocalPosition: {x: 0.76, y: 1.3}
       cameraZoom: 1
       cameraSnapshotNormalizedPosition: {x: 0, y: 0}
       cameraShakeStrength: 1
@@ -96,7 +126,7 @@ MonoBehaviour:
     - property: 0
       normalizedTime: 0
       timeSeconds: 0
-      stageLocalPosition: {x: -0.6, y: -1}
+      stageLocalPosition: {x: 0.1, y: 0}
       scale: {x: 1, y: 1}
       scaleX: 1
       visible: 1
@@ -121,7 +151,7 @@ MonoBehaviour:
       scaleX: 1
       visible: 1
       easing: 7
-      expression: 1
+      expression: 0
       background: {fileID: 0}
       backgroundKey: 
       cameraTargetActorKey: 
@@ -139,33 +169,3 @@ MonoBehaviour:
     - normalizedTime: 0
       timeSeconds: 0
       sfxSound: 10
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e4181cc477f04d9fbe9287c625e92565, type: 3}
-  m_Name: line_011
-  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryLineSO
-  lineId: line_011
-  speaker: {fileID: 11400000, guid: 0893391d14a01ad4f9de3bb1a1e77be5, type: 2}
-  nameOverride: 
-  dialogueText: "\uC774\uAC78 \uD63C\uC790 \uB2E4 \uC815\uB9AC\uD55C\uAC70\uC57C?"
-  nextLineId: line_012
-  logVisible: 1
-  allowTapToComplete: 1
-  focusPolicy: 0
-  voice:
-    voiceKey: 
-    playbackPolicy: 0
-    allowReplayInLog: 1
-  useAutoAdvanceOverride: 0
-  autoAdvanceDelay: 1
-  modules:
-  - {fileID: -2329079083342158225}
-  editorNodePosition: {x: 3161, y: 152}
-  editorNodeSize: {x: -1, y: -1}

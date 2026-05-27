@@ -39,7 +39,11 @@ namespace BBJ.Scene
             tutorialStart?.Invoke();
             Camera.SetupCurrent(sceenMainCamera);
             playerInput?.SetEnable(true);
+            if (mainCanvases != null)
+                foreach (var c in mainCanvases)
+                    c?.gameObject.SetActive(true);
             RestoreCanvasOrders();
+            storyCanvas.gameObject.SetActive(true);
         }
         public void OnBackground()
         {
@@ -47,6 +51,9 @@ namespace BBJ.Scene
             sceenMainCamera?.gameObject.SetActive(false);
             playerInput?.SetEnable(false);
             LowerCanvasOrders();
+            if (mainCanvases != null)
+                foreach (var c in mainCanvases)
+                    c?.gameObject.SetActive(false);
             storyCanvas.gameObject.SetActive(false);
         }
         
