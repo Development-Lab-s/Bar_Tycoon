@@ -802,10 +802,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  <characterEnum>k__BackingField: 0
-  <OnLike>k__BackingField:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1001 &5789050548185350236
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -817,6 +813,10 @@ PrefabInstance:
     - target: {fileID: 1123432103046705895, guid: ba7a71e3ef867bf4fa12649a40411a00, type: 3}
       propertyPath: m_Mesh
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1753849654341755471, guid: ba7a71e3ef867bf4fa12649a40411a00, type: 3}
+      propertyPath: sortingOffset
+      value: 498
       objectReference: {fileID: 0}
     - target: {fileID: 1753849654341755471, guid: ba7a71e3ef867bf4fa12649a40411a00, type: 3}
       propertyPath: targetRenderers.Array.size
@@ -831,6 +831,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2888728427618177675, guid: ba7a71e3ef867bf4fa12649a40411a00, type: 3}
+      propertyPath: sortingOffset
+      value: 498
+      objectReference: {fileID: 0}
+    - target: {fileID: 2888728427618177675, guid: ba7a71e3ef867bf4fa12649a40411a00, type: 3}
       propertyPath: targetRenderers.Array.size
       value: 2
       objectReference: {fileID: 0}
@@ -838,6 +842,10 @@ PrefabInstance:
       propertyPath: 'targetRenderers.Array.data[1]'
       value: 
       objectReference: {fileID: 4544798986088192160}
+    - target: {fileID: 3038135040360286406, guid: ba7a71e3ef867bf4fa12649a40411a00, type: 3}
+      propertyPath: m_Radius
+      value: 0.66
+      objectReference: {fileID: 0}
     - target: {fileID: 5699159144108977193, guid: ba7a71e3ef867bf4fa12649a40411a00, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1053,6 +1061,10 @@ PrefabInstance:
       propertyPath: sortPoint
       value: 
       objectReference: {fileID: 4831979843010641707}
+    - target: {fileID: 6341209904422489513, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
+      propertyPath: sortingOffset
+      value: 499
+      objectReference: {fileID: 0}
     - target: {fileID: 6462065046692645837, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1094,6 +1106,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7378113679254595189, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
+      propertyPath: m_SortingOrder
+      value: 487
+      objectReference: {fileID: 0}
+    - target: {fileID: 7378113679254595189, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 00fc7325225811d46afd88d445835a6c, type: 2}
@@ -1101,7 +1117,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: SittingMimic
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5640682306033516157, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -1136,6 +1153,10 @@ PrefabInstance:
       propertyPath: sortPoint
       value: 
       objectReference: {fileID: 6565294669657912672}
+    - target: {fileID: 6341209904422489513, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
+      propertyPath: sortingOffset
+      value: 499
+      objectReference: {fileID: 0}
     - target: {fileID: 6462065046692645837, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.09
@@ -1189,6 +1210,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7378113679254595189, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
+      propertyPath: m_SortingOrder
+      value: 487
+      objectReference: {fileID: 0}
+    - target: {fileID: 7378113679254595189, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: c973f97156d72d947a008bb1ecb0344f, type: 2}
@@ -1196,7 +1221,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: VisualMimic
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5640682306033516157, guid: 607b2e0e06bf6c94bae87d509deec98d, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

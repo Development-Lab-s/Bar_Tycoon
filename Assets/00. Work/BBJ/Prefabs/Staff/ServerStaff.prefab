@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 4025781611528585969}
   - component: {fileID: 8229166095155297633}
   - component: {fileID: 4439219145106115515}
-  - component: {fileID: 4150850981391875993}
   - component: {fileID: 4700922912668223904}
+  - component: {fileID: 7853632017390402772}
   m_Layer: 0
   m_Name: Cian_Visual (1)
   m_TagString: Untagged
@@ -92,19 +92,6 @@ MeshRenderer:
   m_SortingOrder: -12
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!210 &4150850981391875993
-SortingGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7458727270964136763}
-  m_Enabled: 1
-  m_SortingLayerID: 1019297591
-  m_SortingLayer: -5
-  m_SortingOrder: 600
-  m_SortAtRoot: 0
-  m_Sort3DAs2D: 0
 --- !u!114 &4700922912668223904
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -118,6 +105,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkeletonMimic
   skeletonMesh: {fileID: 6908785275087496241}
+--- !u!114 &7853632017390402772
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7458727270964136763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d793d29fc56669d44a1db8c5f27db7e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Core.Sorting.DepthSortingByPoint
+  sortPoint: {fileID: 8194472641905599734}
+  targetRenderers:
+  - {fileID: 4439219145106115515}
+  sortAxis: {x: 0, y: 0.1, z: 0}
+  precision: 100
+  sortingOffset: 499
+  updateMode: 1
 --- !u!1 &8499071889965679544
 GameObject:
   m_ObjectHideFlags: 0
@@ -885,6 +891,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1646007376925808090}
     m_Modifications:
+    - target: {fileID: 2158160471188406511, guid: e5a8030570d187240baaa24628814778, type: 3}
+      propertyPath: m_TagString
+      value: SortingTarget
+      objectReference: {fileID: 0}
     - target: {fileID: 2338571299057406319, guid: e5a8030570d187240baaa24628814778, type: 3}
       propertyPath: m_SortingOrder
       value: 120
@@ -939,7 +949,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4449036868328066678, guid: e5a8030570d187240baaa24628814778, type: 3}
       propertyPath: targetRenderers.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4449036868328066678, guid: e5a8030570d187240baaa24628814778, type: 3}
       propertyPath: 'targetRenderers.Array.data[1]'
@@ -994,6 +1004,11 @@ MonoBehaviour:
 --- !u!33 &6908785275087496241 stripped
 MeshFilter:
   m_CorrespondingSourceObject: {fileID: 8060562110955857845, guid: e5a8030570d187240baaa24628814778, type: 3}
+  m_PrefabInstance: {fileID: 3475706969937216388}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8194472641905599734 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4721087843748128626, guid: e5a8030570d187240baaa24628814778, type: 3}
   m_PrefabInstance: {fileID: 3475706969937216388}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5315605768024105124

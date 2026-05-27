@@ -36,7 +36,6 @@ Transform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1393990381391150967}
-  - {fileID: 715691292285250045}
   m_Father: {fileID: 5699159144108977193}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8206437771856448327
@@ -232,9 +231,9 @@ GameObject:
   - component: {fileID: 715691292285250045}
   - component: {fileID: 3038135040360286406}
   - component: {fileID: 607552850303252904}
-  m_Layer: 0
+  m_Layer: 15
   m_Name: SortTriggerSenser
-  m_TagString: Untagged
+  m_TagString: SortingTarget
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -249,10 +248,10 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1111109, y: 1.1111109, z: 1.1111109}
+  m_LocalScale: {x: 0.09999999, y: 0.09999999, z: 0.09999999}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8807743336475242274}
+  m_Father: {fileID: 5699159144108977193}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!58 &3038135040360286406
 CircleCollider2D:
@@ -475,6 +474,7 @@ Transform:
   m_Children:
   - {fileID: 1872285595613832235}
   - {fileID: 8807743336475242274}
+  - {fileID: 715691292285250045}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &6245213249431848951

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[RequireComponent(typeof(SortingGroup))]
 public class SkeletonMimic : MonoBehaviour
 {
     public MeshFilter skeletonMesh;
