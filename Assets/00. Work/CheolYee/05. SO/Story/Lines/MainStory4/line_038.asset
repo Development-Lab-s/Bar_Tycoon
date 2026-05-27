@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-8495631276174444436
+--- !u!114 &-897456534451940260
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -17,8 +17,8 @@ MonoBehaviour:
   canSkip: 1
   affectsAutoAdvance: 0
   background:
-    background: {fileID: 11400000, guid: e092e608913f98b439d3357dfd94b7c9, type: 2}
-    backgroundKey: Bar_Night
+    background: {fileID: 11400000, guid: aa9cfe2edd1ce9f41b118a83f04571f8, type: 2}
+    backgroundKey: Bar_BG_Default
     visible: 1
     stageLocalPosition: {x: 0, y: 0}
     overrideParallax: 0
@@ -27,14 +27,26 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     sortOrder: -100
   actors:
-  - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
-    actorKey: cian
-    actorInstanceKey: cian_01
-    stageLocalPosition: {x: 0, y: -1}
+  - actor: {fileID: 11400000, guid: f8ed6af24a23de34cb63365fac84a702, type: 2}
+    actorKey: Yura
+    actorInstanceKey: Yura_01
+    stageLocalPosition: {x: 0, y: 0}
     scaleMultiplier: 1
     visible: 1
     focused: 1
     sortOrder: 0
+    poseKey: 
+    expression: 1
+    expressionKey: 
+    motionProfileKey: 
+  - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
+    actorKey: cian
+    actorInstanceKey: cian_01
+    stageLocalPosition: {x: 4.16, y: 0}
+    scaleMultiplier: 1
+    visible: 0
+    focused: 0
+    sortOrder: 1
     poseKey: 
     expression: 0
     expressionKey: 
@@ -42,8 +54,8 @@ MonoBehaviour:
   cameraFocusTarget: 
   cameraTrack:
     defaultState:
-      stageLocalPosition: {x: 0, y: 0}
-      zoom: 1
+      stageLocalPosition: {x: 0, y: 1}
+      zoom: 1.3
       targetActorInstanceKey: 
       followMode: 0
       snapshotNormalizedPosition: {x: 0.5, y: 0.5}
@@ -61,7 +73,7 @@ MonoBehaviour:
       backgroundKey: 
       cameraTargetActorKey: 
       cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraStageLocalPosition: {x: 0, y: 1}
       cameraZoom: 1
       cameraSnapshotNormalizedPosition: {x: 0, y: 0}
       cameraShakeStrength: 1
@@ -82,6 +94,26 @@ MonoBehaviour:
       cameraTargetActorKey: 
       cameraFollowMode: 0
       cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1.3
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+    - property: 9
+      normalizedTime: 1
+      timeSeconds: 1
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
       cameraZoom: 1
       cameraSnapshotNormalizedPosition: {x: 0, y: 0}
       cameraShakeStrength: 1
@@ -91,12 +123,12 @@ MonoBehaviour:
   backgroundTrack:
     keyframes: []
   actorTracks:
-  - actorInstanceKey: cian_01
+  - actorInstanceKey: Yura_01
     keyframes:
     - property: 0
       normalizedTime: 0
       timeSeconds: 0
-      stageLocalPosition: {x: 0, y: -1}
+      stageLocalPosition: {x: 0, y: 0}
       scale: {x: 1, y: 1}
       scaleX: 1
       visible: 1
@@ -121,7 +153,29 @@ MonoBehaviour:
       scaleX: 1
       visible: 1
       easing: 7
-      expression: 1
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
+  - actorInstanceKey: cian_01
+    keyframes:
+    - property: 0
+      normalizedTime: 0
+      timeSeconds: 0
+      stageLocalPosition: {x: 4.16, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
       background: {fileID: 0}
       backgroundKey: 
       cameraTargetActorKey: 
@@ -152,9 +206,10 @@ MonoBehaviour:
   m_Name: line_038
   m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.StoryLineSO
   lineId: line_038
-  speaker: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
+  speaker: {fileID: 11400000, guid: f8ed6af24a23de34cb63365fac84a702, type: 2}
   nameOverride: 
-  dialogueText: "\uAC10\uC0AC\uD569\uB2C8\uB2E4 \uC810\uC7A5\uB2D8."
+  dialogueText: "\uC190\uB2D8\uC758 \uC624\uB298 \uD558\uB8E8\uAC00 \uC800\uD76C
+    \uB355\uBD84\uC5D0 \uD589\uBCF5\uD574\uC84C\uB2E4\uB2C8 \uB2E4\uD589\uC774\uB124\uC694."
   nextLineId: line_039
   logVisible: 1
   allowTapToComplete: 1
@@ -166,27 +221,6 @@ MonoBehaviour:
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
   modules:
-  - {fileID: -8495631276174444436}
-  - {fileID: 7325000816158995547}
-  editorNodePosition: {x: 2263.7273, y: 736.36365}
+  - {fileID: -897456534451940260}
+  editorNodePosition: {x: 3136.2822, y: 1353.9128}
   editorNodeSize: {x: -1, y: -1}
---- !u!114 &7325000816158995547
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6b1d8d78353467940b73df1c7e7434e7, type: 3}
-  m_Name: Fade
-  m_EditorClassIdentifier: Assembly-CSharp::_00._Work.CheolYee._02._Scripts.Story.RuntIme.Data.Definitions.Modules.StoryFadeModuleSO
-  timing: 2
-  isBlocking: 1
-  canSkip: 0
-  affectsAutoAdvance: 1
-  direction: 0
-  holdDuration: 0.5
-  _holdInitialized: 1
-  _prevDirection: 0

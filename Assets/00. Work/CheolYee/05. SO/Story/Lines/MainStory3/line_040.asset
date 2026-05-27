@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-933686262823975628
+--- !u!114 &-8601494311530986960
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -17,8 +17,8 @@ MonoBehaviour:
   canSkip: 1
   affectsAutoAdvance: 0
   background:
-    background: {fileID: 11400000, guid: 0ee66414d4d379e48880b34f09e7f535, type: 2}
-    backgroundKey: Bar_Kitchin
+    background: {fileID: 11400000, guid: aa9cfe2edd1ce9f41b118a83f04571f8, type: 2}
+    backgroundKey: Bar_BG_Default
     visible: 1
     stageLocalPosition: {x: 0, y: 0}
     overrideParallax: 0
@@ -30,25 +30,13 @@ MonoBehaviour:
   - actor: {fileID: 11400000, guid: d9363b41a01488f4cb3bff703089a731, type: 2}
     actorKey: cian
     actorInstanceKey: cian_01
-    stageLocalPosition: {x: -0.6, y: -1}
+    stageLocalPosition: {x: 0, y: -1}
     scaleMultiplier: 1
-    visible: 1
+    visible: 0
     focused: 0
     sortOrder: 0
     poseKey: 
-    expression: 0
-    expressionKey: 
-    motionProfileKey: 
-  - actor: {fileID: 11400000, guid: 46cf23b7babf9c84fa08f45064393c82, type: 2}
-    actorKey: CD_Prop_Memo
-    actorInstanceKey: CD_Prop_Memo_01
-    stageLocalPosition: {x: 0, y: -6.9264073}
-    scaleMultiplier: 1
-    visible: 0
-    focused: 1
-    sortOrder: 1
-    poseKey: 
-    expression: 0
+    expression: 1
     expressionKey: 
     motionProfileKey: 
   cameraFocusTarget: 
@@ -80,6 +68,26 @@ MonoBehaviour:
       cameraShakeDuration: 0.25
       cameraShakeFrequency: 2
       cameraShakeTargetMode: 0
+    - property: 8
+      normalizedTime: 1
+      timeSeconds: 1
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 1}
+      cameraZoom: 1
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
     - property: 9
       normalizedTime: 0
       timeSeconds: 0
@@ -100,6 +108,26 @@ MonoBehaviour:
       cameraShakeDuration: 0.25
       cameraShakeFrequency: 2
       cameraShakeTargetMode: 0
+    - property: 9
+      normalizedTime: 1
+      timeSeconds: 1
+      stageLocalPosition: {x: 0, y: 0}
+      scale: {x: 1, y: 1}
+      scaleX: 1
+      visible: 1
+      easing: 3
+      expression: 0
+      background: {fileID: 0}
+      backgroundKey: 
+      cameraTargetActorKey: 
+      cameraFollowMode: 0
+      cameraStageLocalPosition: {x: 0, y: 0}
+      cameraZoom: 1.2
+      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
+      cameraShakeStrength: 1
+      cameraShakeDuration: 0.25
+      cameraShakeFrequency: 2
+      cameraShakeTargetMode: 0
   backgroundTrack:
     keyframes: []
   actorTracks:
@@ -108,7 +136,7 @@ MonoBehaviour:
     - property: 0
       normalizedTime: 0
       timeSeconds: 0
-      stageLocalPosition: {x: -0.6, y: -1}
+      stageLocalPosition: {x: 0, y: -1}
       scale: {x: 1, y: 1}
       scaleX: 1
       visible: 1
@@ -133,29 +161,7 @@ MonoBehaviour:
       scaleX: 1
       visible: 1
       easing: 7
-      expression: 0
-      background: {fileID: 0}
-      backgroundKey: 
-      cameraTargetActorKey: 
-      cameraFollowMode: 0
-      cameraStageLocalPosition: {x: 0, y: 0}
-      cameraZoom: 1
-      cameraSnapshotNormalizedPosition: {x: 0, y: 0}
-      cameraShakeStrength: 1
-      cameraShakeDuration: 0.25
-      cameraShakeFrequency: 2
-      cameraShakeTargetMode: 0
-  - actorInstanceKey: CD_Prop_Memo_01
-    keyframes:
-    - property: 0
-      normalizedTime: 0
-      timeSeconds: 0
-      stageLocalPosition: {x: 0, y: -6.9264073}
-      scale: {x: 1, y: 1}
-      scaleX: 1
-      visible: 1
-      easing: 3
-      expression: 0
+      expression: 1
       background: {fileID: 0}
       backgroundKey: 
       cameraTargetActorKey: 
@@ -169,7 +175,10 @@ MonoBehaviour:
       cameraShakeTargetMode: 0
   soundTrack:
     bgmKeyframes: []
-    sfxKeyframes: []
+    sfxKeyframes:
+    - normalizedTime: 0
+      timeSeconds: 0
+      sfxSound: 9
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -185,7 +194,8 @@ MonoBehaviour:
   lineId: line_040
   speaker: {fileID: 11400000, guid: 0893391d14a01ad4f9de3bb1a1e77be5, type: 2}
   nameOverride: 
-  dialogueText: "\uC2E0\uBA54\uB274\uC5D0 \uB300\uD55C \uBC18\uC751\uC774 \uC88B\uB124."
+  dialogueText: "\uD639\uC2DC \uD569\uACA9\uD558\uAC8C \uB41C\uB2E4\uBA74, \uC5BC\uB9C8\uB098
+    \uC77C \uD560 \uC218 \uC788\uC73C\uC2E0\uAC00\uC694?"
   nextLineId: line_041
   logVisible: 1
   allowTapToComplete: 1
@@ -197,6 +207,6 @@ MonoBehaviour:
   useAutoAdvanceOverride: 0
   autoAdvanceDelay: 1
   modules:
-  - {fileID: -933686262823975628}
-  editorNodePosition: {x: 2734.1062, y: 813.30743}
+  - {fileID: -8601494311530986960}
+  editorNodePosition: {x: 2820.1875, y: 732.156}
   editorNodeSize: {x: -1, y: -1}
