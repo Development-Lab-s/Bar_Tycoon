@@ -23,14 +23,14 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
 
         public UniTask OpenAsync()
         {
-            gameObject.SetActive(true);
+            //gameObject.SetActive(true);
            
             return UniTask.CompletedTask;
         }
 
         public UniTask CloseAsync()
         {
-            gameObject.SetActive(false);
+            //gameObject.SetActive(false);
            
             return UniTask.CompletedTask;
         }
