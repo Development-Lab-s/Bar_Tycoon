@@ -1,4 +1,6 @@
+using _00._Work.Goat._02._Scripts.Coin;
 using _00._Work.Goat._02._Scripts.Coin.CoinDatas;
+using _00._Work.Goat._02._Scripts.Exp;
 using _00._Work.Goat._02._Scripts.Exp.ExpDatas;
 using Newtonsoft.Json;
 using System;
@@ -31,8 +33,8 @@ public class LeaderBoardManager : MonoBehaviour
     }
 
     [SerializeField] private LikeitemListSo listSo;
-    [SerializeField] private ExpData expData;
-    [SerializeField] private CoinData coinData;
+    private ExpManager expData;
+    private CoinManager coinData;
     [SerializeField]private TextMeshProUGUI nicknameSetting;
     private int limit = 50;
 
@@ -85,7 +87,7 @@ public class LeaderBoardManager : MonoBehaviour
         LeaderboardExtraData extraData =
             new LeaderboardExtraData
             {
-                playerLevel = expData.currentLevel,
+                playerLevel = expData.CurrentExp,
                 favoriteCharacter = listSo.MostCharacter()
             };
         Debug.Log(listSo.MostCharacter());
@@ -105,7 +107,7 @@ public class LeaderBoardManager : MonoBehaviour
             await LeaderboardsService.Instance
                 .AddPlayerScoreAsync(
                     "Bar_Tycoon",
-                    coinData.coin,
+                    coinData.CurrentCoin,
                     options);
 
         }
