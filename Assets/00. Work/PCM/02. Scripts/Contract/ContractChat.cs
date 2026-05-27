@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Assets._00._Work.PCM._02._Scripts.Contract
 {
-    public class ContractChat : AbstructContractPopUp, IAgentUI, IModule, IAfterInitModule
+    public class ContractChat : AbstructContractPopUp, IAgentUI, IModule
     {
         private TextMeshPro _text;
         private ModuleOwner _owner;
@@ -19,24 +19,19 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
             _text = GetComponentInChildren<TextMeshPro>();
         }
 
-        public void AfterInit()
-        {
-            _owner.GetModule<PlayerCharController>();
-        }
-
         public override void OnOpen() { }
 
         public UniTask OpenAsync()
         {
             gameObject.SetActive(true);
-            IsOpen = true;
+           
             return UniTask.CompletedTask;
         }
 
         public UniTask CloseAsync()
         {
             gameObject.SetActive(false);
-            IsOpen = false;
+           
             return UniTask.CompletedTask;
         }
 
