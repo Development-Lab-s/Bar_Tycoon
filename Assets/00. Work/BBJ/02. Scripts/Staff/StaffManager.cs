@@ -36,8 +36,12 @@ namespace BBJ.Staff
         private void OnSpawnEvent(StaffSpawnEvent e)
         {
             var agent = SpawnByConfig(e.Config);
-            if (agent != null)
-                e.OnSpawnEnded(agent.transform.position);
+            if (agent == null) return;
+
+            if (e.Config != null && !_entries.Exists(en => en.Config == e.Config))
+                _entries.Add(new StaffEntry { Config = e.Config });
+
+            e.OnSpawnEnded(agent.transform.position);
         }
 
         public void SpawnAll()
@@ -48,6 +52,18 @@ namespace BBJ.Staff
 
         public void RestoreStaff(StaffSaveData data)
         {
+            if (data.Entries.Count > 0)
+            {
+                var registry = new List<StaffEntry>(_entries);
+                _entries.Clear();
+                foreach (var role in data.Entries)
+                {
+                    var found = registry.Find(e => e.Config != null && e.Config.Role == role);
+                    if (found.Config != null)
+                        _entries.Add(found);
+                }
+            }
+
             foreach (var save in data.Members)
             {
                 var entry = _entries.Find(e => e.Config != null && e.Config.Role == save.Role);
@@ -59,6 +75,11 @@ namespace BBJ.Staff
         public StaffSaveData GetSaveData()
         {
             var data = new StaffSaveData();
+
+            foreach (var entry in _entries)
+                if (entry.Config != null)
+                    data.Entries.Add(entry.Config.Role);
+
             foreach (var agent in _spawnedAgents)
             {
                 if (agent == null) continue;

@@ -44,6 +44,7 @@ namespace BBJ.Save
     [Serializable]
     public class StaffSaveData
     {
+        public List<AgentRole>           Entries = new();
         public List<StaffMemberSaveData> Members = new();
     }
 
