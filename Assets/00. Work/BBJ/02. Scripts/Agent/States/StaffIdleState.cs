@@ -16,7 +16,6 @@ namespace BBJ.States
 
         private bool _isMoveStarted;
         private bool _shouldWork;
-        private bool _shouldInteract;
 
         public StaffIdleState(Agent owner, AnimParamSO stateParam) : base(owner, stateParam)
         {
@@ -27,24 +26,22 @@ namespace BBJ.States
 
             UtilDebugger.AssertAllAssigned(this);
 
-            AddTransitionToEnum(() => _isMoveStarted,  StaffState.Move);
-            AddTransitionToEnum(() => _shouldWork,     StaffState.Work);
-            AddTransitionToEnum(() => _shouldInteract, StaffState.Interact);
+            AddTransitionToEnum(() => _isMoveStarted,    StaffState.Move);
+            AddTransitionToEnum(() => _shouldWork,       StaffState.Work);
+            AddTransitionToEnum(() => _input.IsInteracting, StaffState.Interact);
         }
 
         public override void Enter()
         {
             base.Enter();
-            _isMoveStarted  = false;
-            _shouldWork     = false;
-            _shouldInteract = false;
+            _isMoveStarted = false;
+            _shouldWork    = false;
 
             if (IsWorking()) { HandleWorkPhaseStarted(); return; }
             if (IsMoving())  { HandleMoveStarted();      return; }
 
             _movement.OnMoveStarted        += HandleMoveStarted;
             _workAction.OnWorkPhaseStarted += HandleWorkPhaseStarted;
-            _input.OnInteracted += HandleInteract;
         }
 
         public override void Exit()
@@ -52,12 +49,10 @@ namespace BBJ.States
             base.Exit();
             _movement.OnMoveStarted        -= HandleMoveStarted;
             _workAction.OnWorkPhaseStarted -= HandleWorkPhaseStarted;
-            _input.OnInteracted            -= HandleInteract;
         }
 
         private void HandleMoveStarted()      => _isMoveStarted = true;
         private void HandleWorkPhaseStarted() => _shouldWork = true;
-        private void HandleInteract()         => _shouldInteract = true;
         private bool IsMoving()  => _movement != null && _movement.IsMoving;
         private bool IsWorking() => _scheduling != null && !_scheduling.IsAvailableForWork && _workAction != null && _workAction.IsInWorkPhase;
     }

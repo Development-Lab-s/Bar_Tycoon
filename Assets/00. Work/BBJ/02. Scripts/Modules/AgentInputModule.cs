@@ -1,4 +1,3 @@
-using System;
 using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work.PCM._02._Scripts;
 
@@ -6,7 +5,7 @@ namespace BBJ.Modules
 {
     public class AgentInputModule : AbstructContractObject, IAgentInput
     {
-        public event Action OnInteracted;
+        public bool IsInteracting { get; set; }
 
         public override void Initialize(ModuleOwner owner)
         {
@@ -18,9 +17,15 @@ namespace BBJ.Modules
         public override void ExcuteClick()
         {
             base.ExcuteClick();
-            OnInteracted?.Invoke();
+            TryInteract();
         }
 
-        private void HandleLike(int _) => OnInteracted?.Invoke();
+        private void HandleLike(int _) => TryInteract();
+
+        private void TryInteract()
+        {
+            if (!IsInteracting)
+                IsInteracting = true;
+        }
     }
 }

@@ -50,6 +50,19 @@ namespace BBJ.Movement
             _cts = null;
         }
 
+        public void PauseMovement()
+        {
+            _cts.CancelAndDispose();
+            _cts = null;
+        }
+
+        public void ResumeMovement()
+        {
+            if (_path == null || _targetIndex >= _path.Length) return;
+            _cts = new CancellationTokenSource();
+            FollowPath(_cts.Token).Forget();
+        }
+
         private async UniTask FollowPath(CancellationToken ct)
         {
             IsMoving = true;

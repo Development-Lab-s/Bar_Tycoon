@@ -15,7 +15,6 @@ namespace BBJ.States
         private readonly AgentStatusUI  _statusUI;
 
         private bool _workEnded;
-        private bool _shouldInteract;
 
         public StaffWorkState(Agent owner, AnimParamSO stateParam) : base(owner, stateParam)
         {
@@ -26,30 +25,26 @@ namespace BBJ.States
 
             UtilDebugger.AssertAllAssigned(this);
 
-            AddTransitionToEnum(() => _workEnded,      StaffState.Idle);
-            AddTransitionToEnum(() => _shouldInteract, StaffState.Interact);
+            AddTransitionToEnum(() => _workEnded,           StaffState.Idle);
+            AddTransitionToEnum(() => _input.IsInteracting, StaffState.Interact);
         }
 
         public override void Enter()
         {
             base.Enter();
-            _workEnded      = false;
-            _shouldInteract = false;
+            _workEnded = false;
 
             _statusUI?.ToggleText("작업중");
             _statusUI?.OpenAsync().Forget();
             _workAction.OnWorkPhaseEnded += HandleWorkEnded;
-            _input.OnInteracted          += HandleInteract;
         }
 
         public override void Exit()
         {
             _statusUI?.CloseAsync().Forget();
             _workAction.OnWorkPhaseEnded -= HandleWorkEnded;
-            _input.OnInteracted          -= HandleInteract;
         }
 
         private void HandleWorkEnded() => _workEnded = true;
-        private void HandleInteract()  => _shouldInteract = true;
     }
 }

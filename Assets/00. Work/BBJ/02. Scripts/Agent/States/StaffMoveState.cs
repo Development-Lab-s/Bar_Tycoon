@@ -14,7 +14,6 @@ namespace BBJ.States
         private readonly IAgentInput      _input;
 
         private bool _isMoveCompleted;
-        private bool _shouldInteract;
 
         public StaffMoveState(Agent owner, AnimParamSO stateParam) : base(owner, stateParam)
         {
@@ -24,37 +23,29 @@ namespace BBJ.States
 
             UtilDebugger.AssertAllAssigned(this);
 
-            AddTransitionToEnum(() => _isMoveCompleted, StaffState.Idle);
-            AddTransitionToEnum(() => _shouldInteract,  StaffState.Interact);
+            AddTransitionToEnum(() => _isMoveCompleted,      StaffState.Idle);
+            AddTransitionToEnum(() => _input.IsInteracting,  StaffState.Interact);
         }
 
         public override void Enter()
         {
             base.Enter();
             _isMoveCompleted = false;
-            _shouldInteract  = false;
 
             if (_scheduling != null && _scheduling.IsWorkPaused)
                 _scheduling.Resume();
 
             _movement.OnMoveCompleted       += HandleMoveCompleted;
             _movement.OnMoveVelocityChanged += HandleVelocityChanged;
-            _input.OnInteracted             += HandleInteract;
         }
 
         public override void Exit()
         {
             _movement.OnMoveCompleted       -= HandleMoveCompleted;
             _movement.OnMoveVelocityChanged -= HandleVelocityChanged;
-            _input.OnInteracted             -= HandleInteract;
         }
 
         private void HandleVelocityChanged(Vector3 velocity) => _renderer.FlipController(velocity.x);
         private void HandleMoveCompleted() => _isMoveCompleted = true;
-        private void HandleInteract()
-        {
-            _scheduling?.Pause();
-            _shouldInteract = true;
-        }
     }
 }

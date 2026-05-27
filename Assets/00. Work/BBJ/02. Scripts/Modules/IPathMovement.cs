@@ -15,5 +15,7 @@ namespace BBJ.Movement
         public void SetMoveDestination(Vector3 destination);
         public void OnSpeedChange(float speed);
         public void StopMovement();
+        public void PauseMovement();
+        public void ResumeMovement();
     }
 }

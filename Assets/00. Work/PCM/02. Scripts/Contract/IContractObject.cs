@@ -21,8 +21,4 @@ namespace _00._Work.PCM._02._Scripts
         public UnityEvent<int> OnLike { get; }
     }
 
-    public interface IChatProvider
-    {
-        string ChatMessage { get; }
-    }
 }

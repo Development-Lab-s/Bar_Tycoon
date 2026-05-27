@@ -4,6 +4,6 @@ namespace BBJ.Modules
 {
     public interface IAgentInput
     {
-        event Action OnInteracted;
+        bool IsInteracting { get; set; }
     }
 }
