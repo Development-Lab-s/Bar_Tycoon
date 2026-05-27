@@ -33,8 +33,11 @@ public class UIPopup : MonoBehaviour, IPopup
 
         await tween;
 
+        if (this == null)
+            return;
+
         IsAniming = false;
-        UIManager.Instance.ClosePopup();
+        UIManager.Instance?.ClosePopup();
     }
 
     public void OnClickClose() => OnClose();
@@ -54,6 +57,8 @@ public class UIPopup : MonoBehaviour, IPopup
             .BindToAnchoredPosition(_target);
 
         await tween;
+        if (this == null)
+            return;
         IsAniming = false;
     }
 }

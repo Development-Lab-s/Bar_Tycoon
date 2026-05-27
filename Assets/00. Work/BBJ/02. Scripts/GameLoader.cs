@@ -103,7 +103,6 @@ namespace BBJ
         private void StartFresh()
         {
             _objectManager?.LoadDefaultLayout();
-            _staffManager?.SpawnAll();
         }
 
         // ─── 복원 ────────────────────────────────────────────
