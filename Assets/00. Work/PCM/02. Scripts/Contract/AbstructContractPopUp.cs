@@ -41,7 +41,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
             //if (isOpen || IsAnimating) return;
 
             //isOpen = true;
-            
+
 
             if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
             if (_motionHandle.IsActive()) _motionHandle.Cancel();
@@ -58,7 +58,7 @@ namespace Assets._00._Work.PCM._02._Scripts.Contract
 
         public virtual void OnClose()
         {
-            //if (!isOpen ||IsAnimating) return;
+            //if (!isOpen || IsAnimating) return;
 
             //isOpen = false;
 
