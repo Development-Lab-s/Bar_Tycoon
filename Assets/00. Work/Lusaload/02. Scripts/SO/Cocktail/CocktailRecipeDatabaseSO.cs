@@ -18,6 +18,9 @@ namespace _00._Work.Lusaload._02._Scripts.SO
         
         [SerializeField] private List<CocktailRecipeSO> itemListForSerialize = new();
 
+        [Header("first")] 
+        [SerializeField] private CocktailRecipeSO firstItem;
+
         public HashSet<CocktailRecipeSO> recipes = new();
         
 
@@ -59,8 +62,17 @@ namespace _00._Work.Lusaload._02._Scripts.SO
             CocktailRecipeDatabaseSaveData saveData =
                 _saveService.Load<CocktailRecipeDatabaseSaveData>();
 
+            // 저장 데이터가 없으면 처음 칵테일 지급
             if (saveData == null)
+            {
+                recipes.Clear();
+
+                if (firstItem != null)
+                    recipes.Add(firstItem);
+
+                Save();
                 return;
+            }
 
             recipes.Clear();
 
@@ -71,6 +83,13 @@ namespace _00._Work.Lusaload._02._Scripts.SO
 
                 if (recipe != null)
                     recipes.Add(recipe);
+            }
+            
+            // 저장 파일은 있는데 내용이 비어있으면 firstItem 지급
+            if (recipes.Count == 0 && firstItem != null)
+            {
+                recipes.Add(firstItem);
+                Save();
             }
         }
         
