@@ -1,5 +1,6 @@
 using BBJ.Actions;
 using BBJ.Customer;
+using BBJ.EventSystem;
 using BBJ.Modules;
 using BBJ.Order;
 using BBJ.Schedule;
@@ -29,7 +30,11 @@ namespace BBJ.Work
                     return occ != null && !occ.IsOccupied && occ.TryReserve(executor, null);
                 });
 
-            if (seat == null) return WorkResult.Cancelled;
+            if (seat == null)
+            {
+                _ctx.CustomerChannel?.RaiseEvent(new CustomerLeftEvent { Customer = customer });
+                return WorkResult.Cancelled;
+            }
 
             seat.GetModule<OccupancyModule>()?.Occupy(executor);
 

@@ -1,12 +1,13 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.Coin
 {
     public class CoinCanvas : MonoBehaviour
     {
-        [SerializeField] private CoinUI coinUI;
+        [SerializeField] private CoinUI     coinUI;
         [SerializeField] private CoinManager coinManager;
+
         private void Awake()
         {
             coinManager.OnChangeCoin += HandleChangeCoin;
@@ -22,7 +23,7 @@ namespace _00._Work.Goat._02._Scripts.Coin
             coinManager.OnChangeCoin -= HandleChangeCoin;
         }
 
-        private void HandleChangeCoin(int coin)
+        private void HandleChangeCoin(long coin)
         {
             coinUI.ChangeText(coin);
         }

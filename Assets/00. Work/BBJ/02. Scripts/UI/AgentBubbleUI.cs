@@ -11,8 +11,14 @@ namespace BBJ.UI
         [SerializeField] private CanvasGroup _canvasGroup;
         [SerializeField] private float _animDuration = 0.15f;
         [SerializeField] private Image _backgroundImage;
+        [SerializeField] private Color _normalColor    = Color.white;
+        [SerializeField] private Color _serveTintColor = new Color(1f, 0.55f, 0.1f, 1f);
+
         public Image BackgroundImage => _backgroundImage;
         public bool IsOpen { get; private set; }
+
+        public void ApplyServeTint() { if (_backgroundImage != null) _backgroundImage.color = _serveTintColor; }
+        public void ClearTint()      { if (_backgroundImage != null) _backgroundImage.color = _normalColor; }
 
         private void Start()
         {

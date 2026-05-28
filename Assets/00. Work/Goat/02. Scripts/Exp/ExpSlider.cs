@@ -27,6 +27,12 @@ namespace _00._Work.Goat._02._Scripts.Exp
         {
             float targetFill = GetFillAmount(amount, max);
 
+            if (!gameObject.activeInHierarchy)
+            {
+                expSliderImage.fillAmount = targetFill;
+                return;
+            }
+
             if (_fillCoroutine != null)
             {
                 StopCoroutine(_fillCoroutine);

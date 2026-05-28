@@ -17,8 +17,6 @@ namespace _00._Work.CheolYee._02._Scripts.Core.Sorting
                 {
                     if (sorting.SortingOffset >= changeSortOffset)
                         sorting.AddSortOffset(-changeSortOffset);
-                    else
-                        sorting.AddSortOffset(changeSortOffset);
                 }
             }
         }

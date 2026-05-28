@@ -19,91 +19,102 @@ using UnityEngine.UI;
 
 public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    [SerializeField] private CharItemSO _itemSO; //Char�� �ŷ��̶�� �� ����
+    [SerializeField] private CharItemSO _itemSO;
     [SerializeField] private CoinManager coinManager;
+    [SerializeField] private CharacterRegisterSO _characterRegister;
+    [SerializeField] private TextMeshProUGUI _priceText;
 
     [Header("Setting")]
-    [SerializeField] private int needMoney;
-    [SerializeField]private LayerMask charact;
+    [SerializeField] private LayerMask charact;
 
     [Header("Events")]
     [SerializeField] private EventChannelSO soundChannel;
     public UnityEvent errorMessage;
     public UnityEvent targetMessage;
+
     private Image _image;
     private GameObject dragInstance;
     private RectTransform dragRectTransform;
     private Canvas mainCanvas;
 
+    private const float CostMultiplier = 0.2f;
+
     private void OnEnable()
     {
         _image = GetComponent<Image>();
         mainCanvas = GetComponentInParent<Canvas>();
+        UpdatePriceText();
         LoadItem();
     }
+
+    private int GetCurrentLevel()
+    {
+        if (_characterRegister == null || _itemSO == null) return 1;
+        return _characterRegister.GetCharacterByName(_itemSO.Ownercharacter)?.CurrentLevel ?? 1;
+    }
+
+    private long GetCurrentCost()
+    {
+        return (long)(_itemSO.Price * (1f + GetCurrentLevel() * CostMultiplier));
+    }
+
+    private void UpdatePriceText()
+    {
+        if (_priceText == null || _itemSO == null) return;
+        _priceText.text = $"{GetCurrentCost()}G";
+    }
+
     private void LoadItem()
     {
-        //SaveManager.DeleteSave($"{_itemSO.ItemName}.save", "Items");
-        if (!SaveManager.IsSaveFile(
+        if (!SaveManager.IsSaveFile($"{_itemSO.ItemName}.save", "Items")) return;
+
+        CharItemSaveData saveData = (CharItemSaveData)SaveManager.Load(
+            typeof(CharItemSaveData),
             $"{_itemSO.ItemName}.save",
-            "Items"))
-        {
-            return;
-        }
-
-        CharItemSaveData saveData =
-            (CharItemSaveData)SaveManager.Load(
-                typeof(CharItemSaveData),
-                $"{_itemSO.ItemName}.save",
-                "Items");
-
+            "Items");
     }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (coinManager.CurrentCoin < needMoney)
+        long cost = GetCurrentCost();
+        if (coinManager.CurrentCoin < cost)
         {
             errorMessage?.Invoke();
             return;
         }
-        ;
-        if (_image.sprite == null)
-        {
-            return;
-        }
-        ;
+
+        if (_image.sprite == null) return;
 
         dragInstance = new GameObject("DragIcon_Clone");
         dragInstance.transform.SetParent(mainCanvas.transform, false);
-        dragInstance.transform.SetAsLastSibling(); 
+        dragInstance.transform.SetAsLastSibling();
 
         Image dragImg = dragInstance.AddComponent<Image>();
         dragImg.sprite = _image.sprite;
         dragImg.rectTransform.sizeDelta = _image.rectTransform.sizeDelta;
-
         dragImg.raycastTarget = false;
 
         dragRectTransform = dragInstance.GetComponent<RectTransform>();
-        
         UpdateDragPosition(eventData);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
         if (dragRectTransform != null)
-        {
             UpdateDragPosition(eventData);
-        }
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (coinManager.CurrentCoin < needMoney)
+        long cost = GetCurrentCost();
+        if (coinManager.CurrentCoin < cost)
         {
             Destroy(dragInstance);
             return;
         }
+
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(eventData.position);
-        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero,100,charact);
+        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero, 100, charact);
 
         if (hit.collider != null)
         {
@@ -115,14 +126,17 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
                     Destroy(dragInstance);
                     return;
                 }
-                soundChannel.RaiseEvent(new PlaySoundEvent((SfxSounds)13,Vector3.zero,SoundChannelId.None));
-                coinManager.TryUseCoin(needMoney);
+                soundChannel.RaiseEvent(new PlaySoundEvent((SfxSounds)13, Vector3.zero, SoundChannelId.None));
+                coinManager.TryUseCoin(cost);
                 pychar.OnLike.Invoke(_itemSO.LikePlus);
+                UpdatePriceText();
             }
         }
-        if(dragInstance != null)
+
+        if (dragInstance != null)
             Destroy(dragInstance);
     }
+
     private void UpdateDragPosition(PointerEventData eventData)
     {
         Vector2 localPoint;
@@ -130,8 +144,7 @@ public class likeabilityController : MonoBehaviour, IBeginDragHandler, IDragHand
             mainCanvas.transform as RectTransform,
             eventData.position,
             eventData.pressEventCamera,
-            out localPoint
-        );
+            out localPoint);
         dragRectTransform.localPosition = localPoint;
     }
 

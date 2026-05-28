@@ -26,6 +26,7 @@ public class SideLpController : MonoBehaviour, IModule
     private readonly Dictionary<int, LPBOX> _lpBoxDict = new();
 
     private int _currentActiveId = -1;
+    private bool _bgmNeedsResume = false;
 
     private ModuleOwner _owner;
 
@@ -95,7 +96,22 @@ public class SideLpController : MonoBehaviour, IModule
 
     private void OnSceneChanged(SceneTypeChangedEvent e)
     {
-        if (e.Current == SceneType.Main) ResumeBgm();
+        switch (e.Current)
+        {
+            case SceneType.Cocktail:
+                // BGM이 계속 재생 중이므로 재개 불필요
+                break;
+            case SceneType.Main:
+                if (_bgmNeedsResume)
+                {
+                    _bgmNeedsResume = false;
+                    ResumeBgm();
+                }
+                break;
+            default:
+                _bgmNeedsResume = true;
+                break;
+        }
     }
 
     private void OnDestroy()

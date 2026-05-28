@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using _00._Work.Goat._02._Scripts.Coin;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
@@ -7,13 +8,10 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
     public class UpgradeData
     {
         [field: SerializeField] public UpgradeDataSO UpgradeDataSo { get; private set; }
-        [field: SerializeField] public int CurrentLevel { get; private set; }
+        [field: SerializeField] public int           CurrentLevel  { get; private set; }
 
-        public void UpgradeLevel()
-        {
-            ChangeLevel(CurrentLevel + 1);
-        }
-        
+        public void UpgradeLevel() => ChangeLevel(CurrentLevel + 1);
+
         public void ChangeLevel(int level)
         {
             CurrentLevel = Mathf.Clamp(level, 0, UpgradeDataSo.MaxLevel);
@@ -25,25 +23,20 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
             ChangeLevel(currentLevel);
         }
 
-        public string GetLevel(int nextLevel)
+        public string GetLevel(int offset)
         {
-            string level = CurrentLevel + nextLevel >= UpgradeDataSo.MaxLevel ? "MAX" : (CurrentLevel+ nextLevel+1).ToString();
-            if (CurrentLevel+ nextLevel > UpgradeDataSo.MaxLevel)
-            {
-                level = $"현재 레벨: {CurrentLevel}";
-            }
-            return level;
-        }
-        
-        public string GetCost()
-        {
-            string cost = CurrentLevel >= UpgradeDataSo.MaxLevel ? "MAX" : UpgradeDataSo.Costs[CurrentLevel].ToString();
-            return cost;
+            int target = CurrentLevel + offset;
+            if (target > UpgradeDataSo.MaxLevel)  return $"현재 레벨: {CurrentLevel}";
+            if (target >= UpgradeDataSo.MaxLevel) return "MAX";
+            return (target + 1).ToString();
         }
 
-        public float GetTotalIncreaseValue()
+        public string GetCost()
         {
-            return UpgradeDataSo.IncreaseValue * CurrentLevel;
+            if (CurrentLevel >= UpgradeDataSo.MaxLevel) return "MAX";
+            return CoinFormatter.Format(UpgradeDataSo.GetCost(CurrentLevel));
         }
+
+        public float GetTotalIncreaseValue() => UpgradeDataSo.IncreaseValue * CurrentLevel;
     }
 }

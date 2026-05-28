@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 
 namespace _00._Work.Goat._02._Scripts.Coin
@@ -7,9 +7,9 @@ namespace _00._Work.Goat._02._Scripts.Coin
     {
         [SerializeField] private TextMeshProUGUI coinText;
 
-        public void ChangeText(int coin)
+        public void ChangeText(long coin)
         {
-            coinText.text = coin.ToString();
+            coinText.text = CoinFormatter.Format(coin);
         }
     }
 }

@@ -37,6 +37,7 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
         private void HandleLaunchRequested(StoryEpisodeLaunchRequested evt)
         {
             string episodeId = ResolveEpisodeId(evt.Episode, evt.EpisodeId);
+            Debug.Log($"[StoryEpisodeLoaderService] HandleLaunchRequested — episodeId={episodeId}");
 
             if (string.IsNullOrEmpty(episodeId))
             {
@@ -51,7 +52,10 @@ namespace _00._Work.CheolYee._02._Scripts.Story.RuntIme.Core
             }
 
             if (progressService != null && !progressService.TrySetUnlocked(episodeId, true))
+            {
+                Debug.LogWarning($"[StoryEpisodeLoaderService] TrySetUnlocked 실패 — {episodeId}");
                 return;
+            }
 
             if (launchRequestStore == null)
             {

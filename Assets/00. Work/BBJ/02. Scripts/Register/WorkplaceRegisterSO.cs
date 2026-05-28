@@ -20,8 +20,10 @@ namespace BBJ.Register
 
         public List<Workplace> GetCandidates(Vector3 from, WorkplaceTypeSO type, int maxCount = 5)
         {
-            return GetCandidates(from, maxCount)
-                .Where(w => w.WorkplaceType == type)
+            return Registry
+                .Where(w => w.WorkplaceType == type && w.GetModule<OccupancyModule>()?.IsAvailable == true)
+                .OrderBy(w => Vector3.Distance(from, w.transform.position))
+                .Take(maxCount)
                 .ToList();
         }
 

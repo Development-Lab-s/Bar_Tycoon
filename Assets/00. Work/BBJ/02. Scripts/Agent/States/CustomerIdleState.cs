@@ -28,6 +28,8 @@ namespace BBJ.States
 
         private bool _isMoveStarted;
         private bool _shouldWork;
+        private bool _initializing;
+        private bool _isDialoguePlaying;
         private CancellationTokenSource _uiCts;
 
         public CustomerIdleState(Agent owner, AnimParamSO stateParam) : base(owner, stateParam)
@@ -119,21 +121,33 @@ namespace BBJ.States
 
         private async UniTaskVoid RunDialogueAsync(CancellationToken ct, string line)
         {
-            RefreshStatusUI();
+            _isDialoguePlaying = true;
             _ = _backUI?.CloseAsync();
             _dialogueUI.SetText(line);
-            await _uiModule.PlaySequenceAsync(ct, _dialogueUI, _statusUI);
+            await _uiModule.PlaySequenceAsync(ct, _dialogueUI);
+            _isDialoguePlaying = false;
             if (!ct.IsCancellationRequested)
-                _ = _backUI?.OpenAsync();
+                RefreshStatusUI();
         }
 
         private async UniTaskVoid PlayStatusSequenceAsync()
         {
             if (_uiCts == null) return;
             var ct = _uiCts.Token;
+            _initializing = true;
             RefreshStatusUI();
+            _initializing = false;
+            if (!ShouldShowBubble()) return;
             _ = _backUI?.OpenAsync();
             await _uiModule.PlaySequenceAsync(ct, _statusUI);
+        }
+
+        private bool ShouldShowBubble()
+        {
+            if (!_customer.OrderPlaced || _customer.IsAwaitingOrder) return true;
+            if (_customer.FoodServed && !_customer.PaymentDone) return true;
+            var ticket = _customer.ActiveTicket;
+            return ticket != null && ticket.IsPlayerActionable;
         }
 
         private void RefreshUI() => RefreshStatusUI();
@@ -146,32 +160,62 @@ namespace BBJ.States
                 _contractObj.CanInteracting = _customer.AssignedSeat != null
                                            || (_customer.FoodServed && !_customer.PaymentDone);
 
+            bool shouldShow = ShouldShowBubble();
+
+            if (!shouldShow)
+            {
+                if (_statusUI.IsOpen)
+                {
+                    _backUI?.ClearTint();
+                    _ = _backUI?.CloseAsync();
+                    _ = _statusUI?.CloseAsync();
+                }
+                return;
+            }
+
+            // 초기화 중이거나 대사 중일 때는 직접 열지 않음
+            if (!_statusUI.IsOpen && !_initializing && !_isDialoguePlaying)
+            {
+                _ = _backUI?.OpenAsync();
+                _ = _statusUI?.OpenAsync();
+            }
+
             if (!_customer.OrderPlaced || _customer.IsAwaitingOrder)
             {
+                _backUI?.ClearTint();
                 _statusUI.ToggleText("...");
                 return;
             }
 
             if (_customer.FoodServed && !_customer.PaymentDone)
             {
+                _backUI?.ClearTint();
                 _statusUI.ToggleText("계산 대기");
                 SetBgAlpha(1f);
                 return;
             }
 
-            var ticket      = _customer.ActiveTicket;
+            var ticket        = _customer.ActiveTicket;
             bool isActionable = ticket != null && ticket.IsPlayerActionable;
-            var newIcon     = _customer.SelectedFood?.cocktailIcon;
+            var newIcon       = _customer.SelectedFood?.cocktailIcon;
 
             if (newIcon != null)
             {
                 _statusUI.ToggleIcon();
                 if (_statusUI.Icon is IStylableUI icon)
-                    icon.SetSprite(newIcon).SetRecolorFade(isActionable ? 0f : 0.72f);
-                SetBgAlpha(isActionable ? 1f : 148f / 255f);
+                    icon.SetSprite(newIcon).SetRecolorFade(0f);
+
+                if (isActionable)
+                    _backUI?.ApplyServeTint();
+                else
+                {
+                    _backUI?.ClearTint();
+                    SetBgAlpha(1f);
+                }
             }
             else
             {
+                _backUI?.ClearTint();
                 _statusUI.ToggleText(_customer.SelectedFood?.cocktailName ?? "...");
             }
         }

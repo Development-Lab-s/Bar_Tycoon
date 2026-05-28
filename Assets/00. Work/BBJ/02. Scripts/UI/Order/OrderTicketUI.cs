@@ -1,5 +1,6 @@
 using BBJ.Order;
 using BBJ.Work;
+using BBJ.WorkplaceSystem.Handlers;
 using LitMotion;
 using System;
 using TMPro;
@@ -11,10 +12,12 @@ namespace BBJ.UI.Order
 {
     public class OrderTicketUI : MonoBehaviour
     {
-        [SerializeField] private Image    _foodIcon;
-        [SerializeField] private TMP_Text _foodName;
-        [SerializeField] private TMP_Text _workPhase;
-        [SerializeField] private TMP_Text _priceLabel;
+        [SerializeField] private Image      _foodIcon;
+        [SerializeField] private TMP_Text   _foodName;
+        [SerializeField] private TMP_Text   _workPhase;
+        [SerializeField] private TMP_Text   _priceLabel;
+        [SerializeField] private GameObject          _occupiedBadge;
+        [SerializeField] private CompletionCashierSO _cashierConfig;
 
         [SerializeField] private Color _incompleteColor = Color.white;
         [SerializeField] private Color _completeColor   = Color.green;
@@ -47,13 +50,18 @@ namespace BBJ.UI.Order
             {
                 _foodIcon.sprite = ordered.cocktailIcon;
                 _foodName.text   = ordered.cocktailName ?? "-";
-                _priceLabel.text = "가격 : " + ordered.price + " <sprite=\"cost\" index=0>";
+
+                int baseAmount = _cashierConfig != null ? _cashierConfig.CalculateBase(ordered) : 0;
+                _priceLabel.text = $"+{baseAmount}<sprite=\"cost\" index=0>";
             }
         }
 
         public void Refresh()
         {
             if (_ticket == null) return;
+
+            bool occupied = _ticket.State is OrderState.Reserved or OrderState.InProgress;
+            if (_occupiedBadge != null) _occupiedBadge.SetActive(occupied);
 
             if (_workPhase != null)
                 _workPhase.text = "(" + WorkPhaseLabel(_ticket.WorkPhase) + "...)";
@@ -96,7 +104,7 @@ namespace BBJ.UI.Order
 
         private static string WorkPhaseLabel(OrderWorkPhase phase) => phase switch
         {
-            OrderWorkPhase.PendingCook     => "",
+            OrderWorkPhase.PendingCook     => "대기 중",
             OrderWorkPhase.ReadyForServe   => "서빙 중",
             OrderWorkPhase.Eating          => "식사 중",
             OrderWorkPhase.ReadyForCashier => "계산 중",

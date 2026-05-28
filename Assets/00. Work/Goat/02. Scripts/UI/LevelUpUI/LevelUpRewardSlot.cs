@@ -24,8 +24,10 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         {
             descriptionPanel = panel;
             descriptionText = text;
+            if (panel == null) return;
             descriptionPanelRect = panel.GetComponent<RectTransform>();
-            canvasRect = panel.GetComponentInParent<Canvas>().transform as RectTransform;
+            var parentCanvas = panel.GetComponentInParent<Canvas>(true);
+            canvasRect = parentCanvas != null ? parentCanvas.transform as RectTransform : null;
         }
 
         public void SetImage(Sprite sprite, string description)

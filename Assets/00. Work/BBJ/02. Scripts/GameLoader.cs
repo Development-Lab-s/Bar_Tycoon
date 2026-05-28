@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using BBJ.Customer;
 using BBJ.EventSystem;
 using BBJ.GridSystem.Objects;
@@ -40,11 +41,23 @@ namespace BBJ
         private const string SaveFile = "game.save";
         private const string SaveFolder = "BarTycoon";
 
+        public static bool DeleteSaveOnQuit { get; set; }
+
         private bool _initialized;
 
         private void Awake()
         {
             _sceneChannel?.AddListener<SceneTransitionRequestEvent>(OnTransitionRequested);
+            PreloadLpIndex();
+        }
+
+        private void PreloadLpIndex()
+        {
+            if (_lpState == null) return;
+            if (!SaveManager.IsSaveFile(SaveFile, SaveFolder)) return;
+            var saveData = SaveManager.Load(typeof(GameSaveData), SaveFile, SaveFolder) as GameSaveData;
+            if (saveData != null)
+                _lpState.SelectedIndex = saveData.SelectedLpIndex;
         }
 
         private void OnDestroy()
@@ -83,9 +96,15 @@ namespace BBJ
         {
             Debug.Log("<color=orange>[GameLoader] OnApplicationQuit: 게임 종료를 감지했습니다.</color>");
 
-            // 앱이 완전히 종료되므로 하던 일을 모두 취소(초기화)하고 저장
             _staffManager?.CancelAllWork();
             SaveAll();
+
+            if (DeleteSaveOnQuit)
+            {
+                string savesRoot = Path.Combine(Application.persistentDataPath, "Saves");
+                if (Directory.Exists(savesRoot))
+                    Directory.Delete(savesRoot, true);
+            }
         }
 
         private void OnApplicationPause(bool pauseStatus)

@@ -60,7 +60,8 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
                         alcoholList.Add(alcohole);
                     }
                     cocktailRecipeDatabaseSo.AddCockTail(reward);
-                    OnCockTailAdd?.Invoke(afterLevel, reward);
+                    try { OnCockTailAdd?.Invoke(afterLevel, reward); }
+                    catch (Exception e) { Debug.LogError($"[LevelUpRewardManager] OnCockTailAdd 예외 — 보상 처리는 계속합니다: {e}"); }
                 }
 
                 alcoholListSO.alcoholList = alcoholListSO.alcoholList.Union(alcoholList).ToList();
@@ -76,7 +77,8 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
 
                     for (int i = 0; i < count; i++)
                     {
-                        OnFuncAdd?.Invoke(sprites[i], descriptions[i], afterLevel);
+                        try { OnFuncAdd?.Invoke(sprites[i], descriptions[i], afterLevel); }
+                        catch (Exception e) { Debug.LogError($"[LevelUpRewardManager] OnFuncAdd 예외: {e}"); }
                     }
                 }
             }

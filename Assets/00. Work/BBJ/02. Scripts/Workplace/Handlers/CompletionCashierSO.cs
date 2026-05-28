@@ -1,5 +1,6 @@
 using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work.Goat._02._Scripts.Events;
+using _00._Work.Lusaload._02._Scripts.SO;
 using Agents.StatSystem;
 using BBJ.Order;
 using BBJ.Particle;
@@ -13,14 +14,20 @@ namespace BBJ.WorkplaceSystem.Handlers
     public class CompletionCashierSO : WorkCompletionHandlerSO
     {
         [SerializeField] private float            _stageMultiplier = 1f;
-        [SerializeField] private CalculatorSO     _calculator; // °è»ê±â
+        [SerializeField] private CalculatorSO     _calculator; // ï¿½ï¿½ï¿½ï¿½
 
-        // ¾Ë ¼ö ¾øÀ½
+        // ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         [SerializeField] private EventChannelSO   _coinChannel;
         [SerializeField] private EventChannelSO   _particleChannel;
         [SerializeField] private CostParticleType _particleType;
 
-        // º¸À¯ÀÚ¿Í, ½ÇÇàÀÚ¿¡ ´ëÇÑ Á¤º¸
+        public int CalculateBase(CocktailRecipeSO food)
+        {
+            if (food == null) return 0;
+            return Mathf.RoundToInt(food.unlockStage * _stageMultiplier);
+        }
+
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         public override void OnCompleted(ModuleOwner executorStat, OrderTicket orderTicket)
         {
             var food = orderTicket.Ordered;

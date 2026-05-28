@@ -41,6 +41,7 @@ namespace Gamelib.SoundSystem
 		FALL = 35,
 		BEEP = 36,
 		FIREWORKS_01 = 37,
-		FIREWORKS_02 = 38
+		FIREWORKS_02 = 38,
+		TITLE_VOICE = 39
     }
 }

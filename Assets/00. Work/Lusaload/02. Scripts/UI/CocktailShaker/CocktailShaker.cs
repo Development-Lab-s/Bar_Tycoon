@@ -1,6 +1,8 @@
 using System;
 using _00._Work.Lusaload._02._Scripts.SO;
 using _00._Work.Lusaload._02._Scripts.UI.AlcoholList;
+using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
 using LitMotion;
 using LitMotion.Extensions;
 using UnityEngine;
@@ -12,6 +14,7 @@ namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
     // 재료 드롭을 받아 시퀀스에 추가하고, 셰이킹 애니메이션 및 성공/실패 이벤트를 처리하는 셰이커 컴포넌트
     public class CocktailShaker : MonoBehaviour, IDropHandler, ISequenceReaderReceiver, IShakerNotifier
     {
+        [SerializeField] private EventChannelSO soundChannel;
         [SerializeField] private RectTransform panelRectTransform; // 셰이커 패널 RectTransform (드롭 완료 시 아래로 이동)
         [SerializeField] private Button shakeButton;               // 재료가 모두 채워졌을 때 표시되는 셰이크 버튼
         [SerializeField] private float panelDropDuration = 0.5f;  // 패널이 아래로 내려가는 애니메이션 시간(초)
@@ -66,6 +69,7 @@ namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
 
             BaseAlcoholButtonUI alcoholItemUI = eventData.pointerDrag.GetComponent<BaseAlcoholButtonUI>();
             DraggableItem draggableItem = eventData.pointerDrag.GetComponent<DraggableItem>();
+            soundChannel.RaiseEvent(new PlaySoundEvent(SfxSounds.BUBBLE_POP, Vector3.zero));
 
             if (alcoholItemUI != null)
                 HandleAlcoholDropped(alcoholItemUI.Data);
@@ -176,6 +180,7 @@ namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
         // 흔들기 시작 시점의 시퀀스 상태를 캡처해 결과 이벤트에 사용
         private void PlayShakeAnimation()
         {
+            soundChannel.RaiseEvent(new PlaySoundEvent(SfxSounds.BARTENDERSHAKING, Vector3.zero));
             _isShaking = true;
             bool isFail = _sequenceReader?.CurrentSequence?.State == SequenceState.Failed;
             Vector3 startPos = transform.localPosition;
@@ -185,8 +190,16 @@ namespace _00._Work.Lusaload._02._Scripts.UI.CocktailShaker
                 {
                     transform.localPosition = startPos;
                     _isShaking = false;
-                    if (isFail) OnCocktailFail?.Invoke();
-                    else        OnCocktailSuccess?.Invoke();
+                    if (isFail)
+                    {
+                        soundChannel.RaiseEvent(new PlaySoundEvent(SfxSounds.FAILSOUND, Vector3.zero));
+                        OnCocktailFail?.Invoke();
+                    }
+                    else
+                    {
+                        soundChannel.RaiseEvent(new PlaySoundEvent(SfxSounds.SUCESSSOUND, Vector3.zero));
+                        OnCocktailSuccess?.Invoke();
+                    }
                 })
                 .Bind(elapsed =>
                 {

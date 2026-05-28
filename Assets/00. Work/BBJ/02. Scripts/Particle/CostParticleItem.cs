@@ -1,5 +1,7 @@
 using System;
+using Gamelib.EventSystem;
 using Gamelib.ObjectPool.Runtime;
+using Gamelib.SoundSystem;
 using LitMotion;
 using LitMotion.Extensions;
 using TMPro;
@@ -9,6 +11,7 @@ namespace BBJ.Particle
 {
     public class CostParticleItem : PoolableMono
     {
+        [SerializeField] private EventChannelSO soundChannel;
         [SerializeField] private TextMeshPro _text;
 
         private MotionHandle _moveHandle;
@@ -23,6 +26,7 @@ namespace BBJ.Particle
         public void Play(int amount, string spriteAssetName, int spriteIndex, Color gainColor, Color spendColor,
             Vector3 worldPos, Action onComplete)
         {
+            soundChannel.RaiseEvent(new PlaySoundEvent(SfxSounds.CASH_REGISTER_DING, Vector2.zero));
             _onComplete = onComplete;
             transform.position = worldPos;
 

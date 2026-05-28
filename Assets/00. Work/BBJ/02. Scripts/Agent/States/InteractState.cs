@@ -1,7 +1,5 @@
 using _00._Work._Resources._02._Scripts.Agents;
 using _00._Work._Resources._02._Scripts.Systems.AnimationSystems;
-using _00._Work.Goat._02._Scripts.Events;
-using _00._Work.Goat._02._Scripts.Module;
 using _00._Work.PCM._02._Scripts;
 using Assets._00._Work.PCM._02._Scripts.Contract;
 using BBJ.Modules;
@@ -18,7 +16,6 @@ namespace BBJ.States
         private readonly SchedulingModule    _scheduling;
         private readonly IAgentUIModule      _uiModule;
         private readonly IAgentInput         _input;
-        private AgentParticleModule          _particles;
         private bool _isTriggerCall;
         private CancellationTokenSource _autoCloseCts;
 
@@ -28,7 +25,6 @@ namespace BBJ.States
             _uiModule = owner.GetModule<IAgentUIModule>();
             _input = owner.GetModule<IAgentInput>();
             _autoCloseCts = new CancellationTokenSource();
-            _particles = owner.GetModule<AgentParticleModule>();
 
             UtilDebugger.AssertAllAssigned(this);
 
@@ -47,7 +43,6 @@ namespace BBJ.States
                 contractObj.CanInteracting = false;
                 contractObj.UnHover();
             }
-            _particles?.PlayParticle(ParticleType.HEART);
             _input.OnInteracted += HandleManualClose;
             _autoCloseCts = new CancellationTokenSource();
             AutoCloseRoutine(_autoCloseCts.Token).Forget();

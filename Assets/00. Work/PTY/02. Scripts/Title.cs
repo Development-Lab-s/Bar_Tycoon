@@ -2,6 +2,8 @@ using LitMotion;
 using LitMotion.Extensions;
 using System.Collections;
 using System.Diagnostics.Contracts;
+using Gamelib.EventSystem;
+using Gamelib.SoundSystem;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -9,6 +11,7 @@ using UnityEngine.UI;
 
 public class Title : MonoBehaviour
 {
+    [SerializeField] private EventChannelSO soundChannel;
     [SerializeField] private Image[] titleElements;
     [SerializeField] private TextMeshProUGUI touchAnywhere;
     [SerializeField] private Image background;
@@ -105,6 +108,7 @@ public class Title : MonoBehaviour
     
     async void TitleAppearAnim() // 로고 텍스트 애니메이션
     {
+        soundChannel.RaiseEvent(new PlaySoundEvent(SfxSounds.TITLE_VOICE, Vector2.zero));
         for (int i = 0; i < titleElements.Length; i++)
         {
             var element = titleElements[i];

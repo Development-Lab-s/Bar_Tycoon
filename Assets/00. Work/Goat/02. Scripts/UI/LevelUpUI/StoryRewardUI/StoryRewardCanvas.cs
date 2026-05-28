@@ -52,23 +52,29 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.StoryRewardUI
 
         private void HandleStoryUnlock(StoryEpisodeUnlockRequested obj)
         {
+            Debug.Log($"[StoryRewardCanvas] 스토리 언락 수신: {obj.Episode?.EpisodeId} — 큐 크기 {storyEpisodeQueue.Count + 1}");
             storyEpisodeQueue.Enqueue(obj.Episode);
         }
-        
+
         private void HandleLevelUpExitClick(LevelUpRewardeExitBtnClickEvent obj)
         {
+            Debug.Log($"[StoryRewardCanvas] 레벨업 종료 클릭 — playGoScene={obj.playGoScene}, 큐 크기={storyEpisodeQueue.Count}, storyCommandChannel={storyCommandChannel != null}");
             if (obj.playGoScene)
             {
                 if (storyEpisodeQueue.Count <= 0)
+                {
+                    Debug.LogWarning("[StoryRewardCanvas] playGoScene=true이지만 큐가 비어있어 스토리 전환 생략");
                     return;
-                
+                }
+
                 StoryEpisodeSO episode = storyEpisodeQueue.Dequeue();
-                storyCommandChannel.RaiseEvent(new StoryEpisodeLaunchRequested(episode));    
+                Debug.Log($"[StoryRewardCanvas] StoryEpisodeLaunchRequested 발행: {episode?.EpisodeId}");
+                storyCommandChannel.RaiseEvent(new StoryEpisodeLaunchRequested(episode));
             }
-            
+
             if (_isPlaying)
                 return;
-            
+
             StartCoroutine(PlayStoryRewardQueue());
         }
 

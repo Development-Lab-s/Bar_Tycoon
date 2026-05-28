@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using _00._Work.Goat._02._Scripts.Coin.CoinDatas;
 using _00._Work.Goat._02._Scripts.Events;
 using _00._Work.Goat._02._Scripts.SaveCode;
@@ -13,12 +13,12 @@ namespace _00._Work.Goat._02._Scripts.Coin
         [SerializeField] private EventChannelSO coinChannelSO;
         [SerializeField] private EventChannelSO achievementChannelSo;
         [SerializeField] private SaveFileNameSO saveFileNameSO;
-        
+
         private CoinData _coinData;
-        public int CurrentCoin => _coinData.coin;
-        
-        public event Action<int> OnChangeCoin;
-        
+        public long CurrentCoin => _coinData.coin;
+
+        public event Action<long> OnChangeCoin;
+
         private JsonSaveService _jsonSaveService;
 
         private void Awake()
@@ -36,13 +36,13 @@ namespace _00._Work.Goat._02._Scripts.Coin
         private void LoadCoin()
         {
             _coinData = _jsonSaveService.Load<CoinData>();
-            
+
             if (_coinData == null)
             {
                 _coinData = new CoinData();
                 _coinData.coin = 0;
             }
-            
+
             OnChangeCoin?.Invoke(_coinData.coin);
         }
 
@@ -51,8 +51,8 @@ namespace _00._Work.Goat._02._Scripts.Coin
             AddCoin(coin.amount);
             achievementChannelSo.RaiseEvent(new AchievementEvent().Init(AchievementType.GoldAdd, coin.amount));
         }
-        
-        private void AddCoin(int amount)
+
+        private void AddCoin(long amount)
         {
             _coinData.coin += amount;
 
@@ -61,8 +61,8 @@ namespace _00._Work.Goat._02._Scripts.Coin
 
             SaveAndNotify();
         }
-        
-        public bool TryUseCoin(int amount)
+
+        public bool TryUseCoin(long amount)
         {
             if (_coinData.coin < amount)
             {
