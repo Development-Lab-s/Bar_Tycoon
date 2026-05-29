@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using _00._Work.Goat._02._Scripts.Events;
 using BBJ.GridSystem.Objects;
+using BBJ.WorkplaceSystem;
 using Gamelib.EventSystem;
 using UnityEngine;
 
@@ -11,6 +12,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
     {
         [SerializeField] private  StageLayoutSO objectDataSO;
         [SerializeField] private EventChannelSO cameraManagerEvent;
+        [SerializeField] private ObjectDataBase objectDataBase;
         
         public readonly List<Vector2> spawnPositions = new List<Vector2>();
         public readonly List<ObjectDataSO> objectDataSOs = new List<ObjectDataSO>();
@@ -26,6 +28,11 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI.UnLockRewards
                 eventChannelSo?.RaiseEvent(objSpawnEvt.Init(obstacle.obstacleData, obstacle.cellIndex, obstacle.flipX, (pos) => spawnPositions.Add(pos)));   
             }
             cameraManagerEvent.RaiseEvent(new CameraManagerEvent().Init(spawnPositions, false));
+
+            foreach (ObjectDataSO obsData in objectDataSOs)
+            {
+                objectDataBase.AddCockTail(obsData);
+            }
         }
 
         public override List<Sprite> GetSprite()
