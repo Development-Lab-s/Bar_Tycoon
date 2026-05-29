@@ -2,7 +2,6 @@ using _00._Work._Resources._02._Scripts.Modules;
 using _00._Work._Resources._02._Scripts.Systems.AnimationSystems;
 using Cysharp.Threading.Tasks.Triggers;
 using System;
-using System.Net.NetworkInformation;
 using UnityEngine;
 
 namespace BBJ.WorkplaceSystem.Modules
@@ -21,10 +20,6 @@ namespace BBJ.WorkplaceSystem.Modules
 
         public void Initialize(ModuleOwner owner)
         {
-            var tycoonObject = owner as TycoonObject;
-            _facingDirection *= (tycoonObject.FlipX ? 1f : -1f);
-
-
             _owner = owner;
         }
 
@@ -36,8 +31,9 @@ namespace BBJ.WorkplaceSystem.Modules
 
         public void Seat(ModuleOwner customer)
         {
-            customer.GetModule<IRenderer>()
-                .FlipController(this._facingDirection);
+            var tycoonObject = _owner as TycoonObject;
+            float facingDir = _facingDirection * (tycoonObject != null && tycoonObject.FlipX ? -1f : 1f);
+            customer.GetModule<IRenderer>()?.FlipController(facingDir);
 
             prevPos = customer.transform.position;
             customer.transform.position = seatPos.transform.position;
