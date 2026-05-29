@@ -1,50 +1,164 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using _00._Work.Goat._02._Scripts;
+using _00._Work.Goat._02._Scripts.SaveCode;
 using UnityEngine;
 using BBJ.GridSystem.Objects;
 
 namespace BBJ.WorkplaceSystem
 {
-    // µµ°¨ ¹× ·¹½ÃÇÇ °ü¸®¸¦ À§ÇÑ µ¥ÀÌÅÍº£ÀÌ½º ScriptableObject
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Íºï¿½ï¿½Ì½ï¿½ ScriptableObject
     [CreateAssetMenu(fileName = "ObjectDataBase", menuName = "GridSystem/ObjectDataBase", order = 0)]
     public class ObjectDataBase : ScriptableObject, ISerializationCallbackReceiver
     {
+        [Header("Save")]
+        [SerializeField] private SaveFileNameSO saveFileNameSO;
+        
+        [Header("All Object Data")]
+        [SerializeField] private List<ObjectDataSO> allObjects = new();
+        
+        [Header("First Item")]
+        [SerializeField] private List<ObjectDataSO> firstItem;
+        
         [SerializeField] private List<ObjectDataSO> itemListForSerialize = new();
         public IReadOnlyCollection<ObjectDataSO> Recipes => recipes;
 
         private readonly HashSet<ObjectDataSO> recipes = new();
         private readonly Dictionary<string, ObjectDataSO> idCache = new();
+        
+        private JsonSaveService _saveService;
+
+
+        private void OnEnable()
+        {
+            if (saveFileNameSO != null)
+                _saveService = new JsonSaveService(saveFileNameSO);
+            
+            LoadSerializedListToHashSet();
+            Load();
+
+        }
 
         public void AddCockTail(ObjectDataSO objectDataSO)
         {
             if (objectDataSO == null || objectDataSO.Id == null) return;
 
             if (recipes.Add(objectDataSO))
+            {
                 idCache[objectDataSO.Id] = objectDataSO;
+                Save();
+            }
+        }
+        
+        public void Save()
+        {
+            if (_saveService == null)
+            {
+                if (saveFileNameSO == null)
+                {
+                    Debug.LogWarning("SaveFileNameSOê°€ ì—†ìŠµë‹ˆë‹¤.");
+                    return;
+                }
+
+                _saveService = new JsonSaveService(saveFileNameSO);
+            }
+
+            ObjectDataBaseSaveData saveData = new ObjectDataBaseSaveData();
+
+            foreach (var item in recipes)
+            {
+                if (item == null || string.IsNullOrEmpty(item.Id))
+                    continue;
+
+                saveData.ids.Add(item.Id);
+            }
+
+            _saveService.Save(saveData);
+        }
+        public void Load()
+        {
+            if (_saveService == null)
+            {
+                if (saveFileNameSO == null)
+                    return;
+
+                _saveService = new JsonSaveService(saveFileNameSO);
+            }
+
+            ObjectDataBaseSaveData saveData =
+                _saveService.Load<ObjectDataBaseSaveData>();
+
+            // ì €ì¥ ë°ì´í„°ê°€ ì—†ìœ¼ë©´ ì²˜ìŒ ì•„ì´í…œë“¤ ì§€ê¸‰
+            if (saveData == null)
+            {
+                Reset();
+
+                AddFirstItems();
+
+                Save();
+                return;
+            }
+
+            recipes.Clear();
+            idCache.Clear();
+
+            foreach (string id in saveData.ids)
+            {
+                ObjectDataSO item = allObjects
+                    .FirstOrDefault(x => x != null && x.Id == id);
+
+                if (item == null)
+                    continue;
+
+                recipes.Add(item);
+                idCache[item.Id] = item;
+            }
+
+            // ì €ì¥ íŒŒì¼ì€ ìˆëŠ”ë° ì•ˆì— ì•„ë¬´ê²ƒë„ ì—†ìœ¼ë©´ ì²˜ìŒ ì•„ì´í…œë“¤ ì§€ê¸‰
+            if (recipes.Count == 0)
+            {
+                AddFirstItems();
+                Save();
+            }
+        }
+        private void AddFirstItems()
+        {
+            foreach (var item in firstItem)
+            {
+                if (item == null || string.IsNullOrEmpty(item.Id))
+                    continue;
+
+                bool isAdded = recipes.Add(item);
+
+                if (isAdded)
+                    idCache[item.Id] = item;
+            }
         }
 
-        // Á÷·ÄÈ­ Àü HashSet µ¥ÀÌÅÍ¸¦ List·Î º¯È¯
+
+        // ï¿½ï¿½ï¿½ï¿½È­ ï¿½ï¿½ HashSet ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ Listï¿½ï¿½ ï¿½ï¿½È¯
         public void OnBeforeSerialize()
         {
             itemListForSerialize.Clear();
 
-            // null Á¦°Å
+            // null ï¿½ï¿½ï¿½ï¿½
             recipes.Remove(null);
-            // ±âÁ¸ Á÷·ÄÈ­¿ë ¸®½ºÆ®¸¦ ºñ¿ì°í »õ·Î Ã¤¿öÁÜ
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã¤ï¿½ï¿½ï¿½ï¿½
             itemListForSerialize.AddRange(recipes);
         }
 
-        // ¿ªÁ÷·ÄÈ­ ÈÄ List µ¥ÀÌÅÍ¸¦ HashSet¿¡ »ğÀÔ
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È­ ï¿½ï¿½ List ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ HashSetï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         public void OnAfterDeserialize()
+        {
+            LoadSerializedListToHashSet();
+        }
+        private void LoadSerializedListToHashSet()
         {
             recipes.Clear();
             idCache.Clear();
 
-            // .ToHashSet()Àº ¸Å¹ø »õ·Î¿î ¸Ş¸ğ¸® °ø°£À» ÇÒ´çÇÏ±â ¶§¹®¿¡ ¸Ş¸ğ¸® ÆÄÆíÈ­¿Í °¡ºñÁö¸¦ À¯¹ß
-            // Áßº¹ ¾øµµ·Ï ÇÕÁıÇÕ(union)À¸·Î ¸¸µé±â
             recipes.UnionWith(itemListForSerialize);
-
-            // null Á¦°Å
             recipes.Remove(null);
 
             foreach (var item in recipes)
