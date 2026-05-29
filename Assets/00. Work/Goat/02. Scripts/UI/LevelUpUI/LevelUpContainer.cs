@@ -76,7 +76,7 @@ namespace _00._Work.Goat._02._Scripts.UI.LevelUpUI
         private LevelUpRewardSlot CreateSlot()
         {
             LevelUpRewardSlot slot = Instantiate(levelUpRewardSlot, transform);
-            slot.Init(descriptionPanel, descriptionText);
+             slot.Init(descriptionPanel, descriptionText);
             slot.gameObject.SetActive(false);
             levelUpRewardSlots.Add(slot);
 
