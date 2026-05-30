@@ -1,4 +1,6 @@
 using System;
+using BBJ.EventSystem;
+using BBJ.Scene;
 using Gamelib.EventSystem;
 using Gamelib.ObjectPool.Runtime;
 using Gamelib.SoundSystem;
@@ -26,7 +28,8 @@ namespace BBJ.Particle
         public void Play(int amount, string spriteAssetName, int spriteIndex, Color gainColor, Color spendColor,
             Vector3 worldPos, Action onComplete)
         {
-            soundChannel.RaiseEvent(new PlaySoundEvent(SfxSounds.CASH_REGISTER_DING, Vector2.zero));
+            if (GameSceneManager.Instance?.CurrentScene == SceneType.Main)
+                soundChannel.RaiseEvent(new PlaySoundEvent(SfxSounds.CASH_REGISTER_DING, Vector2.zero));
             _onComplete = onComplete;
             transform.position = worldPos;
 

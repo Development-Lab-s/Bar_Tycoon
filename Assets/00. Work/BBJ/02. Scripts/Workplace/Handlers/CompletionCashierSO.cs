@@ -14,12 +14,22 @@ namespace BBJ.WorkplaceSystem.Handlers
     public class CompletionCashierSO : WorkCompletionHandlerSO
     {
         [SerializeField] private float            _stageMultiplier = 1f;
-        [SerializeField] private CalculatorSO     _calculator; // ����
+        [SerializeField] private CalculatorSO     _calculator;
+        [SerializeField] private StatSO           _tipProbabilityStat;
 
         // �� �� ����
         [SerializeField] private EventChannelSO   _coinChannel;
         [SerializeField] private EventChannelSO   _particleChannel;
         [SerializeField] private CostParticleType _particleType;
+
+        private bool RollTipChance(ModuleOwner executor)
+        {
+            if (_tipProbabilityStat == null) return true;
+            var statModule = executor.GetModule<IStatModule>();
+            if (statModule == null) return true;
+            if (!statModule.TryGetStat(_tipProbabilityStat.AssetIndex, out var stat)) return true;
+            return Random.value * 100f < stat.Value;
+        }
 
         public int CalculateBase(CocktailRecipeSO food)
         {
@@ -33,7 +43,9 @@ namespace BBJ.WorkplaceSystem.Handlers
             var food = orderTicket.Ordered;
             if (food == null) return;
 
-            int tip    = _calculator != null ? _calculator.Calculate(executorStat, orderTicket) : 0;
+            int tip = 0;
+            if (_calculator != null && RollTipChance(executorStat))
+                tip = _calculator.Calculate(executorStat, orderTicket);
             int amount = Mathf.RoundToInt(food.unlockStage * _stageMultiplier) + tip;
 
             _coinChannel?.RaiseEvent(new CoinEvent().Init(amount));

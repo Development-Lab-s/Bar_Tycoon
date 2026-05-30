@@ -23,6 +23,8 @@
             private bool      _sceneReady;
             private bool      _isTransitioning;
 
+            public SceneType CurrentScene => _foreground;
+
             private void Awake()
             {
                 if (Instance != null && Instance != this)

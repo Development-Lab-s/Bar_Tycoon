@@ -50,8 +50,8 @@ namespace _00._Work.Goat._02._Scripts.UI.UpgradeUI.UpgradeSlot
             costText.text = data.GetCost();
             nowLevel.text = data.GetLevel(0);
             nextLevel.text = data.GetLevel(1);
-            nowStat.text = (data.UpgradeDataSo.TargetStat.BaseValue + data.GetTotalIncreaseValue()).ToString();
-            nextStat.text = (data.UpgradeDataSo.TargetStat.BaseValue + data.GetTotalIncreaseValue() + data.UpgradeDataSo.IncreaseValue).ToString();
+            nowStat.text = (data.UpgradeDataSo.TargetStat.BaseValue + data.GetTotalIncreaseValue()).ToString("F1");
+            nextStat.text = (data.UpgradeDataSo.TargetStat.BaseValue + data.GetTotalIncreaseValue() + data.UpgradeDataSo.IncreaseValue).ToString("F1");
         }
     }
 }
