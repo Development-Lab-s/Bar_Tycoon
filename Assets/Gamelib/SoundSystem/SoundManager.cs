@@ -24,6 +24,8 @@ namespace Gamelib.SoundSystem
             SoundChannel.AddListener<StopSoundEvent>(HandleStopSoundEvent);
             SoundChannel.AddListener<PlayManagedSoundEvent>(HandlePlayManagedSoundEvent);
             SoundChannel.AddListener<StopManagedSoundEvent>(HandleStopManagedSoundEvent);
+            SoundChannel.AddListener<PauseSoundEvent>(HandlePauseSoundEvent);
+            SoundChannel.AddListener<ResumeSoundEvent>(HandleResumeSoundEvent);
         }
 
         private void OnDestroy()
@@ -32,6 +34,8 @@ namespace Gamelib.SoundSystem
             SoundChannel.RemoveListener<StopSoundEvent>(HandleStopSoundEvent);
             SoundChannel.RemoveListener<PlayManagedSoundEvent>(HandlePlayManagedSoundEvent);
             SoundChannel.RemoveListener<StopManagedSoundEvent>(HandleStopManagedSoundEvent);
+            SoundChannel.RemoveListener<PauseSoundEvent>(HandlePauseSoundEvent);
+            SoundChannel.RemoveListener<ResumeSoundEvent>(HandleResumeSoundEvent);
         }
 
         private void HandlePlaySoundEvent(PlaySoundEvent evt)
@@ -164,6 +168,18 @@ namespace Gamelib.SoundSystem
 
                 groupPlayers.Clear();
             }
+        }
+
+        private void HandlePauseSoundEvent(PauseSoundEvent evt)
+        {
+            if (_channelPlayers.TryGetValue(evt.ChannelId, out SoundPlayer player))
+                player.Pause();
+        }
+
+        private void HandleResumeSoundEvent(ResumeSoundEvent evt)
+        {
+            if (_channelPlayers.TryGetValue(evt.ChannelId, out SoundPlayer player))
+                player.Resume();
         }
 
         private void StopChannel(SoundChannelId channelId)

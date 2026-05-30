@@ -18,6 +18,7 @@ namespace BBJ.Customer
     {
         [SerializeField] private EventChannelSO _scheduleChannel;
         [SerializeField] private EventChannelSO _orderChannel;
+        [SerializeField] private EventChannelSO _sceneChannel;
 
         public CocktailRecipeSO SelectedFood { get; private set; }
         public bool IsAwaitingOrder { get; private set; }
@@ -44,6 +45,7 @@ namespace BBJ.Customer
         {
             SelectedFood = food;
             _orderChannel?.AddListener<OrderStateChangedEvent>(HandleOrderStateChanged);
+            _sceneChannel?.AddListener<SceneTypeChangedEvent>(HandleSceneTypeChanged);
             ChangeState(CustomerState.Idle);
             _scheduleChannel?.RaiseEvent(new ScheduleTriggerEvent());
         }
@@ -57,6 +59,12 @@ namespace BBJ.Customer
         private void HandleOrderStateChanged(OrderStateChangedEvent e)
         {
             if (e.Ticket == ActiveTicket)
+                OnOrderStateChanged?.Invoke();
+        }
+
+        private void HandleSceneTypeChanged(SceneTypeChangedEvent e)
+        {
+            if (e.Current == SceneType.Main)
                 OnOrderStateChanged?.Invoke();
         }
 
@@ -92,6 +100,7 @@ namespace BBJ.Customer
             ActiveTicket = ticket;
             OrderPlaced  = true;
             _orderChannel?.AddListener<OrderStateChangedEvent>(HandleOrderStateChanged);
+            _sceneChannel?.AddListener<SceneTypeChangedEvent>(HandleSceneTypeChanged);
         }
 
         internal void SetFoodServedForRestore() => FoodServed = true;
@@ -99,6 +108,7 @@ namespace BBJ.Customer
         public override void ResetItem()
         {
             _orderChannel?.RemoveListener<OrderStateChangedEvent>(HandleOrderStateChanged);
+            _sceneChannel?.RemoveListener<SceneTypeChangedEvent>(HandleSceneTypeChanged);
 
             // 활성 티켓이 있으면 OrderManager 흐름을 통해 취소 → CTS 전파로 진행 중인 워커도 중단
             if (ActiveTicket != null && !ActiveTicket.IsTerminal)

@@ -17,9 +17,10 @@ public class SideLpController : MonoBehaviour, IModule
 
     [SerializeField] private TextMeshProUGUI text;
 
-    [Header("LP �θ� ������")]
+    [Header("LP 모듈 변수들")]
     [SerializeField] private GameObject lpItemPrefab;
-    [SerializeField]private LpBoxImage lpImage;
+    [SerializeField] private LpBoxImage lpImage;
+    [SerializeField] private Image currentLpImage;
 
     private Transform parentTrm;
 
@@ -27,6 +28,7 @@ public class SideLpController : MonoBehaviour, IModule
 
     private int _currentActiveId = -1;
     private bool _bgmNeedsResume = false;
+    private bool _isPaused = false;
 
     private ModuleOwner _owner;
 
@@ -38,7 +40,7 @@ public class SideLpController : MonoBehaviour, IModule
         parentTrm = transform;
         CreateLPBoxes();
         int initialIndex = _lpState != null ? _lpState.SelectedIndex : 0;
-        PlayLp(initialIndex);
+        InitLp(initialIndex);
     }
 
     private void CreateLPBoxes()
@@ -82,10 +84,32 @@ public class SideLpController : MonoBehaviour, IModule
             return;
         if (_currentActiveId != -1)
             _lpBoxDict[_currentActiveId].StopLP();
+        _isPaused = false;
         _lpBoxDict[id].Select();
         text.text = _lpBoxDict[id].ChangeName();
+        if (currentLpImage != null) currentLpImage.sprite = lpImage.image[id];
         _currentActiveId = id;
         if (_lpState != null) _lpState.SelectedIndex = id;
+    }
+
+    public void TogglePause()
+    {
+        if (_currentActiveId < 0) return;
+        _isPaused = !_isPaused;
+        if (_isPaused)
+            _soundChannel?.RaiseEvent(new PauseSoundEvent(SoundChannelId.Bgm));
+        else
+            _soundChannel?.RaiseEvent(new ResumeSoundEvent(SoundChannelId.Bgm));
+    }
+
+    private void InitLp(int id)
+    {
+        if (!_lpBoxDict.ContainsKey(id)) return;
+        _lpBoxDict[id].SelectSilent();
+        text.text = _lpBoxDict[id].ChangeName();
+        if (currentLpImage != null) currentLpImage.sprite = lpImage.image[id];
+        _currentActiveId = id;
+        ResumeBgm();
     }
 
     private void ResumeBgm()

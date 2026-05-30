@@ -152,6 +152,16 @@ namespace Gamelib.SoundSystem
             CompletePlayback();
         }
 
+        public void Pause()
+        {
+            _audioSource.Pause();
+        }
+
+        public void Resume()
+        {
+            _audioSource.UnPause();
+        }
+
         public void ForceStopSound()
         {
             StopActiveCoroutines();

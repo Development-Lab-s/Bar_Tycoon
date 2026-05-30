@@ -17,6 +17,7 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController, IModul
     [Header("캐릭터 SO (인스펙터에서 할당)")]
     [field: SerializeField] public CharacterSO characterData { get; private set; }
     [field: SerializeField] public CharacterRegisterSO registerSO { get; private set; }
+    [SerializeField] private CharacterRegisterSO sharedRegisterSO;
     [field: SerializeField] public CharcterLikeSO CharlikeSo { get; set; }
     [field: SerializeField] public UnityEvent<string> ChatOpen { get; set; }
     [SerializeField] private EventChannelSO exitBtnClickEvent;
@@ -63,12 +64,14 @@ public class PlayerCharController : MonoBehaviour, IPlayerCharController, IModul
     private void OnEnable()
     {
         if (registerSO != null) registerSO.Register(this);
+        if (sharedRegisterSO != null) sharedRegisterSO.Register(this);
         levelTrigger += GiveItem;
     }
 
     private void OnDisable()
     {
         if (registerSO != null) registerSO.Unregister(this);
+        if (sharedRegisterSO != null) sharedRegisterSO.Unregister(this);
     }
 
     public float GetExpRatio()

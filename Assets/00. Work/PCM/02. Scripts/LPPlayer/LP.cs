@@ -16,6 +16,7 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
         public RectTransform rect;
         protected MotionHandle moveMotion;
         protected MotionHandle rotateMotion;
+        private Coroutine _soundCoroutine;
         public virtual void Awake()
         {
             rect = GetComponent<RectTransform>();
@@ -27,12 +28,12 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
         }
         public virtual void Active()
         {
-            Debug.Log("¼± ½ÇÇà");
-            // ±âÁ¸¿¡ ½ÇÇà ÁßÀÎ µ¿ÀÛÀÌ ÀÖ´Ù¸é ¾ÈÀüÇÏ°Ô Ãë¼Ò
+            Debug.Log("ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½
             StopExistingMotions();
             //rect.localRotation = Quaternion.identity;
 
-            // 1. ÀÌµ¿ ¾Ö´Ï¸ÞÀÌ¼Ç
+            // 1. ï¿½Ìµï¿½ ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½
             
             
             rotateMotion = LMotion.Create(0f, -360f, 2f)
@@ -42,10 +43,10 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
                     rect.localRotation = Quaternion.Euler(0, 0, angle);
                 });
         }
-        public virtual void PlaySound(BgmSounds id) 
+        public virtual void PlaySound(BgmSounds id)
         {
-            StartCoroutine(RestTime(id));
-
+            if (_soundCoroutine != null) StopCoroutine(_soundCoroutine);
+            _soundCoroutine = StartCoroutine(RestTime(id));
         }
         public IEnumerator RestTime(BgmSounds id)
         {
@@ -55,10 +56,16 @@ namespace Assets._00._Work.PCM._02._Scripts._TileChange
         }
         public virtual string NameChosing(int id)
         {
-           return SoundList.sounds[id].name;
+            return SoundList.sounds[id].note;
         }
         public virtual void Stop()
         {
+            if (_soundCoroutine != null)
+            {
+                StopCoroutine(_soundCoroutine);
+                _soundCoroutine = null;
+                SoundEventChannel.RaiseEvent(new StopSoundEvent(SoundChannelId.Bgm));
+            }
             StopExistingMotions();
 
             float currentZ = rect.localRotation.eulerAngles.z;

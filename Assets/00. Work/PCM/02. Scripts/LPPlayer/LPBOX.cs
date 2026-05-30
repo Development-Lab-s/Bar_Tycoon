@@ -40,6 +40,16 @@ public class LPBOX : MonoBehaviour
         _isOpen = false;
     }
 
+    public void SelectSilent()
+    {
+        if (_isOpen) return;
+        if (_lpScript != null)
+        {
+            _isOpen = true;
+            _lpScript.Active();
+        }
+    }
+
     public void Show()
     {
         _lpScript.Active();

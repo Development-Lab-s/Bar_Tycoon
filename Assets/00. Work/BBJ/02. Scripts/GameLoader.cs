@@ -5,6 +5,7 @@ using BBJ.EventSystem;
 using BBJ.GridSystem.Objects;
 using BBJ.Order;
 using BBJ.Save;
+using BBJ.Schedule;
 using BBJ.Staff;
 using Gamelib.EventSystem;
 using System.Collections.Generic;
@@ -37,6 +38,7 @@ namespace BBJ
 
         [Header("Scene")]
         [SerializeField] private EventChannelSO _sceneChannel;
+        [SerializeField] private EventChannelSO _scheduleChannel;
 
         private const string SaveFile = "game.save";
         private const string SaveFolder = "BarTycoon";
@@ -158,6 +160,9 @@ namespace BBJ
 
             // Step 5: Staff 저장 위치에 스폰
             _staffManager?.RestoreStaff(saveData.Staff);
+
+            // Step 5.5: 스폰된 스태프에게 펜딩 작업 배분
+            _scheduleChannel?.RaiseEvent(new ScheduleTriggerEvent());
 
             // Step 6.5: LP 선택 인덱스 복원
             if (_lpState != null) _lpState.SelectedIndex = saveData.SelectedLpIndex;

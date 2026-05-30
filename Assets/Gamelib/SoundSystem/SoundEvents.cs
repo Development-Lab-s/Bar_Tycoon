@@ -122,4 +122,16 @@ namespace Gamelib.SoundSystem
             FadeOutDuration = fadeOutDuration;
         }
     }
+
+    public sealed class PauseSoundEvent : GameEvent
+    {
+        public SoundChannelId ChannelId { get; }
+        public PauseSoundEvent(SoundChannelId channelId) => ChannelId = channelId;
+    }
+
+    public sealed class ResumeSoundEvent : GameEvent
+    {
+        public SoundChannelId ChannelId { get; }
+        public ResumeSoundEvent(SoundChannelId channelId) => ChannelId = channelId;
+    }
 }
