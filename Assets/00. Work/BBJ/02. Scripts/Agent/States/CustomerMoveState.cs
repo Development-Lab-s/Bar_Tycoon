@@ -28,6 +28,10 @@ namespace BBJ.States
 
             _movement.OnMoveCompleted       += HandleMoveCompleted;
             _movement.OnMoveVelocityChanged += HandleVelocityChanged;
+
+            // OnMoveCompleted이 Enter() 이전에 이미 발동된 경우(경로가 매우 짧아 즉시 완료)
+            if (!_movement.IsMoving)
+                _isMoveCompleted = true;
         }
 
         public override void Exit()

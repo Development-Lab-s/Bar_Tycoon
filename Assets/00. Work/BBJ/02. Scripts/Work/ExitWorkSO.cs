@@ -33,8 +33,12 @@ namespace BBJ.Work
                 if (exits != null && exits.Count > 0 && actions != null)
                 {
                     var role = executor.GetModule<SchedulingModule>()?.InteractRole;
-                    await actions.Execute<MoveAction>(
-                        a => a.ExecuteAsync(exits[0].GetNearestPoint(role, executor.transform.position), ctx.Token));
+                    try
+                    {
+                        await actions.Execute<MoveAction>(
+                            a => a.ExecuteAsync(exits[0].GetNearestPoint(role, executor.transform.position), ctx.Token));
+                    }
+                    catch (System.OperationCanceledException) { }
                 }
             }
 

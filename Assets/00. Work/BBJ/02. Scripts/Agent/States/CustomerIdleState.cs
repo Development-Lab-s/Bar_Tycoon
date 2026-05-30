@@ -204,19 +204,19 @@ namespace BBJ.States
                 _statusUI.ToggleIcon();
                 if (_statusUI.Icon is IStylableUI icon)
                     icon.SetSprite(newIcon).SetRecolorFade(0f);
-
-                if (isActionable)
-                    _backUI?.ApplyServeTint();
-                else
-                {
-                    _backUI?.ClearTint();
-                    SetBgAlpha(1f);
-                }
             }
             else
             {
-                _backUI?.ClearTint();
                 _statusUI.ToggleText(_customer.SelectedFood?.cocktailName ?? "...");
+            }
+
+            // アイコンの有無に関わらず、IsPlayerActionable に基づいて tint を適用
+            if (isActionable)
+                _backUI?.ApplyServeTint();
+            else
+            {
+                _backUI?.ClearTint();
+                SetBgAlpha(1f);
             }
         }
 

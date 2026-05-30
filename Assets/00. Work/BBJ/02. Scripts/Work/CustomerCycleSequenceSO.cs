@@ -18,7 +18,20 @@ namespace BBJ.Work
             if (_steps == null) return WorkResult.Completed;
 
             int startStep = 0;
-            if (executor is CustomerAgent ca) { startStep = ca.RestoreCycleStep; ca.RestoreCycleStep = 0; }
+            if (executor is CustomerAgent ca)
+            {
+                startStep = ca.RestoreCycleStep;
+                ca.RestoreCycleStep = 0;
+
+                // PaymentDone なのにサイクルが最初から再実行された場合、ExitWork へ直行
+                if (ca.PaymentDone && startStep == 0)
+                {
+                    for (int j = _steps.Length - 1; j >= 0; j--)
+                    {
+                        if (_steps[j] is ExitWorkSO) { startStep = j; break; }
+                    }
+                }
+            }
 
             for (int i = startStep; i < _steps.Length; i++)
             {

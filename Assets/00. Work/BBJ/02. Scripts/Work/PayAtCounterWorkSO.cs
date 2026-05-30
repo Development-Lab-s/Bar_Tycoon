@@ -21,6 +21,8 @@ namespace BBJ.Work
             var actions  = executor.GetModule<AgentActionModule>();
             if (customer == null || actions == null) return WorkResult.Cancelled;
 
+            if (customer.PaymentDone) return WorkResult.Completed;
+
             customer.AssignedSeat?.GetModule<SeatModule>()?.UnSeat();
 
            var counter = _ctx.WorkplaceRegister?.GetFirst(_ctx.CounterType);
@@ -40,7 +42,7 @@ namespace BBJ.Work
                 () => { customer.OnPaymentDone(); paid = true; });
             payQueue.Enqueue(slot);
 
-            await actions.Execute<WaitAction>(a => a.ExecuteAsync(() => paid, ctx.Token));
+            await actions.Execute<WaitAction>(a => a.ExecuteAsync(() => paid || customer.PaymentDone, ctx.Token));
             return WorkResult.Completed;
         }
     }

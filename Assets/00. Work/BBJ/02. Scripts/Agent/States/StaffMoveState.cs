@@ -40,6 +40,9 @@ namespace BBJ.States
             _movement.OnMoveCompleted       += HandleMoveCompleted;
             _movement.OnMoveVelocityChanged += HandleVelocityChanged;
             _input.OnInteracted             += HandleInteract;
+
+            if (!_movement.IsMoving)
+                _isMoveCompleted = true;
         }
 
         public override void Exit()

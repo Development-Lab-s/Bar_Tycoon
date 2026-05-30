@@ -46,6 +46,7 @@ namespace BBJ.UI
             if (_canvasGroup == null) return;
 
             _closing = true;
+            IsOpen = false;
             if (_currentHandle.IsActive()) _currentHandle.Cancel();
 
             _currentHandle = LMotion.Create(1f, 0f, _animDuration)
@@ -54,7 +55,7 @@ namespace BBJ.UI
                 .AddTo(this);
             await _currentHandle;
             if (_closing)
-                SetActive(false);
+                _canvasGroup.gameObject.SetActive(false);
         }
         public void ToggleIcon()
         {

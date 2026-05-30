@@ -18,6 +18,8 @@ namespace BBJ.Player
             ticket.TrySteal(player);
             oldWorker?.GetModule<ISchedulable>()?.CancelWork();
 
+            customer.OnPaymentDone();
+
             var counter = context.Register?.GetFirst(context.CounterType);
             if (counter != null)
             {

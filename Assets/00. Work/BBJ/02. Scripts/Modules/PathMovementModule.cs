@@ -100,7 +100,12 @@ namespace BBJ.Movement
                 new(_owner.transform.position, destination, HandleRequestPath)));
         private void HandleRequestPath(Vector3[] path, bool isSucces)
         {
-            if (!isSucces) return;
+            if (!isSucces)
+            {
+                IsMoving = false;
+                OnMoveCompleted?.Invoke();
+                return;
+            }
             OnPathMove(path);
         }
         private void FireCompleted() => OnMoveCompleted?.Invoke();
