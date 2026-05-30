@@ -14,6 +14,8 @@ namespace BBJ.GridSystem
         private Node[,] _grid;
         public int MaxSize => Size.x * Size.y;
 
+        public int Version { get; private set; }
+
         private void Awake()
         {
             _gridCompo = GetComponent<Grid>();
@@ -71,7 +73,10 @@ namespace BBJ.GridSystem
         public void SetNodeWalkable(Vector2Int cell, bool walkable)
         {
             if (TryGetCellToNode(cell.x, cell.y, out Node node))
+            {
                 node.walkable = walkable;
+                Version++;
+            }
         }
         public Vector3 CellToWorld(Vector2Int cellIndex)
         {

@@ -16,7 +16,11 @@ namespace BBJ.WorkplaceSystem
 
         [SerializeField] private List<InteractPoint> _interactPoints = new();
 
-        private readonly Dictionary<InteractRoleSO, List<Vector3>> _validPoints   = new();
+        private readonly Dictionary<InteractRoleSO, List<Vector3>> _allPoints   = new();
+        private readonly Dictionary<InteractRoleSO, List<Vector3>> _validPoints = new();
+
+        private GridManager _gridManager;
+        private int         _cachedGridVersion = -1;
 
         protected override void Awake()
         {
@@ -32,6 +36,7 @@ namespace BBJ.WorkplaceSystem
         public override void Setup(Func<Vector2Int, Vector3> offsetToWorld, bool flipX)
         {
             base.Setup(offsetToWorld, flipX);
+            _allPoints.Clear();
             _validPoints.Clear();
             foreach (var ip in _interactPoints)
             {
@@ -40,22 +45,27 @@ namespace BBJ.WorkplaceSystem
                 var offset   = flipX ? new Vector2Int(ip.Offset.y, ip.Offset.x) : ip.Offset;
                 var worldPos = offsetToWorld(offset);
 
-                if (!_validPoints.TryGetValue(ip.Role, out var list))
+                if (!_allPoints.TryGetValue(ip.Role, out var list))
                 {
                     list = new List<Vector3>();
-                    _validPoints[ip.Role] = list;
+                    _allPoints[ip.Role] = list;
                 }
                 list.Add(worldPos);
             }
+
+            foreach (var kvp in _allPoints)
+                _validPoints[kvp.Key] = new List<Vector3>(kvp.Value);
         }
 
         public void RefreshWorkPoints(GridManager gridManager)
         {
-            var keys = new List<InteractRoleSO>(_validPoints.Keys);
-            foreach (var key in keys)
+            _gridManager        = gridManager;
+            _cachedGridVersion  = gridManager.Version;
+
+            foreach (var key in _allPoints.Keys)
             {
                 var filtered = new List<Vector3>();
-                foreach (var pt in _validPoints[key])
+                foreach (var pt in _allPoints[key])
                 {
                     Node node = gridManager.NodeFromWorldPoint(pt);
                     if (node != null && node.walkable)
@@ -67,6 +77,9 @@ namespace BBJ.WorkplaceSystem
 
         public Vector3 GetNearestPoint(InteractRoleSO role, Vector3 from)
         {
+            if (_gridManager != null && _cachedGridVersion != _gridManager.Version)
+                RefreshWorkPoints(_gridManager);
+
             if (role != null && _validPoints.TryGetValue(role, out var points) && points.Count > 0)
                 return GetNearestFrom(points, from);
 
